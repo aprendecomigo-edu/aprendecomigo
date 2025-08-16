@@ -343,17 +343,17 @@ export const EducationalSystemSelector: React.FC<EducationalSystemSelectorProps>
     if (systemKey === 'portugal') {
       selectedSystem =
         systems.find(
-          s => s.country?.toLowerCase() === 'portugal' || s.name.toLowerCase().includes('portug')
+          s => s.country?.toLowerCase() === 'portugal' || s.name.toLowerCase().includes('portug'),
         ) || null;
     } else if (systemKey === 'brazil') {
       selectedSystem =
         systems.find(
-          s => s.country?.toLowerCase() === 'brazil' || s.name.toLowerCase().includes('brazil')
+          s => s.country?.toLowerCase() === 'brazil' || s.name.toLowerCase().includes('brazil'),
         ) || null;
     } else if (systemKey === 'custom') {
       selectedSystem =
         systems.find(
-          s => s.name.toLowerCase().includes('custom') || s.name.toLowerCase().includes('other')
+          s => s.name.toLowerCase().includes('custom') || s.name.toLowerCase().includes('other'),
         ) || null;
     }
 

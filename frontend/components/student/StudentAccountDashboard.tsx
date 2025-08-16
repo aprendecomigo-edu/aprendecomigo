@@ -6,7 +6,7 @@
  * and account management features.
  */
 
-import useRouter from '@unitools/router';
+import { useRouter } from 'expo-router';
 import {
   CreditCard,
   History,

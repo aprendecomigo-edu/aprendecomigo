@@ -30,7 +30,7 @@ class MockCloseEvent extends Event {
 
   constructor(
     type: string,
-    eventInitDict: { code?: number; reason?: string; wasClean?: boolean } = {}
+    eventInitDict: { code?: number; reason?: string; wasClean?: boolean } = {},
   ) {
     super(type);
     this.code = eventInitDict.code || 1000;
@@ -439,7 +439,7 @@ export const WebSocketTestUtils = {
   createMockWebSocket: (
     url: string = 'ws://localhost:8000/test/',
     protocols?: string | string[],
-    options?: MockWebSocketOptions
+    options?: MockWebSocketOptions,
   ): MockWebSocket => {
     return new MockWebSocket(url, protocols, options);
   },
@@ -526,7 +526,7 @@ export const WebSocketTestUtils = {
    */
   simulateDisconnectAndReconnect: async (
     mockWs: MockWebSocket,
-    reconnectDelay: number = 1000
+    reconnectDelay: number = 1000,
   ): Promise<void> => {
     await act(async () => {
       mockWs.simulateDisconnect();
@@ -653,7 +653,7 @@ export const WebSocketTestUtils = {
   expectMessageReceived: (
     mockWs: MockWebSocket,
     expectedMessage: any,
-    onMessage: jest.Mock
+    onMessage: jest.Mock,
   ): void => {
     act(() => {
       mockWs.simulateMessage(expectedMessage);
@@ -776,7 +776,7 @@ export const WebSocketTestUtils = {
   verifyBackoffTiming: (
     attempts: number[],
     baseDelay: number,
-    toleranceMs: number = 100
+    toleranceMs: number = 100,
   ): boolean => {
     if (attempts.length < 2) return true;
 
@@ -791,7 +791,7 @@ export const WebSocketTestUtils = {
             expected: expectedDelay,
             actual: actualDelay,
             tolerance,
-            difference: Math.abs(actualDelay - expectedDelay)
+            difference: Math.abs(actualDelay - expectedDelay),
           });
         }
         return false;

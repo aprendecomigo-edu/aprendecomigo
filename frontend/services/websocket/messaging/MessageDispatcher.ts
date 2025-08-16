@@ -37,13 +37,13 @@ export class MessageDispatcher implements EventEmitterInterface {
   private errorCallback?: (
     error: Error,
     message: WebSocketMessage,
-    handler: MessageHandler
+    handler: MessageHandler,
   ) => void;
 
   addHandler(
     messageType: string,
     handler: MessageHandler,
-    options: MessageHandlerOptions = {}
+    options: MessageHandlerOptions = {},
   ): void {
     if (!this.handlers.has(messageType)) {
       this.handlers.set(messageType, []);
@@ -211,7 +211,7 @@ export class MessageDispatcher implements EventEmitterInterface {
   }
 
   onHandlerError(
-    callback: (error: Error, message: WebSocketMessage, handler: MessageHandler) => void
+    callback: (error: Error, message: WebSocketMessage, handler: MessageHandler) => void,
   ): void {
     this.errorCallback = callback;
   }

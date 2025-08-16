@@ -145,13 +145,13 @@ describe('No Global State Verification', () => {
       const client1 = new ApiClient(
         { ...baseConfig, baseURL: 'https://api1.example.com' },
         storage1,
-        authHandler1
+        authHandler1,
       );
 
       const client2 = new ApiClient(
         { ...baseConfig, baseURL: 'https://api2.example.com' },
         storage2,
-        authHandler2
+        authHandler2,
       );
 
       // Verify instances are completely separate
@@ -159,10 +159,10 @@ describe('No Global State Verification', () => {
 
       // Mock axios to verify different configurations
       expect(mockedAxios.create).toHaveBeenCalledWith(
-        expect.objectContaining({ baseURL: 'https://api1.example.com' })
+        expect.objectContaining({ baseURL: 'https://api1.example.com' }),
       );
       expect(mockedAxios.create).toHaveBeenCalledWith(
-        expect.objectContaining({ baseURL: 'https://api2.example.com' })
+        expect.objectContaining({ baseURL: 'https://api2.example.com' }),
       );
     });
 
@@ -302,7 +302,7 @@ describe('No Global State Verification', () => {
             const client = new ApiClient(
               { ...baseConfig, baseURL: `https://api${i}.example.com` },
               storage,
-              authHandler
+              authHandler,
             );
 
             const gateway = new ApiGatewayImpl(client);
@@ -313,7 +313,7 @@ describe('No Global State Verification', () => {
             expect(gateway.auth).toBeDefined();
 
             return { client, gateway, index: i };
-          })()
+          })(),
         );
       }
 
@@ -418,7 +418,7 @@ describe('No Global State Verification', () => {
           headers: expect.objectContaining({
             'X-Client': 'client1',
           }),
-        })
+        }),
       );
 
       expect(mockedAxios.create).toHaveBeenCalledWith(
@@ -428,7 +428,7 @@ describe('No Global State Verification', () => {
           headers: expect.objectContaining({
             'X-Client': 'client2',
           }),
-        })
+        }),
       );
     });
   });

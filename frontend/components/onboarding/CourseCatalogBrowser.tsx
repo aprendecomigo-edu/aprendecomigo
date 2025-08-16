@@ -159,8 +159,8 @@ const CourseCard: React.FC<{
             isSelected
               ? 'border-blue-500 bg-blue-50 shadow-md'
               : canSelect
-              ? 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50'
-              : 'border-gray-100 bg-gray-50'
+                ? 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50'
+                : 'border-gray-100 bg-gray-50'
           }
         `}
       >
@@ -176,8 +176,8 @@ const CourseCard: React.FC<{
                         isSelected
                           ? 'bg-blue-600 border-blue-600'
                           : canSelect
-                          ? 'border-gray-300 bg-white'
-                          : 'border-gray-200 bg-gray-100'
+                            ? 'border-gray-300 bg-white'
+                            : 'border-gray-200 bg-gray-100'
                       }
                     `}
                   >
@@ -512,7 +512,7 @@ export const CourseCatalogBrowser: React.FC<CourseCatalogBrowserProps> = ({
           course.name.toLowerCase().includes(query) ||
           course.code.toLowerCase().includes(query) ||
           course.description?.toLowerCase().includes(query) ||
-          course.subject_area?.toLowerCase().includes(query)
+          course.subject_area?.toLowerCase().includes(query),
       );
     }
 
@@ -523,13 +523,13 @@ export const CourseCatalogBrowser: React.FC<CourseCatalogBrowserProps> = ({
 
     if (filters.subjects.length > 0) {
       filtered = filtered.filter(
-        course => course.subject_area && filters.subjects.includes(course.subject_area)
+        course => course.subject_area && filters.subjects.includes(course.subject_area),
       );
     }
 
     if (filters.difficulty.length > 0) {
       filtered = filtered.filter(
-        course => course.difficulty_level && filters.difficulty.includes(course.difficulty_level)
+        course => course.difficulty_level && filters.difficulty.includes(course.difficulty_level),
       );
     }
 

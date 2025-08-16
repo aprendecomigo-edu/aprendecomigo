@@ -51,7 +51,7 @@ const PrimitiveIcon = React.forwardRef<React.ElementRef<typeof Svg>, IPrimitiveI
       return <AsComp ref={ref} {...props} {...sizeProps} {...colorProps} />;
     }
     return <Svg ref={ref} height={height} width={width} {...colorProps} {...props} />;
-  }
+  },
 );
 
 // Simplified style definitions
@@ -134,7 +134,7 @@ export const Select = React.forwardRef<View, ISelectProps>(
         {children}
       </View>
     );
-  }
+  },
 );
 
 // SelectTrigger component
@@ -153,7 +153,7 @@ export const SelectTrigger = React.forwardRef<View, ISelectTriggerProps>(
         </Pressable>
       </SelectContext.Provider>
     );
-  }
+  },
 );
 
 // SelectInput component
@@ -172,7 +172,7 @@ export const SelectInput = React.forwardRef<TextInput, ISelectInputProps>(
         })}
       />
     );
-  }
+  },
 );
 
 // SelectIcon component
@@ -195,7 +195,7 @@ export const SelectIcon = React.forwardRef<any, ISelectIconProps>(
         })}
       />
     );
-  }
+  },
 );
 
 // Display names for debugging

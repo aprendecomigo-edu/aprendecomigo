@@ -91,7 +91,7 @@ const getCurrentSchoolId = (userProfile: any): number => {
     const adminMembership = userProfile.school_memberships.find(
       (membership: any) =>
         membership.is_active &&
-        (membership.role === 'school_owner' || membership.role === 'school_admin')
+        (membership.role === 'school_owner' || membership.role === 'school_admin'),
     );
     if (adminMembership?.school?.id) {
       return adminMembership.school.id;
@@ -100,7 +100,7 @@ const getCurrentSchoolId = (userProfile: any): number => {
 
   // Security: throw error instead of fallback to prevent unauthorized access
   throw new Error(
-    'Unable to determine school context. Please ensure you have proper school administration privileges.'
+    'Unable to determine school context. Please ensure you have proper school administration privileges.',
   );
 };
 

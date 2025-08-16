@@ -7,7 +7,7 @@
  */
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import Link from '@unitools/link';
+import { Link } from 'expo-router';
 import { AlertTriangle } from 'lucide-react-native';
 import React from 'react';
 import { useForm, Controller } from 'react-hook-form';

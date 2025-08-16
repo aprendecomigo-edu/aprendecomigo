@@ -123,7 +123,7 @@ export const getTeacherDashboard = async (): Promise<TeacherDashboardData> => {
  */
 export const getStudentProgress = async (
   schoolId?: number,
-  searchQuery?: string
+  searchQuery?: string,
 ): Promise<StudentProgress[]> => {
   try {
     const params: any = {};
@@ -156,7 +156,7 @@ export const getStudentDetail = async (studentId: number): Promise<StudentProgre
  */
 export const updateStudentProgress = async (
   studentId: number,
-  progressData: Partial<StudentProgress>
+  progressData: Partial<StudentProgress>,
 ): Promise<StudentProgress> => {
   try {
     const response = await apiClient.patch(`/api/students/${studentId}/progress/`, progressData);

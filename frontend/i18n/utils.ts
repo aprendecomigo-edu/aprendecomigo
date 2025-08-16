@@ -80,7 +80,7 @@ export const formatNumber = (number: number, options?: Intl.NumberFormatOptions)
  */
 export const formatDate = (
   date: Date | string | number,
-  options?: Intl.DateTimeFormatOptions
+  options?: Intl.DateTimeFormatOptions,
 ): string => {
   const currentLang = _getCurrentLanguage();
   const locale = currentLang === 'pt-PT' ? 'pt-PT' : 'en-GB';

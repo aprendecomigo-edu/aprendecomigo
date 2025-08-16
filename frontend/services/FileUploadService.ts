@@ -29,7 +29,7 @@ export class FileUploadService {
   private static createFormData(
     file: ImagePicker.ImagePickerAsset | DocumentPicker.DocumentPickerAsset,
     fieldName: string = 'file',
-    additionalData?: { [key: string]: any }
+    additionalData?: { [key: string]: any },
   ): FormData {
     const formData = new FormData();
 
@@ -59,7 +59,7 @@ export class FileUploadService {
   private static createXMLHttpRequest(
     url: string,
     formData: FormData,
-    options: FileUploadOptions
+    options: FileUploadOptions,
   ): Promise<FileUploadResult> {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -159,7 +159,7 @@ export class FileUploadService {
    */
   static async uploadProfilePhoto(
     image: ImagePicker.ImagePickerAsset,
-    options: FileUploadOptions = {}
+    options: FileUploadOptions = {},
   ): Promise<FileUploadResult> {
     try {
       const endpoint = options.endpoint || '/accounts/teacher-profile/upload-photo/';
@@ -191,7 +191,7 @@ export class FileUploadService {
    */
   static async uploadCredentialDocument(
     document: DocumentPicker.DocumentPickerAsset,
-    options: FileUploadOptions = {}
+    options: FileUploadOptions = {},
   ): Promise<FileUploadResult> {
     try {
       const endpoint = options.endpoint || '/accounts/teacher-profile/upload-credential/';
@@ -224,7 +224,7 @@ export class FileUploadService {
   static async uploadFile(
     file: ImagePicker.ImagePickerAsset | DocumentPicker.DocumentPickerAsset,
     endpoint: string,
-    options: FileUploadOptions = {}
+    options: FileUploadOptions = {},
   ): Promise<FileUploadResult> {
     try {
       const fieldName = options.fieldName || 'file';
@@ -259,7 +259,7 @@ export class FileUploadService {
       maxSizeInMB?: number;
       allowedTypes?: string[];
       isImage?: boolean;
-    } = {}
+    } = {},
   ): { isValid: boolean; error?: string } {
     const { maxSizeInMB = 10, allowedTypes = [], isImage = false } = options;
 

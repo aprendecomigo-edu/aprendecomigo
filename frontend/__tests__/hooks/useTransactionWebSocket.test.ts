@@ -22,9 +22,9 @@ describe('useTransactionWebSocket', () => {
   beforeEach(() => {
     // Suppress console logs during tests
     if (__DEV__) {
-    // Suppress console logs during tests
+      // Suppress console logs during tests
       console.log = jest.fn();
-    // Suppress console logs during tests
+      // Suppress console logs during tests
     }
     console.error = jest.fn();
 
@@ -34,9 +34,9 @@ describe('useTransactionWebSocket', () => {
   afterEach(() => {
     jest.useRealTimers();
     if (__DEV__) {
-    jest.useRealTimers();
+      jest.useRealTimers();
       console.log = originalConsoleLog;
-    jest.useRealTimers();
+      jest.useRealTimers();
     }
     console.error = originalConsoleError;
     jest.clearAllMocks();
@@ -198,7 +198,7 @@ describe('useTransactionWebSocket', () => {
           renderCount++;
           return useTransactionWebSocket(enabled);
         },
-        { initialProps: { enabled: true } }
+        { initialProps: { enabled: true } },
       );
 
       const initialRenderCount = renderCount;
@@ -373,7 +373,7 @@ describe('useTransactionWebSocket', () => {
               result.current.clearUpdates();
               resolve(undefined);
             });
-          })
+          }),
       );
 
       await Promise.all(promises);

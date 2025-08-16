@@ -81,7 +81,7 @@ export const useSchoolBranding = (autoFetch = true) => {
         setHasUnsavedChanges(true);
       }
     },
-    [branding]
+    [branding],
   );
 
   const resetChanges = useCallback(() => {
@@ -250,7 +250,7 @@ export const useBrandingPreview = () => {
 
       return previewHtml;
     },
-    []
+    [],
   );
 
   const closePreview = useCallback(() => {

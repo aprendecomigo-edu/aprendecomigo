@@ -288,12 +288,12 @@ export const ROUTE_PERMISSIONS: Record<string, string[]> = {
 export const getNavigationItems = (userRole: string): SidebarItem[] => {
   if (userRole === 'school_admin' || userRole === 'school_owner') {
     return adminSidebarNavItems.filter(
-      item => !item.permission || item.permission === 'school_admin'
+      item => !item.permission || item.permission === 'school_admin',
     );
   }
   if (userRole === 'teacher') {
     return teacherSidebarNavItems.filter(
-      item => !item.permission || item.permission === 'teacher' || !item.permission
+      item => !item.permission || item.permission === 'teacher' || !item.permission,
     );
   }
   return sidebarNavItems;

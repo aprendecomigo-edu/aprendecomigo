@@ -132,7 +132,7 @@ const CommunicationSettingsPage = () => {
         setHasUnsavedChanges(true);
       }
     },
-    [settings]
+    [settings],
   );
 
   // Save settings
@@ -184,7 +184,7 @@ const CommunicationSettingsPage = () => {
 
       updateSetting(field, newArray);
     },
-    [settings, updateSetting]
+    [settings, updateSetting],
   );
 
   // Add/remove follow-up day
@@ -197,7 +197,7 @@ const CommunicationSettingsPage = () => {
 
       updateSetting(field, [...currentArray, 1]);
     },
-    [settings, updateSetting]
+    [settings, updateSetting],
   );
 
   const removeFollowUpDay = useCallback(
@@ -212,7 +212,7 @@ const CommunicationSettingsPage = () => {
         updateSetting(field, newArray);
       }
     },
-    [settings, updateSetting]
+    [settings, updateSetting],
   );
 
   // Loading state

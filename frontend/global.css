@@ -271,7 +271,7 @@
     --color-typography-900: #f9fafb;
     --color-typography-950: #ffffff;
 
-    /* Border Color Palette (Dark Mode) */  
+    /* Border Color Palette (Dark Mode) */
     --color-border-0: #030712;
     --color-border-50: #111827;
     --color-border-100: #1f2937;
@@ -336,7 +336,9 @@
   color: transparent;
 }
 
-html, body, #__next {
+html,
+body,
+#__next {
   height: 100%;
   min-height: 100vh;
 }

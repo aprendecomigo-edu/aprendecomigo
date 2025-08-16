@@ -135,7 +135,7 @@ describe('TodaysOverview', () => {
 
     expect(screen.getByText('Sem Sessões Hoje')).toBeTruthy();
     expect(
-      screen.getByText('Que tal agendar uma sessão para hoje ou para os próximos dias?')
+      screen.getByText('Que tal agendar uma sessão para hoje ou para os próximos dias?'),
     ).toBeTruthy();
   });
 

@@ -49,7 +49,7 @@ const AcceptInvitationPage = () => {
       // Check if user needs to authenticate
       if (isLoggedIn && userProfile && response.invitation.email !== userProfile.email) {
         setError(
-          'Este convite não é para o usuário atualmente autenticado. Por favor, faça login com o email correto.'
+          'Este convite não é para o usuário atualmente autenticado. Por favor, faça login com o email correto.',
         );
       } else if (!isLoggedIn) {
         setNeedsAuth(true);
@@ -72,7 +72,7 @@ const AcceptInvitationPage = () => {
             text: 'Fazer Login',
             onPress: () => router.push(`/auth/signin?redirect=/accept-invitation/${token}`),
           },
-        ]
+        ],
       );
       return;
     }
@@ -129,7 +129,7 @@ const AcceptInvitationPage = () => {
             }
           },
         },
-      ]
+      ],
     );
   };
 
@@ -266,7 +266,7 @@ const AcceptInvitationPage = () => {
               variant="outline"
               onPress={() =>
                 router.push(
-                  `/auth/signup?email=${invitation?.email}&redirect=/accept-invitation/${token}`
+                  `/auth/signup?email=${invitation?.email}&redirect=/accept-invitation/${token}`,
                 )
               }
             >
@@ -311,8 +311,8 @@ const AcceptInvitationPage = () => {
                       {invitation.role === 'teacher'
                         ? 'Professor'
                         : invitation.role === 'school_admin'
-                        ? 'Administrador'
-                        : invitation.role}
+                          ? 'Administrador'
+                          : invitation.role}
                     </Text>
                   </HStack>
 

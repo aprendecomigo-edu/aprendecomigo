@@ -42,7 +42,7 @@ const getInputStyles = (
   variant?: string,
   isDisabled?: boolean,
   isInvalid?: boolean,
-  isFocused?: boolean
+  isFocused?: boolean,
 ) => {
   const baseStyle: any = {
     flexDirection: 'row',
@@ -128,13 +128,13 @@ export const Input = React.forwardRef<View, IInputProps>(
       style,
       ...props
     },
-    ref
+    ref,
   ) => {
     const [isFocused, setIsFocused] = useState(false);
 
     const contextValue = useMemo(
       () => ({ size, variant, isDisabled, isInvalid, isFocused }),
-      [size, variant, isDisabled, isInvalid, isFocused]
+      [size, variant, isDisabled, isInvalid, isFocused],
     );
 
     const inputStyles = getInputStyles(size, variant, isDisabled, isInvalid, isFocused);
@@ -163,7 +163,7 @@ export const Input = React.forwardRef<View, IInputProps>(
         </View>
       </InputContext.Provider>
     );
-  }
+  },
 );
 
 // InputField component
@@ -183,7 +183,7 @@ export const InputField = React.forwardRef<TextInput, IInputFieldProps>(
         style={[inputFieldStyles, style]}
       />
     );
-  }
+  },
 );
 
 // InputIcon component - Simple placeholder
@@ -216,7 +216,7 @@ export const InputIcon = React.forwardRef<View, IInputIconProps>(
         {children}
       </View>
     );
-  }
+  },
 );
 
 // InputSlot component
@@ -244,7 +244,7 @@ export const InputSlot = React.forwardRef<View, IInputSlotProps>(
         {children}
       </Pressable>
     );
-  }
+  },
 );
 
 // Display names for debugging

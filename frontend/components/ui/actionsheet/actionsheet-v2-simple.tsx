@@ -97,7 +97,7 @@ export const Actionsheet = React.forwardRef<View, IActionsheetProps>(
         </Modal>
       </ActionsheetContext.Provider>
     );
-  }
+  },
 );
 
 // ActionsheetBackdrop component
@@ -118,7 +118,7 @@ export const ActionsheetBackdrop = React.forwardRef<View, IActionsheetBackdropPr
         style={[{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }, style]}
       />
     );
-  }
+  },
 );
 
 // ActionsheetContent component
@@ -131,7 +131,7 @@ export const ActionsheetContent = React.forwardRef<View, IActionsheetContentProp
         {children}
       </View>
     );
-  }
+  },
 );
 
 // ActionsheetDragIndicatorWrapper component
@@ -156,7 +156,7 @@ export const ActionsheetDragIndicator = React.forwardRef<View, IActionsheetDragI
       {...props}
       style={[{ width: 64, height: 4, backgroundColor: '#9ca3af', borderRadius: 2 }, style]}
     />
-  )
+  ),
 );
 
 // ActionsheetScrollView component
@@ -165,7 +165,7 @@ export const ActionsheetScrollView = React.forwardRef<ScrollView, IActionsheetSc
     <ScrollView ref={ref} {...props} style={[{ width: '100%', maxHeight: '100%' }, style]}>
       {children}
     </ScrollView>
-  )
+  ),
 );
 
 // ActionsheetItem component
@@ -178,14 +178,14 @@ export const ActionsheetItem = React.forwardRef<View, IActionsheetItemProps>(
         {children}
       </Pressable>
     );
-  }
+  },
 );
 
 // ActionsheetItemText component
 export const ActionsheetItemText = React.forwardRef<Text, IActionsheetItemTextProps>(
   ({ style, ...props }, ref) => (
     <Text ref={ref} {...props} style={[{ fontSize: 16, color: '#374151' }, style]} />
-  )
+  ),
 );
 
 // Display names for debugging

@@ -120,7 +120,7 @@ describe('useMultiSchool Hook', () => {
       expect(Alert.alert).toHaveBeenCalledWith(
         'Escola Alterada',
         'Você agora está visualizando New School',
-        [{ text: 'OK' }]
+        [{ text: 'OK' }],
       );
     });
 
@@ -175,7 +175,7 @@ describe('useMultiSchool Hook', () => {
         () =>
           new Promise(resolve => {
             resolveSwitch = resolve;
-          })
+          }),
       );
 
       const { result } = renderHook(() => useMultiSchool());
@@ -228,7 +228,7 @@ describe('useMultiSchool Hook', () => {
       expect(Alert.alert).toHaveBeenCalledWith(
         'Sair da Escola',
         'Tem certeza de que deseja sair da escola "Test School"? Esta ação não pode ser desfeita.',
-        expect.any(Array)
+        expect.any(Array),
       );
       expect(mockedApiClient.delete).toHaveBeenCalledWith('/accounts/school-memberships/1/');
     });

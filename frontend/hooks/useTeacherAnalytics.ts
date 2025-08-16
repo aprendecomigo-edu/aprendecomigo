@@ -23,7 +23,7 @@ interface UseTeacherAnalyticsReturn {
   getCompletionTrend: () => 'improving' | 'declining' | 'stable';
   getHighPriorityIssues: () => string[];
   getTopMissingFields: (
-    limit?: number
+    limit?: number,
   ) => Array<{ field: string; count: number; percentage: number }>;
   getCompletionDistributionPercentages: () => Record<string, number>;
 
@@ -35,7 +35,7 @@ interface UseTeacherAnalyticsReturn {
 }
 
 export const useTeacherAnalytics = (
-  options: UseTeacherAnalyticsOptions = {}
+  options: UseTeacherAnalyticsOptions = {},
 ): UseTeacherAnalyticsReturn => {
   const { schoolId: initialSchoolId, autoFetch = true, refreshInterval } = options;
   const { userProfile } = useUserProfile();
@@ -77,7 +77,7 @@ export const useTeacherAnalytics = (
         setLoading(false);
       }
     },
-    [schoolId]
+    [schoolId],
   );
 
   const refresh = useCallback(async () => {
@@ -138,19 +138,19 @@ export const useTeacherAnalytics = (
     // Check for common missing critical fields
     const criticalFields = analytics.common_missing_fields.filter(
       field =>
-        ['bio', 'hourly_rate', 'teaching_subjects'].includes(field.field) && field.percentage > 30
+        ['bio', 'hourly_rate', 'teaching_subjects'].includes(field.field) && field.percentage > 30,
     );
 
     if (criticalFields.length > 0) {
       issues.push(
-        `Critical fields missing in many profiles: ${criticalFields.map(f => f.field).join(', ')}`
+        `Critical fields missing in many profiles: ${criticalFields.map(f => f.field).join(', ')}`,
       );
     }
 
     // Check for teachers needing attention
     if (analytics.profile_completion_stats?.needs_attention?.length > 0) {
       issues.push(
-        `${analytics.profile_completion_stats.needs_attention.length} teachers need immediate attention`
+        `${analytics.profile_completion_stats.needs_attention.length} teachers need immediate attention`,
       );
     }
 
@@ -165,7 +165,7 @@ export const useTeacherAnalytics = (
         .slice(0, limit)
         .sort((a, b) => b.percentage - a.percentage);
     },
-    [analytics]
+    [analytics],
   );
 
   const getCompletionDistributionPercentages = useCallback((): Record<string, number> => {
@@ -175,10 +175,13 @@ export const useTeacherAnalytics = (
 
     const { completion_distribution, total_teachers } = analytics;
 
-    return Object.entries(completion_distribution).reduce((acc, [range, count]) => {
-      acc[range] = (count / total_teachers) * 100;
-      return acc;
-    }, {} as Record<string, number>);
+    return Object.entries(completion_distribution).reduce(
+      (acc, [range, count]) => {
+        acc[range] = (count / total_teachers) * 100;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
   }, [analytics]);
 
   // Status helpers

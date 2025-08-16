@@ -48,7 +48,7 @@ export const Pressable = React.forwardRef<RNPressable, IPressableProps>(
         </RNPressable>
       </PressableContext.Provider>
     );
-  }
+  },
 );
 
 // Display names for debugging

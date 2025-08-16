@@ -154,11 +154,9 @@ function RootLayoutNav() {
       };
 
       if (__DEV__) {
-
         if (__DEV__) {
           console.log('✅ CSS compatibility patch applied successfully');
         }
-
       }
 
       return () => {

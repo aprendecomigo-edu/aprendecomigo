@@ -57,7 +57,7 @@ interface UseStudentsReturn {
   deleteStudentRecord: (id: number) => Promise<void>;
   updateStudentStatusRecord: (
     id: number,
-    status: 'active' | 'inactive' | 'graduated'
+    status: 'active' | 'inactive' | 'graduated',
   ) => Promise<StudentProfile>;
   bulkImportStudentsFromCSV: (file: File) => Promise<BulkImportResult>;
   getStudentByIdRecord: (id: number) => Promise<StudentProfile>;
@@ -168,7 +168,7 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
         console.error('Failed to load students:', err);
         const errorMessage = getErrorMessage(
           err,
-          'Erro ao carregar lista de alunos. Tente novamente.'
+          'Erro ao carregar lista de alunos. Tente novamente.',
         );
         setError(errorMessage);
         setStudents([]);
@@ -177,7 +177,7 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
         setIsLoading(false);
       }
     },
-    [filters]
+    [filters],
   );
 
   // Load more students (pagination)
@@ -243,7 +243,7 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
         setIsCreating(false);
       }
     },
-    []
+    [],
   );
 
   const updateStudentRecord = useCallback(
@@ -267,7 +267,7 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
         setIsUpdating(false);
       }
     },
-    []
+    [],
   );
 
   const deleteStudentRecord = useCallback(async (id: number): Promise<void> => {
@@ -312,7 +312,7 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
         console.error('Failed to update student status:', err);
         const errorMessage = getErrorMessage(
           err,
-          'Erro ao atualizar status do aluno. Tente novamente.'
+          'Erro ao atualizar status do aluno. Tente novamente.',
         );
         setError(errorMessage);
         throw new Error(errorMessage);
@@ -320,7 +320,7 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
         setIsUpdating(false);
       }
     },
-    []
+    [],
   );
 
   const bulkImportStudentsFromCSV = useCallback(
@@ -341,7 +341,7 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
         console.error('Failed to bulk import students:', err);
         const errorMessage = getErrorMessage(
           err,
-          'Erro ao importar alunos do CSV. Tente novamente.'
+          'Erro ao importar alunos do CSV. Tente novamente.',
         );
         setError(errorMessage);
         throw new Error(errorMessage);
@@ -349,7 +349,7 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
         setIsBulkImporting(false);
       }
     },
-    [refreshStudents]
+    [refreshStudents],
   );
 
   const getStudentByIdRecord = useCallback(async (id: number): Promise<StudentProfile> => {
@@ -371,7 +371,7 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
       setFiltersState(updatedFilters);
       loadStudents(updatedFilters);
     },
-    [filters, loadStudents]
+    [filters, loadStudents],
   );
 
   const clearFilters = useCallback(() => {
@@ -387,35 +387,35 @@ export const useStudents = (options: UseStudentsOptions = {}): UseStudentsReturn
     (search: string) => {
       setFilters({ search: search || undefined });
     },
-    [setFilters]
+    [setFilters],
   );
 
   const setStatusFilter = useCallback(
     (status?: 'active' | 'inactive' | 'graduated') => {
       setFilters({ status });
     },
-    [setFilters]
+    [setFilters],
   );
 
   const setEducationalSystemFilter = useCallback(
     (systemId?: number) => {
       setFilters({ educational_system: systemId });
     },
-    [setFilters]
+    [setFilters],
   );
 
   const setSchoolYearFilter = useCallback(
     (schoolYear?: string) => {
       setFilters({ school_year: schoolYear });
     },
-    [setFilters]
+    [setFilters],
   );
 
   const setSortOrder = useCallback(
     (ordering?: string) => {
       setFilters({ ordering });
     },
-    [setFilters]
+    [setFilters],
   );
 
   // Auto-load on mount

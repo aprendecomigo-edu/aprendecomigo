@@ -76,7 +76,7 @@ export const fetchMessages = async (channelId: number): Promise<Message[]> => {
 export const sendMessage = async (
   channelId: number,
   content: string,
-  file?: File
+  file?: File,
 ): Promise<Message> => {
   try {
     const formData = new FormData();
@@ -103,7 +103,7 @@ export const sendMessage = async (
 export const createChannel = async (
   name: string,
   isDirect: boolean,
-  participantIds: number[]
+  participantIds: number[],
 ): Promise<Channel> => {
   try {
     const response = await apiClient.post('/channels/', {

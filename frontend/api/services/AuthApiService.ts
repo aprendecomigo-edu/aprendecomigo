@@ -97,11 +97,11 @@ export class AuthApiService {
    * Request verification code (TOTP)
    */
   async requestEmailCode(
-    params: RequestEmailCodeParams | RequestPhoneCodeParams
+    params: RequestEmailCodeParams | RequestPhoneCodeParams,
   ): Promise<TOTPEmailCodeResponse> {
     const response = await this.apiClient.post<TOTPEmailCodeResponse>(
       '/accounts/auth/request-code/',
-      params
+      params,
     );
     return response.data;
   }

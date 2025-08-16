@@ -44,7 +44,7 @@ export const sanitizeText = (text: string): string => {
 export const sanitizeAndTruncateText = (
   text: string,
   maxLength: number = 500,
-  addEllipsis: boolean = true
+  addEllipsis: boolean = true,
 ): string => {
   const sanitized = sanitizeText(text);
 

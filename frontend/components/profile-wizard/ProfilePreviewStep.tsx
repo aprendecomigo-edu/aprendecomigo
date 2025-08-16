@@ -271,8 +271,8 @@ export const ProfilePreviewStep: React.FC<ProfilePreviewStepProps> = ({
               getCompletionScore() >= 90
                 ? 'border-l-green-500 bg-green-50'
                 : getCompletionScore() >= 70
-                ? 'border-l-yellow-500 bg-yellow-50'
-                : 'border-l-red-500 bg-red-50'
+                  ? 'border-l-yellow-500 bg-yellow-50'
+                  : 'border-l-red-500 bg-red-50'
             }`}
           >
             <VStack space="md" className="p-6">
@@ -285,8 +285,8 @@ export const ProfilePreviewStep: React.FC<ProfilePreviewStepProps> = ({
                       getCompletionScore() >= 90
                         ? 'text-green-600'
                         : getCompletionScore() >= 70
-                        ? 'text-yellow-600'
-                        : 'text-red-600'
+                          ? 'text-yellow-600'
+                          : 'text-red-600'
                     }
                   />
                   <Heading
@@ -295,8 +295,8 @@ export const ProfilePreviewStep: React.FC<ProfilePreviewStepProps> = ({
                       getCompletionScore() >= 90
                         ? 'text-green-900'
                         : getCompletionScore() >= 70
-                        ? 'text-yellow-900'
-                        : 'text-red-900'
+                          ? 'text-yellow-900'
+                          : 'text-red-900'
                     }
                   >
                     Profile Completion: {getCompletionScore()}%
@@ -318,8 +318,8 @@ export const ProfilePreviewStep: React.FC<ProfilePreviewStepProps> = ({
                     getCompletionScore() >= 90
                       ? 'bg-green-600'
                       : getCompletionScore() >= 70
-                      ? 'bg-yellow-600'
-                      : 'bg-red-600'
+                        ? 'bg-yellow-600'
+                        : 'bg-red-600'
                   }
                 />
               </Progress>
@@ -605,7 +605,7 @@ export const ProfilePreviewStep: React.FC<ProfilePreviewStepProps> = ({
                             </Badge>
                           </VStack>
                         </HStack>
-                      )
+                      ),
                     )}
                   </VStack>
                 )}

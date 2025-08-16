@@ -158,7 +158,7 @@ export const useSchoolSettings = (): UseSchoolSettingsReturn => {
   const fetchEducationalSystems = useCallback(async (schoolId: number) => {
     try {
       const response = await apiClient.get(
-        `/api/accounts/schools/${schoolId}/settings/educational-systems/`
+        `/api/accounts/schools/${schoolId}/settings/educational-systems/`,
       );
 
       if (response.status === 200) {
@@ -201,7 +201,7 @@ export const useSchoolSettings = (): UseSchoolSettingsReturn => {
           const validationErrors = Object.entries(err.response.data.errors)
             .map(
               ([field, messages]) =>
-                `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`
+                `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`,
             )
             .join('\n');
           Alert.alert('Validation Error', validationErrors);
@@ -214,7 +214,7 @@ export const useSchoolSettings = (): UseSchoolSettingsReturn => {
         setSaving(false);
       }
     },
-    []
+    [],
   );
 
   const uploadSchoolLogo = useCallback(
@@ -233,7 +233,7 @@ export const useSchoolSettings = (): UseSchoolSettingsReturn => {
             headers: {
               'Content-Type': 'multipart/form-data',
             },
-          }
+          },
         );
 
         if (response.status === 200) {
@@ -265,7 +265,7 @@ export const useSchoolSettings = (): UseSchoolSettingsReturn => {
         setSaving(false);
       }
     },
-    [schoolSettings]
+    [schoolSettings],
   );
 
   const refreshSettings = useCallback(async () => {

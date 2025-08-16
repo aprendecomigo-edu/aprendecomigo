@@ -110,7 +110,7 @@ export const Slider = React.forwardRef<View, ISliderProps>(
       style,
       ...props
     },
-    ref
+    ref,
   ) => {
     const [internalValue, setInternalValue] = useState(value);
 
@@ -127,7 +127,7 @@ export const Slider = React.forwardRef<View, ISliderProps>(
           onValueChange?.(newValue);
         },
       }),
-      [size, orientation, isReversed, internalValue, min, max, onValueChange]
+      [size, orientation, isReversed, internalValue, min, max, onValueChange],
     );
 
     const sliderStyles = getSliderStyles(orientation, isDisabled);
@@ -139,7 +139,7 @@ export const Slider = React.forwardRef<View, ISliderProps>(
         </View>
       </SliderContext.Provider>
     );
-  }
+  },
 );
 
 // SliderTrack component
@@ -165,7 +165,7 @@ export const SliderTrack = React.forwardRef<View, ISliderTrackProps>(
         {children}
       </Pressable>
     );
-  }
+  },
 );
 
 // SliderFilledTrack component
@@ -181,7 +181,7 @@ export const SliderFilledTrack = React.forwardRef<View, ISliderFilledTrackProps>
       orientation === 'horizontal' ? { width: `${percentage}%` } : { height: `${percentage}%` };
 
     return <View ref={ref} {...props} style={[filledTrackStyles, dimensionStyle, style]} />;
-  }
+  },
 );
 
 // SliderThumb component

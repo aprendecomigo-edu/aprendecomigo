@@ -54,7 +54,7 @@ const COLORS = {
 const getCompletionStatusColor = (
   percentage: number,
   isComplete: boolean,
-  hasCritical: boolean
+  hasCritical: boolean,
 ) => {
   if (hasCritical || percentage < 30) return COLORS.danger;
   if (isComplete && percentage >= 80) return COLORS.success;

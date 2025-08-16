@@ -80,7 +80,7 @@ describe('Cross-School Data Leakage Prevention', () => {
           headers: expect.objectContaining({
             'X-School-Context': '1',
           }),
-        })
+        }),
       );
     });
 
@@ -214,11 +214,11 @@ describe('Cross-School Data Leakage Prevention', () => {
 
       // Client-side filtering for security validation
       const authorizedStudents = allStudents.filter(
-        (student: any) => student.school_id === authorizedSchool.school.id
+        (student: any) => student.school_id === authorizedSchool.school.id,
       );
 
       const unauthorizedStudents = allStudents.filter(
-        (student: any) => student.school_id !== authorizedSchool.school.id
+        (student: any) => student.school_id !== authorizedSchool.school.id,
       );
 
       expect(authorizedStudents).toHaveLength(2);
@@ -228,13 +228,13 @@ describe('Cross-School Data Leakage Prevention', () => {
       if (unauthorizedStudents.length > 0) {
         if (__DEV__) {
           console.warn(
-            `Security Alert: API returned ${unauthorizedStudents.length} unauthorized records`
+            `Security Alert: API returned ${unauthorizedStudents.length} unauthorized records`,
           );
         }
 
         // In a real application, this should trigger security logging
         expect(unauthorizedStudents).toEqual(
-          expect.arrayContaining([expect.objectContaining({ school_id: expect.not.toEqual(1) })])
+          expect.arrayContaining([expect.objectContaining({ school_id: expect.not.toEqual(1) })]),
         );
       }
     });
@@ -263,12 +263,14 @@ describe('Cross-School Data Leakage Prevention', () => {
       // Security validation - check for unauthorized data
       const responseKeys = Object.keys(response.data);
       const suspiciousKeys = responseKeys.filter(
-        key => key.includes('leaked') || key.includes('other_school') || key.startsWith('__')
+        key => key.includes('leaked') || key.includes('other_school') || key.startsWith('__'),
       );
 
       if (suspiciousKeys.length > 0) {
         if (__DEV__) {
-          console.warn(`Security Alert: Suspicious data keys detected: ${suspiciousKeys.join(', ')}`);
+          console.warn(
+            `Security Alert: Suspicious data keys detected: ${suspiciousKeys.join(', ')}`,
+          );
         }
 
         // In production, this should trigger security monitoring
@@ -278,7 +280,7 @@ describe('Cross-School Data Leakage Prevention', () => {
 
       // Validate that the application only uses authorized data
       const authorizedStudents = response.data.students.filter(
-        (student: any) => student.school_id === 1
+        (student: any) => student.school_id === 1,
       );
 
       expect(authorizedStudents).toHaveLength(1);
@@ -594,7 +596,7 @@ describe('Cross-School Data Leakage Prevention', () => {
 
       invalidMessages.forEach(message => {
         expect(() => handleWebSocketMessage(message)).toThrow(
-          `Unauthorized message from school ${message.school_id}`
+          `Unauthorized message from school ${message.school_id}`,
         );
       });
     });

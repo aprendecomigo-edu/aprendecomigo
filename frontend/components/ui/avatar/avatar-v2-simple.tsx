@@ -101,7 +101,7 @@ export const Avatar = React.forwardRef<View, IAvatarProps>(
         </View>
       </AvatarContext.Provider>
     );
-  }
+  },
 );
 
 // AvatarBadge component
@@ -123,7 +123,7 @@ export const AvatarBadge = React.forwardRef<View, IAvatarBadgeProps>(
         {children}
       </View>
     );
-  }
+  },
 );
 
 // AvatarFallbackText component
@@ -143,14 +143,14 @@ export const AvatarFallbackText = React.forwardRef<Text, IAvatarFallbackTextProp
         })}
       />
     );
-  }
+  },
 );
 
 // AvatarImage component
 export const AvatarImage = React.forwardRef<Image, IAvatarImageProps>(
   ({ className, ...props }, ref) => {
     return <Image ref={ref} {...props} className={avatarImageStyle({ class: className })} />;
-  }
+  },
 );
 
 // AvatarGroup component
@@ -161,7 +161,7 @@ export const AvatarGroup = React.forwardRef<View, IAvatarGroupProps>(
         {children}
       </View>
     );
-  }
+  },
 );
 
 // Display names for debugging

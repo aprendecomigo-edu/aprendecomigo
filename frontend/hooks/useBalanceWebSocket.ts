@@ -53,7 +53,7 @@ interface UseBalanceWebSocketResult {
  * Hook for real-time balance updates via WebSocket
  */
 export function useBalanceWebSocket(
-  options: UseBalanceWebSocketOptions = {}
+  options: UseBalanceWebSocketOptions = {},
 ): UseBalanceWebSocketResult {
   const { enabled = true, reconnectInterval = 5000, maxReconnectAttempts = 5 } = options;
 
@@ -178,7 +178,7 @@ export function useBalanceWebSocket(
           }
       }
     },
-    [userProfile?.id]
+    [userProfile?.id],
   );
 
   /**
@@ -223,7 +223,7 @@ export function useBalanceWebSocket(
  */
 export function useBalanceUpdates(
   onBalanceUpdate?: (balance: StudentBalanceResponse) => void,
-  onNotification?: (notification: NotificationResponse) => void
+  onNotification?: (notification: NotificationResponse) => void,
 ) {
   const { connected, latestBalance, latestNotification } = useBalanceWebSocket();
 
@@ -276,7 +276,7 @@ function getWebSocketClass() {
  */
 export function createBalanceWebSocket(
   url: string,
-  protocols?: string | string[]
+  protocols?: string | string[],
 ): WebSocket | null {
   const WebSocketClass = getWebSocketClass();
 

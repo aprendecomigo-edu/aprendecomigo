@@ -53,7 +53,7 @@ export const NotificationBadge: React.FC<NotificationBadgeProps> = ({
         'absolute -top-1 -right-1 rounded-full flex items-center justify-center',
         sizeClasses[size],
         typeClasses[type],
-        className
+        className,
       )}
     >
       <Text
@@ -92,7 +92,7 @@ export const NotificationDot: React.FC<{
         'absolute -top-1 -right-1 rounded-full',
         sizeClasses[size],
         typeClasses[type],
-        className
+        className,
       )}
     />
   );

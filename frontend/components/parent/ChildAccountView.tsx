@@ -5,7 +5,7 @@
  * balance, activity history, and parent management options.
  */
 
-import useRouter from '@unitools/router';
+import { useRouter } from 'expo-router';
 import {
   ArrowLeft,
   User,

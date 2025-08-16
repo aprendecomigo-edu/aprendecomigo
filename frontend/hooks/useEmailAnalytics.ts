@@ -37,7 +37,7 @@ export const useEmailAnalytics = (autoFetch = true) => {
         setLoading(false);
       }
     },
-    [filters]
+    [filters],
   );
 
   const updateFilters = useCallback(
@@ -45,7 +45,7 @@ export const useEmailAnalytics = (autoFetch = true) => {
       setFilters(newFilters);
       fetchAnalytics(newFilters);
     },
-    [fetchAnalytics]
+    [fetchAnalytics],
   );
 
   const refreshAnalytics = useCallback(() => {
@@ -113,7 +113,7 @@ export const useEmailCommunications = (autoFetch = true) => {
         setLoading(false);
       }
     },
-    []
+    [],
   );
 
   const refreshCommunications = useCallback(() => {
@@ -198,7 +198,7 @@ export const useAnalyticsDateRange = () => {
         });
       }
     },
-    [presetRanges]
+    [presetRanges],
   );
 
   const setCustomRange = useCallback((start_date: string, end_date: string) => {
@@ -344,8 +344,8 @@ export const useAnalyticsMetrics = (analytics: EmailAnalytics | null) => {
           analytics.delivery_rate >= 0.95
             ? '#10B981'
             : analytics.delivery_rate >= 0.85
-            ? '#F59E0B'
-            : '#EF4444',
+              ? '#F59E0B'
+              : '#EF4444',
       },
       {
         label: 'Open Rate',
@@ -354,8 +354,8 @@ export const useAnalyticsMetrics = (analytics: EmailAnalytics | null) => {
           analytics.open_rate >= 0.25
             ? '#10B981'
             : analytics.open_rate >= 0.15
-            ? '#F59E0B'
-            : '#EF4444',
+              ? '#F59E0B'
+              : '#EF4444',
       },
       {
         label: 'Click Rate',
@@ -364,8 +364,8 @@ export const useAnalyticsMetrics = (analytics: EmailAnalytics | null) => {
           analytics.click_rate >= 0.05
             ? '#10B981'
             : analytics.click_rate >= 0.02
-            ? '#F59E0B'
-            : '#EF4444',
+              ? '#F59E0B'
+              : '#EF4444',
       },
     ];
 
@@ -390,13 +390,13 @@ export const useAnalyticsMetrics = (analytics: EmailAnalytics | null) => {
 
     // Find best performing template
     const bestTemplate = analytics.template_performance.reduce((best, current) =>
-      current.open_rate > best.open_rate ? current : best
+      current.open_rate > best.open_rate ? current : best,
     );
     if (bestTemplate) {
       insights.push(
         `Your "${bestTemplate.template_type}" template has the highest open rate at ${Math.round(
-          bestTemplate.open_rate * 100
-        )}%.`
+          bestTemplate.open_rate * 100,
+        )}%.`,
       );
     }
 

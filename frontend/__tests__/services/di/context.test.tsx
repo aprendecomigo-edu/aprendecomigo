@@ -95,7 +95,7 @@ describe('DependencyContext and Provider Infrastructure', () => {
       const { getByText } = render(
         <DependencyProvider dependencies={mockDependencies}>
           <TestChild />
-        </DependencyProvider>
+        </DependencyProvider>,
       );
 
       expect(getByText('Test Child Component')).toBeTruthy();
@@ -118,7 +118,7 @@ describe('DependencyContext and Provider Infrastructure', () => {
       const { getByText } = render(
         <DependencyProvider dependencies={mockDependencies}>
           <TestComponent />
-        </DependencyProvider>
+        </DependencyProvider>,
       );
 
       expect(getByText('Dependencies Received')).toBeTruthy();
@@ -149,7 +149,7 @@ describe('DependencyContext and Provider Infrastructure', () => {
       const { getByText } = render(
         <DependencyProvider dependencies={overriddenDependencies}>
           <TestComponent />
-        </DependencyProvider>
+        </DependencyProvider>,
       );
 
       expect(getByText('Override Success')).toBeTruthy();
@@ -181,7 +181,7 @@ describe('DependencyContext and Provider Infrastructure', () => {
           <DependencyProvider dependencies={innerDependencies}>
             <TestComponent />
           </DependencyProvider>
-        </DependencyProvider>
+        </DependencyProvider>,
       );
 
       expect(getByText('Nested Success')).toBeTruthy();
@@ -204,7 +204,7 @@ describe('DependencyContext and Provider Infrastructure', () => {
         render(
           <DependencyProvider dependencies={incompleteDependencies as Dependencies}>
             <TestComponent />
-          </DependencyProvider>
+          </DependencyProvider>,
         );
       }).toThrow('Missing required dependencies');
     });
@@ -311,10 +311,10 @@ describe('DependencyContext and Provider Infrastructure', () => {
       expect(typeof defaultDependencies.authContextService.checkAuthStatus).toBe('function');
 
       expect(typeof defaultDependencies.onboardingApiService.getNavigationPreferences).toBe(
-        'function'
+        'function',
       );
       expect(typeof defaultDependencies.onboardingApiService.getOnboardingProgress).toBe(
-        'function'
+        'function',
       );
     });
 
@@ -362,7 +362,7 @@ describe('DependencyContext and Provider Infrastructure', () => {
       const { getByText } = render(
         <DependencyProvider dependencies={createMockDependencies()}>
           <TestComponent />
-        </DependencyProvider>
+        </DependencyProvider>,
       );
 
       expect(getByText('Factory Pattern Success')).toBeTruthy();
@@ -418,7 +418,7 @@ describe('DependencyContext and Provider Infrastructure', () => {
       const { getByText } = render(
         <DependencyProvider dependencies={decoratedDependencies}>
           <TestComponent />
-        </DependencyProvider>
+        </DependencyProvider>,
       );
 
       expect(getByText('Decoration Success')).toBeTruthy();
@@ -446,7 +446,7 @@ describe('DependencyContext and Provider Infrastructure', () => {
       const { getByText } = render(
         <DependencyProvider dependencies={mockDependencies}>
           <TestComponent />
-        </DependencyProvider>
+        </DependencyProvider>,
       );
 
       expect(getByText('TypeScript Success')).toBeTruthy();

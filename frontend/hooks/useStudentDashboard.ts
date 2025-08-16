@@ -160,7 +160,7 @@ export function useStudentDashboard(email?: string): UseStudentDashboardResult {
                   ...transactionData,
                   results: [...prev.results, ...transactionData.results],
                 }
-              : transactionData
+              : transactionData,
           );
         }
       } catch (error: any) {
@@ -173,7 +173,7 @@ export function useStudentDashboard(email?: string): UseStudentDashboardResult {
         setTransactionsLoading(false);
       }
     },
-    [state.transactionFilters, debouncedSearchQuery, email]
+    [state.transactionFilters, debouncedSearchQuery, email],
   );
 
   // Fetch purchase history
@@ -207,7 +207,7 @@ export function useStudentDashboard(email?: string): UseStudentDashboardResult {
                   ...purchaseData,
                   results: [...prev.results, ...purchaseData.results],
                 }
-              : purchaseData
+              : purchaseData,
           );
         }
       } catch (error: any) {
@@ -220,7 +220,7 @@ export function useStudentDashboard(email?: string): UseStudentDashboardResult {
         setPurchasesLoading(false);
       }
     },
-    [state.purchaseFilters, debouncedSearchQuery, email]
+    [state.purchaseFilters, debouncedSearchQuery, email],
   );
 
   // Refresh all data with graceful degradation

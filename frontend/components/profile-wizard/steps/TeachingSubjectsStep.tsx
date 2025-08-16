@@ -131,7 +131,7 @@ const TeachingSubjectsStep: React.FC<TeachingSubjectsStepProps> = ({
           <Text className="text-sm text-gray-600">Toque para adicionar rapidamente:</Text>
           <Box className="flex-row flex-wrap">
             {COMMON_SUBJECTS.filter(
-              subject => !profileData.teaching_subjects.some(ts => ts.subject === subject)
+              subject => !profileData.teaching_subjects.some(ts => ts.subject === subject),
             )
               .slice(0, 8)
               .map(subject => (

@@ -47,14 +47,14 @@ export const Modal = React.forwardRef<View, IModalProps>(
         className={`${baseClasses} ${className}`}
       />
     );
-  }
+  },
 );
 
 // Simple Modal Backdrop
 export const ModalBackdrop = React.forwardRef<View, IModalBackdropProps>(
   (
     { className = '', entering = FadeIn.duration(250), exiting = FadeOut.duration(250), ...props },
-    ref
+    ref,
   ) => {
     const baseClasses =
       'absolute left-0 top-0 right-0 bottom-0 bg-background-dark web:cursor-default';
@@ -68,7 +68,7 @@ export const ModalBackdrop = React.forwardRef<View, IModalBackdropProps>(
         className={`${baseClasses} ${className}`}
       />
     );
-  }
+  },
 );
 
 // Simple Modal Content
@@ -82,7 +82,7 @@ export const ModalContent = React.forwardRef<View, IModalContentProps>(
       pointerEvents = 'auto',
       ...props
     },
-    ref
+    ref,
   ) => {
     const sizeClasses = {
       xs: 'w-[60%] max-w-[360px]',
@@ -106,7 +106,7 @@ export const ModalContent = React.forwardRef<View, IModalContentProps>(
         pointerEvents={pointerEvents}
       />
     );
-  }
+  },
 );
 
 // Simple Modal Header
@@ -115,7 +115,7 @@ export const ModalHeader = React.forwardRef<View, IModalHeaderProps>(
     const baseClasses = 'justify-between items-center flex-row';
 
     return <View ref={ref} {...props} className={`${baseClasses} ${className}`} />;
-  }
+  },
 );
 
 // Simple Modal Body
@@ -124,7 +124,7 @@ export const ModalBody = React.forwardRef<ScrollView, IModalBodyProps>(
     const baseClasses = 'mt-4 mb-6';
 
     return <ScrollView ref={ref} {...props} className={`${baseClasses} ${className}`} />;
-  }
+  },
 );
 
 // Simple Modal Footer
@@ -133,7 +133,7 @@ export const ModalFooter = React.forwardRef<View, IModalFooterProps>(
     const baseClasses = 'flex-row justify-end items-center gap-2';
 
     return <View ref={ref} {...props} className={`${baseClasses} ${className}`} />;
-  }
+  },
 );
 
 // Simple Modal Close Button
@@ -143,7 +143,7 @@ export const ModalCloseButton = React.forwardRef<View, IModalCloseButtonProps>(
       'group/modal-close-button z-10 rounded data-[focus-visible=true]:web:bg-background-100 web:outline-0 cursor-pointer';
 
     return <Pressable ref={ref as any} {...props} className={`${baseClasses} ${className}`} />;
-  }
+  },
 );
 
 // Display names

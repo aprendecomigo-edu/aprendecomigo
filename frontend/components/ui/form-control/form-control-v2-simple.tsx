@@ -35,7 +35,7 @@ export const FormControl = React.forwardRef<View, IFormControlProps>(
     const baseClasses = 'flex flex-col';
 
     return <View ref={ref} {...props} className={`${baseClasses} ${className}`} />;
-  }
+  },
 );
 
 // Simple FormControlError
@@ -44,7 +44,7 @@ export const FormControlError = React.forwardRef<View, IFormControlErrorProps>(
     const baseClasses = 'flex flex-row justify-start items-center mt-1 gap-1';
 
     return <View ref={ref} {...props} className={`${baseClasses} ${className}`} />;
-  }
+  },
 );
 
 // Simple FormControlErrorText
@@ -63,7 +63,7 @@ export const FormControlErrorText = React.forwardRef<Text, IFormControlErrorText
     } ${className}`;
 
     return <Text ref={ref} {...props} className={combinedClasses} />;
-  }
+  },
 );
 
 // Simple FormControlErrorIcon
@@ -122,7 +122,7 @@ export const FormControlLabel = React.forwardRef<View, IFormControlLabelProps>(
     const baseClasses = 'flex flex-row justify-start items-center mb-1';
 
     return <View ref={ref} {...props} className={`${baseClasses} ${className}`} />;
-  }
+  },
 );
 
 // Simple FormControlLabelText
@@ -141,7 +141,7 @@ export const FormControlLabelText = React.forwardRef<Text, IFormControlLabelText
     } ${className}`;
 
     return <Text ref={ref} {...props} className={combinedClasses} />;
-  }
+  },
 );
 
 // Simple FormControlLabelAstrick
@@ -150,7 +150,7 @@ export const FormControlLabelAstrick = React.forwardRef<Text, IFormControlLabelA
     const baseClasses = 'font-medium text-typography-900';
 
     return <Text ref={ref} {...props} className={`${baseClasses} ${className}`} />;
-  }
+  },
 );
 
 // Simple FormControlHelper
@@ -159,7 +159,7 @@ export const FormControlHelper = React.forwardRef<View, IFormControlHelperProps>
     const baseClasses = 'flex flex-row justify-start items-center mt-1';
 
     return <View ref={ref} {...props} className={`${baseClasses} ${className}`} />;
-  }
+  },
 );
 
 // Simple FormControlHelperText
@@ -178,7 +178,7 @@ export const FormControlHelperText = React.forwardRef<Text, IFormControlHelperTe
     } ${className}`;
 
     return <Text ref={ref} {...props} className={combinedClasses} />;
-  }
+  },
 );
 
 // Display names

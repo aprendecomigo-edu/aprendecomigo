@@ -99,7 +99,7 @@ export const useParentDashboard = () => {
         }));
       }
     },
-    [timeframe]
+    [timeframe],
   );
 
   // Initial data load
@@ -132,11 +132,11 @@ export const useParentDashboard = () => {
             ? {
                 ...prev.dashboardData,
                 pending_requests: prev.dashboardData.pending_requests.filter(
-                  req => req.id !== parseInt(requestId)
+                  req => req.id !== parseInt(requestId),
                 ),
                 recent_approvals: [updatedRequest, ...prev.dashboardData.recent_approvals].slice(
                   0,
-                  10
+                  10,
                 ),
               }
             : null,
@@ -154,7 +154,7 @@ export const useParentDashboard = () => {
         throw error;
       }
     },
-    [timeframe]
+    [timeframe],
   );
 
   // Reject purchase request
@@ -171,11 +171,11 @@ export const useParentDashboard = () => {
           ? {
               ...prev.dashboardData,
               pending_requests: prev.dashboardData.pending_requests.filter(
-                req => req.id !== parseInt(requestId)
+                req => req.id !== parseInt(requestId),
               ),
               recent_approvals: [updatedRequest, ...prev.dashboardData.recent_approvals].slice(
                 0,
-                10
+                10,
               ),
             }
           : null,

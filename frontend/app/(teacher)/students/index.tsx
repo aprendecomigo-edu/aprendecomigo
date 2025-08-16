@@ -57,7 +57,7 @@ const StudentListItem: React.FC<StudentListItemProps> = ({ student, onPress }) =
 
     const lastSessionDate = new Date(student.last_session_date);
     const daysSinceLastSession = Math.floor(
-      (Date.now() - lastSessionDate.getTime()) / (1000 * 60 * 60 * 24)
+      (Date.now() - lastSessionDate.getTime()) / (1000 * 60 * 60 * 24),
     );
 
     if (daysSinceLastSession <= 7) {
@@ -119,7 +119,7 @@ const StudentListItem: React.FC<StudentListItemProps> = ({ student, onPress }) =
               <Box className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
                 <Box
                   className={`h-full rounded-full ${getProgressColor(
-                    student.completion_percentage
+                    student.completion_percentage,
                   )}`}
                   style={{ width: `${Math.min(student.completion_percentage, 100)}%` }}
                 />
@@ -404,8 +404,8 @@ const TeacherStudentsPage = () => {
                   {searchQuery
                     ? `Nenhum resultado para "${searchQuery}". Tente ajustar os filtros de pesquisa.`
                     : filterBy === 'active'
-                    ? 'Nenhum estudante ativo encontrado.'
-                    : 'Nenhum estudante que precisa de atenção encontrado.'}
+                      ? 'Nenhum estudante ativo encontrado.'
+                      : 'Nenhum estudante que precisa de atenção encontrado.'}
                 </Text>
               </VStack>
               {(searchQuery || filterBy !== 'all') && (

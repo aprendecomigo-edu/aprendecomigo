@@ -95,7 +95,7 @@ const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
     }
 
     const existingIndex = daySchedule.findIndex(
-      slot => slot.start_time === timeSlot.start_time && slot.end_time === timeSlot.end_time
+      slot => slot.start_time === timeSlot.start_time && slot.end_time === timeSlot.end_time,
     );
 
     if (existingIndex > -1) {
@@ -129,7 +129,7 @@ const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
     }
 
     return daySchedule.some(
-      slot => slot.start_time === targetSlot.start_time && slot.end_time === targetSlot.end_time
+      slot => slot.start_time === targetSlot.start_time && slot.end_time === targetSlot.end_time,
     );
   };
 

@@ -67,7 +67,7 @@ jest.mock('@/components/ui/input', () => {
     Input: ({ children, ...props }: any) =>
       React.createElement('div', { ...props, className: 'mock-input' }, children),
     InputField: React.forwardRef((props: any, ref) =>
-      React.createElement('input', { ...props, ref, className: 'mock-input-field' })
+      React.createElement('input', { ...props, ref, className: 'mock-input-field' }),
     ),
   };
 });
@@ -222,7 +222,7 @@ describe('TeacherDashboard', () => {
       expect(screen.getByText('Carregando dashboard...')).toBeTruthy();
       expect(screen.getByTestId('main-layout')).toHaveAttribute(
         'data-title',
-        'Dashboard do Professor'
+        'Dashboard do Professor',
       );
     });
   });

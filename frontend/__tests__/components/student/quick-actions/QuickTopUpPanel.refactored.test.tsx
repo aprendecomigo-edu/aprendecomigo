@@ -117,7 +117,7 @@ describe('QuickTopUpPanel - Refactored Architecture', () => {
     return render(
       <DependencyProvider dependencies={mockDependencies}>
         <QuickTopUpPanel {...props} />
-      </DependencyProvider>
+      </DependencyProvider>,
     );
   };
 
@@ -314,7 +314,7 @@ describe('QuickTopUpPanel - Refactored Architecture', () => {
     it('should handle service errors gracefully', async () => {
       // Arrange
       mockTopUpService.processTopUpRequest.mockRejectedValue(
-        new Error('Payment processing failed')
+        new Error('Payment processing failed'),
       );
 
       renderWithDependencies();
@@ -384,7 +384,7 @@ describe('QuickTopUpPanel - Refactored Architecture', () => {
     it('should handle PaymentService failures during load', async () => {
       // Arrange
       mockPaymentService.getPaymentMethods.mockRejectedValue(
-        new Error('Payment service unavailable')
+        new Error('Payment service unavailable'),
       );
 
       // Act
@@ -417,7 +417,7 @@ describe('QuickTopUpPanel - Refactored Architecture', () => {
         expect(mockToast.show).toHaveBeenCalledWith(
           expect.objectContaining({
             placement: 'top',
-          })
+          }),
         );
       });
     });
@@ -470,7 +470,7 @@ describe('QuickTopUpPanel - Refactored Architecture', () => {
       render(
         <DependencyProvider dependencies={customDependencies}>
           <QuickTopUpPanel />
-        </DependencyProvider>
+        </DependencyProvider>,
       );
 
       // Assert

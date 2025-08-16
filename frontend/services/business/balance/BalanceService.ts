@@ -155,7 +155,7 @@ export class BalanceService implements BalanceServiceInterface {
    */
   predictExpiryDate(
     balance: RemainingHoursCalculation,
-    consumptionHistory: ConsumptionRecord[]
+    consumptionHistory: ConsumptionRecord[],
   ): ExpiryPrediction {
     // Handle case with no consumption history
     if (consumptionHistory.length === 0) {
@@ -195,7 +195,7 @@ export class BalanceService implements BalanceServiceInterface {
     // Calculate consumption rates
     const totalHoursConsumed = consumptionHistory.reduce(
       (sum, record) => sum + record.hoursConsumed,
-      0
+      0,
     );
     const averageDailyConsumption = totalHoursConsumed / consumptionHistory.length;
     const weeklyConsumptionRate = averageDailyConsumption * 7;

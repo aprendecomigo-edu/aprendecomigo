@@ -152,7 +152,7 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
     day: string,
     slotIndex: number,
     field: 'start_time' | 'end_time',
-    value: string
+    value: string,
   ) => {
     const currentSlots = formData.weekly_availability[day] || [];
     const updatedSlots = [...currentSlots];
@@ -406,8 +406,8 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
                             isSelected
                               ? 'border-blue-500 bg-blue-50'
                               : hasSlots
-                              ? 'border-green-300 bg-green-50'
-                              : 'border-gray-300 bg-white'
+                                ? 'border-green-300 bg-green-50'
+                                : 'border-gray-300 bg-white'
                           }`}
                         >
                           <VStack space="xs" className="items-center min-w-16">
@@ -416,8 +416,8 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
                                 isSelected
                                   ? 'text-blue-800'
                                   : hasSlots
-                                  ? 'text-green-800'
-                                  : 'text-gray-600'
+                                    ? 'text-green-800'
+                                    : 'text-gray-600'
                               }`}
                             >
                               {day.short}
@@ -427,8 +427,8 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
                                 isSelected
                                   ? 'text-blue-600'
                                   : hasSlots
-                                  ? 'text-green-600'
-                                  : 'text-gray-500'
+                                    ? 'text-green-600'
+                                    : 'text-gray-500'
                               }`}
                             >
                               {getDayHours(day.key) > 0 ? `${getDayHours(day.key)}h` : '—'}
@@ -462,8 +462,8 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
                               isSelected
                                 ? 'text-blue-600'
                                 : hasSlots
-                                ? 'text-green-600'
-                                : 'text-gray-600'
+                                  ? 'text-green-600'
+                                  : 'text-gray-600'
                             }`}
                           >
                             {day.label}
@@ -668,7 +668,7 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
                       <HStack key={duration} space="sm" className="items-center py-1">
                         <Switch
                           value={formData.booking_preferences.session_duration_options.includes(
-                            duration
+                            duration,
                           )}
                           onValueChange={checked => toggleSessionDuration(duration, checked)}
                         />
@@ -758,7 +758,7 @@ export const AvailabilityStep: React.FC<AvailabilityStepProps> = ({
                     <Text className="font-semibold text-green-900">
                       {
                         Object.values(formData.weekly_availability).filter(
-                          slots => slots.length > 0
+                          slots => slots.length > 0,
                         ).length
                       }{' '}
                       days

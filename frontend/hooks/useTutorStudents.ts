@@ -50,15 +50,15 @@ const useTutorStudents = (schoolId?: number): UseTutorStudentsResult => {
           totalPlannedSessions: Math.floor(Math.random() * 25) + 5,
           completionRate: Math.random() * 0.4 + 0.6, // 60-100%
           lastSessionDate: new Date(
-            Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000
+            Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000,
           ).toISOString(),
           nextSessionDate: new Date(
-            Date.now() + Math.random() * 7 * 24 * 60 * 60 * 1000
+            Date.now() + Math.random() * 7 * 24 * 60 * 60 * 1000,
           ).toISOString(),
         },
         acquisition: {
           invitationDate: new Date(
-            Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000
+            Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000,
           ).toISOString(),
           invitationMethod: ['email', 'link', 'referral'][Math.floor(Math.random() * 3)],
           conversionDays: Math.floor(Math.random() * 14) + 1,

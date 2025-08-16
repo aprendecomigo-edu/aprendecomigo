@@ -89,7 +89,7 @@ export default function TransactionSearchInterface({
 
   // Count active filters
   const activeFilterCount = Object.values(filters).filter(
-    value => value !== undefined && value !== '' && value !== null
+    value => value !== undefined && value !== '' && value !== null,
   ).length;
 
   // Handle filter changes
@@ -109,7 +109,7 @@ export default function TransactionSearchInterface({
 
       onFiltersChange(updatedFilters);
     },
-    [filters, onFiltersChange]
+    [filters, onFiltersChange],
   );
 
   // Clear all filters
@@ -122,7 +122,7 @@ export default function TransactionSearchInterface({
     (search: SavedSearch) => {
       onFiltersChange(search.filters);
     },
-    [onFiltersChange]
+    [onFiltersChange],
   );
 
   // Save current search

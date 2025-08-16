@@ -174,7 +174,7 @@ const BreadcrumbItem: React.FC<BreadcrumbItemProps> = ({ item, onPress }) => {
           'text-sm',
           item.isActive ? 'text-primary-600 font-semibold' : 'text-typography-600',
           isClickable && 'hover:text-primary-600',
-          Platform.OS === 'web' && isClickable && 'cursor-pointer'
+          Platform.OS === 'web' && isClickable && 'cursor-pointer',
         )}
         numberOfLines={1}
       >

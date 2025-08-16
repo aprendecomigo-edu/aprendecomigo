@@ -67,7 +67,7 @@ export const Link = React.forwardRef<Pressable, ILinkProps>(
   ({ className, isDisabled = false, children, disabled, ...props }, ref) => {
     const contextValue = useMemo(
       () => ({ isDisabled: isDisabled || disabled }),
-      [isDisabled, disabled]
+      [isDisabled, disabled],
     );
 
     const finalDisabled = isDisabled || disabled;
@@ -85,7 +85,7 @@ export const Link = React.forwardRef<Pressable, ILinkProps>(
         </Pressable>
       </LinkContext.Provider>
     );
-  }
+  },
 );
 
 // LinkText component
@@ -100,7 +100,7 @@ export const LinkText = React.forwardRef<Text, ILinkTextProps>(
       size = 'md',
       ...props
     },
-    ref
+    ref,
   ) => {
     return (
       <Text
@@ -116,7 +116,7 @@ export const LinkText = React.forwardRef<Text, ILinkTextProps>(
         })}
       />
     );
-  }
+  },
 );
 
 // Display names for debugging

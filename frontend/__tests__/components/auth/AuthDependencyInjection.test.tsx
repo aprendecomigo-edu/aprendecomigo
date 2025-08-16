@@ -71,7 +71,7 @@ describe('Authentication Dependency Injection - New Architecture', () => {
       render(
         <AuthDependencyProvider dependencies={mockDeps}>
           <TestComponent />
-        </AuthDependencyProvider>
+        </AuthDependencyProvider>,
       );
     });
 
@@ -92,7 +92,7 @@ describe('Authentication Dependency Injection - New Architecture', () => {
       render(
         <AuthDependencyProvider dependencies={mockDeps}>
           <TestHook />
-        </AuthDependencyProvider>
+        </AuthDependencyProvider>,
       );
 
       await waitFor(() => {
@@ -127,7 +127,7 @@ describe('Authentication Dependency Injection - New Architecture', () => {
       render(
         <AuthDependencyProvider dependencies={overrideDeps}>
           <TestComponent />
-        </AuthDependencyProvider>
+        </AuthDependencyProvider>,
       );
 
       expect(customAuthApi.requestEmailCode).toHaveBeenCalledWith({
@@ -144,7 +144,7 @@ describe('Authentication Dependency Injection - New Architecture', () => {
       const { getByPlaceholderText, getByText } = render(
         <AuthDependencyProvider dependencies={mockDeps}>
           <SignIn />
-        </AuthDependencyProvider>
+        </AuthDependencyProvider>,
       );
 
       const emailInput = getByPlaceholderText('your_email@example.com');
@@ -159,10 +159,10 @@ describe('Authentication Dependency Injection - New Architecture', () => {
         });
         expect(mockDeps.toast.showToast).toHaveBeenCalledWith(
           'success',
-          'Verification code sent to your email!'
+          'Verification code sent to your email!',
         );
         expect(mockDeps.router.push).toHaveBeenCalledWith(
-          '/auth/verify-code?email=inject%40test.com'
+          '/auth/verify-code?email=inject%40test.com',
         );
       });
     });
@@ -175,7 +175,7 @@ describe('Authentication Dependency Injection - New Architecture', () => {
       const { getByPlaceholderText, getByText } = render(
         <AuthDependencyProvider dependencies={mockDeps}>
           <SignIn />
-        </AuthDependencyProvider>
+        </AuthDependencyProvider>,
       );
 
       const emailInput = getByPlaceholderText('your_email@example.com');
@@ -187,7 +187,7 @@ describe('Authentication Dependency Injection - New Architecture', () => {
       await waitFor(() => {
         expect(mockDeps.toast.showToast).toHaveBeenCalledWith(
           'error',
-          'Failed to send verification code. Please try again.'
+          'Failed to send verification code. Please try again.',
         );
         expect(mockDeps.router.push).not.toHaveBeenCalled();
       });
@@ -207,7 +207,7 @@ describe('Authentication Dependency Injection - New Architecture', () => {
       const { getByText } = render(
         <AuthDependencyProvider dependencies={mockDeps}>
           <SignUp />
-        </AuthDependencyProvider>
+        </AuthDependencyProvider>,
       );
 
       // Select tutor tab
@@ -225,7 +225,7 @@ describe('Authentication Dependency Injection - New Architecture', () => {
             school: expect.objectContaining({
               name: "Test Tutor's Tutoring Practice",
             }),
-          })
+          }),
         );
       });
     });
@@ -237,7 +237,7 @@ describe('Authentication Dependency Injection - New Architecture', () => {
       const { getByText, getByPlaceholderText } = render(
         <AuthDependencyProvider dependencies={mockDeps}>
           <SignUp />
-        </AuthDependencyProvider>
+        </AuthDependencyProvider>,
       );
 
       // Select school tab
@@ -260,7 +260,7 @@ describe('Authentication Dependency Injection - New Architecture', () => {
             school: expect.objectContaining({
               name: 'Test School',
             }),
-          })
+          }),
         );
       });
     });
@@ -288,7 +288,7 @@ describe('Authentication Dependency Injection - New Architecture', () => {
       const { getByPlaceholderText, getByText } = render(
         <AuthDependencyProvider dependencies={mockDeps}>
           <VerifyCode />
-        </AuthDependencyProvider>
+        </AuthDependencyProvider>,
       );
 
       const codeInput = getByPlaceholderText('Enter the verification code');
@@ -306,7 +306,7 @@ describe('Authentication Dependency Injection - New Architecture', () => {
         expect(mockDeps.authContext.checkAuthStatus).toHaveBeenCalled();
         expect(mockDeps.toast.showToast).toHaveBeenCalledWith(
           'success',
-          'Verification successful!'
+          'Verification successful!',
         );
       });
     });
@@ -338,7 +338,7 @@ describe('Authentication Dependency Injection - New Architecture', () => {
       const { getByPlaceholderText, getByText } = render(
         <AuthDependencyProvider dependencies={mockDeps}>
           <VerifyCode />
-        </AuthDependencyProvider>
+        </AuthDependencyProvider>,
       );
 
       const codeInput = getByPlaceholderText('Enter the verification code');
@@ -375,7 +375,7 @@ describe('Authentication Dependency Injection - New Architecture', () => {
       });
       expect(mockDeps.toast.showToast).toHaveBeenCalledWith(
         'success',
-        'Verification code sent to your email!'
+        'Verification code sent to your email!',
       );
       expect(mockDeps.router.push).toHaveBeenCalledWith('/auth/verify-code?email=hook%40test.com');
     });
@@ -442,7 +442,7 @@ describe('Authentication Dependency Injection - New Architecture', () => {
       const { getByPlaceholderText, getByText, rerender } = render(
         <AuthDependencyProvider dependencies={mockDeps}>
           <SignIn />
-        </AuthDependencyProvider>
+        </AuthDependencyProvider>,
       );
 
       // Submit email
@@ -457,7 +457,7 @@ describe('Authentication Dependency Injection - New Architecture', () => {
       rerender(
         <AuthDependencyProvider dependencies={mockDeps}>
           <VerifyCode />
-        </AuthDependencyProvider>
+        </AuthDependencyProvider>,
       );
 
       // Verify code
@@ -482,7 +482,7 @@ describe('Authentication Dependency Injection - New Architecture', () => {
       const { getByPlaceholderText, getByText } = render(
         <AuthDependencyProvider dependencies={mockDeps}>
           <SignIn />
-        </AuthDependencyProvider>
+        </AuthDependencyProvider>,
       );
 
       fireEvent.changeText(getByPlaceholderText('your_email@example.com'), 'error@test.com');
@@ -491,7 +491,7 @@ describe('Authentication Dependency Injection - New Architecture', () => {
       await waitFor(() => {
         expect(mockDeps.toast.showToast).toHaveBeenCalledWith(
           'error',
-          'Failed to send verification code. Please try again.'
+          'Failed to send verification code. Please try again.',
         );
       });
 
@@ -508,7 +508,7 @@ describe('Authentication Dependency Injection - New Architecture', () => {
       } = render(
         <AuthDependencyProvider dependencies={mockDeps}>
           <VerifyCode />
-        </AuthDependencyProvider>
+        </AuthDependencyProvider>,
       );
 
       fireEvent.changeText(getCodeInput('Enter the verification code'), 'invalid');
@@ -533,7 +533,7 @@ describe('Authentication Dependency Injection - New Architecture', () => {
         render(
           <AuthDependencyProvider dependencies={incompleteDeps as any}>
             <SignIn />
-          </AuthDependencyProvider>
+          </AuthDependencyProvider>,
         );
       }).toThrow('Missing required dependencies');
 
@@ -576,7 +576,7 @@ describe('Authentication Dependency Injection - New Architecture', () => {
           <AuthDependencyProvider dependencies={innerDeps}>
             <TestComponent />
           </AuthDependencyProvider>
-        </AuthDependencyProvider>
+        </AuthDependencyProvider>,
       );
 
       // Inner provider should override outer provider

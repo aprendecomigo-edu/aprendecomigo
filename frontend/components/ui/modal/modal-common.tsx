@@ -117,7 +117,7 @@ export function createModalComponents(UIModal: any) {
         className={modalStyle({ size, class: className })}
         context={{ size }}
       />
-    )
+    ),
   );
 
   const ModalBackdrop = React.forwardRef<
@@ -172,7 +172,7 @@ export function createModalComponents(UIModal: any) {
           })}
         />
       );
-    }
+    },
   );
 
   const ModalBody = React.forwardRef<React.ElementRef<typeof UIModal.Body>, IModalBodyProps>(
@@ -186,7 +186,7 @@ export function createModalComponents(UIModal: any) {
           })}
         />
       );
-    }
+    },
   );
 
   const ModalFooter = React.forwardRef<React.ElementRef<typeof UIModal.Footer>, IModalFooterProps>(
@@ -200,7 +200,7 @@ export function createModalComponents(UIModal: any) {
           })}
         />
       );
-    }
+    },
   );
 
   const ModalCloseButton = React.forwardRef<

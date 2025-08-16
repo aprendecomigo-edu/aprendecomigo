@@ -50,7 +50,7 @@ describe('PaymentService', () => {
       const result = await paymentService.processQuickTopUp(
         mockPackage.id,
         mockPaymentMethod.id,
-        'student@example.com'
+        'student@example.com',
       );
 
       expect(result).toEqual({
@@ -65,7 +65,7 @@ describe('PaymentService', () => {
       const result = await paymentService.processQuickTopUp(
         mockPackage.id,
         null,
-        'student@example.com'
+        'student@example.com',
       );
 
       expect(result).toEqual({
@@ -79,7 +79,7 @@ describe('PaymentService', () => {
       const result = await paymentService.processQuickTopUp(
         mockPackage.id,
         mockPaymentMethod.id,
-        'admin@school.com'
+        'admin@school.com',
       );
 
       expect(result.package_id).toBe(mockPackage.id);
@@ -89,13 +89,13 @@ describe('PaymentService', () => {
 
     it('should validate package ID is required', async () => {
       await expect(
-        paymentService.processQuickTopUp(0, mockPaymentMethod.id, 'test@example.com')
+        paymentService.processQuickTopUp(0, mockPaymentMethod.id, 'test@example.com'),
       ).rejects.toThrow('Package ID is required');
     });
 
     it('should validate either payment method ID or default payment method flag', async () => {
       await expect(paymentService.processQuickTopUp(mockPackage.id, null, null)).rejects.toThrow(
-        'Either payment method ID or use default payment method must be specified'
+        'Either payment method ID or use default payment method must be specified',
       );
     });
   });

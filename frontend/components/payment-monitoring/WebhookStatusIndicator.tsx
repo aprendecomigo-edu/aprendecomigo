@@ -162,8 +162,8 @@ function WebhookStatusCard({ webhook, compact }: WebhookStatusCardProps) {
                 webhook.response_time_avg < 200
                   ? '#10B981'
                   : webhook.response_time_avg < 500
-                  ? '#F59E0B'
-                  : '#EF4444',
+                    ? '#F59E0B'
+                    : '#EF4444',
             }}
           />
 
@@ -181,8 +181,8 @@ function WebhookStatusCard({ webhook, compact }: WebhookStatusCardProps) {
                 webhook.failure_count_24h === 0
                   ? 'text-success-600'
                   : webhook.failure_count_24h < 5
-                  ? 'text-warning-600'
-                  : 'text-error-600'
+                    ? 'text-warning-600'
+                    : 'text-error-600'
               }`}
             >
               {webhook.failure_count_24h}

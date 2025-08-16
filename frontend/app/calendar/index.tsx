@@ -235,7 +235,7 @@ const WeekView: React.FC<{
             const dateStr = date.toISOString().split('T')[0];
             const dayClasses = safeClasses.filter(c => c.scheduled_date === dateStr);
             const dayTasks = safeTasks.filter(
-              t => t.due_date && t.due_date.split('T')[0] === dateStr
+              t => t.due_date && t.due_date.split('T')[0] === dateStr,
             );
 
             const hasContent = dayClasses.length > 0 || dayTasks.length > 0;
@@ -377,7 +377,7 @@ const CalendarScreen: React.FC = () => {
       if (endDate) params.append('end_date', endDate);
 
       const response = await apiClient.get(
-        `/tasks/calendar/${params.toString() ? '?' + params.toString() : ''}`
+        `/tasks/calendar/${params.toString() ? '?' + params.toString() : ''}`,
       );
       const calendarTasks = response.data;
 
@@ -425,7 +425,7 @@ const CalendarScreen: React.FC = () => {
     if (dayClasses.length > 0 || dayTasks.length > 0) {
       if (__DEV__) {
         console.log(
-          `Selected day ${day.dateString} has ${dayClasses.length} classes and ${dayTasks.length} tasks`
+          `Selected day ${day.dateString} has ${dayClasses.length} classes and ${dayTasks.length} tasks`,
         );
       }
     }

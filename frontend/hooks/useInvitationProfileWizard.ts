@@ -281,7 +281,7 @@ export const useInvitationProfileWizard = (invitationToken: string) => {
 
       return Object.keys(errors).length === 0;
     },
-    [profileData]
+    [profileData],
   );
 
   // Navigate to next step
@@ -322,7 +322,7 @@ export const useInvitationProfileWizard = (invitationToken: string) => {
     (stepNumber: number) => {
       return validateStep(stepNumber);
     },
-    [validateStep]
+    [validateStep],
   );
 
   // Get progress percentage
@@ -345,7 +345,7 @@ export const useInvitationProfileWizard = (invitationToken: string) => {
       const newSubjects = [...profileData.teaching_subjects, subject];
       updateProfileData({ teaching_subjects: newSubjects });
     },
-    [profileData.teaching_subjects, updateProfileData]
+    [profileData.teaching_subjects, updateProfileData],
   );
 
   const removeTeachingSubject = useCallback(
@@ -353,7 +353,7 @@ export const useInvitationProfileWizard = (invitationToken: string) => {
       const newSubjects = profileData.teaching_subjects.filter((_, i) => i !== index);
       updateProfileData({ teaching_subjects: newSubjects });
     },
-    [profileData.teaching_subjects, updateProfileData]
+    [profileData.teaching_subjects, updateProfileData],
   );
 
   const addEducationEntry = useCallback(
@@ -361,7 +361,7 @@ export const useInvitationProfileWizard = (invitationToken: string) => {
       const newEducation = [...profileData.education_background, education];
       updateProfileData({ education_background: newEducation });
     },
-    [profileData.education_background, updateProfileData]
+    [profileData.education_background, updateProfileData],
   );
 
   const removeEducationEntry = useCallback(
@@ -369,7 +369,7 @@ export const useInvitationProfileWizard = (invitationToken: string) => {
       const newEducation = profileData.education_background.filter((_, i) => i !== index);
       updateProfileData({ education_background: newEducation });
     },
-    [profileData.education_background, updateProfileData]
+    [profileData.education_background, updateProfileData],
   );
 
   const addExperienceEntry = useCallback(
@@ -377,7 +377,7 @@ export const useInvitationProfileWizard = (invitationToken: string) => {
       const newExperience = [...profileData.teaching_experience, experience];
       updateProfileData({ teaching_experience: newExperience });
     },
-    [profileData.teaching_experience, updateProfileData]
+    [profileData.teaching_experience, updateProfileData],
   );
 
   const removeExperienceEntry = useCallback(
@@ -385,7 +385,7 @@ export const useInvitationProfileWizard = (invitationToken: string) => {
       const newExperience = profileData.teaching_experience.filter((_, i) => i !== index);
       updateProfileData({ teaching_experience: newExperience });
     },
-    [profileData.teaching_experience, updateProfileData]
+    [profileData.teaching_experience, updateProfileData],
   );
 
   const addCertification = useCallback(
@@ -393,7 +393,7 @@ export const useInvitationProfileWizard = (invitationToken: string) => {
       const newCertifications = [...profileData.certifications, certification];
       updateProfileData({ certifications: newCertifications });
     },
-    [profileData.certifications, updateProfileData]
+    [profileData.certifications, updateProfileData],
   );
 
   const removeCertification = useCallback(
@@ -401,7 +401,7 @@ export const useInvitationProfileWizard = (invitationToken: string) => {
       const newCertifications = profileData.certifications.filter((_, i) => i !== index);
       updateProfileData({ certifications: newCertifications });
     },
-    [profileData.certifications, updateProfileData]
+    [profileData.certifications, updateProfileData],
   );
 
   return {

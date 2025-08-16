@@ -56,7 +56,7 @@ const PrimitiveIcon = React.forwardRef<React.ElementRef<typeof Svg>, IPrimitiveI
       return <AsComp ref={ref} {...sizeProps} {...colorProps} {...props} />;
     }
     return <Svg ref={ref} height={height} width={width} {...colorProps} {...props} />;
-  }
+  },
 );
 
 export const UIActionsheet = createActionsheet({
@@ -304,7 +304,7 @@ const Actionsheet = React.forwardRef<React.ElementRef<typeof UIActionsheet>, IAc
         {...props}
       />
     );
-  }
+  },
 );
 
 const ActionsheetContent = React.forwardRef<
@@ -488,7 +488,7 @@ const ActionsheetSectionHeaderText = React.forwardRef<
       highlight,
       ...props
     },
-    ref
+    ref,
   ) => {
     return (
       <UIActionsheet.SectionHeaderText
@@ -507,7 +507,7 @@ const ActionsheetSectionHeaderText = React.forwardRef<
         {...props}
       />
     );
-  }
+  },
 );
 
 const ActionsheetIcon = React.forwardRef<

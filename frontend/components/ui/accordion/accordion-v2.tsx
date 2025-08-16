@@ -3,7 +3,15 @@ import { H3 } from '@expo/html-elements';
 import type { VariantProps } from '@gluestack-ui/nativewind-utils';
 import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import React, { createContext, useContext, useMemo, useState } from 'react';
-import { View, Pressable, Text, Platform, TextProps, ViewProps, PressableProps } from 'react-native';
+import {
+  View,
+  Pressable,
+  Text,
+  Platform,
+  TextProps,
+  ViewProps,
+  PressableProps,
+} from 'react-native';
 import { Svg } from 'react-native-svg';
 
 // Accordion Context for sharing state between components
@@ -34,23 +42,8 @@ export type IPrimitiveIcon = React.ComponentPropsWithoutRef<typeof Svg> & {
   as?: React.ElementType;
 };
 
-const PrimitiveIcon = React.forwardRef<
-  React.ElementRef<typeof Svg>,
-  IPrimitiveIcon
->(
-  (
-    {
-      height,
-      width,
-      fill,
-      color,
-      size,
-      stroke = 'currentColor',
-      as: AsComp,
-      ...props
-    },
-    ref
-  ) => {
+const PrimitiveIcon = React.forwardRef<React.ElementRef<typeof Svg>, IPrimitiveIcon>(
+  ({ height, width, fill, color, size, stroke = 'currentColor', as: AsComp, ...props }, ref) => {
     const sizeProps = useMemo(() => {
       if (size) return { size };
       if (height && width) return { height, width };
@@ -67,7 +60,7 @@ const PrimitiveIcon = React.forwardRef<
     return (
       <Svg ref={ref} height={height} width={width} fill={fill} stroke={colorProps} {...props} />
     );
-  }
+  },
 );
 
 // Style definitions
@@ -197,23 +190,16 @@ export type IAccordionTitleTextProps = TextProps &
 // Main Accordion component - Direct implementation without factory
 export const Accordion = React.forwardRef<View, IAccordionProps>(
   ({ className, variant = 'filled', size = 'md', children, ...props }, ref) => {
-    const contextValue = useMemo(
-      () => ({ variant, size }),
-      [variant, size]
-    );
+    const contextValue = useMemo(() => ({ variant, size }), [variant, size]);
 
     return (
       <AccordionContext.Provider value={contextValue}>
-        <View
-          ref={ref}
-          {...props}
-          className={accordionStyle({ variant, class: className })}
-        >
+        <View ref={ref} {...props} className={accordionStyle({ variant, class: className })}>
           {children}
         </View>
       </AccordionContext.Provider>
     );
-  }
+  },
 );
 
 // AccordionItem component
@@ -228,7 +214,7 @@ export const AccordionItem = React.forwardRef<View, IAccordionItemProps>(
         isExpanded,
         onToggle: () => setIsExpanded(!isExpanded),
       }),
-      [isExpanded]
+      [isExpanded],
     );
 
     return (
@@ -245,26 +231,25 @@ export const AccordionItem = React.forwardRef<View, IAccordionItemProps>(
         </View>
       </AccordionItemContext.Provider>
     );
-  }
+  },
 );
 
 // AccordionHeader component
-export const AccordionHeader = React.forwardRef<
-  View,
-  IAccordionHeaderProps
->(({ className, ...props }, ref) => {
-  const HeaderComponent = (Platform.OS === 'web' ? H3 : View) as React.ComponentType<any>;
-  
-  return (
-    <HeaderComponent
-      ref={ref}
-      {...props}
-      className={accordionHeaderStyle({
-        class: className,
-      })}
-    />
-  );
-});
+export const AccordionHeader = React.forwardRef<View, IAccordionHeaderProps>(
+  ({ className, ...props }, ref) => {
+    const HeaderComponent = (Platform.OS === 'web' ? H3 : View) as React.ComponentType<any>;
+
+    return (
+      <HeaderComponent
+        ref={ref}
+        {...props}
+        className={accordionHeaderStyle({
+          class: className,
+        })}
+      />
+    );
+  },
+);
 
 // AccordionTrigger component
 export const AccordionTrigger = React.forwardRef<View, IAccordionTriggerProps>(
@@ -288,7 +273,7 @@ export const AccordionTrigger = React.forwardRef<View, IAccordionTriggerProps>(
         {children}
       </Pressable>
     );
-  }
+  },
 );
 
 // AccordionTitleText component
@@ -307,7 +292,7 @@ export const AccordionTitleText = React.forwardRef<Text, IAccordionTitleTextProp
         })}
       />
     );
-  }
+  },
 );
 
 // AccordionIcon component
@@ -318,14 +303,7 @@ export const AccordionIcon = React.forwardRef<any, IAccordionIconProps>(
     const { size: parentSize } = context || {};
 
     if (typeof size === 'number') {
-      return (
-        <PrimitiveIcon
-          ref={ref}
-          {...props}
-          className={className}
-          size={size}
-        />
-      );
+      return <PrimitiveIcon ref={ref} {...props} className={className} size={size} />;
     }
 
     return (
@@ -342,7 +320,7 @@ export const AccordionIcon = React.forwardRef<any, IAccordionIconProps>(
         }}
       />
     );
-  }
+  },
 );
 
 // AccordionContent component
@@ -365,7 +343,7 @@ export const AccordionContent = React.forwardRef<View, IAccordionContentProps>(
         {children}
       </View>
     );
-  }
+  },
 );
 
 // AccordionContentText component
@@ -384,7 +362,7 @@ export const AccordionContentText = React.forwardRef<Text, IAccordionContentText
         })}
       />
     );
-  }
+  },
 );
 
 // Display names for debugging

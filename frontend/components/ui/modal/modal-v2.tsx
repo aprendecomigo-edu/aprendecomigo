@@ -127,14 +127,14 @@ export const Modal = React.forwardRef<View, IModalProps>(
         </ModalRoot>
       </ModalContext.Provider>
     );
-  }
+  },
 );
 
 // ModalBackdrop component - Direct implementation
 export const ModalBackdrop = React.forwardRef<View, IModalBackdropProps>(
   (
     { className, entering = FadeIn.duration(250), exiting = FadeOut.duration(250), ...props },
-    ref
+    ref,
   ) => {
     return (
       <AnimatedPressable
@@ -145,7 +145,7 @@ export const ModalBackdrop = React.forwardRef<View, IModalBackdropProps>(
         className={modalBackdropStyle({ class: className })}
       />
     );
-  }
+  },
 );
 
 // ModalContent component - Direct implementation
@@ -159,7 +159,7 @@ export const ModalContent = React.forwardRef<View, IModalContentProps>(
       pointerEvents = 'auto',
       ...props
     },
-    ref
+    ref,
   ) => {
     const context = useContext(ModalContext);
     const { size: parentSize } = context || {};
@@ -178,14 +178,14 @@ export const ModalContent = React.forwardRef<View, IModalContentProps>(
         pointerEvents={pointerEvents}
       />
     );
-  }
+  },
 );
 
 // ModalHeader component - Direct implementation
 export const ModalHeader = React.forwardRef<View, IModalHeaderProps>(
   ({ className, ...props }, ref) => {
     return <View ref={ref} {...props} className={modalHeaderStyle({ class: className })} />;
-  }
+  },
 );
 
 // ModalBody component - Direct implementation
@@ -206,14 +206,14 @@ export const ModalBody = React.forwardRef<ScrollView, IModalBodyProps>(
         ]}
       />
     );
-  }
+  },
 );
 
 // ModalFooter component - Direct implementation
 export const ModalFooter = React.forwardRef<View, IModalFooterProps>(
   ({ className, ...props }, ref) => {
     return <View ref={ref} {...props} className={modalFooterStyle({ class: className })} />;
-  }
+  },
 );
 
 // ModalCloseButton component - Direct implementation
@@ -226,7 +226,7 @@ export const ModalCloseButton = React.forwardRef<View, IModalCloseButtonProps>(
         className={modalCloseButtonStyle({ class: className })}
       />
     );
-  }
+  },
 );
 
 // Display names for debugging

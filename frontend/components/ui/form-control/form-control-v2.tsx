@@ -52,7 +52,7 @@ const PrimitiveIcon = React.forwardRef<React.ElementRef<typeof Svg>, IPrimitiveI
       return <AsComp ref={ref} {...sizeProps} {...colorProps} {...props} />;
     }
     return <Svg ref={ref} height={height} width={width} {...colorProps} {...props} />;
-  }
+  },
 );
 
 // Style definitions (reuse existing styles)
@@ -305,14 +305,14 @@ export const FormControl = React.forwardRef<View, IFormControlProps>(
         </FormControlRoot>
       </FormControlContext.Provider>
     );
-  }
+  },
 );
 
 // FormControlError component - Direct implementation
 export const FormControlError = React.forwardRef<View, IFormControlErrorProps>(
   ({ className, ...props }, ref) => {
     return <View ref={ref} {...props} className={formControlErrorStyle({ class: className })} />;
-  }
+  },
 );
 
 // FormControlErrorText component - Direct implementation
@@ -332,7 +332,7 @@ export const FormControlErrorText = React.forwardRef<Text, IFormControlErrorText
         })}
       />
     );
-  }
+  },
 );
 
 // FormControlErrorIcon component - Direct implementation
@@ -378,7 +378,7 @@ export const FormControlErrorIcon = React.forwardRef<
 export const FormControlLabel = React.forwardRef<View, IFormControlLabelProps>(
   ({ className, ...props }, ref) => {
     return <View ref={ref} {...props} className={formControlLabelStyle({ class: className })} />;
-  }
+  },
 );
 
 // FormControlLabelText component - Direct implementation
@@ -398,7 +398,7 @@ export const FormControlLabelText = React.forwardRef<Text, IFormControlLabelText
         })}
       />
     );
-  }
+  },
 );
 
 // FormControlLabelAstrick component - Direct implementation
@@ -417,14 +417,14 @@ export const FormControlLabelAstrick = React.forwardRef<Text, IFormControlLabelA
         })}
       />
     );
-  }
+  },
 );
 
 // FormControlHelper component - Direct implementation
 export const FormControlHelper = React.forwardRef<View, IFormControlHelperProps>(
   ({ className, ...props }, ref) => {
     return <View ref={ref} {...props} className={formControlHelperStyle({ class: className })} />;
-  }
+  },
 );
 
 // FormControlHelperText component - Direct implementation
@@ -444,7 +444,7 @@ export const FormControlHelperText = React.forwardRef<Text, IFormControlHelperTe
         })}
       />
     );
-  }
+  },
 );
 
 // Display names for debugging

@@ -274,7 +274,7 @@ describe('useTransactionWebSocket Hook', () => {
           effectRunCount.count++; // Count renders, not effects
           return hookResult;
         },
-        { initialProps: { enabled: true } }
+        { initialProps: { enabled: true } },
       );
 
       const initialCount = effectRunCount.count;
@@ -293,7 +293,7 @@ describe('useTransactionWebSocket Hook', () => {
     it('should work correctly with default parameter values', () => {
       // Test calling without any parameters (should default to enabled: true)
       const { result: resultWithDefault } = renderHook(() =>
-        useTransactionWebSocket(undefined as any)
+        useTransactionWebSocket(undefined as any),
       );
 
       // Undefined should be falsy, so should not connect

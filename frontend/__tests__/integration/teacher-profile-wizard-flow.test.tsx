@@ -63,7 +63,7 @@ describe('TeacherProfileWizard - Integration Flow', () => {
         .mockResolvedValue(mockApiResponse({})); // final submission
 
       const { getByTestId, getByText } = render(
-        <TeacherProfileWizard onComplete={mockOnComplete} />
+        <TeacherProfileWizard onComplete={mockOnComplete} />,
       );
 
       // Wait for initialization
@@ -95,7 +95,7 @@ describe('TeacherProfileWizard - Integration Flow', () => {
         const bioTextarea = getByTestId('bio-textarea');
         fireEvent.changeText(
           bioTextarea,
-          'I am an experienced mathematics teacher with over 5 years of experience...'
+          'I am an experienced mathematics teacher with over 5 years of experience...',
         );
 
         fireEvent.press(getByTestId('next-button'));
@@ -196,7 +196,7 @@ describe('TeacherProfileWizard - Integration Flow', () => {
             last_name: 'Doe',
             email: 'john.doe@example.com',
           }),
-        })
+        }),
       );
     });
 
@@ -210,7 +210,7 @@ describe('TeacherProfileWizard - Integration Flow', () => {
               first_name: ['First name is required'],
               email: ['Invalid email format'],
             },
-          })
+          }),
         )
         .mockResolvedValueOnce(mockApiResponse({ is_valid: true })); // Second attempt succeeds
 
@@ -303,7 +303,7 @@ describe('TeacherProfileWizard - Integration Flow', () => {
           profile_data: expect.objectContaining({
             first_name: 'Test',
           }),
-        })
+        }),
       );
     });
   });
@@ -389,7 +389,7 @@ describe('TeacherProfileWizard - Integration Flow', () => {
         mockApiResponse({
           is_valid: false,
           errors: { first_name: ['Required'] },
-        })
+        }),
       );
 
       const { getByTestId, getByText } = render(<TeacherProfileWizard />);
@@ -470,7 +470,7 @@ describe('TeacherProfileWizard - Integration Flow', () => {
             first_name: 'Jane',
             last_name: 'Doe',
           }),
-        })
+        }),
       );
     });
   });
@@ -602,7 +602,7 @@ describe('TeacherProfileWizard - Integration Flow', () => {
       // Should not have auto-saved yet
       expect(mockApiClient.post).not.toHaveBeenCalledWith(
         '/accounts/teachers/profile-wizard/save-progress/',
-        expect.any(Object)
+        expect.any(Object),
       );
 
       // Complete the debounce period
@@ -617,7 +617,7 @@ describe('TeacherProfileWizard - Integration Flow', () => {
           profile_data: expect.objectContaining({
             first_name: 'John',
           }),
-        })
+        }),
       );
     });
   });

@@ -83,7 +83,7 @@ export const createMockDependencies = (): MockDependencies => {
 };
 
 export const createPartialMockDependencies = (
-  partialDeps: PartialDependencies
+  partialDeps: PartialDependencies,
 ): PartialDependencies => {
   return partialDeps;
 };
@@ -92,13 +92,13 @@ export const createPartialMockDependencies = (
 
 export const withMockDependencies = <P extends object>(
   Component: ComponentType<P>,
-  dependencies: Dependencies
+  dependencies: Dependencies,
 ) => {
   const WrappedComponent = (props: P) => {
     return React.createElement(
       DependencyProvider,
       { dependencies },
-      React.createElement(Component, props)
+      React.createElement(Component, props),
     );
   };
 
@@ -306,7 +306,7 @@ export const createAsyncTestScenario = (
     mockImplementation: (...args: any[]) => Promise<any>;
     expectedResult?: any;
     expectError?: boolean;
-  }>
+  }>,
 ) => {
   return scenarios.map(scenario => {
     const mocks = createMockDependencies();
@@ -330,7 +330,7 @@ export const createCombinedServiceScenario = (
     service: keyof Dependencies;
     method: string;
     mockImplementation: (...args: any[]) => any;
-  }>
+  }>,
 ) => {
   const mocks = createMockDependencies();
 

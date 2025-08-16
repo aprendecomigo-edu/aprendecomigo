@@ -45,7 +45,7 @@ config.watchFolders = [projectRoot];
 
 // Simple server configuration
 config.server = {
-  enhanceMiddleware: (middleware) => {
+  enhanceMiddleware: middleware => {
     return middleware;
   },
 };

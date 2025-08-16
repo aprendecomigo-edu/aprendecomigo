@@ -54,7 +54,7 @@ interface QuickActionsModalProps {
   /** Callback when successful transaction completes */
   onTransactionSuccess?: (
     type: 'renewal' | 'topup',
-    response: RenewalResponse | QuickTopUpResponse
+    response: RenewalResponse | QuickTopUpResponse,
   ) => void;
 }
 
@@ -120,7 +120,7 @@ export function QuickActionsModal({
   useEffect(() => {
     if (balance?.package_status.expired_packages.length) {
       const mostRecent = balance.package_status.expired_packages.sort(
-        (a, b) => new Date(b.expires_at || '').getTime() - new Date(a.expires_at || '').getTime()
+        (a, b) => new Date(b.expires_at || '').getTime() - new Date(a.expires_at || '').getTime(),
       )[0];
       setExpiredPackage(mostRecent);
     }

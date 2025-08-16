@@ -94,7 +94,7 @@ const ClassDetailScreen: React.FC = () => {
             }
           },
         },
-      ]
+      ],
     );
   };
 

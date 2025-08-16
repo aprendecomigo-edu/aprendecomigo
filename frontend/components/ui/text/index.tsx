@@ -20,7 +20,7 @@ const Text = React.forwardRef<React.ElementRef<typeof RNText>, ITextProps>(
       highlight,
       ...props
     },
-    ref
+    ref,
   ) => {
     return (
       <RNText
@@ -39,7 +39,7 @@ const Text = React.forwardRef<React.ElementRef<typeof RNText>, ITextProps>(
         ref={ref}
       />
     );
-  }
+  },
 );
 
 Text.displayName = 'Text';

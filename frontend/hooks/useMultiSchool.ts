@@ -116,7 +116,7 @@ export const useMultiSchool = () => {
         prev.map(m => ({
           ...m,
           is_active: m.id === membership.id,
-        }))
+        })),
       );
 
       Alert.alert('Escola Alterada', `Você agora está visualizando ${membership.school.name}`, [
@@ -175,11 +175,11 @@ export const useMultiSchool = () => {
                 }
               },
             },
-          ]
+          ],
         );
       });
     },
-    [currentSchool, memberships]
+    [currentSchool, memberships],
   );
 
   // Get school statistics
@@ -195,10 +195,7 @@ export const useMultiSchool = () => {
 
   // Refresh all data with graceful degradation
   const refresh = useCallback(async () => {
-    const results = await Promise.allSettled([
-      fetchMemberships(), 
-      fetchPendingInvitations()
-    ]);
+    const results = await Promise.allSettled([fetchMemberships(), fetchPendingInvitations()]);
 
     // Log any failures for monitoring
     results.forEach((result, index) => {

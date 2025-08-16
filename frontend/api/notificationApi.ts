@@ -23,7 +23,7 @@ export class NotificationApiClient {
   static async getNotifications(
     filters?: NotificationFilters,
     page: number = 1,
-    pageSize: number = 20
+    pageSize: number = 20,
   ): Promise<NotificationListResponse> {
     const params = new URLSearchParams({
       page: page.toString(),
@@ -54,7 +54,7 @@ export class NotificationApiClient {
    * Mark a notification as read
    */
   static async markNotificationAsRead(
-    notificationId: number
+    notificationId: number,
   ): Promise<NotificationMarkReadResponse> {
     const response = await apiClient.post(`${this.baseUrl}/${notificationId}/read/`);
     return response.data;
@@ -77,25 +77,30 @@ export class NotificationApiClient {
 
     // Mark each notification as read with graceful degradation
     const promises = notifications.results.map(notification =>
-      this.markNotificationAsRead(notification.id)
+      this.markNotificationAsRead(notification.id),
     );
 
     const results = await Promise.allSettled(promises);
-    
+
     // Count successful and failed operations
     const successful = results.filter(result => result.status === 'fulfilled').length;
     const failed = results.filter(result => result.status === 'rejected').length;
-    
+
     // Log failed operations for monitoring
     results.forEach((result, index) => {
       if (result.status === 'rejected') {
-        console.error(`Failed to mark notification ${notifications.results[index].id} as read:`, result.reason);
+        console.error(
+          `Failed to mark notification ${notifications.results[index].id} as read:`,
+          result.reason,
+        );
       }
     });
 
     // Partial success is acceptable for this operation
     if (failed > 0) {
-      console.warn(`Mark all as read completed with ${successful} successful and ${failed} failed operations.`);
+      console.warn(
+        `Mark all as read completed with ${successful} successful and ${failed} failed operations.`,
+      );
     }
   }
 
@@ -104,7 +109,7 @@ export class NotificationApiClient {
    */
   static async pollNotifications(
     lastCheckTimestamp?: string,
-    filters?: NotificationFilters
+    filters?: NotificationFilters,
   ): Promise<NotificationListResponse> {
     const params = new URLSearchParams();
 

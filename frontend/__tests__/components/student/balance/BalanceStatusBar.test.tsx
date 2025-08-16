@@ -434,7 +434,7 @@ describe('CompactBalanceStatusBar Component', () => {
 
     it('renders with custom className', () => {
       const { toJSON } = render(
-        <CompactBalanceStatusBar remainingHours={5} totalHours={10} className="compact-custom" />
+        <CompactBalanceStatusBar remainingHours={5} totalHours={10} className="compact-custom" />,
       );
 
       expect(toJSON()).toBeTruthy();

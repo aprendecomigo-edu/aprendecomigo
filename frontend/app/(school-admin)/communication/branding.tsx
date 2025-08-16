@@ -76,7 +76,7 @@ const SchoolBrandingPage = () => {
       setPrimaryColor(color);
       updateBrandingField('primary_color', color);
     },
-    [setPrimaryColor, updateBrandingField]
+    [setPrimaryColor, updateBrandingField],
   );
 
   // Update secondary color
@@ -85,7 +85,7 @@ const SchoolBrandingPage = () => {
       setSecondaryColor(color);
       updateBrandingField('secondary_color', color);
     },
-    [setSecondaryColor, updateBrandingField]
+    [setSecondaryColor, updateBrandingField],
   );
 
   // Handle logo upload

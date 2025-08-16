@@ -150,7 +150,7 @@ export const usePurchaseApprovalWebSocket = ({
         console.error('Error processing purchase approval notification:', error);
       }
     },
-    [onNewRequest, onRequestStatusChange, onBudgetAlert, onAutoApproval, enablePushNotifications]
+    [onNewRequest, onRequestStatusChange, onBudgetAlert, onAutoApproval, enablePushNotifications],
   );
 
   // Initialize WebSocket connection
@@ -182,8 +182,8 @@ export const usePurchaseApprovalWebSocket = ({
   const markAsRead = useCallback((notificationId: string) => {
     setNotifications(prev =>
       prev.map(notification =>
-        notification.id === notificationId ? { ...notification, read: true } : notification
-      )
+        notification.id === notificationId ? { ...notification, read: true } : notification,
+      ),
     );
   }, []);
 
@@ -214,7 +214,7 @@ export const usePurchaseApprovalWebSocket = ({
         });
       }
     },
-    [isConnected, sendMessage]
+    [isConnected, sendMessage],
   );
 
   // Calculate unread count

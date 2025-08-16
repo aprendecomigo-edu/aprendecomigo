@@ -69,10 +69,8 @@ export function QuickTopUpPanel({
         setLoading(true);
         // For this component, we only have one API call, but we'll prepare for future additions
         const results = await Promise.allSettled([PurchaseApiClient.getTopUpPackages(email)]);
-        
-        const packagesData = results[0].status === 'fulfilled' 
-          ? results[0].value 
-          : [];
+
+        const packagesData = results[0].status === 'fulfilled' ? results[0].value : [];
 
         if (results[0].status === 'rejected') {
           console.error('Failed to load top-up packages:', results[0].reason);
@@ -119,7 +117,7 @@ export function QuickTopUpPanel({
       const request = await paymentService.processQuickTopUp(
         selectedPackage.id,
         null, // Use default payment method
-        email
+        email,
       );
 
       const response = await PurchaseApiClient.quickTopUp(request, email);

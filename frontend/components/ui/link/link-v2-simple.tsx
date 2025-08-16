@@ -35,20 +35,20 @@ const getLinkTextStyles = (
   bold?: boolean,
   underline?: boolean,
   strikeThrough?: boolean,
-  size?: string
+  size?: string,
 ) => {
   const fontSize =
     size === '2xs'
       ? 10
       : size === 'xs'
-      ? 12
-      : size === 'sm'
-      ? 14
-      : size === 'lg'
-      ? 18
-      : size === 'xl'
-      ? 20
-      : 16;
+        ? 12
+        : size === 'sm'
+          ? 14
+          : size === 'lg'
+            ? 18
+            : size === 'xl'
+              ? 20
+              : 16;
 
   return {
     color: '#1d4ed8',
@@ -57,8 +57,8 @@ const getLinkTextStyles = (
     textDecorationLine: underline
       ? ('underline' as const)
       : strikeThrough
-      ? ('line-through' as const)
-      : ('none' as const),
+        ? ('line-through' as const)
+        : ('none' as const),
   };
 };
 
@@ -67,7 +67,7 @@ export const Link = React.forwardRef<Pressable, ILinkProps>(
   ({ isDisabled = false, disabled, children, style, ...props }, ref) => {
     const contextValue = useMemo(
       () => ({ isDisabled: isDisabled || disabled }),
-      [isDisabled, disabled]
+      [isDisabled, disabled],
     );
 
     const finalDisabled = isDisabled || disabled;
@@ -80,7 +80,7 @@ export const Link = React.forwardRef<Pressable, ILinkProps>(
         </Pressable>
       </LinkContext.Provider>
     );
-  }
+  },
 );
 
 // LinkText component
@@ -95,7 +95,7 @@ export const LinkText = React.forwardRef<Text, ILinkTextProps>(
       style,
       ...props
     },
-    ref
+    ref,
   ) => {
     const linkTextStyles = getLinkTextStyles(bold, underline, strikeThrough, size);
 
@@ -108,7 +108,7 @@ export const LinkText = React.forwardRef<Text, ILinkTextProps>(
         ellipsizeMode={isTruncated ? 'tail' : undefined}
       />
     );
-  }
+  },
 );
 
 // Display names for debugging

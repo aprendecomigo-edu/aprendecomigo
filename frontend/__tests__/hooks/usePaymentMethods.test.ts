@@ -248,7 +248,7 @@ describe('usePaymentMethods Hook', () => {
 
       expect(mockPaymentMethodApiClient.removePaymentMethod).toHaveBeenCalledWith(
         methodIdToRemove,
-        mockEmail
+        mockEmail,
       );
       expect(result.current.operationError).toBeNull();
 
@@ -329,7 +329,7 @@ describe('usePaymentMethods Hook', () => {
       });
 
       expect(result.current.operationError).toBe(
-        'Payment method is being used in a pending transaction'
+        'Payment method is being used in a pending transaction',
       );
     });
 
@@ -365,7 +365,7 @@ describe('usePaymentMethods Hook', () => {
 
       expect(mockPaymentMethodApiClient.setDefaultPaymentMethod).toHaveBeenCalledWith(
         methodIdToSetDefault,
-        mockEmail
+        mockEmail,
       );
       expect(result.current.operationError).toBeNull();
 
@@ -512,7 +512,7 @@ describe('usePaymentMethods Hook', () => {
 
       // Simulate operation error
       mockPaymentMethodApiClient.removePaymentMethod.mockRejectedValue(
-        new Error('Operation error')
+        new Error('Operation error'),
       );
       await act(async () => {
         try {
@@ -575,7 +575,7 @@ describe('usePaymentMethods Hook', () => {
 
     it('handles very large number of payment methods', async () => {
       const manyMethods = Array.from({ length: 100 }, (_, i) =>
-        createMockPaymentMethod({ id: `pm_${i}` })
+        createMockPaymentMethod({ id: `pm_${i}` }),
       );
       mockPaymentMethodApiClient.getPaymentMethods.mockResolvedValue(manyMethods);
 
@@ -625,7 +625,7 @@ describe('usePaymentMethods Hook', () => {
       });
 
       expect(mockPaymentMethodApiClient.getPaymentMethods).toHaveBeenCalledWith(
-        'user1@example.com'
+        'user1@example.com',
       );
 
       // Change email
@@ -633,7 +633,7 @@ describe('usePaymentMethods Hook', () => {
 
       await waitFor(() => {
         expect(mockPaymentMethodApiClient.getPaymentMethods).toHaveBeenCalledWith(
-          'user2@example.com'
+          'user2@example.com',
         );
       });
 

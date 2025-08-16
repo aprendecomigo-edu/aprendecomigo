@@ -8,7 +8,7 @@ type ICardProps = React.ComponentPropsWithoutRef<'div'> & VariantProps<typeof ca
 const Card = React.forwardRef<HTMLDivElement, ICardProps>(
   ({ className, size = 'md', variant = 'elevated', ...props }, ref) => {
     return <div className={cardStyle({ size, variant, class: className })} {...props} ref={ref} />;
-  }
+  },
 );
 
 Card.displayName = 'Card';

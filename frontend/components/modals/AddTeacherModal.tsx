@@ -131,13 +131,13 @@ export const AddTeacherModal = ({ isOpen, onClose, onSuccess }: AddTeacherModalP
     ? courses.filter(
         course =>
           course.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          course.description.toLowerCase().includes(searchQuery.toLowerCase())
+          course.description.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     : [];
 
   const toggleCourseSelection = (courseId: number) => {
     setSelectedCourseIds(prev =>
-      prev.includes(courseId) ? prev.filter(id => id !== courseId) : [...prev, courseId]
+      prev.includes(courseId) ? prev.filter(id => id !== courseId) : [...prev, courseId],
     );
   };
 

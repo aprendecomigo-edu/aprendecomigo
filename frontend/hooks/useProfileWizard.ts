@@ -379,7 +379,7 @@ export function useProfileWizard() {
         return newState;
       });
     },
-    [cacheState]
+    [cacheState],
   );
 
   // Update single field with type safety
@@ -411,7 +411,7 @@ export function useProfileWizard() {
         return newState;
       });
     },
-    [cacheState]
+    [cacheState],
   );
 
   // Set current step with bounds checking
@@ -435,7 +435,7 @@ export function useProfileWizard() {
         return newState;
       });
     },
-    [cacheState]
+    [cacheState],
   );
 
   // Validate current step with proper error handling
@@ -449,7 +449,7 @@ export function useProfileWizard() {
           {
             step: stepIndex,
             data: state.formData,
-          }
+          },
         );
 
         if (!isMountedRef.current) return false;
@@ -480,7 +480,7 @@ export function useProfileWizard() {
         return false;
       }
     },
-    [state.formData]
+    [state.formData],
   );
 
   // Save progress to backend with improved error handling
@@ -495,7 +495,7 @@ export function useProfileWizard() {
         {
           profile_data: state.formData,
           current_step: state.currentStep,
-        }
+        },
       );
 
       if (!isMountedRef.current) return;
@@ -574,7 +574,7 @@ export function useProfileWizard() {
         return null;
       }
     },
-    []
+    [],
   );
 
   // Upload profile photo with proper typing
@@ -601,7 +601,7 @@ export function useProfileWizard() {
             headers: {
               'Content-Type': 'multipart/form-data',
             },
-          }
+          },
         );
 
         if (!isMountedRef.current) {
@@ -616,7 +616,7 @@ export function useProfileWizard() {
         throw error;
       }
     },
-    [updateFormData]
+    [updateFormData],
   );
 
   // Reset wizard state

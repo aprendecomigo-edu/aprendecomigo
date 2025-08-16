@@ -108,7 +108,7 @@ const SchoolAdminDashboard = () => {
   // Filter admin schools from user schools
   const adminSchools = useMemo(() => {
     return userSchools.filter(
-      school => school.role === 'school_owner' || school.role === 'school_admin'
+      school => school.role === 'school_owner' || school.role === 'school_admin',
     );
   }, [userSchools]);
 
@@ -217,7 +217,7 @@ const SchoolAdminDashboard = () => {
         setSchoolInfoLoading(false);
       }
     },
-    [selectedSchoolId]
+    [selectedSchoolId],
   );
 
   // Welcome message

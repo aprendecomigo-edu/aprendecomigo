@@ -73,7 +73,7 @@ describe('DI Testing Utilities', () => {
 
       // OnboardingApiService mocks
       expect(jest.isMockFunction(mockDeps.onboardingApiService.getNavigationPreferences)).toBe(
-        true
+        true,
       );
       expect(jest.isMockFunction(mockDeps.onboardingApiService.getOnboardingProgress)).toBe(true);
     });
@@ -313,7 +313,7 @@ describe('DI Testing Utilities', () => {
       expect(jest.isMockFunction(mockDeps.routerService.push)).toBe(true);
       expect(jest.isMockFunction(mockDeps.toastService.showToast)).toBe(true);
       expect(jest.isMockFunction(mockDeps.onboardingApiService.getNavigationPreferences)).toBe(
-        true
+        true,
       );
     });
 
@@ -351,7 +351,7 @@ describe('DI Testing Utilities', () => {
       const { getByText } = render(
         <TestDependencyProvider dependencies={mockDeps}>
           <TestChild />
-        </TestDependencyProvider>
+        </TestDependencyProvider>,
       );
 
       expect(getByText('Provider Child')).toBeTruthy();
@@ -373,7 +373,7 @@ describe('DI Testing Utilities', () => {
       const { getByText } = render(
         <TestDependencyProvider dependencies={mockDeps} overrides={{ authApi: customAuthApi }}>
           <TestComponent />
-        </TestDependencyProvider>
+        </TestDependencyProvider>,
       );
 
       expect(getByText('Test Provider')).toBeTruthy();
@@ -390,7 +390,7 @@ describe('DI Testing Utilities', () => {
           <TestDependencyProvider dependencies={nestedMockDeps}>
             <TestComponent />
           </TestDependencyProvider>
-        </TestDependencyProvider>
+        </TestDependencyProvider>,
       );
 
       expect(getByText('Nested Provider')).toBeTruthy();
@@ -471,7 +471,7 @@ describe('DI Testing Utilities', () => {
       mockDeps.authApi.requestEmailCode.mockRejectedValue(networkError);
 
       await expect(
-        mockDeps.authApi.requestEmailCode({ email: 'test@example.com' })
+        mockDeps.authApi.requestEmailCode({ email: 'test@example.com' }),
       ).rejects.toThrow('Network failure');
 
       expect(mockDeps.authApi.requestEmailCode).toHaveBeenCalledWith({ email: 'test@example.com' });
@@ -541,7 +541,7 @@ describe('DI Testing Utilities', () => {
           <TestComponent
             onSubmit={() => mockDeps.authApi.requestEmailCode({ email: 'test@example.com' })}
           />
-        </TestDependencyProvider>
+        </TestDependencyProvider>,
       );
 
       expect(getByText('Submit')).toBeTruthy();

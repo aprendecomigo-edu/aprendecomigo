@@ -58,9 +58,9 @@ describe('useBalanceWebSocket', () => {
 
     // Suppress console logs during tests
     if (__DEV__) {
-    // Suppress console logs during tests
+      // Suppress console logs during tests
       console.log = jest.fn();
-    // Suppress console logs during tests
+      // Suppress console logs during tests
     }
     console.error = jest.fn();
 
@@ -70,9 +70,9 @@ describe('useBalanceWebSocket', () => {
   afterEach(() => {
     jest.useRealTimers();
     if (__DEV__) {
-    jest.useRealTimers();
+      jest.useRealTimers();
       console.log = originalConsoleLog;
-    jest.useRealTimers();
+      jest.useRealTimers();
     }
     console.error = originalConsoleError;
     jest.clearAllMocks();
@@ -122,7 +122,7 @@ describe('useBalanceWebSocket', () => {
           onClose: expect.any(Function),
           onError: expect.any(Function),
           shouldReconnect: expect.any(Boolean),
-        })
+        }),
       );
     });
 
@@ -338,7 +338,7 @@ describe('useBalanceWebSocket', () => {
       expect(console.error).toHaveBeenCalledWith(
         'Failed to parse WebSocket message:',
         expect.any(Error),
-        '{ invalid json }'
+        '{ invalid json }',
       );
     });
 

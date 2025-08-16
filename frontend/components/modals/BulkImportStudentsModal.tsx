@@ -241,7 +241,7 @@ export const BulkImportStudentsModal: React.FC<BulkImportStudentsModalProps> = (
 
       setSelectedFile(file);
     },
-    [showToast]
+    [showToast],
   );
 
   // Drag and drop handlers
@@ -265,7 +265,7 @@ export const BulkImportStudentsModal: React.FC<BulkImportStudentsModalProps> = (
         handleFileSelect(files[0]);
       }
     },
-    [handleFileSelect]
+    [handleFileSelect],
   );
 
   // Handle import
@@ -285,7 +285,7 @@ export const BulkImportStudentsModal: React.FC<BulkImportStudentsModalProps> = (
         } else {
           showToast(
             'warning',
-            `${result.created_count} alunos importados, ${result.failed_count} com falhas`
+            `${result.created_count} alunos importados, ${result.failed_count} com falhas`,
           );
         }
       } else {

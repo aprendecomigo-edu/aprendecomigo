@@ -109,7 +109,7 @@ const ProfileWizard: React.FC<ProfileWizardProps> = ({
               onCancel?.();
             },
           },
-        ]
+        ],
       );
     } else {
       onCancel?.();
@@ -129,7 +129,7 @@ const ProfileWizard: React.FC<ProfileWizardProps> = ({
     if (!allValid) {
       Alert.alert(
         'Perfil incompleto',
-        'Por favor, complete todos os campos obrigatórios antes de enviar.'
+        'Por favor, complete todos os campos obrigatórios antes de enviar.',
       );
       return;
     }
@@ -242,7 +242,7 @@ const ProfileWizard: React.FC<ProfileWizardProps> = ({
             currentStep={currentStep}
             totalSteps={totalSteps}
             completedSteps={Array.from({ length: totalSteps }, (_, i) => i + 1).filter(
-              step => step < currentStep && isStepCompleted(step)
+              step => step < currentStep && isStepCompleted(step),
             )}
           />
         </VStack>

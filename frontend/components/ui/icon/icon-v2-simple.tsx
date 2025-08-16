@@ -25,7 +25,7 @@ export type IIconProps = ViewProps & {
 const getIconStyles = (
   size?: string | number,
   height?: number | string,
-  width?: number | string
+  width?: number | string,
 ) => {
   if (typeof size === 'number') {
     return { width: size, height: size };
@@ -69,7 +69,7 @@ export const Icon = React.forwardRef<View, IIconProps>(
       style,
       ...props
     },
-    ref
+    ref,
   ) => {
     const contextValue = useMemo(() => ({ size }), [size]);
 
@@ -98,7 +98,7 @@ export const Icon = React.forwardRef<View, IIconProps>(
         </View>
       </IconContext.Provider>
     );
-  }
+  },
 );
 
 // Display names for debugging

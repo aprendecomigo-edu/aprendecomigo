@@ -123,7 +123,7 @@ export class InvitationErrorBoundary extends Component<Props, State> {
     Alert.alert(
       'Relatório de Erro',
       'As informações do erro foram coletadas. Por favor, entre em contato com nosso suporte através do email suporte@aprendecomigo.com',
-      [{ text: 'OK', onPress: this.handleRetry }]
+      [{ text: 'OK', onPress: this.handleRetry }],
     );
   };
 
@@ -174,7 +174,7 @@ export interface WithErrorBoundaryProps {
 
 export function withInvitationErrorBoundary<P extends object>(
   Component: React.ComponentType<P>,
-  errorBoundaryProps?: WithErrorBoundaryProps
+  errorBoundaryProps?: WithErrorBoundaryProps,
 ) {
   const WrappedComponent = (props: P) => (
     <InvitationErrorBoundary {...errorBoundaryProps}>

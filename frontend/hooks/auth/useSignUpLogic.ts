@@ -73,7 +73,7 @@ export const useSignUpLogic = ({
       }
       return null;
     },
-    [userType]
+    [userType],
   );
 
   const sanitizeFormData = useCallback((data: SignUpFormData): SignUpFormData => {
@@ -128,7 +128,7 @@ export const useSignUpLogic = ({
 
         // Navigate to verification with appropriate next route
         const baseUrl = `/auth/verify-code?contact=${encodeURIComponent(
-          sanitizedData.userEmail
+          sanitizedData.userEmail,
         )}&contactType=${sanitizedData.primaryContact}`;
         const nextRoute =
           userType === 'tutor'
@@ -144,12 +144,12 @@ export const useSignUpLogic = ({
         if (error?.response?.status === 409) {
           toast.showToast(
             'error',
-            'An account with this email already exists. Try signing in instead.'
+            'An account with this email already exists. Try signing in instead.',
           );
         } else if (error?.response?.status === 400) {
           toast.showToast(
             'error',
-            'Invalid information provided. Please check your details and try again.'
+            'Invalid information provided. Please check your details and try again.',
           );
         } else {
           toast.showToast('error', 'Failed to complete registration. Please try again.');
@@ -167,7 +167,7 @@ export const useSignUpLogic = ({
       generateSchoolName,
       validateFormData,
       sanitizeFormData,
-    ]
+    ],
   );
 
   return {

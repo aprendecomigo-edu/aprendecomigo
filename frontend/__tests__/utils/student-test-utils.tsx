@@ -81,7 +81,7 @@ export const StudentTestData = {
 
 // Mock student balance data factory
 export const createMockStudentBalance = (
-  overrides: Partial<StudentBalanceResponse> = {}
+  overrides: Partial<StudentBalanceResponse> = {},
 ): StudentBalanceResponse => ({
   student_info: {
     id: 1,
@@ -209,7 +209,7 @@ export const createMockEmptyBalanceStudent = (): StudentBalanceResponse =>
 
 // Mock transaction history item factory
 export const createMockTransactionItem = (
-  overrides: Partial<TransactionHistoryItem> = {}
+  overrides: Partial<TransactionHistoryItem> = {},
 ): TransactionHistoryItem => ({
   id: 1,
   transaction_id: 'txn_123',
@@ -228,7 +228,7 @@ export const createMockTransactionItem = (
 
 // Mock paginated transaction history
 export const createMockTransactionHistory = (
-  overrides: Partial<PaginatedTransactionHistory> = {}
+  overrides: Partial<PaginatedTransactionHistory> = {},
 ): PaginatedTransactionHistory => ({
   count: 25,
   next: 'http://api.example.com/transactions?page=2',
@@ -272,7 +272,7 @@ export const createMockTransactionHistory = (
 
 // Mock purchase history item factory
 export const createMockPurchaseItem = (
-  overrides: Partial<PurchaseHistoryItem> = {}
+  overrides: Partial<PurchaseHistoryItem> = {},
 ): PurchaseHistoryItem => ({
   id: 1,
   transaction_id: 'txn_123',
@@ -312,7 +312,7 @@ export const createMockPurchaseItem = (
 
 // Mock paginated purchase history
 export const createMockPurchaseHistory = (
-  overrides: Partial<PaginatedPurchaseHistory> = {}
+  overrides: Partial<PaginatedPurchaseHistory> = {},
 ): PaginatedPurchaseHistory => ({
   count: 12,
   next: null,
@@ -392,7 +392,7 @@ export const createMockTopUpPackages = (): TopUpPackage[] => [
 
 // Mock dashboard state factory
 export const createMockDashboardState = (
-  overrides: Partial<DashboardState> = {}
+  overrides: Partial<DashboardState> = {},
 ): DashboardState => ({
   activeTab: 'overview',
   transactionFilters: {
@@ -413,7 +413,7 @@ export const createMockDashboardState = (
 
 // Mock useStudentBalance hook result
 export const createMockUseStudentBalance = (
-  overrides: Partial<UseStudentBalanceResult> = {}
+  overrides: Partial<UseStudentBalanceResult> = {},
 ): UseStudentBalanceResult => ({
   balance: createMockStudentBalance(),
   loading: false,
@@ -424,7 +424,7 @@ export const createMockUseStudentBalance = (
 
 // Mock useStudentDashboard hook result
 export const createMockUseStudentDashboard = (
-  overrides: Partial<UseStudentDashboardResult> = {}
+  overrides: Partial<UseStudentDashboardResult> = {},
 ): UseStudentDashboardResult => ({
   state: createMockDashboardState(),
   balance: createMockStudentBalance(),
@@ -505,7 +505,7 @@ export const createMockStudentWebSocket = () => {
 
 // Balance update WebSocket message factory
 export const createBalanceUpdateWebSocketMessage = (
-  balance: Partial<StudentBalanceResponse> = {}
+  balance: Partial<StudentBalanceResponse> = {},
 ) => ({
   type: 'balance_update',
   data: {
@@ -516,7 +516,7 @@ export const createBalanceUpdateWebSocketMessage = (
 
 // Transaction update WebSocket message factory
 export const createTransactionUpdateWebSocketMessage = (
-  transaction: Partial<TransactionHistoryItem> = {}
+  transaction: Partial<TransactionHistoryItem> = {},
 ) => ({
   type: 'transaction_update',
   data: {
@@ -549,7 +549,7 @@ export const simulateBalanceUpdate = (mockWs: any, newBalance: Partial<StudentBa
 
   // Simulate WebSocket message
   const messageHandler = mockWs.addEventListener.mock.calls.find(
-    call => call[0] === 'message'
+    call => call[0] === 'message',
   )?.[1];
 
   if (messageHandler) {
@@ -559,12 +559,12 @@ export const simulateBalanceUpdate = (mockWs: any, newBalance: Partial<StudentBa
 
 export const simulateTransactionUpdate = (
   mockWs: any,
-  transaction: Partial<TransactionHistoryItem>
+  transaction: Partial<TransactionHistoryItem>,
 ) => {
   const message = createTransactionUpdateWebSocketMessage(transaction);
 
   const messageHandler = mockWs.addEventListener.mock.calls.find(
-    call => call[0] === 'message'
+    call => call[0] === 'message',
   )?.[1];
 
   if (messageHandler) {

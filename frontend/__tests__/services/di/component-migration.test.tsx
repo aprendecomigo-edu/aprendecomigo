@@ -34,7 +34,7 @@ describe('Component Migration to Dependency Injection', () => {
       const { getByPlaceholderText, getByText } = render(
         <DependencyProvider dependencies={mockDependencies}>
           <SignInWithDI />
-        </DependencyProvider>
+        </DependencyProvider>,
       );
 
       expect(getByPlaceholderText('your_email@example.com')).toBeTruthy();
@@ -47,7 +47,7 @@ describe('Component Migration to Dependency Injection', () => {
       const { getByPlaceholderText, getByText } = render(
         <DependencyProvider dependencies={mockDependencies}>
           <SignInWithDI />
-        </DependencyProvider>
+        </DependencyProvider>,
       );
 
       const emailInput = getByPlaceholderText('your_email@example.com');
@@ -62,10 +62,10 @@ describe('Component Migration to Dependency Injection', () => {
         });
         expect(mockDependencies.toastService.showToast).toHaveBeenCalledWith(
           'success',
-          'Verification code sent to your email!'
+          'Verification code sent to your email!',
         );
         expect(mockDependencies.routerService.push).toHaveBeenCalledWith(
-          '/auth/verify-code?email=test%40example.com'
+          '/auth/verify-code?email=test%40example.com',
         );
       });
     });
@@ -77,7 +77,7 @@ describe('Component Migration to Dependency Injection', () => {
       const { getByPlaceholderText, getByText } = render(
         <DependencyProvider dependencies={mockDependencies}>
           <SignInWithDI />
-        </DependencyProvider>
+        </DependencyProvider>,
       );
 
       const emailInput = getByPlaceholderText('your_email@example.com');
@@ -89,7 +89,7 @@ describe('Component Migration to Dependency Injection', () => {
       await waitFor(() => {
         expect(mockDependencies.toastService.showToast).toHaveBeenCalledWith(
           'error',
-          'Failed to send verification code. Please try again.'
+          'Failed to send verification code. Please try again.',
         );
         expect(mockDependencies.routerService.push).not.toHaveBeenCalled();
       });
@@ -109,7 +109,7 @@ describe('Component Migration to Dependency Injection', () => {
       const { getByPlaceholderText, getByText } = render(
         <DependencyProvider dependencies={customMockDeps}>
           <SignInWithDI />
-        </DependencyProvider>
+        </DependencyProvider>,
       );
 
       fireEvent.changeText(getByPlaceholderText('your_email@example.com'), 'custom@test.com');
@@ -128,7 +128,7 @@ describe('Component Migration to Dependency Injection', () => {
       const { getByText } = render(
         <DependencyProvider dependencies={mockDependencies}>
           <SignUpWithDI />
-        </DependencyProvider>
+        </DependencyProvider>,
       );
 
       expect(getByText('Individual Tutor')).toBeTruthy();
@@ -147,7 +147,7 @@ describe('Component Migration to Dependency Injection', () => {
       const { getByText } = render(
         <DependencyProvider dependencies={mockDependencies}>
           <SignUpWithDI />
-        </DependencyProvider>
+        </DependencyProvider>,
       );
 
       // Select tutor tab
@@ -165,7 +165,7 @@ describe('Component Migration to Dependency Injection', () => {
             school: expect.objectContaining({
               name: "Test Tutor's Tutoring Practice",
             }),
-          })
+          }),
         );
       });
     });
@@ -176,7 +176,7 @@ describe('Component Migration to Dependency Injection', () => {
       const { getByText, getByPlaceholderText } = render(
         <DependencyProvider dependencies={mockDependencies}>
           <SignUpWithDI />
-        </DependencyProvider>
+        </DependencyProvider>,
       );
 
       // Select school tab
@@ -200,7 +200,7 @@ describe('Component Migration to Dependency Injection', () => {
             school: expect.objectContaining({
               name: 'Test School',
             }),
-          })
+          }),
         );
       });
     });
@@ -211,7 +211,7 @@ describe('Component Migration to Dependency Injection', () => {
       const { getByPlaceholderText, getByText } = render(
         <DependencyProvider dependencies={mockDependencies}>
           <VerifyCodeWithDI />
-        </DependencyProvider>
+        </DependencyProvider>,
       );
 
       expect(getByPlaceholderText('Enter the verification code')).toBeTruthy();
@@ -239,7 +239,7 @@ describe('Component Migration to Dependency Injection', () => {
       const { getByPlaceholderText, getByText } = render(
         <DependencyProvider dependencies={mockDependencies}>
           <VerifyCodeWithDI />
-        </DependencyProvider>
+        </DependencyProvider>,
       );
 
       const codeInput = getByPlaceholderText('Enter the verification code');
@@ -252,13 +252,13 @@ describe('Component Migration to Dependency Injection', () => {
         expect(mockDependencies.authApi.verifyEmailCode).toHaveBeenCalledWith(
           expect.objectContaining({
             code: '123456',
-          })
+          }),
         );
         expect(mockDependencies.authContextService.setUserProfile).toHaveBeenCalledWith(mockUser);
         expect(mockDependencies.authContextService.checkAuthStatus).toHaveBeenCalled();
         expect(mockDependencies.toastService.showToast).toHaveBeenCalledWith(
           'success',
-          'Verification successful!'
+          'Verification successful!',
         );
       });
     });
@@ -290,7 +290,7 @@ describe('Component Migration to Dependency Injection', () => {
       const { getByPlaceholderText, getByText } = render(
         <DependencyProvider dependencies={mockDependencies}>
           <VerifyCodeWithDI />
-        </DependencyProvider>
+        </DependencyProvider>,
       );
 
       const codeInput = getByPlaceholderText('Enter the verification code');
@@ -327,10 +327,10 @@ describe('Component Migration to Dependency Injection', () => {
         });
         expect(mockDependencies.toastService.showToast).toHaveBeenCalledWith(
           'success',
-          'Verification code sent to your email!'
+          'Verification code sent to your email!',
         );
         expect(mockDependencies.routerService.push).toHaveBeenCalledWith(
-          '/auth/verify-code?email=hook%40test.com'
+          '/auth/verify-code?email=hook%40test.com',
         );
       });
 
@@ -408,7 +408,7 @@ describe('Component Migration to Dependency Injection', () => {
             name: 'New User',
             email: 'new@example.com',
             user_type: 'student',
-          })
+          }),
         );
       });
 
@@ -421,7 +421,7 @@ describe('Component Migration to Dependency Injection', () => {
             wrapper: ({ children }) => (
               <DependencyProvider dependencies={mockDependencies}>{children}</DependencyProvider>
             ),
-          }
+          },
         );
 
         await act(async () => {
@@ -434,7 +434,7 @@ describe('Component Migration to Dependency Injection', () => {
         expect(mockDependencies.authApi.createUser).toHaveBeenCalledWith(
           expect.objectContaining({
             user_type: 'tutor',
-          })
+          }),
         );
       });
     });
@@ -457,7 +457,7 @@ describe('Component Migration to Dependency Injection', () => {
             wrapper: ({ children }) => (
               <DependencyProvider dependencies={mockDependencies}>{children}</DependencyProvider>
             ),
-          }
+          },
         );
 
         await act(async () => {
@@ -488,7 +488,7 @@ describe('Component Migration to Dependency Injection', () => {
             wrapper: ({ children }) => (
               <DependencyProvider dependencies={mockDependencies}>{children}</DependencyProvider>
             ),
-          }
+          },
         );
 
         await act(async () => {
@@ -547,7 +547,7 @@ describe('Component Migration to Dependency Injection', () => {
       fastApiMock.authApi.requestEmailCode.mockResolvedValue({ success: true, speed: 'fast' });
       slowApiMock.authApi.requestEmailCode.mockImplementation(
         () =>
-          new Promise(resolve => setTimeout(() => resolve({ success: true, speed: 'slow' }), 100))
+          new Promise(resolve => setTimeout(() => resolve({ success: true, speed: 'slow' }), 100)),
       );
 
       // Each test can use different implementations
@@ -580,7 +580,7 @@ describe('Component Migration to Dependency Injection', () => {
         'auth_email_submitted',
         expect.objectContaining({
           email_domain: 'test.com',
-        })
+        }),
       );
     });
 
@@ -620,7 +620,7 @@ describe('Component Migration to Dependency Injection', () => {
       const { getByText: getNewText } = render(
         <DependencyProvider dependencies={mockDependencies}>
           <SignInWithDI />
-        </DependencyProvider>
+        </DependencyProvider>,
       );
 
       // New component with DI

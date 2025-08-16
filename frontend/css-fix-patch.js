@@ -74,11 +74,9 @@ if (typeof window !== 'undefined' && window.CSSStyleDeclaration) {
     }
 
     if (__DEV__) {
-
       if (__DEV__) {
         console.log('Applied CSS compatibility patch for NativeWind + React Native Web');
       }
-
     }
   } catch (e) {
     if (__DEV__) {
@@ -110,11 +108,9 @@ if (typeof window !== 'undefined' && window.React && window.ReactDOM) {
   };
 
   if (__DEV__) {
-
     if (__DEV__) {
       console.log('Applied React createElement CSS error prevention patch');
     }
-
   }
 }
 

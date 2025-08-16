@@ -173,7 +173,7 @@ describe('VerifyCode Component Tests', () => {
       authApi.verifyEmailCode({
         email: 'test@example.com',
         code: '000000',
-      })
+      }),
     ).rejects.toMatchObject(mockError);
   });
 
@@ -191,7 +191,7 @@ describe('VerifyCode Component Tests', () => {
       authApi.verifyEmailCode({
         email: 'test@example.com',
         code: '123456',
-      })
+      }),
     ).rejects.toMatchObject(mockError);
   });
 
@@ -303,11 +303,11 @@ describe('VerifyCode Component Tests', () => {
     const nextRoute = '/custom/route';
 
     const queryString = `contact=${encodeURIComponent(
-      contact
+      contact,
     )}&contactType=${contactType}&nextRoute=${encodeURIComponent(nextRoute)}`;
 
     expect(queryString).toBe(
-      'contact=test%40example.com&contactType=email&nextRoute=%2Fcustom%2Froute'
+      'contact=test%40example.com&contactType=email&nextRoute=%2Fcustom%2Froute',
     );
 
     // Parse parameters
@@ -330,20 +330,20 @@ describe('VerifyCode Component Tests', () => {
     toastInstance.showToast('error', 'Invalid verification code. Please try again.');
     expect(mockShowToast).toHaveBeenCalledWith(
       'error',
-      'Invalid verification code. Please try again.'
+      'Invalid verification code. Please try again.',
     );
 
     toastInstance.showToast('error', 'Too many attempts. Please wait and try again.');
     expect(mockShowToast).toHaveBeenCalledWith(
       'error',
-      'Too many attempts. Please wait and try again.'
+      'Too many attempts. Please wait and try again.',
     );
 
     // Resend success
     toastInstance.showToast('success', 'New verification code sent to your email!');
     expect(mockShowToast).toHaveBeenCalledWith(
       'success',
-      'New verification code sent to your email!'
+      'New verification code sent to your email!',
     );
   });
 

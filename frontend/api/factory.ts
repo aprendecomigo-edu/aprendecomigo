@@ -34,7 +34,7 @@ class StorageAdapter implements StorageGateway {
 export function createApiClient(
   storage: StorageInterface,
   onAuthError?: AuthErrorCallback,
-  config?: Partial<ApiClientConfig>
+  config?: Partial<ApiClientConfig>,
 ): ApiClient {
   const defaultConfig: ApiClientConfig = {
     baseURL: API_URL,
@@ -54,7 +54,7 @@ export function createApiClient(
 export function createApiGateway(
   storage: StorageInterface,
   onAuthError?: AuthErrorCallback,
-  config?: Partial<ApiClientConfig>
+  config?: Partial<ApiClientConfig>,
 ): ApiGateway {
   const apiClient = createApiClient(storage, onAuthError, config);
   return new ApiGatewayImpl(apiClient);

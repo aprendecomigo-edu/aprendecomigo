@@ -118,7 +118,7 @@ export class PaymentMethodApiClient {
    */
   static async addPaymentMethod(
     request: AddPaymentMethodRequest,
-    email?: string
+    email?: string,
   ): Promise<AddPaymentMethodResponse> {
     try {
       const data = email ? { ...request, email } : request;
@@ -178,7 +178,7 @@ export class PaymentMethodApiClient {
 
       if (error.response?.status === 400) {
         throw new Error(
-          'Cannot remove the default payment method. Please set another method as default first.'
+          'Cannot remove the default payment method. Please set another method as default first.',
         );
       } else if (error.response?.status === 404) {
         throw new Error('Payment method not found');
@@ -207,7 +207,7 @@ export class PaymentMethodApiClient {
       const data = email ? { email } : {};
       await apiClient.post(
         `/api/student-balance/payment-methods/${paymentMethodId}/set-default/`,
-        data
+        data,
       );
     } catch (error: any) {
       console.error('Error setting default payment method:', error);

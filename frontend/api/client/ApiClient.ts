@@ -78,7 +78,7 @@ export class ApiClient {
       },
       error => {
         return Promise.reject(error);
-      }
+      },
     );
   }
 
@@ -118,7 +118,7 @@ export class ApiClient {
         }
 
         return Promise.reject(error);
-      }
+      },
     );
   }
 

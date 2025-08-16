@@ -5,7 +5,7 @@
  * The actual form logic is in SignUpForm, and business logic is in useSignUpLogic hook.
  */
 
-import useRouter from '@unitools/router';
+import { useRouter } from 'expo-router';
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
 

@@ -157,7 +157,7 @@ const AdminDashboard = () => {
       prev.map(filter => ({
         ...filter,
         active: filter.value === filterValue,
-      }))
+      })),
     );
   };
 

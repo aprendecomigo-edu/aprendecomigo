@@ -63,7 +63,7 @@ const StudentDetailPage = () => {
 
     const lastSessionDate = new Date(student.last_session_date);
     const daysSinceLastSession = Math.floor(
-      (Date.now() - lastSessionDate.getTime()) / (1000 * 60 * 60 * 24)
+      (Date.now() - lastSessionDate.getTime()) / (1000 * 60 * 60 * 24),
     );
 
     if (daysSinceLastSession <= 7) {
@@ -210,7 +210,7 @@ const StudentDetailPage = () => {
                       <Box className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
                         <Box
                           className={`h-full rounded-full ${getProgressColor(
-                            student.completion_percentage
+                            student.completion_percentage,
                           )}`}
                           style={{ width: `${Math.min(student.completion_percentage, 100)}%` }}
                         />
@@ -366,10 +366,10 @@ const StudentDetailPage = () => {
                               assessment.assessment_type === 'quiz'
                                 ? 'bg-blue-100'
                                 : assessment.assessment_type === 'test'
-                                ? 'bg-purple-100'
-                                : assessment.assessment_type === 'homework'
-                                ? 'bg-orange-100'
-                                : 'bg-gray-100'
+                                  ? 'bg-purple-100'
+                                  : assessment.assessment_type === 'homework'
+                                    ? 'bg-orange-100'
+                                    : 'bg-gray-100'
                             }
                           >
                             <BadgeText
@@ -377,19 +377,19 @@ const StudentDetailPage = () => {
                                 assessment.assessment_type === 'quiz'
                                   ? 'text-blue-800'
                                   : assessment.assessment_type === 'test'
-                                  ? 'text-purple-800'
-                                  : assessment.assessment_type === 'homework'
-                                  ? 'text-orange-800'
-                                  : 'text-gray-800'
+                                    ? 'text-purple-800'
+                                    : assessment.assessment_type === 'homework'
+                                      ? 'text-orange-800'
+                                      : 'text-gray-800'
                               }
                             >
                               {assessment.assessment_type === 'quiz'
                                 ? 'Quiz'
                                 : assessment.assessment_type === 'test'
-                                ? 'Teste'
-                                : assessment.assessment_type === 'homework'
-                                ? 'TPC'
-                                : assessment.assessment_type}
+                                  ? 'Teste'
+                                  : assessment.assessment_type === 'homework'
+                                    ? 'TPC'
+                                    : assessment.assessment_type}
                             </BadgeText>
                           </Badge>
                           <Text className="text-xs text-gray-500">
@@ -406,10 +406,10 @@ const StudentDetailPage = () => {
                             assessment.percentage >= 80
                               ? 'bg-green-500'
                               : assessment.percentage >= 60
-                              ? 'bg-yellow-500'
-                              : assessment.percentage >= 40
-                              ? 'bg-orange-500'
-                              : 'bg-red-500'
+                                ? 'bg-yellow-500'
+                                : assessment.percentage >= 40
+                                  ? 'bg-orange-500'
+                                  : 'bg-red-500'
                           }`}
                         />
                       </VStack>

@@ -71,13 +71,13 @@ export default function SchoolSettingsPage() {
           setAuthorizationError(null);
         } else {
           setAuthorizationError(
-            'You do not have administrative access to any schools. Please contact your system administrator.'
+            'You do not have administrative access to any schools. Please contact your system administrator.',
           );
           setSelectedSchoolId(null);
         }
       } catch (error) {
         setAuthorizationError(
-          'Failed to load school information. Please try again or contact support.'
+          'Failed to load school information. Please try again or contact support.',
         );
         setSelectedSchoolId(null);
         setAdminSchools([]);

@@ -94,7 +94,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       expect(result.current.isVerifying).toBe(false);
@@ -126,7 +126,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
           authContext: customAuthContext,
           router: customRouter,
           toast: customToast,
-        })
+        }),
       );
 
       expect(result.current.isVerifying).toBe(false);
@@ -144,7 +144,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       expect(result.current.contact).toBe('+1234567890');
@@ -164,7 +164,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -191,7 +191,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -223,7 +223,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -251,7 +251,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -260,7 +260,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
 
       expect(mockShowToast).toHaveBeenCalledWith(
         'error',
-        'Too many attempts. Please wait and try again.'
+        'Too many attempts. Please wait and try again.',
       );
     });
 
@@ -281,7 +281,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       // Start verification
@@ -316,7 +316,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -328,7 +328,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
       });
       expect(mockShowToast).toHaveBeenCalledWith(
         'success',
-        'New verification code sent to your email!'
+        'New verification code sent to your email!',
       );
     });
 
@@ -345,7 +345,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -357,7 +357,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
       });
       expect(mockShowToast).toHaveBeenCalledWith(
         'success',
-        'New verification code sent to your phone!'
+        'New verification code sent to your phone!',
       );
     });
 
@@ -375,7 +375,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -384,7 +384,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
 
       expect(mockShowToast).toHaveBeenCalledWith(
         'error',
-        'Failed to send new verification code. Please try again.'
+        'Failed to send new verification code. Please try again.',
       );
     });
 
@@ -405,7 +405,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       // Start resend
@@ -438,7 +438,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -459,7 +459,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -492,7 +492,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -523,7 +523,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -549,7 +549,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -572,7 +572,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -595,7 +595,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -618,7 +618,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -644,7 +644,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -667,7 +667,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       // First, cause an error
@@ -702,7 +702,7 @@ describe('useVerifyCodeLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       // Test the complete business logic flow

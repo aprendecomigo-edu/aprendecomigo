@@ -65,7 +65,7 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({
       },
       { number: 8, name: 'Review & Submit', description: 'Final review and profile activation' },
     ],
-    []
+    [],
   );
 
   const milestones = useMemo(
@@ -106,7 +106,7 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({
         icon: 'star',
       },
     ],
-    []
+    [],
   );
 
   const getStepStatus = (stepNumber: number) => {
@@ -124,7 +124,7 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({
     if (progress.milestones_achieved.includes(milestone.id)) return 'achieved';
 
     const allRequiredCompleted = milestone.requiredSteps.every(step =>
-      progress.completed_steps.includes(step)
+      progress.completed_steps.includes(step),
     );
 
     if (allRequiredCompleted) return 'available';
@@ -178,8 +178,8 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({
                 progressPercentage === 100
                   ? 'bg-green-100 text-green-800'
                   : progressPercentage >= 50
-                  ? 'bg-blue-100 text-blue-800'
-                  : 'bg-yellow-100 text-yellow-800'
+                    ? 'bg-blue-100 text-blue-800'
+                    : 'bg-yellow-100 text-yellow-800'
               }`}
             >
               <Text className="font-semibold">{Math.round(progressPercentage)}% Complete</Text>
@@ -218,8 +218,8 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({
                     status === 'current'
                       ? 'border-blue-200 bg-blue-50'
                       : status === 'completed'
-                      ? 'border-green-200 bg-green-50'
-                      : 'border-gray-200 bg-gray-50'
+                        ? 'border-green-200 bg-green-50'
+                        : 'border-gray-200 bg-gray-50'
                   } ${isClickable ? 'hover:shadow-md cursor-pointer' : ''}`}
                   onTouchEnd={isClickable ? () => onStepClick!(step.number) : undefined}
                 >
@@ -243,8 +243,8 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({
                             status === 'current'
                               ? 'text-blue-900'
                               : status === 'completed'
-                              ? 'text-green-900'
-                              : 'text-gray-600'
+                                ? 'text-green-900'
+                                : 'text-gray-600'
                           }`}
                         >
                           {step.name}
@@ -262,8 +262,8 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({
                           status === 'current'
                             ? 'text-blue-700'
                             : status === 'completed'
-                            ? 'text-green-700'
-                            : 'text-gray-500'
+                              ? 'text-green-700'
+                              : 'text-gray-500'
                         }`}
                       >
                         {step.description}
@@ -304,8 +304,8 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({
                       status === 'achieved'
                         ? 'border-yellow-200 bg-yellow-50'
                         : status === 'available'
-                        ? 'border-blue-200 bg-blue-50'
-                        : 'border-gray-200 bg-gray-50'
+                          ? 'border-blue-200 bg-blue-50'
+                          : 'border-gray-200 bg-gray-50'
                     }`}
                   >
                     <Box className="flex-shrink-0">
@@ -324,8 +324,8 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({
                           status === 'achieved'
                             ? 'text-yellow-900'
                             : status === 'available'
-                            ? 'text-blue-900'
-                            : 'text-gray-600'
+                              ? 'text-blue-900'
+                              : 'text-gray-600'
                         }`}
                       >
                         {milestone.name}
@@ -336,8 +336,8 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({
                           status === 'achieved'
                             ? 'text-yellow-700'
                             : status === 'available'
-                            ? 'text-blue-700'
-                            : 'text-gray-500'
+                              ? 'text-blue-700'
+                              : 'text-gray-500'
                         }`}
                       >
                         {milestone.description}

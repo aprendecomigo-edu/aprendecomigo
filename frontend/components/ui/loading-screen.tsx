@@ -13,10 +13,10 @@ interface LoadingScreenProps {
  * Reusable loading screen component for Suspense fallbacks and async operations
  * Used throughout the app for consistent loading states
  */
-export function LoadingScreen({ 
-  message = 'Loading...', 
+export function LoadingScreen({
+  message = 'Loading...',
   size = 'large',
-  className = 'flex-1 justify-center items-center bg-gray-50'
+  className = 'flex-1 justify-center items-center bg-gray-50',
 }: LoadingScreenProps) {
   return (
     <View className={className}>

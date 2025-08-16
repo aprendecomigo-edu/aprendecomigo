@@ -34,54 +34,50 @@ interface MetricItemProps {
   color: string;
 }
 
-const MetricItem = React.memo<MetricItemProps>(({
-  title,
-  value,
-  subtitle,
-  trend,
-  icon: IconComponent,
-  color,
-}) => (
-  <VStack space="xs" className="flex-1 min-w-0">
-    <HStack space="sm" className="items-center">
-      <Icon as={IconComponent} size="sm" className={`text-${color}-600`} />
-      <Text className="text-sm font-medium text-gray-600 flex-1">{title}</Text>
-    </HStack>
+const MetricItem = React.memo<MetricItemProps>(
+  ({ title, value, subtitle, trend, icon: IconComponent, color }) => (
+    <VStack space="xs" className="flex-1 min-w-0">
+      <HStack space="sm" className="items-center">
+        <Icon as={IconComponent} size="sm" className={`text-${color}-600`} />
+        <Text className="text-sm font-medium text-gray-600 flex-1">{title}</Text>
+      </HStack>
 
-    <VStack space="xs">
-      <Text className="text-2xl font-bold text-gray-900">{value.toLocaleString()}</Text>
+      <VStack space="xs">
+        <Text className="text-2xl font-bold text-gray-900">{value.toLocaleString()}</Text>
 
-      {subtitle && <Text className="text-xs text-gray-500">{subtitle}</Text>}
+        {subtitle && <Text className="text-xs text-gray-500">{subtitle}</Text>}
 
-      {trend && (
-        <HStack space="xs" className="items-center">
-          <Icon
-            as={trend.isPositive ? TrendingUp : TrendingDown}
-            size="xs"
-            className={trend.isPositive ? 'text-green-600' : 'text-red-600'}
-          />
-          <Text
-            className={`text-xs font-medium ${
-              trend.isPositive ? 'text-green-600' : 'text-red-600'
-            }`}
-          >
-            {trend.isPositive ? '+' : ''}
-            {trend.value}%
-          </Text>
-        </HStack>
-      )}
+        {trend && (
+          <HStack space="xs" className="items-center">
+            <Icon
+              as={trend.isPositive ? TrendingUp : TrendingDown}
+              size="xs"
+              className={trend.isPositive ? 'text-green-600' : 'text-red-600'}
+            />
+            <Text
+              className={`text-xs font-medium ${
+                trend.isPositive ? 'text-green-600' : 'text-red-600'
+              }`}
+            >
+              {trend.isPositive ? '+' : ''}
+              {trend.value}%
+            </Text>
+          </HStack>
+        )}
+      </VStack>
     </VStack>
-  </VStack>
-), (prevProps, nextProps) => {
-  // Memoize MetricItem to prevent unnecessary re-renders
-  return (
-    prevProps.title === nextProps.title &&
-    prevProps.value === nextProps.value &&
-    prevProps.subtitle === nextProps.subtitle &&
-    prevProps.color === nextProps.color &&
-    JSON.stringify(prevProps.trend) === JSON.stringify(nextProps.trend)
-  );
-});
+  ),
+  (prevProps, nextProps) => {
+    // Memoize MetricItem to prevent unnecessary re-renders
+    return (
+      prevProps.title === nextProps.title &&
+      prevProps.value === nextProps.value &&
+      prevProps.subtitle === nextProps.subtitle &&
+      prevProps.color === nextProps.color &&
+      JSON.stringify(prevProps.trend) === JSON.stringify(nextProps.trend)
+    );
+  },
+);
 
 const MetricItemSkeleton: React.FC = () => (
   <VStack space="xs" className="flex-1 min-w-0">
@@ -94,154 +90,159 @@ const MetricItemSkeleton: React.FC = () => (
   </VStack>
 );
 
-const MetricsCard = React.memo<MetricsCardProps>(({ metrics, isLoading }) => {
-  if (isLoading) {
+const MetricsCard = React.memo<MetricsCardProps>(
+  ({ metrics, isLoading }) => {
+    if (isLoading) {
+      return (
+        <Card variant="elevated" className="bg-white shadow-sm">
+          <CardHeader>
+            <Skeleton className="h-6 w-32 rounded" />
+          </CardHeader>
+          <CardBody>
+            <VStack space="lg">
+              <HStack space="lg" className="flex-wrap">
+                <MetricItemSkeleton />
+                <MetricItemSkeleton />
+              </HStack>
+              <HStack space="lg" className="flex-wrap">
+                <MetricItemSkeleton />
+                <MetricItemSkeleton />
+              </HStack>
+            </VStack>
+          </CardBody>
+        </Card>
+      );
+    }
+
+    if (!metrics) {
+      return (
+        <Card variant="elevated" className="bg-white shadow-sm">
+          <CardBody>
+            <VStack space="md" className="items-center py-8">
+              <Icon as={Activity} size="xl" className="text-gray-300" />
+              <Text className="text-lg font-medium text-gray-600">Métricas indisponíveis</Text>
+              <Text className="text-sm text-gray-500 text-center">
+                Não foi possível carregar as métricas da escola
+              </Text>
+            </VStack>
+          </CardBody>
+        </Card>
+      );
+    }
+
+    // Calculate trends (using latest data point if available) - memoized for performance
+    const trends = useMemo(() => {
+      if (!metrics) return { studentTrend: null, teacherTrend: null, classTrend: null };
+
+      const getLatestTrend = (
+        trendData: Array<{ date: string; count: number; change: number }>,
+      ) => {
+        if (!trendData || trendData.length === 0) return null;
+        const latest = trendData[trendData.length - 1];
+        return {
+          value: Math.abs(latest.change),
+          isPositive: latest.change >= 0,
+        };
+      };
+
+      return {
+        studentTrend: getLatestTrend(metrics.student_count.trend.daily),
+        teacherTrend: getLatestTrend(metrics.teacher_count.trend.daily),
+        classTrend: getLatestTrend(metrics.class_metrics.trend.daily),
+      };
+    }, [metrics]);
+
     return (
       <Card variant="elevated" className="bg-white shadow-sm">
         <CardHeader>
-          <Skeleton className="h-6 w-32 rounded" />
+          <Heading size="md" className="text-gray-900">
+            Métricas da Escola
+          </Heading>
         </CardHeader>
         <CardBody>
           <VStack space="lg">
+            {/* Students and Teachers Row */}
             <HStack space="lg" className="flex-wrap">
-              <MetricItemSkeleton />
-              <MetricItemSkeleton />
+              <MetricItem
+                title="Estudantes"
+                value={metrics.student_count.total}
+                subtitle={`${metrics.student_count.active} ativos`}
+                trend={trends.studentTrend}
+                icon={Users}
+                color="blue"
+              />
+
+              <MetricItem
+                title="Professores"
+                value={metrics.teacher_count.total}
+                subtitle={`${metrics.teacher_count.active} ativos`}
+                trend={trends.teacherTrend}
+                icon={GraduationCap}
+                color="green"
+              />
             </HStack>
+
+            {/* Classes and Engagement Row */}
             <HStack space="lg" className="flex-wrap">
-              <MetricItemSkeleton />
-              <MetricItemSkeleton />
+              <MetricItem
+                title="Aulas Ativas"
+                value={metrics.class_metrics.active_classes}
+                subtitle={`${metrics.class_metrics.completed_today} hoje`}
+                trend={trends.classTrend}
+                icon={BookOpen}
+                color="purple"
+              />
+
+              <MetricItem
+                title="Taxa de Aceitação"
+                value={Math.round(metrics.engagement_metrics.acceptance_rate * 100)}
+                subtitle={`${metrics.engagement_metrics.invitations_sent} convites`}
+                trend={
+                  metrics.engagement_metrics.acceptance_rate >= 0.7
+                    ? {
+                        value: Math.round(metrics.engagement_metrics.acceptance_rate * 100),
+                        isPositive: true,
+                      }
+                    : {
+                        value: Math.round((1 - metrics.engagement_metrics.acceptance_rate) * 100),
+                        isPositive: false,
+                      }
+                }
+                icon={Activity}
+                color="orange"
+              />
             </HStack>
-          </VStack>
-        </CardBody>
-      </Card>
-    );
-  }
 
-  if (!metrics) {
-    return (
-      <Card variant="elevated" className="bg-white shadow-sm">
-        <CardBody>
-          <VStack space="md" className="items-center py-8">
-            <Icon as={Activity} size="xl" className="text-gray-300" />
-            <Text className="text-lg font-medium text-gray-600">Métricas indisponíveis</Text>
-            <Text className="text-sm text-gray-500 text-center">
-              Não foi possível carregar as métricas da escola
-            </Text>
-          </VStack>
-        </CardBody>
-      </Card>
-    );
-  }
-
-  // Calculate trends (using latest data point if available) - memoized for performance
-  const trends = useMemo(() => {
-    if (!metrics) return { studentTrend: null, teacherTrend: null, classTrend: null };
-    
-    const getLatestTrend = (trendData: Array<{ date: string; count: number; change: number }>) => {
-      if (!trendData || trendData.length === 0) return null;
-      const latest = trendData[trendData.length - 1];
-      return {
-        value: Math.abs(latest.change),
-        isPositive: latest.change >= 0,
-      };
-    };
-
-    return {
-      studentTrend: getLatestTrend(metrics.student_count.trend.daily),
-      teacherTrend: getLatestTrend(metrics.teacher_count.trend.daily),
-      classTrend: getLatestTrend(metrics.class_metrics.trend.daily),
-    };
-  }, [metrics]);
-
-  return (
-    <Card variant="elevated" className="bg-white shadow-sm">
-      <CardHeader>
-        <Heading size="md" className="text-gray-900">
-          Métricas da Escola
-        </Heading>
-      </CardHeader>
-      <CardBody>
-        <VStack space="lg">
-          {/* Students and Teachers Row */}
-          <HStack space="lg" className="flex-wrap">
-            <MetricItem
-              title="Estudantes"
-              value={metrics.student_count.total}
-              subtitle={`${metrics.student_count.active} ativos`}
-              trend={trends.studentTrend}
-              icon={Users}
-              color="blue"
-            />
-
-            <MetricItem
-              title="Professores"
-              value={metrics.teacher_count.total}
-              subtitle={`${metrics.teacher_count.active} ativos`}
-              trend={trends.teacherTrend}
-              icon={GraduationCap}
-              color="green"
-            />
-          </HStack>
-
-          {/* Classes and Engagement Row */}
-          <HStack space="lg" className="flex-wrap">
-            <MetricItem
-              title="Aulas Ativas"
-              value={metrics.class_metrics.active_classes}
-              subtitle={`${metrics.class_metrics.completed_today} hoje`}
-              trend={trends.classTrend}
-              icon={BookOpen}
-              color="purple"
-            />
-
-            <MetricItem
-              title="Taxa de Aceitação"
-              value={Math.round(metrics.engagement_metrics.acceptance_rate * 100)}
-              subtitle={`${metrics.engagement_metrics.invitations_sent} convites`}
-              trend={
-                metrics.engagement_metrics.acceptance_rate >= 0.7
-                  ? {
-                      value: Math.round(metrics.engagement_metrics.acceptance_rate * 100),
-                      isPositive: true,
-                    }
-                  : {
-                      value: Math.round((1 - metrics.engagement_metrics.acceptance_rate) * 100),
-                      isPositive: false,
-                    }
-              }
-              icon={Activity}
-              color="orange"
-            />
-          </HStack>
-
-          {/* Completion Rate Bar */}
-          {metrics.class_metrics.completion_rate > 0 && (
-            <VStack space="xs">
-              <HStack className="justify-between items-center">
-                <Text className="text-sm font-medium text-gray-600">Taxa de Conclusão</Text>
-                <Text className="text-sm font-bold text-gray-900">
-                  {Math.round(metrics.class_metrics.completion_rate * 100)}%
-                </Text>
-              </HStack>
-              <VStack className="w-full bg-gray-200 rounded-full h-2">
-                <VStack
-                  className="bg-blue-600 h-2 rounded-full"
-                  style={{ width: `${Math.round(metrics.class_metrics.completion_rate * 100)}%` }}
-                />
+            {/* Completion Rate Bar */}
+            {metrics.class_metrics.completion_rate > 0 && (
+              <VStack space="xs">
+                <HStack className="justify-between items-center">
+                  <Text className="text-sm font-medium text-gray-600">Taxa de Conclusão</Text>
+                  <Text className="text-sm font-bold text-gray-900">
+                    {Math.round(metrics.class_metrics.completion_rate * 100)}%
+                  </Text>
+                </HStack>
+                <VStack className="w-full bg-gray-200 rounded-full h-2">
+                  <VStack
+                    className="bg-blue-600 h-2 rounded-full"
+                    style={{ width: `${Math.round(metrics.class_metrics.completion_rate * 100)}%` }}
+                  />
+                </VStack>
               </VStack>
-            </VStack>
-          )}
-        </VStack>
-      </CardBody>
-    </Card>
-  );
-}, (prevProps, nextProps) => {
-  // Custom comparison function for MetricsCard
-  return (
-    prevProps.isLoading === nextProps.isLoading &&
-    JSON.stringify(prevProps.metrics) === JSON.stringify(nextProps.metrics)
-  );
-});
+            )}
+          </VStack>
+        </CardBody>
+      </Card>
+    );
+  },
+  (prevProps, nextProps) => {
+    // Custom comparison function for MetricsCard
+    return (
+      prevProps.isLoading === nextProps.isLoading &&
+      JSON.stringify(prevProps.metrics) === JSON.stringify(nextProps.metrics)
+    );
+  },
+);
 
 export { MetricsCard };
 export default MetricsCard;

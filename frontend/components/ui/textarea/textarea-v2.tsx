@@ -72,11 +72,11 @@ export const Textarea = React.forwardRef<View, ITextareaProps>(
       children,
       ...props
     },
-    ref
+    ref,
   ) => {
     const contextValue = useMemo(
       () => ({ variant, size, isInvalid, isDisabled }),
-      [variant, size, isInvalid, isDisabled]
+      [variant, size, isInvalid, isDisabled],
     );
 
     return (
@@ -94,7 +94,7 @@ export const Textarea = React.forwardRef<View, ITextareaProps>(
         </View>
       </TextareaContext.Provider>
     );
-  }
+  },
 );
 
 // TextareaInput component
@@ -115,7 +115,7 @@ export const TextareaInput = React.forwardRef<TextInput, ITextareaInputProps>(
         })}
       />
     );
-  }
+  },
 );
 
 // Display names for debugging

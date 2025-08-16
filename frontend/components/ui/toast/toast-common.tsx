@@ -177,7 +177,7 @@ export function createToastComponents(UIToast: any) {
           {...props}
         />
       );
-    }
+    },
   );
 
   const ToastTitle = React.forwardRef<React.ElementRef<typeof UIToast.Title>, IToastTitleProps>(
@@ -197,7 +197,7 @@ export function createToastComponents(UIToast: any) {
           })}
         />
       );
-    }
+    },
   );
 
   const ToastDescription = React.forwardRef<

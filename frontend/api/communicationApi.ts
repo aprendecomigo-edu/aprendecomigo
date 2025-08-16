@@ -206,7 +206,7 @@ class CommunicationApi {
 
   async sendTestEmail(
     templateId: number,
-    testEmail: string
+    testEmail: string,
   ): Promise<{ success: boolean; message: string }> {
     const response = await apiClient.post(`/accounts/communication/templates/${templateId}/test/`, {
       test_email: testEmail,
@@ -270,7 +270,7 @@ class CommunicationApi {
 
   async updateOnboardingProgress(
     step: number,
-    data?: Record<string, any>
+    data?: Record<string, any>,
   ): Promise<TeacherOnboardingProgress> {
     const response = await apiClient.patch('/communication/onboarding/me/', {
       current_step: step,
@@ -343,7 +343,7 @@ class CommunicationApi {
       tags: string[];
       order: number;
       is_active: boolean;
-    }>
+    }>,
   ): Promise<FAQ> {
     const response = await apiClient.patch(`/communication/admin/faqs/${id}/`, data);
     return response.data;
@@ -377,7 +377,7 @@ class CommunicationApi {
   }> {
     const response = await apiClient.post(
       '/accounts/communication/templates/validate/',
-      templateContent
+      templateContent,
     );
     return response.data;
   }

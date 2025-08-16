@@ -299,13 +299,13 @@ export default function FraudAlertsSummary({
   onViewAllDisputes,
 }: FraudAlertsSummaryProps) {
   const activeAlerts = alerts.filter(
-    alert => alert.status === 'active' || alert.status === 'investigating'
+    alert => alert.status === 'active' || alert.status === 'investigating',
   );
   const urgentDisputes = disputes.filter(
     dispute =>
       dispute.status.includes('needs_response') ||
       (dispute.evidence_due_by &&
-        new Date(dispute.evidence_due_by) <= new Date(Date.now() + 24 * 60 * 60 * 1000))
+        new Date(dispute.evidence_due_by) <= new Date(Date.now() + 24 * 60 * 60 * 1000)),
   );
 
   if (loading) {

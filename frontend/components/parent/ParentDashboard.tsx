@@ -257,7 +257,7 @@ export const ParentDashboard: React.FC = () => {
                 <VStack className="space-y-4">
                   {children.map(child => {
                     const childMetrics = familyMetrics?.children_summary.find(
-                      c => c.child_id === child.id
+                      c => c.child_id === child.id,
                     );
 
                     return (

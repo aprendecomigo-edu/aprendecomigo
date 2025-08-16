@@ -247,7 +247,7 @@ describe('Service Interfaces and Types', () => {
       // Test route with parameters
       mockRouterService.push('/auth/verify-code?email=test%40example.com');
       expect(mockRouterService.push).toHaveBeenCalledWith(
-        '/auth/verify-code?email=test%40example.com'
+        '/auth/verify-code?email=test%40example.com',
       );
 
       // Test dynamic routes
@@ -278,7 +278,7 @@ describe('Service Interfaces and Types', () => {
 
       expect(mockToastService.showToast).toHaveBeenCalledWith(
         'success',
-        'Operation completed successfully'
+        'Operation completed successfully',
       );
       expect(mockToastService.showToast).toHaveBeenCalledWith('error', 'An error occurred');
       expect(mockToastService.showToast).toHaveBeenCalledWith('info', 'Information message');
@@ -557,7 +557,7 @@ describe('Service Interfaces and Types', () => {
       expect(jest.isMockFunction(mockDependencies.toastService.showToast)).toBe(true);
       expect(jest.isMockFunction(mockDependencies.authContextService.checkAuthStatus)).toBe(true);
       expect(
-        jest.isMockFunction(mockDependencies.onboardingApiService.getNavigationPreferences)
+        jest.isMockFunction(mockDependencies.onboardingApiService.getNavigationPreferences),
       ).toBe(true);
     });
 

@@ -123,7 +123,7 @@ class DefaultRouterService implements RouterService {
   constructor() {
     try {
       // Import and use the router implementation
-      const useRouter = require('@unitools/router').default;
+      const { useRouter } = require('expo-router');
       this.router = useRouter();
     } catch (error) {
       // Fallback for testing
@@ -142,7 +142,7 @@ class DefaultRouterService implements RouterService {
           if (__DEV__) {
             console.log('Router replace');
           }
-        }
+        },
       };
     }
   }

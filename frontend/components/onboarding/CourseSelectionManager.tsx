@@ -745,12 +745,12 @@ export const CourseSelectionManager: React.FC<CourseSelectionManagerProps> = ({
 
     if (isCustom) {
       const updatedCustomSubjects = customSubjects.map(item =>
-        item.id === itemId ? { ...item, ...updates } : item
+        item.id === itemId ? { ...item, ...updates } : item,
       );
       onSelectionChange(selectedCourses, updatedCustomSubjects);
     } else {
       const updatedCourses = selectedCourses.map(item =>
-        item.id === itemId ? { ...item, ...updates } : item
+        item.id === itemId ? { ...item, ...updates } : item,
       );
       onSelectionChange(updatedCourses, customSubjects);
     }

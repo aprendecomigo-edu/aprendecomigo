@@ -19,12 +19,12 @@ interface UseBulkTeacherActionsReturn {
   performAction: (action: BulkTeacherAction) => Promise<BulkActionResult>;
   updateStatus: (
     teacherIds: number[],
-    status: 'active' | 'inactive' | 'pending'
+    status: 'active' | 'inactive' | 'pending',
   ) => Promise<BulkActionResult>;
   sendMessage: (
     teacherIds: number[],
     template: string,
-    customMessage?: string
+    customMessage?: string,
   ) => Promise<BulkActionResult>;
   exportData: (teacherIds: number[], fields?: string[]) => Promise<BulkActionResult>;
   updateProfiles: (teacherIds: number[], updates: Record<string, any>) => Promise<BulkActionResult>;
@@ -79,13 +79,13 @@ export const useBulkTeacherActions = (): UseBulkTeacherActionsReturn => {
         setLoading(false);
       }
     },
-    []
+    [],
   );
 
   const updateStatus = useCallback(
     async (
       teacherIds: number[],
-      status: 'active' | 'inactive' | 'pending'
+      status: 'active' | 'inactive' | 'pending',
     ): Promise<BulkActionResult> => {
       return performAction({
         action: 'update_status',
@@ -93,14 +93,14 @@ export const useBulkTeacherActions = (): UseBulkTeacherActionsReturn => {
         parameters: { status },
       });
     },
-    [performAction]
+    [performAction],
   );
 
   const sendMessage = useCallback(
     async (
       teacherIds: number[],
       template: string,
-      customMessage?: string
+      customMessage?: string,
     ): Promise<BulkActionResult> => {
       return performAction({
         action: 'send_message',
@@ -111,7 +111,7 @@ export const useBulkTeacherActions = (): UseBulkTeacherActionsReturn => {
         },
       });
     },
-    [performAction]
+    [performAction],
   );
 
   const exportData = useCallback(
@@ -124,7 +124,7 @@ export const useBulkTeacherActions = (): UseBulkTeacherActionsReturn => {
         },
       });
     },
-    [performAction]
+    [performAction],
   );
 
   const updateProfiles = useCallback(
@@ -135,7 +135,7 @@ export const useBulkTeacherActions = (): UseBulkTeacherActionsReturn => {
         parameters: updates,
       });
     },
-    [performAction]
+    [performAction],
   );
 
   const loadTemplates = useCallback(async () => {
@@ -155,7 +155,7 @@ export const useBulkTeacherActions = (): UseBulkTeacherActionsReturn => {
     (templateId: string): TeacherMessageTemplate | undefined => {
       return templates.find(template => template.id === templateId);
     },
-    [templates]
+    [templates],
   );
 
   const getSuccessRate = useCallback((): number => {

@@ -109,7 +109,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
         usePurchaseApprovalWebSocket({
           parentId: mockParentId,
           onNewRequest,
-        })
+        }),
       );
 
       // Get the message handler and simulate a new request
@@ -148,7 +148,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
         expect.objectContaining({
           type: 'new_request',
           title: 'New Purchase Request',
-        })
+        }),
       );
     });
 
@@ -159,7 +159,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
         usePurchaseApprovalWebSocket({
           parentId: mockParentId,
           onRequestStatusChange,
-        })
+        }),
       );
 
       const onMessage = mockUseWebSocket.mock.calls[0][0].onMessage;
@@ -186,7 +186,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
       expect(onRequestStatusChange).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'request_approved',
-        })
+        }),
       );
     });
 
@@ -197,7 +197,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
         usePurchaseApprovalWebSocket({
           parentId: mockParentId,
           onBudgetAlert,
-        })
+        }),
       );
 
       const onMessage = mockUseWebSocket.mock.calls[0][0].onMessage;
@@ -224,7 +224,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
       expect(onBudgetAlert).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'budget_alert',
-        })
+        }),
       );
     });
 
@@ -235,7 +235,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
         usePurchaseApprovalWebSocket({
           parentId: mockParentId,
           onAutoApproval,
-        })
+        }),
       );
 
       const onMessage = mockUseWebSocket.mock.calls[0][0].onMessage;
@@ -263,7 +263,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
       expect(onAutoApproval).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'auto_approved',
-        })
+        }),
       );
     });
 
@@ -287,7 +287,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
       expect(result.current.notifications).toHaveLength(0);
       expect(consoleSpy).toHaveBeenCalledWith(
         'Error processing purchase approval notification:',
-        expect.any(Error)
+        expect.any(Error),
       );
 
       consoleSpy.mockRestore();
@@ -331,7 +331,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
         usePurchaseApprovalWebSocket({
           parentId: mockParentId,
           enablePushNotifications: true,
-        })
+        }),
       );
 
       const onMessage = mockUseWebSocket.mock.calls[0][0].onMessage;
@@ -361,7 +361,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
             notificationId: 'urgent_123',
             requestId: undefined,
           },
-        })
+        }),
       );
     });
 
@@ -370,7 +370,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
         usePurchaseApprovalWebSocket({
           parentId: mockParentId,
           enablePushNotifications: false,
-        })
+        }),
       );
 
       const onMessage = mockUseWebSocket.mock.calls[0][0].onMessage;
@@ -398,7 +398,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
         usePurchaseApprovalWebSocket({
           parentId: mockParentId,
           enablePushNotifications: true,
-        })
+        }),
       );
 
       expect(global.Notification.requestPermission).toHaveBeenCalled();
@@ -412,7 +412,7 @@ describe('usePurchaseApprovalWebSocket Hook', () => {
         usePurchaseApprovalWebSocket({
           parentId: mockParentId,
           enablePushNotifications: true,
-        })
+        }),
       );
 
       expect(global.Notification.requestPermission).not.toHaveBeenCalled();

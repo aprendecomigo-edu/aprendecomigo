@@ -71,7 +71,7 @@ export class AnalyticsApiClient {
    */
   static async getUsageStatistics(
     timeRange?: AnalyticsTimeRange,
-    email?: string
+    email?: string,
   ): Promise<UsageStatistics> {
     try {
       const params: any = {};
@@ -166,7 +166,7 @@ export class AnalyticsApiClient {
    */
   static async getUsagePatterns(
     timeRange?: AnalyticsTimeRange,
-    email?: string
+    email?: string,
   ): Promise<UsagePattern[]> {
     try {
       const params: any = {};
@@ -257,7 +257,7 @@ export class AnalyticsApiClient {
    */
   static async updateNotificationPreferences(
     preferences: Partial<NotificationPreferences>,
-    email?: string
+    email?: string,
   ): Promise<void> {
     try {
       const data = email ? { ...preferences, email } : preferences;

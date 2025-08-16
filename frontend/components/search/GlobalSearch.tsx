@@ -126,7 +126,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
         const response: GlobalSearchResponse = await navigationApi.globalSearch(
           searchQuery,
           categories.flatMap(cat => cat.searchTypes),
-          maxResults
+          maxResults,
         );
         setResults(response.results);
       } catch (err) {
@@ -137,7 +137,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
         setIsLoading(false);
       }
     },
-    [categories, maxResults]
+    [categories, maxResults],
   );
 
   // Effect for debounced search
@@ -181,7 +181,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
         onResultSelect(result);
       }
     },
-    [query, onResultSelect]
+    [query, onResultSelect],
   );
 
   // Handle recent search selection
@@ -190,7 +190,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
       setQuery(suggestion.query);
       performSearch(suggestion.query);
     },
-    [performSearch]
+    [performSearch],
   );
 
   // Keyboard navigation
@@ -215,7 +215,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
           break;
       }
     },
-    [isOpen, enhancedResults, selectedIndex, handleResultSelect]
+    [isOpen, enhancedResults, selectedIndex, handleResultSelect],
   );
 
   // Clear search
@@ -234,7 +234,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
         className={cn(
           'flex-row items-center bg-background-50 border border-border-200 rounded-lg px-3 py-2',
           'hover:border-border-300 focus:border-primary-300',
-          className
+          className,
         )}
       >
         <Icon as={SearchIcon} size="sm" className="text-typography-400 mr-2" />
@@ -250,7 +250,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({
         <ModalContent
           className={cn(
             'mx-4 my-8 max-w-2xl w-full',
-            Platform.OS === 'web' ? 'max-h-[80vh]' : 'max-h-[70vh]'
+            Platform.OS === 'web' ? 'max-h-[80vh]' : 'max-h-[70vh]',
           )}
         >
           <VStack space="sm" className="p-4">
@@ -369,7 +369,7 @@ const SearchResultItem: React.FC<SearchResultItemProps> = ({ result, isSelected,
       onPress={() => onSelect(result)}
       className={cn(
         'p-3 rounded-lg flex-row items-center space-x-3',
-        isSelected ? 'bg-primary-50 border border-primary-200' : 'hover:bg-background-50'
+        isSelected ? 'bg-primary-50 border border-primary-200' : 'hover:bg-background-50',
       )}
     >
       {/* Avatar or Icon */}

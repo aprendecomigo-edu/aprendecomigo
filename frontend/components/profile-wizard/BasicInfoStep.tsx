@@ -150,7 +150,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
   const removeLanguage = (language: string) => {
     handleFieldChange(
       'languages',
-      formData.languages.filter(l => l !== language)
+      formData.languages.filter(l => l !== language),
     );
   };
 
@@ -479,7 +479,7 @@ export const BasicInfoStep: React.FC<BasicInfoStepProps> = ({
                         >
                           <ButtonText>{language}</ButtonText>
                         </Button>
-                      )
+                      ),
                     )}
                   </HStack>
 

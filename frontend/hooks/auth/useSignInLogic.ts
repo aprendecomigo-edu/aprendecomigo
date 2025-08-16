@@ -49,7 +49,7 @@ export const useSignInLogic = ({
         setIsRequesting(false);
       }
     },
-    [authApi, router, toast]
+    [authApi, router, toast],
   );
 
   const handleKeyPress = useCallback(
@@ -58,7 +58,7 @@ export const useSignInLogic = ({
       // The actual form submission logic is handled by submitEmail
       submitEmail(email);
     },
-    [submitEmail]
+    [submitEmail],
   );
 
   return {

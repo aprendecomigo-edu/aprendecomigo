@@ -10,7 +10,7 @@ const HStack = React.forwardRef<React.ElementRef<'div'>, IHStackProps>(
     return (
       <div className={hstackStyle({ space, reversed, class: className })} {...props} ref={ref} />
     );
-  }
+  },
 );
 
 HStack.displayName = 'HStack';

@@ -46,7 +46,7 @@ export async function safePromiseAll<T>(promises: Promise<T>[], defaultValues: T
  * @returns Array of detailed results with success status and error info
  */
 export async function safePromiseAllWithResults<T>(
-  promises: Promise<T>[]
+  promises: Promise<T>[],
 ): Promise<PromiseResult<T>[]> {
   const results = await Promise.allSettled(promises);
 
@@ -81,7 +81,7 @@ export async function safePromiseAllWithResults<T>(
  */
 export function logFailedOperations<T>(
   results: PromiseSettledResult<T>[],
-  operationNames?: string[]
+  operationNames?: string[],
 ): void {
   results.forEach((result, index) => {
     if (result.status === 'rejected') {
@@ -105,7 +105,7 @@ export function logFailedOperations<T>(
 export async function safePromiseAllWithRetry<T>(
   promiseFactories: (() => Promise<T>)[],
   maxRetries = 2,
-  retryDelay = 1000
+  retryDelay = 1000,
 ): Promise<PromiseSettledResult<T>[]> {
   const retryPromise = async (factory: () => Promise<T>): Promise<T> => {
     let lastError: any;
@@ -135,7 +135,7 @@ export async function safePromiseAllWithRetry<T>(
  * Type guard to check if a promise result is fulfilled.
  */
 export function isFulfilled<T>(
-  result: PromiseSettledResult<T>
+  result: PromiseSettledResult<T>,
 ): result is PromiseFulfilledResult<T> {
   return result.status === 'fulfilled';
 }

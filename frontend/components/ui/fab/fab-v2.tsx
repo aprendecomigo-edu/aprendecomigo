@@ -51,7 +51,7 @@ const PrimitiveIcon = React.forwardRef<React.ElementRef<typeof Svg>, IPrimitiveI
       return <AsComp ref={ref} {...sizeProps} {...colorProps} {...props} />;
     }
     return <Svg ref={ref} height={height} width={width} {...colorProps} {...props} />;
-  }
+  },
 );
 
 // Style definitions (reuse existing styles)
@@ -168,7 +168,7 @@ export const Fab = React.forwardRef<Pressable, IFabProps>(
         </Pressable>
       </FabContext.Provider>
     );
-  }
+  },
 );
 
 // FabLabel component
@@ -183,7 +183,7 @@ export const FabLabel = React.forwardRef<Text, IFabLabelProps>(
       strikeThrough = false,
       ...props
     },
-    ref
+    ref,
   ) => {
     const context = useContext(FabContext);
     const { size: parentSize } = context || {};
@@ -203,7 +203,7 @@ export const FabLabel = React.forwardRef<Text, IFabLabelProps>(
         })}
       />
     );
-  }
+  },
 );
 
 // FabIcon component
@@ -228,7 +228,7 @@ export const FabIcon = React.forwardRef<any, IFabIconProps>(
         })}
       />
     );
-  }
+  },
 );
 
 // Display names for debugging

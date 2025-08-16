@@ -301,11 +301,11 @@ export const getEducationalSystems = async (): Promise<EducationalSystem[]> => {
  * Create tutor school (individual tutoring practice)
  */
 export const createTutorSchool = async (
-  data: TutorSchoolData
+  data: TutorSchoolData,
 ): Promise<TutorSchoolCreationResponse> => {
   const response = await apiClient.post<TutorSchoolCreationResponse>(
     '/accounts/schools/create-tutor-school/',
-    data
+    data,
   );
   return response.data;
 };
@@ -335,7 +335,7 @@ export const saveTutorOnboardingProgress = async (data: {
 }): Promise<{ success: boolean; progress: OnboardingProgress }> => {
   const response = await apiClient.post<{ success: boolean; progress: OnboardingProgress }>(
     '/accounts/tutors/onboarding/save-progress/',
-    data
+    data,
   );
   return response.data;
 };
@@ -349,7 +349,7 @@ export const validateTutorOnboardingStep = async (data: {
 }): Promise<OnboardingStepValidation> => {
   const response = await apiClient.post<OnboardingStepValidation>(
     '/accounts/tutors/onboarding/validate-step/',
-    data
+    data,
   );
   return response.data;
 };
@@ -358,7 +358,7 @@ export const validateTutorOnboardingStep = async (data: {
  * Get tutor onboarding progress
  */
 export const getTutorOnboardingProgress = async (
-  onboardingId?: string
+  onboardingId?: string,
 ): Promise<OnboardingProgress> => {
   const endpoint = onboardingId
     ? `/accounts/tutors/onboarding/progress/${onboardingId}/`
@@ -378,7 +378,7 @@ export const completeTutorOnboarding = async (data: {
 }): Promise<ProfilePublishingResponse> => {
   const response = await apiClient.post<ProfilePublishingResponse>(
     '/accounts/tutors/onboarding/complete/',
-    data
+    data,
   );
   return response.data;
 };
@@ -387,7 +387,7 @@ export const completeTutorOnboarding = async (data: {
  * Get tutor discovery profiles (public endpoint)
  */
 export const discoverTutors = async (
-  filters?: TutorDiscoveryFilters
+  filters?: TutorDiscoveryFilters,
 ): Promise<TutorDiscoveryResponse> => {
   const queryParams = new URLSearchParams();
 
@@ -444,7 +444,7 @@ export const getCourseRateSuggestions = async (params: {
  * Upload tutor profile photo
  */
 export const uploadTutorProfilePhoto = async (
-  file: File | Blob
+  file: File | Blob,
 ): Promise<{ photo_url: string }> => {
   const formData = new FormData();
   formData.append('photo', file);
@@ -456,7 +456,7 @@ export const uploadTutorProfilePhoto = async (
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-    }
+    },
   );
   return response.data;
 };
@@ -493,7 +493,7 @@ export const searchCourseSuggestions = async (params: {
  * Validate tutor business name availability
  */
 export const validateTutorBusinessName = async (
-  name: string
+  name: string,
 ): Promise<{
   is_available: boolean;
   suggestions?: string[];
@@ -510,7 +510,7 @@ export const validateTutorBusinessName = async (
  */
 export const getOnboardingGuidance = async (
   stepId: string,
-  context?: Record<string, any>
+  context?: Record<string, any>,
 ): Promise<{
   tips: Array<{
     title: string;

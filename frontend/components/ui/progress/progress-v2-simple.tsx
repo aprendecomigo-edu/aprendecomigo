@@ -29,14 +29,14 @@ const getProgressStyles = (size?: string) => {
     size === 'xs'
       ? 4
       : size === 'sm'
-      ? 8
-      : size === 'lg'
-      ? 16
-      : size === 'xl'
-      ? 20
-      : size === '2xl'
-      ? 24
-      : 12;
+        ? 8
+        : size === 'lg'
+          ? 16
+          : size === 'xl'
+            ? 20
+            : size === '2xl'
+              ? 24
+              : 12;
 
   return {
     backgroundColor: '#e5e7eb',
@@ -52,14 +52,14 @@ const getFilledTrackStyles = (size?: string, percentage: number) => {
     size === 'xs'
       ? 4
       : size === 'sm'
-      ? 8
-      : size === 'lg'
-      ? 16
-      : size === 'xl'
-      ? 20
-      : size === '2xl'
-      ? 24
-      : 12;
+        ? 8
+        : size === 'lg'
+          ? 16
+          : size === 'xl'
+            ? 20
+            : size === '2xl'
+              ? 24
+              : 12;
 
   return {
     backgroundColor: '#3b82f6',
@@ -79,7 +79,7 @@ export const Progress = React.forwardRef<View, IProgressProps>(
         value,
         max,
       }),
-      [size, value, max]
+      [size, value, max],
     );
 
     const progressStyles = getProgressStyles(size);
@@ -99,7 +99,7 @@ export const Progress = React.forwardRef<View, IProgressProps>(
         </View>
       </ProgressContext.Provider>
     );
-  }
+  },
 );
 
 // ProgressFilledTrack component
@@ -112,7 +112,7 @@ export const ProgressFilledTrack = React.forwardRef<View, IProgressFilledTrackPr
     const filledTrackStyles = getFilledTrackStyles(size, percentage);
 
     return <View ref={ref} {...props} style={[filledTrackStyles, style]} />;
-  }
+  },
 );
 
 // Display names for debugging

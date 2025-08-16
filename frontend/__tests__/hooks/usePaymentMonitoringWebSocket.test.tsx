@@ -109,7 +109,7 @@ describe('usePaymentMonitoringWebSocket Hook', () => {
         JSON.stringify({
           type: 'subscribe',
           channels: ['metrics', 'transactions', 'webhooks', 'fraud_alerts', 'disputes'],
-        })
+        }),
       );
     });
   });
@@ -715,7 +715,7 @@ describe('usePaymentMonitoringWebSocket Hook', () => {
       expect(result.current.isConnected).toBe(true); // Should remain connected
       expect(consoleSpy).toHaveBeenCalledWith(
         'Error parsing payment monitoring WebSocket message:',
-        expect.any(Error)
+        expect.any(Error),
       );
     });
 
@@ -735,13 +735,13 @@ describe('usePaymentMonitoringWebSocket Hook', () => {
             type: 'unknown_message_type',
             data: {},
             timestamp: new Date().toISOString(),
-          })
+          }),
         );
       });
 
       expect(consoleSpy).toHaveBeenCalledWith(
         'Unknown payment monitoring WebSocket message type:',
-        'unknown_message_type'
+        'unknown_message_type',
       );
     });
   });

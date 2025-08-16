@@ -33,7 +33,11 @@ const getStatusColor = (status: string): string => {
   }
 };
 
-export const ClassCard: React.FC<ClassCardProps> = ({ classSchedule, onPress, showDate = false }) => {
+export const ClassCard: React.FC<ClassCardProps> = ({
+  classSchedule,
+  onPress,
+  showDate = false,
+}) => {
   const { userProfile } = useUserProfile();
   const isTeacher = userProfile?.user_type === 'teacher';
 

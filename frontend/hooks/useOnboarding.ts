@@ -206,7 +206,7 @@ export function useOnboarding(): OnboardingState & OnboardingActions {
         console.error('Error completing step:', error);
       }
     },
-    [state, cacheState]
+    [state, cacheState],
   );
 
   // Skip an onboarding step
@@ -240,7 +240,7 @@ export function useOnboarding(): OnboardingState & OnboardingActions {
         console.error('Error skipping step:', error);
       }
     },
-    [state, cacheState]
+    [state, cacheState],
   );
 
   // Skip entire onboarding process
@@ -322,7 +322,7 @@ export function useOnboarding(): OnboardingState & OnboardingActions {
         console.error('Error updating preferences:', error);
       }
     },
-    [state, cacheState]
+    [state, cacheState],
   );
 
   // Create onboarding task

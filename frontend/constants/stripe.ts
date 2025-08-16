@@ -78,8 +78,8 @@ export const validateStripeConfig = () => {
       keyType: STRIPE_PUBLIC_KEY?.startsWith('pk_test_')
         ? 'test'
         : STRIPE_PUBLIC_KEY?.startsWith('pk_live_')
-        ? 'live'
-        : 'unknown',
+          ? 'live'
+          : 'unknown',
     },
   };
 };

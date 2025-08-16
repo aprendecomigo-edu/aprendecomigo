@@ -81,7 +81,7 @@ export function useReceipts(email?: string): UseReceiptsResult {
         setGenerating(false);
       }
     },
-    [email, refreshReceipts]
+    [email, refreshReceipts],
   );
 
   // Download receipt
@@ -100,7 +100,7 @@ export function useReceipts(email?: string): UseReceiptsResult {
         setDownloading(false);
       }
     },
-    [email]
+    [email],
   );
 
   // Get receipt preview URL
@@ -114,7 +114,7 @@ export function useReceipts(email?: string): UseReceiptsResult {
         return null;
       }
     },
-    [email]
+    [email],
   );
 
   // Clear all errors

@@ -40,7 +40,7 @@ describe('TransactionHistory Component', () => {
   describe('Loading State', () => {
     it('renders loading state when transactions is null and loading', () => {
       const { toJSON } = render(
-        <TransactionHistory {...defaultProps} transactions={null} loading={true} />
+        <TransactionHistory {...defaultProps} transactions={null} loading={true} />,
       );
 
       expect(toJSON()).toBeTruthy();
@@ -64,7 +64,7 @@ describe('TransactionHistory Component', () => {
     it('calls onRefresh when retry is triggered', () => {
       const mockOnRefresh = jest.fn();
       const { toJSON } = render(
-        <TransactionHistory {...defaultProps} error="Network error" onRefresh={mockOnRefresh} />
+        <TransactionHistory {...defaultProps} error="Network error" onRefresh={mockOnRefresh} />,
       );
 
       // Component should render
@@ -99,7 +99,7 @@ describe('TransactionHistory Component', () => {
       });
 
       const { toJSON } = render(
-        <TransactionHistory {...defaultProps} transactions={transactions} />
+        <TransactionHistory {...defaultProps} transactions={transactions} />,
       );
 
       expect(toJSON()).toBeTruthy();
@@ -124,7 +124,7 @@ describe('TransactionHistory Component', () => {
       });
 
       const { toJSON } = render(
-        <TransactionHistory {...defaultProps} transactions={transactions} />
+        <TransactionHistory {...defaultProps} transactions={transactions} />,
       );
 
       expect(toJSON()).toBeTruthy();
@@ -139,7 +139,7 @@ describe('TransactionHistory Component', () => {
       });
 
       const { toJSON } = render(
-        <TransactionHistory {...defaultProps} transactions={emptyTransactions} />
+        <TransactionHistory {...defaultProps} transactions={emptyTransactions} />,
       );
 
       expect(toJSON()).toBeTruthy();
@@ -166,7 +166,7 @@ describe('TransactionHistory Component', () => {
       };
 
       const { toJSON } = render(
-        <TransactionHistory {...defaultProps} filters={filtersWithValues} />
+        <TransactionHistory {...defaultProps} filters={filtersWithValues} />,
       );
 
       expect(toJSON()).toBeTruthy();
@@ -180,7 +180,7 @@ describe('TransactionHistory Component', () => {
       });
 
       const { toJSON } = render(
-        <TransactionHistory {...defaultProps} transactions={transactionsWithNext} />
+        <TransactionHistory {...defaultProps} transactions={transactionsWithNext} />,
       );
 
       expect(toJSON()).toBeTruthy();
@@ -219,7 +219,7 @@ describe('TransactionHistory Component', () => {
           {...defaultProps}
           onSearchChange={mockOnSearchChange}
           searchQuery="test"
-        />
+        />,
       );
 
       expect(mockOnSearchChange).toBeDefined();
@@ -234,13 +234,13 @@ describe('TransactionHistory Component', () => {
     it('renders quickly with many transactions', () => {
       const manyTransactions = createMockTransactionHistory({
         results: Array.from({ length: 50 }, (_, i) =>
-          createMockTransactionItem({ id: i + 1, transaction_id: `txn_${i}` })
+          createMockTransactionItem({ id: i + 1, transaction_id: `txn_${i}` }),
         ),
       });
 
       const start = performance.now();
       const { toJSON } = render(
-        <TransactionHistory {...defaultProps} transactions={manyTransactions} />
+        <TransactionHistory {...defaultProps} transactions={manyTransactions} />,
       );
       const end = performance.now();
 

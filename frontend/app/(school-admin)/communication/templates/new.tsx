@@ -90,7 +90,7 @@ const CreateTemplatePage = () => {
 
   // Get current template type info
   const currentTemplateType = templateTypeOptions.find(
-    option => option.value === templateData.template_type
+    option => option.value === templateData.template_type,
   );
 
   // Update template field
@@ -102,7 +102,7 @@ const CreateTemplatePage = () => {
       }));
       clearError();
     },
-    [clearError]
+    [clearError],
   );
 
   // Validate template content
@@ -177,7 +177,7 @@ const CreateTemplatePage = () => {
             onPress: () =>
               router.push(`/(school-admin)/communication/templates/${template.id}/test`),
           },
-        ]
+        ],
       );
     } catch (err) {
       if (__DEV__) {
@@ -208,7 +208,7 @@ const CreateTemplatePage = () => {
             style: 'destructive',
             onPress: () => router.back(),
           },
-        ]
+        ],
       );
     } else {
       router.back();
@@ -430,7 +430,7 @@ const CreateTemplatePage = () => {
                         text: 'View Help',
                         onPress: () => router.push('/(school-admin)/communication/help'),
                       },
-                    ]
+                    ],
                   );
                 }}
                 variant="outline"

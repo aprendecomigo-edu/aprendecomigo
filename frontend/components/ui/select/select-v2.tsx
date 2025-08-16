@@ -71,7 +71,7 @@ const PrimitiveIcon = React.forwardRef<React.ElementRef<typeof Svg>, IPrimitiveI
       return <AsComp ref={ref} {...props} {...sizeProps} {...colorProps} />;
     }
     return <Svg ref={ref} height={height} width={width} {...colorProps} {...props} />;
-  }
+  },
 );
 
 // Style definitions (reuse existing styles)
@@ -167,11 +167,11 @@ export const Select = React.forwardRef<View, ISelectProps>(
       children,
       ...props
     },
-    ref
+    ref,
   ) => {
     const contextValue = useMemo(
       () => ({ isDisabled, isInvalid, isFocused, isHovered }),
-      [isDisabled, isInvalid, isFocused, isHovered]
+      [isDisabled, isInvalid, isFocused, isHovered],
     );
 
     return (
@@ -181,7 +181,7 @@ export const Select = React.forwardRef<View, ISelectProps>(
         </View>
       </SelectContext.Provider>
     );
-  }
+  },
 );
 
 // SelectTrigger component
@@ -192,7 +192,7 @@ export const SelectTrigger = React.forwardRef<View, ISelectTriggerProps>(
 
     const contextValue = useMemo(
       () => ({ size, variant, isDisabled, isInvalid, isFocused, isHovered }),
-      [size, variant, isDisabled, isInvalid, isFocused, isHovered]
+      [size, variant, isDisabled, isInvalid, isFocused, isHovered],
     );
 
     return (
@@ -212,7 +212,7 @@ export const SelectTrigger = React.forwardRef<View, ISelectTriggerProps>(
         </Pressable>
       </SelectContext.Provider>
     );
-  }
+  },
 );
 
 // SelectInput component
@@ -232,7 +232,7 @@ export const SelectInput = React.forwardRef<TextInput, ISelectInputProps>(
         })}
       />
     );
-  }
+  },
 );
 
 // SelectIcon component
@@ -255,7 +255,7 @@ export const SelectIcon = React.forwardRef<any, ISelectIconProps>(
         })}
       />
     );
-  }
+  },
 );
 
 // Actionsheet Components - These remain the same as v1 for compatibility

@@ -228,10 +228,10 @@ export const InvitationErrorDisplay: React.FC<InvitationErrorDisplayProps> = ({
                       config.severity === 'error'
                         ? 'bg-red-600'
                         : config.severity === 'warning'
-                        ? 'bg-yellow-600'
-                        : config.severity === 'info'
-                        ? 'bg-blue-600'
-                        : 'bg-gray-600'
+                          ? 'bg-yellow-600'
+                          : config.severity === 'info'
+                            ? 'bg-blue-600'
+                            : 'bg-gray-600'
                     }
                   >
                     {retrying ? (
@@ -256,10 +256,10 @@ export const InvitationErrorDisplay: React.FC<InvitationErrorDisplayProps> = ({
                       config.severity === 'error'
                         ? 'border-red-300'
                         : config.severity === 'warning'
-                        ? 'border-yellow-300'
-                        : config.severity === 'info'
-                        ? 'border-blue-300'
-                        : 'border-gray-300'
+                          ? 'border-yellow-300'
+                          : config.severity === 'info'
+                            ? 'border-blue-300'
+                            : 'border-gray-300'
                     }
                   >
                     <ButtonText
@@ -267,10 +267,10 @@ export const InvitationErrorDisplay: React.FC<InvitationErrorDisplayProps> = ({
                         config.severity === 'error'
                           ? 'text-red-600'
                           : config.severity === 'warning'
-                          ? 'text-yellow-600'
-                          : config.severity === 'info'
-                          ? 'text-blue-600'
-                          : 'text-gray-600'
+                            ? 'text-yellow-600'
+                            : config.severity === 'info'
+                              ? 'text-blue-600'
+                              : 'text-gray-600'
                       }
                     >
                       Entrar em Contato com Suporte

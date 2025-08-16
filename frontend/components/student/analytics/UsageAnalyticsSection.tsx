@@ -155,10 +155,10 @@ export function UsageAnalyticsSection({ email }: UsageAnalyticsSectionProps) {
 
     // Refresh data with graceful degradation
     const results = await Promise.allSettled([
-      refreshUsageStats(timeRange), 
-      refreshPatterns(timeRange)
+      refreshUsageStats(timeRange),
+      refreshPatterns(timeRange),
     ]);
-    
+
     // Log any failures for monitoring
     results.forEach((result, index) => {
       if (result.status === 'rejected') {
@@ -345,22 +345,22 @@ export function UsageAnalyticsSection({ email }: UsageAnalyticsSectionProps) {
                 usageStats.streak_days > 7
                   ? 'Great momentum!'
                   : usageStats.streak_days > 0
-                  ? 'Keep it up!'
-                  : 'Start a streak'
+                    ? 'Keep it up!'
+                    : 'Start a streak'
               }
               trendColor={
                 usageStats.streak_days > 7
                   ? 'text-success-600'
                   : usageStats.streak_days > 0
-                  ? 'text-warning-600'
-                  : 'text-typography-600'
+                    ? 'text-warning-600'
+                    : 'text-typography-600'
               }
               bgColor={
                 usageStats.streak_days > 7
                   ? 'bg-success-50'
                   : usageStats.streak_days > 0
-                  ? 'bg-warning-50'
-                  : 'bg-background-50'
+                    ? 'bg-warning-50'
+                    : 'bg-background-50'
               }
             />
           </HStack>

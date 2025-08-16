@@ -55,8 +55,6 @@
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
-    "additionalDirectories": [
-      "/Users/anapmc/Code/aprendecomigo/.github/workflows"
-    ]
+    "additionalDirectories": ["/Users/anapmc/Code/aprendecomigo/.github/workflows"]
   }
 }

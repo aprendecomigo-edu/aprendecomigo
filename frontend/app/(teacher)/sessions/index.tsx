@@ -70,7 +70,7 @@ const TeacherSessionsPage = () => {
           session.grade_level.toLowerCase().includes(query) ||
           (session.student_names &&
             session.student_names.some(name => name.toLowerCase().includes(query))) ||
-          session.notes.toLowerCase().includes(query)
+          session.notes.toLowerCase().includes(query),
       );
     }
 

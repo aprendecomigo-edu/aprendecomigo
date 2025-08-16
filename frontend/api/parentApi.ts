@@ -100,7 +100,7 @@ export const getParentProfile = async (): Promise<ParentProfile> => {
 };
 
 export const updateParentProfile = async (
-  profileData: Partial<ParentProfile>
+  profileData: Partial<ParentProfile>,
 ): Promise<ParentProfile> => {
   const response = await apiClient.patch('/accounts/parent-profiles/me/', profileData);
   return response.data;
@@ -155,7 +155,7 @@ export const createBudgetControl = async (budgetData: {
 
 export const updateBudgetControl = async (
   budgetId: string,
-  budgetData: Partial<FamilyBudgetControl>
+  budgetData: Partial<FamilyBudgetControl>,
 ): Promise<FamilyBudgetControl> => {
   const response = await apiClient.patch(`/finances/budget-controls/${budgetId}/`, budgetData);
   return response.data;
@@ -176,7 +176,7 @@ export const getPurchaseApprovalRequests = async (params?: {
 
 export const approvePurchaseRequest = async (
   requestId: string,
-  responseNotes?: string
+  responseNotes?: string,
 ): Promise<PurchaseApprovalRequest> => {
   const response = await apiClient.post(`/finances/approval-requests/${requestId}/approve/`, {
     response_notes: responseNotes,
@@ -186,7 +186,7 @@ export const approvePurchaseRequest = async (
 
 export const rejectPurchaseRequest = async (
   requestId: string,
-  responseNotes?: string
+  responseNotes?: string,
 ): Promise<PurchaseApprovalRequest> => {
   const response = await apiClient.post(`/finances/approval-requests/${requestId}/reject/`, {
     response_notes: responseNotes,
@@ -201,7 +201,7 @@ export const getParentApprovalDashboard = async (): Promise<ParentApprovalDashbo
 };
 
 export const getFamilyMetrics = async (
-  timeframe?: 'week' | 'month' | 'quarter'
+  timeframe?: 'week' | 'month' | 'quarter',
 ): Promise<FamilyMetrics> => {
   const params = timeframe ? { timeframe } : {};
   const response = await apiClient.get('/finances/family-metrics/', { params });
@@ -220,11 +220,11 @@ export const getChildTransactionHistory = async (
     page?: number;
     limit?: number;
     transaction_type?: string;
-  }
+  },
 ) => {
   const response = await apiClient.get(
     `/finances/student-balance/transaction-history/?student_id=${childId}`,
-    { params }
+    { params },
   );
   return response.data;
 };
@@ -234,11 +234,11 @@ export const getChildPurchaseHistory = async (
   params?: {
     page?: number;
     limit?: number;
-  }
+  },
 ) => {
   const response = await apiClient.get(
     `/finances/student-balance/purchase-history/?student_id=${childId}`,
-    { params }
+    { params },
   );
   return response.data;
 };

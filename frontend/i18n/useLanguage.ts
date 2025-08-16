@@ -14,7 +14,7 @@ import {
  * Provides loading states and error handling for language changes
  */
 export const useLanguage = () => {
-  const { } = useTranslation();
+  const {} = useTranslation();
   const [isChangingLanguage, setIsChangingLanguage] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

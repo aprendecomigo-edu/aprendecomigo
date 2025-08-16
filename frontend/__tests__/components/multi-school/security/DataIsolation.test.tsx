@@ -113,7 +113,7 @@ describe('Multi-School Security - Data Isolation', () => {
       // Assert data isolation
       multiSchoolAssertions.shouldIsolateSchoolData(
         { students: school1Students },
-        { students: school2Students }
+        { students: school2Students },
       );
 
       expect(school1Students).not.toEqual(school2Students);
@@ -563,7 +563,7 @@ describe('Multi-School Security - Data Isolation', () => {
 
       // Validate that only current school data is present
       const currentSchoolStudents = response.data.students.filter(
-        (student: any) => student.school_id === currentSchool.school.id
+        (student: any) => student.school_id === currentSchool.school.id,
       );
 
       expect(currentSchoolStudents).toHaveLength(1);
@@ -571,7 +571,7 @@ describe('Multi-School Security - Data Isolation', () => {
 
       // Should not contain data from other schools
       const wrongSchoolStudents = response.data.students.filter(
-        (student: any) => student.school_id !== currentSchool.school.id
+        (student: any) => student.school_id !== currentSchool.school.id,
       );
 
       // If this test finds wrong school data, it indicates a security issue

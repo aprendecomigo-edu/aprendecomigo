@@ -122,7 +122,7 @@ describe('Real-time WebSocket Features Integration', () => {
 
       const { result: balanceHook } = renderHook(() => useBalanceWebSocket({ enabled: true }));
       const { result: approvalHook } = renderHook(() =>
-        usePurchaseApprovalWebSocket({ parentId: 'parent123' })
+        usePurchaseApprovalWebSocket({ parentId: 'parent123' }),
       );
 
       // Simulate simultaneous updates
@@ -196,7 +196,7 @@ describe('Real-time WebSocket Features Integration', () => {
         usePurchaseApprovalWebSocket({
           parentId: 'parent123',
           onNewRequest: onApprovalNotification,
-        })
+        }),
       );
 
       // Simulate purchase approval workflow
@@ -207,7 +207,7 @@ describe('Real-time WebSocket Features Integration', () => {
 
         // 2. Balance update after purchase
         mockBalanceWS.lastMessage = JSON.stringify(
-          WebSocketTestData.balanceUpdate(mockUserProfile.id, 50.0) // Lower balance after purchase
+          WebSocketTestData.balanceUpdate(mockUserProfile.id, 50.0), // Lower balance after purchase
         );
       });
 
@@ -227,11 +227,11 @@ describe('Real-time WebSocket Features Integration', () => {
       });
 
       const paymentWS = WebSocketTestUtils.getAllWebSockets().find(ws =>
-        ws.url.includes('/ws/admin/payments/')
+        ws.url.includes('/ws/admin/payments/'),
       );
 
       const balanceWS = WebSocketTestUtils.getAllWebSockets().find(
-        ws => ws.url.includes('/balance/') || ws === WebSocketTestUtils.getLastWebSocket()
+        ws => ws.url.includes('/balance/') || ws === WebSocketTestUtils.getLastWebSocket(),
       );
 
       // Simulate coordinated updates
@@ -253,7 +253,7 @@ describe('Real-time WebSocket Features Integration', () => {
                 },
               },
               timestamp: new Date().toISOString(),
-            })
+            }),
           );
         }
 
@@ -261,7 +261,7 @@ describe('Real-time WebSocket Features Integration', () => {
         if (mockUseWebSocketEnhanced.mock.results[0]?.value) {
           const mockBalanceResult = mockUseWebSocketEnhanced.mock.results[0].value;
           mockBalanceResult.lastMessage = JSON.stringify(
-            WebSocketTestData.balanceUpdate(mockUserProfile.id, 125.0)
+            WebSocketTestData.balanceUpdate(mockUserProfile.id, 125.0),
           );
         }
       });
@@ -276,7 +276,7 @@ describe('Real-time WebSocket Features Integration', () => {
       const { result: balanceHook } = renderHook(() => useBalanceWebSocket({ enabled: true }));
 
       const { result: approvalHook } = renderHook(() =>
-        usePurchaseApprovalWebSocket({ parentId: 'parent123' })
+        usePurchaseApprovalWebSocket({ parentId: 'parent123' }),
       );
 
       await act(async () => {
@@ -310,7 +310,7 @@ describe('Real-time WebSocket Features Integration', () => {
       const { result: balanceHook } = renderHook(() => useBalanceWebSocket({ enabled: true }));
 
       const { result: approvalHook } = renderHook(() =>
-        usePurchaseApprovalWebSocket({ parentId: 'parent123' })
+        usePurchaseApprovalWebSocket({ parentId: 'parent123' }),
       );
 
       await act(async () => {
@@ -398,7 +398,7 @@ describe('Real-time WebSocket Features Integration', () => {
         // 100 payment monitoring updates
         for (let i = 0; i < 100; i++) {
           const paymentWS = WebSocketTestUtils.getAllWebSockets().find(ws =>
-            ws.url.includes('/ws/admin/payments/')
+            ws.url.includes('/ws/admin/payments/'),
           );
 
           if (paymentWS) {
@@ -414,7 +414,7 @@ describe('Real-time WebSocket Features Integration', () => {
                   },
                 },
                 timestamp: new Date().toISOString(),
-              })
+              }),
             );
           }
         }
@@ -424,7 +424,7 @@ describe('Real-time WebSocket Features Integration', () => {
         for (let i = 0; i < 50; i++) {
           if (mockBalanceResult) {
             mockBalanceResult.lastMessage = JSON.stringify(
-              WebSocketTestData.balanceUpdate(mockUserProfile.id, 200.0 - i * 2)
+              WebSocketTestData.balanceUpdate(mockUserProfile.id, 200.0 - i * 2),
             );
           }
         }
@@ -443,7 +443,7 @@ describe('Real-time WebSocket Features Integration', () => {
       const { result: balanceHook } = renderHook(() => useBalanceWebSocket({ enabled: true }));
 
       const { result: approvalHook } = renderHook(() =>
-        usePurchaseApprovalWebSocket({ parentId: 'parent123' })
+        usePurchaseApprovalWebSocket({ parentId: 'parent123' }),
       );
 
       const renderEndTime = Date.now();
@@ -462,7 +462,7 @@ describe('Real-time WebSocket Features Integration', () => {
         if (mockBalanceResult) {
           for (let i = 0; i < 20; i++) {
             mockBalanceResult.lastMessage = JSON.stringify(
-              WebSocketTestData.balanceUpdate(mockUserProfile.id, 100.0 + i)
+              WebSocketTestData.balanceUpdate(mockUserProfile.id, 100.0 + i),
             );
           }
         }
@@ -491,7 +491,7 @@ describe('Real-time WebSocket Features Integration', () => {
       const { result: balanceHook } = renderHook(() =>
         useBalanceWebSocket({
           enabled: true,
-        })
+        }),
       );
 
       const { result: approvalHook } = renderHook(() =>
@@ -499,7 +499,7 @@ describe('Real-time WebSocket Features Integration', () => {
           parentId: 'parent123',
           onNewRequest: () => workflowSteps.push('approval_received'),
           onRequestStatusChange: () => workflowSteps.push('approval_processed'),
-        })
+        }),
       );
 
       await act(async () => {
@@ -556,7 +556,7 @@ describe('Real-time WebSocket Features Integration', () => {
         const mockBalanceResult = mockUseWebSocketEnhanced.mock.results[0]?.value;
         if (mockBalanceResult) {
           mockBalanceResult.lastMessage = JSON.stringify(
-            WebSocketTestData.balanceUpdate(mockUserProfile.id, 25.0) // Balance after €25 purchase
+            WebSocketTestData.balanceUpdate(mockUserProfile.id, 25.0), // Balance after €25 purchase
           );
         }
       });
@@ -588,13 +588,13 @@ describe('Real-time WebSocket Features Integration', () => {
 
         if (mockBalanceResult1) {
           mockBalanceResult1.lastMessage = JSON.stringify(
-            WebSocketTestData.balanceUpdate(user1.id, 100.0)
+            WebSocketTestData.balanceUpdate(user1.id, 100.0),
           );
         }
 
         if (mockBalanceResult2) {
           mockBalanceResult2.lastMessage = JSON.stringify(
-            WebSocketTestData.balanceUpdate(user2.id, 200.0)
+            WebSocketTestData.balanceUpdate(user2.id, 200.0),
           );
         }
       });
@@ -612,7 +612,7 @@ describe('Real-time WebSocket Features Integration', () => {
       const { unmount: unmountBalance } = renderHook(() => useBalanceWebSocket({ enabled: true }));
 
       const { unmount: unmountApproval } = renderHook(() =>
-        usePurchaseApprovalWebSocket({ parentId: 'parent123' })
+        usePurchaseApprovalWebSocket({ parentId: 'parent123' }),
       );
 
       const { unmount: unmountPayment } = renderHook(() => usePaymentMonitoringWebSocket(true));
@@ -660,11 +660,11 @@ describe('Real-time WebSocket Features Integration', () => {
   describe('Error Recovery Integration', () => {
     it('should coordinate error recovery across multiple features', async () => {
       const { result: balanceHook } = renderHook(() =>
-        useBalanceWebSocket({ enabled: true, maxReconnectAttempts: 2 })
+        useBalanceWebSocket({ enabled: true, maxReconnectAttempts: 2 }),
       );
 
       const { result: approvalHook } = renderHook(() =>
-        usePurchaseApprovalWebSocket({ parentId: 'parent123' })
+        usePurchaseApprovalWebSocket({ parentId: 'parent123' }),
       );
 
       await act(async () => {

@@ -16,7 +16,7 @@ const Svg = React.forwardRef<React.ElementRef<'svg'>, React.ComponentPropsWithou
     }, [className, style]);
 
     return <svg ref={ref} {...props} className={calculateClassName} />;
-  }
+  },
 );
 
 type IPrimitiveIcon = {

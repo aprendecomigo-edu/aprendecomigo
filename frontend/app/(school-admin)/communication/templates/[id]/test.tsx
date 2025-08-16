@@ -104,7 +104,7 @@ const TestEmailPage = () => {
   ];
 
   const currentTemplateType = templateTypeOptions.find(
-    option => option.value === currentTemplate?.template_type
+    option => option.value === currentTemplate?.template_type,
   );
 
   // Send test email
@@ -130,8 +130,8 @@ const TestEmailPage = () => {
         prev.map(test =>
           test.id === testId
             ? { ...test, status: result.success ? 'sent' : 'failed', error_message: result.message }
-            : test
-        )
+            : test,
+        ),
       );
 
       // Show success message
@@ -139,7 +139,7 @@ const TestEmailPage = () => {
         Alert.alert(
           'Test Email Sent',
           `A test email has been sent to ${testEmail}. Check your inbox to see how the template looks.`,
-          [{ text: 'OK' }]
+          [{ text: 'OK' }],
         );
       }
 
@@ -151,8 +151,8 @@ const TestEmailPage = () => {
         prev.map(test =>
           test.email === testEmail && test.status === 'sending'
             ? { ...test, status: 'failed', error_message: err.message }
-            : test
-        )
+            : test,
+        ),
       );
       if (__DEV__) {
         console.error('Error sending test email:', err); // TODO: Review for sensitive data // TODO: Review for sensitive data // TODO: Review for sensitive data

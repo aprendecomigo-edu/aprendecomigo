@@ -63,7 +63,7 @@ export const useCommunicationTemplates = (options: UseCommunicationTemplatesOpti
         setLoading(false);
       }
     },
-    [templateType, activeOnly]
+    [templateType, activeOnly],
   );
 
   const refreshTemplates = useCallback(() => {
@@ -178,7 +178,7 @@ export const useTemplateEditor = () => {
         setSaving(false);
       }
     },
-    [currentTemplate]
+    [currentTemplate],
   );
 
   const duplicateTemplate = useCallback(async (id: number, newName?: string) => {
@@ -213,7 +213,7 @@ export const useTemplateEditor = () => {
         setHasUnsavedChanges(true);
       }
     },
-    [currentTemplate]
+    [currentTemplate],
   );
 
   const loadAvailableVariables = useCallback(async () => {
@@ -279,7 +279,7 @@ export const useTemplatePreview = () => {
         setLoading(false);
       }
     },
-    []
+    [],
   );
 
   const sendTestEmail = useCallback(async (templateId: number, testEmail: string) => {
@@ -327,7 +327,7 @@ export const useTemplatePreview = () => {
         setLoading(false);
       }
     },
-    []
+    [],
   );
 
   return {
@@ -357,14 +357,14 @@ export const useTemplateActions = () => {
           style: 'destructive',
           onPress: onConfirm,
         },
-      ]
+      ],
     );
   }, []);
 
   const toggleTemplateStatus = useCallback(
     async (
       template: SchoolEmailTemplate,
-      onUpdate: (updatedTemplate: SchoolEmailTemplate) => void
+      onUpdate: (updatedTemplate: SchoolEmailTemplate) => void,
     ) => {
       try {
         setLoading(true);
@@ -378,7 +378,7 @@ export const useTemplateActions = () => {
 
         Alert.alert(
           'Success',
-          `Template ${updatedTemplate.is_active ? 'activated' : 'deactivated'} successfully`
+          `Template ${updatedTemplate.is_active ? 'activated' : 'deactivated'} successfully`,
         );
       } catch (err: any) {
         const errorMessage =
@@ -390,7 +390,7 @@ export const useTemplateActions = () => {
         setLoading(false);
       }
     },
-    []
+    [],
   );
 
   return {

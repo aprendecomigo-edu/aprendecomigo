@@ -181,7 +181,7 @@ class WizardErrorBoundary extends Component<WizardErrorBoundaryProps, ErrorBound
   };
 
   private getErrorMessage = (
-    error: Error
+    error: Error,
   ): { title: string; description: string; suggestions: string[] } => {
     const severity = this.getErrorSeverity(error);
     const message = error.message.toLowerCase();

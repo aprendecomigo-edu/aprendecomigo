@@ -150,10 +150,10 @@ export const SpendingAnalytics: React.FC<SpendingAnalyticsProps> = ({
         ? currentSpent >= monthlyLimit
           ? 'exceeded'
           : currentSpent >= monthlyLimit * 0.9
-          ? 'warning'
-          : currentSpent >= monthlyLimit * 0.75
-          ? 'caution'
-          : 'safe'
+            ? 'warning'
+            : currentSpent >= monthlyLimit * 0.75
+              ? 'caution'
+              : 'safe'
         : 'no-limit',
     };
   }, [budgetControls, familyMetrics]);
@@ -270,16 +270,16 @@ export const SpendingAnalytics: React.FC<SpendingAnalyticsProps> = ({
                         spendingVelocity.trend === 'increasing'
                           ? TrendingUp
                           : spendingVelocity.trend === 'decreasing'
-                          ? TrendingDown
-                          : Activity
+                            ? TrendingDown
+                            : Activity
                       }
                       size={12}
                       className={
                         spendingVelocity.trend === 'increasing'
                           ? 'text-red-500'
                           : spendingVelocity.trend === 'decreasing'
-                          ? 'text-green-500'
-                          : 'text-gray-500'
+                            ? 'text-green-500'
+                            : 'text-gray-500'
                       }
                     />
                     <Text
@@ -287,8 +287,8 @@ export const SpendingAnalytics: React.FC<SpendingAnalyticsProps> = ({
                         spendingVelocity.trend === 'increasing'
                           ? 'text-red-600'
                           : spendingVelocity.trend === 'decreasing'
-                          ? 'text-green-600'
-                          : 'text-gray-600'
+                            ? 'text-green-600'
+                            : 'text-gray-600'
                       }`}
                     >
                       {Math.abs(spendingVelocity.change).toFixed(1)}% vs last week
@@ -334,10 +334,10 @@ export const SpendingAnalytics: React.FC<SpendingAnalyticsProps> = ({
                         budgetUtilization.status === 'exceeded'
                           ? 'error'
                           : budgetUtilization.status === 'warning'
-                          ? 'warning'
-                          : budgetUtilization.status === 'caution'
-                          ? 'info'
-                          : 'success'
+                            ? 'warning'
+                            : budgetUtilization.status === 'caution'
+                              ? 'info'
+                              : 'success'
                       }
                       size="sm"
                     >
@@ -401,7 +401,7 @@ export const SpendingAnalytics: React.FC<SpendingAnalyticsProps> = ({
                 <Text className="text-sm text-gray-700">Average per {timeframe}:</Text>
                 <Text className="text-sm font-semibold text-gray-900">
                   {formatCurrency(
-                    spendingTrends.reduce((sum, t) => sum + t.amount, 0) / spendingTrends.length
+                    spendingTrends.reduce((sum, t) => sum + t.amount, 0) / spendingTrends.length,
                   )}
                 </Text>
               </HStack>

@@ -85,11 +85,11 @@ export interface MessageDispatcherMetrics {
 export interface EventEmitterInterface {
   on<K extends keyof ConnectionEventMap>(
     event: K,
-    listener: (...args: ConnectionEventMap[K]) => void
+    listener: (...args: ConnectionEventMap[K]) => void,
   ): void;
   off<K extends keyof ConnectionEventMap>(
     event: K,
-    listener: (...args: ConnectionEventMap[K]) => void
+    listener: (...args: ConnectionEventMap[K]) => void,
   ): void;
   emit<K extends keyof ConnectionEventMap>(event: K, ...args: ConnectionEventMap[K]): void;
 }

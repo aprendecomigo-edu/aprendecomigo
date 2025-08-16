@@ -176,7 +176,7 @@ describe('Service Layer Integration', () => {
         expect(mockPaymentService.processQuickTopUp).toHaveBeenCalledWith(
           2, // package ID
           'pm_test123', // payment method ID
-          'test@example.com'
+          'test@example.com',
         );
       });
     });
@@ -215,7 +215,7 @@ describe('Service Layer Integration', () => {
 
     it('should handle PaymentService processing errors', async () => {
       mockPaymentService.processQuickTopUp.mockRejectedValue(
-        new Error('Payment processing failed')
+        new Error('Payment processing failed'),
       );
 
       render(<QuickTopUpPanel email="test@example.com" />);
@@ -283,7 +283,7 @@ describe('Service Layer Integration', () => {
           totalHours={20.0}
           daysUntilExpiry={30}
           showDetails={true}
-        />
+        />,
       );
 
       // BalanceService.getBalanceStatus should be called with correct parameters
@@ -297,7 +297,7 @@ describe('Service Layer Integration', () => {
           totalHours={20.0}
           daysUntilExpiry={30}
           showDetails={true}
-        />
+        />,
       );
 
       // Should display the status information calculated by BalanceService
@@ -314,7 +314,7 @@ describe('Service Layer Integration', () => {
           daysUntilExpiry={30}
           showDetails={true}
           className="test-balance-bar"
-        />
+        />,
       );
 
       // Should apply the bg color class from BalanceService status
@@ -341,7 +341,7 @@ describe('Service Layer Integration', () => {
           totalHours={20.0}
           daysUntilExpiry={7}
           showDetails={true}
-        />
+        />,
       );
 
       expect(mockBalanceService.getBalanceStatus).toHaveBeenCalledWith(1.0, 20.0);
@@ -355,7 +355,7 @@ describe('Service Layer Integration', () => {
           totalHours={20.0}
           daysUntilExpiry={30}
           showDetails={true}
-        />
+        />,
       );
 
       expect(mockBalanceService.getBalanceStatus).toHaveBeenCalledWith(12.0, 20.0);
@@ -370,7 +370,7 @@ describe('Service Layer Integration', () => {
           totalHours={20.0}
           daysUntilExpiry={15}
           showDetails={true}
-        />
+        />,
       );
 
       expect(mockBalanceService.getBalanceStatus).toHaveBeenCalledWith(5.0, 20.0);
@@ -398,10 +398,10 @@ describe('Service Layer Integration', () => {
       render(<TestComponent />);
 
       expect(screen.getByTestId('payment-service-available')).toHaveTextContent(
-        'Payment Service Available'
+        'Payment Service Available',
       );
       expect(screen.getByTestId('balance-service-available')).toHaveTextContent(
-        'Balance Service Available'
+        'Balance Service Available',
       );
     });
 
@@ -449,7 +449,7 @@ describe('Service Layer Integration', () => {
       expect(mockPaymentService.processQuickTopUp).toHaveBeenCalledWith(
         1,
         'pm_test',
-        'test@example.com'
+        'test@example.com',
       );
     });
   });
@@ -483,7 +483,7 @@ describe('Service Layer Integration', () => {
           totalHours={15.0}
           daysUntilExpiry={10}
           showDetails={true}
-        />
+        />,
       );
 
       // All balance calculations should be delegated to BalanceService

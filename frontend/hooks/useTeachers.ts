@@ -134,7 +134,7 @@ export const useTeachers = (options: UseTeachersOptions = {}): UseTeachersReturn
           teacher.user.name.toLowerCase().includes(query) ||
           teacher.user.email.toLowerCase().includes(query) ||
           teacher.specialty?.toLowerCase().includes(query) ||
-          teacher.bio?.toLowerCase().includes(query)
+          teacher.bio?.toLowerCase().includes(query),
       );
     }
 
@@ -161,14 +161,14 @@ export const useTeachers = (options: UseTeachersOptions = {}): UseTeachersReturn
         }
       });
     },
-    [teachers]
+    [teachers],
   );
 
   const getTeachersByStatus = useCallback(
     (status: 'active' | 'inactive' | 'pending') => {
       return teachers.filter(teacher => teacher.status === status);
     },
-    [teachers]
+    [teachers],
   );
 
   const searchTeachers = useCallback(
@@ -185,11 +185,11 @@ export const useTeachers = (options: UseTeachersOptions = {}): UseTeachersReturn
           teacher.teacher_courses?.some(
             course =>
               course.course_name.toLowerCase().includes(searchQuery) ||
-              course.subject_area.toLowerCase().includes(searchQuery)
-          )
+              course.subject_area.toLowerCase().includes(searchQuery),
+          ),
       );
     },
-    [teachers]
+    [teachers],
   );
 
   return {

@@ -55,7 +55,7 @@ const PrimitiveIcon = React.forwardRef<React.ElementRef<typeof Svg>, IPrimitiveI
       return <AsComp ref={ref} {...sizeProps} {...colorProps} {...props} />;
     }
     return <Svg ref={ref} height={height} width={width} {...colorProps} {...props} />;
-  }
+  },
 );
 
 // Style definitions (reuse existing styles)
@@ -162,11 +162,11 @@ export const Radio = React.forwardRef<View, IRadioProps>(
       children,
       ...props
     },
-    ref
+    ref,
   ) => {
     const contextValue = useMemo(
       () => ({ size, isDisabled, isInvalid, isChecked, isHovered, isActive, isFocused }),
-      [size, isDisabled, isInvalid, isChecked, isHovered, isActive, isFocused]
+      [size, isDisabled, isInvalid, isChecked, isHovered, isActive, isFocused],
     );
 
     const Component = Platform.OS === 'web' ? View : Pressable;
@@ -190,7 +190,7 @@ export const Radio = React.forwardRef<View, IRadioProps>(
         </Component>
       </RadioContext.Provider>
     );
-  }
+  },
 );
 
 // RadioGroup component
@@ -201,7 +201,7 @@ export const RadioGroup = React.forwardRef<View, IRadioGroupProps>(
         {children}
       </View>
     );
-  }
+  },
 );
 
 // RadioIndicator component
@@ -230,7 +230,7 @@ export const RadioIndicator = React.forwardRef<View, IRadioIndicatorProps>(
         {children}
       </View>
     );
-  }
+  },
 );
 
 // RadioLabel component
@@ -254,7 +254,7 @@ export const RadioLabel = React.forwardRef<Text, IRadioLabelProps>(
         data-active={isActive}
       />
     );
-  }
+  },
 );
 
 // RadioIcon component
@@ -277,7 +277,7 @@ export const RadioIcon = React.forwardRef<any, IRadioIconProps>(
         })}
       />
     );
-  }
+  },
 );
 
 // Display names for debugging

@@ -36,125 +36,130 @@ interface IntegrationsSectionProps {
   watchedEnableEmail: boolean;
 }
 
-export const IntegrationsSection = memo<IntegrationsSectionProps>(({ 
-  control, 
-  errors, 
-  watchedEnableCalendar, 
-  watchedEnableEmail 
-}) => {
-  return (
-    <VStack space="md">
-      <Heading size="lg">Integrations</Heading>
-
+export const IntegrationsSection = memo<IntegrationsSectionProps>(
+  ({ control, errors, watchedEnableCalendar, watchedEnableEmail }) => {
+    return (
       <VStack space="md">
-        <Controller
-          control={control}
-          name="settings.enable_calendar_integration"
-          render={({ field: { onChange, value } }) => (
-            <HStack space="sm" alignItems="center">
-              <Switch value={value} onValueChange={onChange} />
-              <VStack flex={1}>
-                <Text>Calendar Integration</Text>
-                <Text size="sm" color="$textLight600">
-                  Sync classes with external calendar systems
-                </Text>
-              </VStack>
-            </HStack>
-          )}
-        />
+        <Heading size="lg">Integrations</Heading>
 
-        {watchedEnableCalendar && (
+        <VStack space="md">
           <Controller
             control={control}
-            name="settings.calendar_integration_type"
+            name="settings.enable_calendar_integration"
             render={({ field: { onChange, value } }) => (
-              <FormControl isInvalid={!!errors.settings?.calendar_integration_type}>
-                <FormControlLabel>
-                  <Text>Calendar Provider</Text>
-                </FormControlLabel>
-                <Select onValueChange={onChange} selectedValue={value}>
-                  <SelectTrigger>
-                    <SelectInput placeholder="Select calendar provider" />
-                  </SelectTrigger>
-                  <SelectPortal>
-                    <SelectBackdrop />
-                    <SelectContent>
-                      <SelectDragIndicatorWrapper>
-                        <SelectDragIndicator />
-                      </SelectDragIndicatorWrapper>
-                      {CALENDAR_PROVIDERS.map(provider => (
-                        <SelectItem key={provider.value} label={provider.label} value={provider.value} />
-                      ))}
-                    </SelectContent>
-                  </SelectPortal>
-                </Select>
-                <FormControlError>
-                  <FormControlErrorIcon as={AlertCircleIcon} />
-                  <FormControlErrorText>
-                    {errors.settings?.calendar_integration_type?.message}
-                  </FormControlErrorText>
-                </FormControlError>
-              </FormControl>
+              <HStack space="sm" alignItems="center">
+                <Switch value={value} onValueChange={onChange} />
+                <VStack flex={1}>
+                  <Text>Calendar Integration</Text>
+                  <Text size="sm" color="$textLight600">
+                    Sync classes with external calendar systems
+                  </Text>
+                </VStack>
+              </HStack>
             )}
           />
-        )}
-      </VStack>
 
-      <VStack space="md">
-        <Controller
-          control={control}
-          name="settings.enable_email_integration"
-          render={({ field: { onChange, value } }) => (
-            <HStack space="sm" alignItems="center">
-              <Switch value={value} onValueChange={onChange} />
-              <VStack flex={1}>
-                <Text>Email Integration</Text>
-                <Text size="sm" color="$textLight600">
-                  Connect with external email providers for automated communications
-                </Text>
-              </VStack>
-            </HStack>
+          {watchedEnableCalendar && (
+            <Controller
+              control={control}
+              name="settings.calendar_integration_type"
+              render={({ field: { onChange, value } }) => (
+                <FormControl isInvalid={!!errors.settings?.calendar_integration_type}>
+                  <FormControlLabel>
+                    <Text>Calendar Provider</Text>
+                  </FormControlLabel>
+                  <Select onValueChange={onChange} selectedValue={value}>
+                    <SelectTrigger>
+                      <SelectInput placeholder="Select calendar provider" />
+                    </SelectTrigger>
+                    <SelectPortal>
+                      <SelectBackdrop />
+                      <SelectContent>
+                        <SelectDragIndicatorWrapper>
+                          <SelectDragIndicator />
+                        </SelectDragIndicatorWrapper>
+                        {CALENDAR_PROVIDERS.map(provider => (
+                          <SelectItem
+                            key={provider.value}
+                            label={provider.label}
+                            value={provider.value}
+                          />
+                        ))}
+                      </SelectContent>
+                    </SelectPortal>
+                  </Select>
+                  <FormControlError>
+                    <FormControlErrorIcon as={AlertCircleIcon} />
+                    <FormControlErrorText>
+                      {errors.settings?.calendar_integration_type?.message}
+                    </FormControlErrorText>
+                  </FormControlError>
+                </FormControl>
+              )}
+            />
           )}
-        />
+        </VStack>
 
-        {watchedEnableEmail && (
+        <VStack space="md">
           <Controller
             control={control}
-            name="settings.email_integration_provider"
+            name="settings.enable_email_integration"
             render={({ field: { onChange, value } }) => (
-              <FormControl isInvalid={!!errors.settings?.email_integration_provider}>
-                <FormControlLabel>
-                  <Text>Email Provider</Text>
-                </FormControlLabel>
-                <Select onValueChange={onChange} selectedValue={value}>
-                  <SelectTrigger>
-                    <SelectInput placeholder="Select email provider" />
-                  </SelectTrigger>
-                  <SelectPortal>
-                    <SelectBackdrop />
-                    <SelectContent>
-                      <SelectDragIndicatorWrapper>
-                        <SelectDragIndicator />
-                      </SelectDragIndicatorWrapper>
-                      {EMAIL_PROVIDERS.map(provider => (
-                        <SelectItem key={provider.value} label={provider.label} value={provider.value} />
-                      ))}
-                    </SelectContent>
-                  </SelectPortal>
-                </Select>
-                <FormControlError>
-                  <FormControlErrorIcon as={AlertCircleIcon} />
-                  <FormControlErrorText>
-                    {errors.settings?.email_integration_provider?.message}
-                  </FormControlErrorText>
-                </FormControlError>
-              </FormControl>
+              <HStack space="sm" alignItems="center">
+                <Switch value={value} onValueChange={onChange} />
+                <VStack flex={1}>
+                  <Text>Email Integration</Text>
+                  <Text size="sm" color="$textLight600">
+                    Connect with external email providers for automated communications
+                  </Text>
+                </VStack>
+              </HStack>
             )}
           />
-        )}
+
+          {watchedEnableEmail && (
+            <Controller
+              control={control}
+              name="settings.email_integration_provider"
+              render={({ field: { onChange, value } }) => (
+                <FormControl isInvalid={!!errors.settings?.email_integration_provider}>
+                  <FormControlLabel>
+                    <Text>Email Provider</Text>
+                  </FormControlLabel>
+                  <Select onValueChange={onChange} selectedValue={value}>
+                    <SelectTrigger>
+                      <SelectInput placeholder="Select email provider" />
+                    </SelectTrigger>
+                    <SelectPortal>
+                      <SelectBackdrop />
+                      <SelectContent>
+                        <SelectDragIndicatorWrapper>
+                          <SelectDragIndicator />
+                        </SelectDragIndicatorWrapper>
+                        {EMAIL_PROVIDERS.map(provider => (
+                          <SelectItem
+                            key={provider.value}
+                            label={provider.label}
+                            value={provider.value}
+                          />
+                        ))}
+                      </SelectContent>
+                    </SelectPortal>
+                  </Select>
+                  <FormControlError>
+                    <FormControlErrorIcon as={AlertCircleIcon} />
+                    <FormControlErrorText>
+                      {errors.settings?.email_integration_provider?.message}
+                    </FormControlErrorText>
+                  </FormControlError>
+                </FormControl>
+              )}
+            />
+          )}
+        </VStack>
       </VStack>
-    </VStack>
-  );
-});
+    );
+  },
+);
 
 IntegrationsSection.displayName = 'IntegrationsSection';

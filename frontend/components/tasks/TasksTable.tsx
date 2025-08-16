@@ -261,7 +261,7 @@ const TasksTable: React.FC<TasksTableProps> = ({
   const [editingTask, setEditingTask] = useState<Task | undefined>();
   const [isLoading, setIsLoading] = useState(false);
   const [sortBy, setSortBy] = useState<'due_date' | 'priority' | 'created_at' | 'title'>(
-    'due_date'
+    'due_date',
   );
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed'>('all');
@@ -277,7 +277,7 @@ const TasksTable: React.FC<TasksTableProps> = ({
     if (filterStatus !== 'all') {
       if (filterStatus === 'pending') {
         filteredTasks = filteredTasks.filter(
-          task => task.status === 'pending' || task.status === 'in_progress'
+          task => task.status === 'pending' || task.status === 'in_progress',
         );
       } else {
         filteredTasks = filteredTasks.filter(task => task.status === filterStatus);
@@ -570,7 +570,7 @@ const TasksTable: React.FC<TasksTableProps> = ({
           <Box
             key={task.id}
             className={`rounded-lg p-4 border-l-4 ${getPriorityBorderColor(
-              task.priority
+              task.priority,
             )} ${getStatusColor(task.status)}`}
           >
             <HStack className="justify-between items-start">

@@ -321,7 +321,7 @@ describe('BasicInfoStep', () => {
       });
 
       const { getByText } = render(
-        <BasicInfoStep {...defaultProps} validationErrors={validationErrors} />
+        <BasicInfoStep {...defaultProps} validationErrors={validationErrors} />,
       );
 
       expectValidationError(getByText, 'First name is required');
@@ -335,7 +335,7 @@ describe('BasicInfoStep', () => {
       });
 
       const { getByTestId, queryByText, rerender } = render(
-        <BasicInfoStep {...defaultProps} validationErrors={validationErrors} />
+        <BasicInfoStep {...defaultProps} validationErrors={validationErrors} />,
       );
 
       // Initially should show error
@@ -507,7 +507,7 @@ describe('BasicInfoStep', () => {
       });
 
       const { getByTestId } = render(
-        <BasicInfoStep {...defaultProps} validationErrors={validationErrors} />
+        <BasicInfoStep {...defaultProps} validationErrors={validationErrors} />,
       );
 
       const errorMessage = getByTestId('first-name-error');

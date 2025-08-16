@@ -104,7 +104,7 @@ describe('Purchase Flow Integration Tests', () => {
       mockStripe.confirmPayment.mockResolvedValue(createMockStripeSuccess());
 
       const { getByText, getByPlaceholderText, queryByText } = render(
-        <PurchaseFlow onPurchaseComplete={onPurchaseComplete} onCancel={onCancel} />
+        <PurchaseFlow onPurchaseComplete={onPurchaseComplete} onCancel={onCancel} />,
       );
 
       // Step 1: Plan Selection
@@ -638,7 +638,7 @@ describe('Purchase Flow Integration Tests', () => {
 
       // Fix network and retry
       mockPurchaseApiClient.initiatePurchase.mockResolvedValue(
-        createMockPurchaseInitiationResponse()
+        createMockPurchaseInitiationResponse(),
       );
 
       fireEvent.press(getByText('Try Again'));
@@ -743,7 +743,7 @@ describe('Purchase Flow Integration Tests', () => {
       act(() => {
         require('react-native').AppState.currentState = 'background';
         require('react-native').AppState._eventHandlers.change?.forEach((handler: any) =>
-          handler('background')
+          handler('background'),
         );
       });
 
@@ -751,7 +751,7 @@ describe('Purchase Flow Integration Tests', () => {
       act(() => {
         require('react-native').AppState.currentState = 'active';
         require('react-native').AppState._eventHandlers.change?.forEach((handler: any) =>
-          handler('active')
+          handler('active'),
         );
       });
 
@@ -841,7 +841,7 @@ describe('Purchase Flow Integration Tests', () => {
       mockPurchaseApiClient.initiatePurchase.mockResolvedValueOnce(purchaseResponse1);
 
       const { getByText: getByText1, getByPlaceholderText: getByPlaceholderText1 } = render(
-        <PurchaseFlow />
+        <PurchaseFlow />,
       );
 
       // Start first purchase
@@ -859,7 +859,7 @@ describe('Purchase Flow Integration Tests', () => {
         JSON.stringify({
           step: 'payment',
           transactionId: purchaseResponse2.transaction_id, // Different transaction
-        })
+        }),
       );
 
       // Trigger storage event (simulating another tab)
@@ -871,7 +871,7 @@ describe('Purchase Flow Integration Tests', () => {
               step: 'success',
               transactionId: purchaseResponse2.transaction_id,
             }),
-          })
+          }),
         );
       });
 

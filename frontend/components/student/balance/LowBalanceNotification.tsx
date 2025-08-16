@@ -5,7 +5,7 @@
  * compatibility (Expo toast for mobile, custom toast for web).
  */
 
-import useRouter from '@unitools/router';
+import { useRouter } from 'expo-router';
 import { AlertTriangle, Clock, CreditCard, X, ShoppingCart } from 'lucide-react-native';
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { Platform, Animated, Dimensions } from 'react-native';
@@ -293,7 +293,7 @@ export const useLowBalanceToast = (): LowBalanceToastContextType => {
  * Higher-order component to show balance alerts
  */
 export const withBalanceAlerts = <P extends object>(
-  Component: React.ComponentType<P>
+  Component: React.ComponentType<P>,
 ): React.ComponentType<P> => {
   return (props: P) => {
     return (
@@ -310,14 +310,14 @@ export const withBalanceAlerts = <P extends object>(
 export const BalanceNotificationUtils = {
   showLowBalanceAlert: (
     showToast: (data: ToastNotificationData) => void,
-    remainingHours: number
+    remainingHours: number,
   ) => {
     showToast({
       id: 'low-balance-alert',
       type: 'low_balance',
       title: 'Low Balance Alert',
       message: `Only ${remainingHours.toFixed(
-        1
+        1,
       )} hours remaining. Purchase more to continue learning.`,
       priority: 'high',
       duration: 6000,
@@ -328,14 +328,14 @@ export const BalanceNotificationUtils = {
 
   showCriticalBalanceAlert: (
     showToast: (data: ToastNotificationData) => void,
-    remainingHours: number
+    remainingHours: number,
   ) => {
     showToast({
       id: 'critical-balance-alert',
       type: 'balance_depleted',
       title: 'Critical Balance',
       message: `Only ${remainingHours.toFixed(
-        1
+        1,
       )} hours left! Your learning will be interrupted soon.`,
       priority: 'urgent',
       duration: 8000,
@@ -347,7 +347,7 @@ export const BalanceNotificationUtils = {
   showPackageExpiringAlert: (
     showToast: (data: ToastNotificationData) => void,
     daysUntilExpiry: number,
-    hoursRemaining: number
+    hoursRemaining: number,
   ) => {
     showToast({
       id: 'package-expiring-alert',

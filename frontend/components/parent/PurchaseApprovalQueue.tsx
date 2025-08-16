@@ -368,8 +368,8 @@ export const PurchaseApprovalQueue: React.FC<PurchaseApprovalQueueProps> = ({
                   urgency === 'urgent'
                     ? 'text-red-600'
                     : urgency === 'soon'
-                    ? 'text-orange-600'
-                    : 'text-blue-600';
+                      ? 'text-orange-600'
+                      : 'text-blue-600';
 
                 return (
                   <Pressable
@@ -390,8 +390,8 @@ export const PurchaseApprovalQueue: React.FC<PurchaseApprovalQueueProps> = ({
                           urgency === 'urgent'
                             ? 'bg-red-500'
                             : urgency === 'soon'
-                            ? 'bg-orange-500'
-                            : 'bg-blue-500'
+                              ? 'bg-orange-500'
+                              : 'bg-blue-500'
                         }`}
                       />
 
@@ -416,8 +416,8 @@ export const PurchaseApprovalQueue: React.FC<PurchaseApprovalQueueProps> = ({
                               urgency === 'urgent'
                                 ? 'error'
                                 : urgency === 'soon'
-                                ? 'warning'
-                                : 'info'
+                                  ? 'warning'
+                                  : 'info'
                             }
                             size="sm"
                           >

@@ -43,7 +43,7 @@ export const Switch = React.forwardRef<RNSwitch, ISwitchProps>(
         isDisabled: isDisabled || disabled,
         isInvalid,
       }),
-      [size, isDisabled, disabled, isInvalid]
+      [size, isDisabled, disabled, isInvalid],
     );
 
     const finalDisabled = isDisabled || disabled;
@@ -54,7 +54,7 @@ export const Switch = React.forwardRef<RNSwitch, ISwitchProps>(
         <RNSwitch ref={ref} {...props} disabled={finalDisabled} style={[switchStyles, style]} />
       </SwitchContext.Provider>
     );
-  }
+  },
 );
 
 // Display names for debugging

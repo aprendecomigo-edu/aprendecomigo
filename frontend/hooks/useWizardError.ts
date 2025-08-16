@@ -147,7 +147,7 @@ export function useWizardError(options: ErrorHandlerOptions = {}) {
         ],
       };
     },
-    []
+    [],
   );
 
   const logError = useCallback(
@@ -186,7 +186,7 @@ export function useWizardError(options: ErrorHandlerOptions = {}) {
         }
       }
     },
-    [logErrors, reportErrors]
+    [logErrors, reportErrors],
   );
 
   const showError = useCallback(
@@ -227,7 +227,7 @@ export function useWizardError(options: ErrorHandlerOptions = {}) {
 
       return errorId;
     },
-    [generateErrorId, categorizeError, logError, maxErrors, autoClean, autoCleanDelay]
+    [generateErrorId, categorizeError, logError, maxErrors, autoClean, autoCleanDelay],
   );
 
   const clearError = useCallback((errorId: string) => {
@@ -289,21 +289,21 @@ export function useWizardError(options: ErrorHandlerOptions = {}) {
     (type: WizardError['type']) => {
       return errors.filter(error => error.type === type);
     },
-    [errors]
+    [errors],
   );
 
   const getErrorsByStep = useCallback(
     (step: number) => {
       return errors.filter(error => error.step === step);
     },
-    [errors]
+    [errors],
   );
 
   const getErrorsBySeverity = useCallback(
     (severity: WizardError['severity']) => {
       return errors.filter(error => error.severity === severity);
     },
-    [errors]
+    [errors],
   );
 
   const hasErrors = errors.length > 0;
@@ -367,7 +367,7 @@ export function useValidationErrors() {
   const hasValidationErrors = Object.keys(validationErrors).length > 0;
   const getFieldErrors = useCallback(
     (field: string) => validationErrors[field] || [],
-    [validationErrors]
+    [validationErrors],
   );
 
   return {

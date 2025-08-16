@@ -136,8 +136,8 @@ describe('Test Environment Infrastructure Validation', () => {
           <View>
             <TestComponent testID="component-1">First Component</TestComponent>
             <TestComponent testID="component-2">Second Component</TestComponent>
-          </View>
-        )
+          </View>,
+        ),
       ).not.toThrow();
     });
 
@@ -147,8 +147,8 @@ describe('Test Environment Infrastructure Validation', () => {
           <TestComponent testID="parent">
             <TestComponent testID="child-1">Child 1</TestComponent>
             <TestComponent testID="child-2">Child 2</TestComponent>
-          </TestComponent>
-        )
+          </TestComponent>,
+        ),
       ).not.toThrow();
     });
 
@@ -165,7 +165,7 @@ describe('Test Environment Infrastructure Validation', () => {
       const { debug } = render(
         <View testID="container">
           <Text testID="text">Test content</Text>
-        </View>
+        </View>,
       );
 
       // Debug should not throw and should return some structure

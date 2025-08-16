@@ -126,7 +126,7 @@ describe('usePurchaseFlow Hook', () => {
       act(() => {
         result.current.actions.updateStudentInfo(
           VALID_TEST_DATA.studentName,
-          VALID_TEST_DATA.studentEmail
+          VALID_TEST_DATA.studentEmail,
         );
       });
 
@@ -151,7 +151,7 @@ describe('usePurchaseFlow Hook', () => {
       act(() => {
         result.current.actions.updateStudentInfo(
           VALID_TEST_DATA.studentName,
-          VALID_TEST_DATA.studentEmail
+          VALID_TEST_DATA.studentEmail,
         );
       });
 
@@ -170,7 +170,7 @@ describe('usePurchaseFlow Hook', () => {
       act(() => {
         result.current.actions.updateStudentInfo(
           VALID_TEST_DATA.studentName,
-          INVALID_TEST_DATA.studentEmail
+          INVALID_TEST_DATA.studentEmail,
         );
       });
 
@@ -179,7 +179,7 @@ describe('usePurchaseFlow Hook', () => {
       act(() => {
         result.current.actions.updateStudentInfo(
           VALID_TEST_DATA.studentName,
-          VALID_TEST_DATA.studentEmail
+          VALID_TEST_DATA.studentEmail,
         );
       });
 
@@ -192,7 +192,7 @@ describe('usePurchaseFlow Hook', () => {
       act(() => {
         result.current.actions.updateStudentInfo(
           VALID_TEST_DATA.studentName,
-          '  JOHN@EXAMPLE.COM  '
+          '  JOHN@EXAMPLE.COM  ',
         );
       });
 
@@ -213,7 +213,7 @@ describe('usePurchaseFlow Hook', () => {
       act(() => {
         result.current.actions.updateStudentInfo(
           VALID_TEST_DATA.studentName,
-          VALID_TEST_DATA.studentEmail
+          VALID_TEST_DATA.studentEmail,
         );
       });
 
@@ -236,7 +236,7 @@ describe('usePurchaseFlow Hook', () => {
       act(() => {
         result.current.actions.updateStudentInfo(
           VALID_TEST_DATA.studentName,
-          VALID_TEST_DATA.studentEmail
+          VALID_TEST_DATA.studentEmail,
         );
       });
 
@@ -310,7 +310,7 @@ describe('usePurchaseFlow Hook', () => {
       act(() => {
         result.current.actions.updateStudentInfo(
           VALID_TEST_DATA.studentName,
-          VALID_TEST_DATA.studentEmail
+          VALID_TEST_DATA.studentEmail,
         );
       });
 
@@ -340,7 +340,7 @@ describe('usePurchaseFlow Hook', () => {
       act(() => {
         result.current.actions.updateStudentInfo(
           VALID_TEST_DATA.studentName,
-          VALID_TEST_DATA.studentEmail
+          VALID_TEST_DATA.studentEmail,
         );
       });
 
@@ -370,7 +370,7 @@ describe('usePurchaseFlow Hook', () => {
       act(() => {
         result.current.actions.updateStudentInfo(
           VALID_TEST_DATA.studentName,
-          VALID_TEST_DATA.studentEmail
+          VALID_TEST_DATA.studentEmail,
         );
       });
 
@@ -406,7 +406,7 @@ describe('usePurchaseFlow Hook', () => {
       act(() => {
         result.current.actions.updateStudentInfo(
           VALID_TEST_DATA.studentName,
-          VALID_TEST_DATA.studentEmail
+          VALID_TEST_DATA.studentEmail,
         );
       });
 
@@ -552,7 +552,7 @@ describe('usePurchaseFlow Hook', () => {
       act(() => {
         result.current.actions.updateStudentInfo(
           VALID_TEST_DATA.studentName,
-          VALID_TEST_DATA.studentEmail
+          VALID_TEST_DATA.studentEmail,
         );
       });
 
@@ -620,7 +620,7 @@ describe('usePurchaseFlow Hook', () => {
       act(() => {
         result.current.actions.updateStudentInfo(
           VALID_TEST_DATA.studentName,
-          VALID_TEST_DATA.studentEmail
+          VALID_TEST_DATA.studentEmail,
         );
       });
 
@@ -692,7 +692,7 @@ describe('usePurchaseFlow Hook', () => {
       act(() => {
         result.current.actions.updateStudentInfo(
           VALID_TEST_DATA.studentName,
-          VALID_TEST_DATA.studentEmail
+          VALID_TEST_DATA.studentEmail,
         );
       });
 
@@ -768,7 +768,7 @@ describe('usePurchaseFlow Hook', () => {
       act(() => {
         result.current.actions.updateStudentInfo(
           VALID_TEST_DATA.studentName,
-          VALID_TEST_DATA.studentEmail
+          VALID_TEST_DATA.studentEmail,
         );
       });
 

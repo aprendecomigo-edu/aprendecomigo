@@ -5,7 +5,7 @@
  * Provides confirmation details and next steps for students.
  */
 
-import useRouter from '@unitools/router';
+import { useRouter } from 'expo-router';
 import { CheckCircle, Calendar, BookOpen, ArrowRight } from 'lucide-react-native';
 import React, { useEffect } from 'react';
 

@@ -276,7 +276,7 @@ const StudentRow: React.FC<StudentRowProps> = React.memo(
         </Actionsheet>
       </>
     );
-  }
+  },
 );
 
 export const StudentListTable: React.FC<StudentListTableProps> = ({
@@ -345,14 +345,14 @@ export const StudentListTable: React.FC<StudentListTableProps> = ({
     (student: StudentProfile) => {
       router.push(`/students/${student.id}`);
     },
-    [router]
+    [router],
   );
 
   const handleEditStudent = React.useCallback(
     (student: StudentProfile) => {
       router.push(`/students/${student.id}?edit=true`);
     },
-    [router]
+    [router],
   );
 
   const handleDeleteStudent = React.useCallback((student: StudentProfile) => {
@@ -380,7 +380,7 @@ export const StudentListTable: React.FC<StudentListTableProps> = ({
         showToast('error', error.message || 'Erro ao atualizar status do aluno');
       }
     },
-    [updateStudentStatusRecord, showToast]
+    [updateStudentStatusRecord, showToast],
   );
 
   // Filter summary

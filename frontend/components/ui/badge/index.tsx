@@ -125,7 +125,7 @@ const PrimitiveIcon = React.forwardRef<React.ElementRef<typeof Svg>, IPrimitiveI
       return <AsComp ref={ref} {...sizeProps} {...colorProps} {...props} />;
     }
     return <Svg ref={ref} height={height} width={width} {...colorProps} {...props} />;
-  }
+  },
 );
 
 const ContextView = withStyleContext(View, SCOPE);
@@ -191,7 +191,7 @@ const BadgeText = React.forwardRef<React.ElementRef<typeof Text>, IBadgeTextProp
         {children}
       </Text>
     );
-  }
+  },
 );
 
 type IBadgeIconProps = React.ComponentPropsWithoutRef<typeof PrimitiveIcon> &
@@ -229,7 +229,7 @@ const BadgeIcon = React.forwardRef<React.ElementRef<typeof PrimitiveIcon>, IBadg
         ref={ref}
       />
     );
-  }
+  },
 );
 
 Badge.displayName = 'Badge';

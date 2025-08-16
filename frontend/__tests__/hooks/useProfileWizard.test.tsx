@@ -58,7 +58,7 @@ describe('useProfileWizard', () => {
       // Mock API responses for loadProgress
       mockApiClient.get
         .mockResolvedValueOnce(
-          mockApiResponse({ user: { name: 'Cached User', email: 'cached@example.com' } })
+          mockApiResponse({ user: { name: 'Cached User', email: 'cached@example.com' } }),
         )
         .mockResolvedValueOnce(mockApiResponse(cachedState.completionData));
 
@@ -97,7 +97,7 @@ describe('useProfileWizard', () => {
 
       mockApiClient.get
         .mockResolvedValueOnce(
-          mockApiResponse({ user: { name: 'John Doe', email: 'john@example.com' } })
+          mockApiResponse({ user: { name: 'John Doe', email: 'john@example.com' } }),
         )
         .mockResolvedValueOnce(mockApiResponse(mockCompletionData));
 
@@ -199,7 +199,7 @@ describe('useProfileWizard', () => {
 
       expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
         '@teacher_profile_wizard',
-        expect.stringContaining('"first_name":"John"')
+        expect.stringContaining('"first_name":"John"'),
       );
 
       // Restore fake timers
@@ -218,7 +218,7 @@ describe('useProfileWizard', () => {
         mockApiResponse({
           is_valid: false,
           errors: { first_name: ['Required'] },
-        })
+        }),
       );
 
       await act(async () => {
@@ -281,7 +281,7 @@ describe('useProfileWizard', () => {
 
       expect(mockAsyncStorage.setItem).toHaveBeenCalledWith(
         '@teacher_profile_wizard',
-        expect.stringContaining('"currentStep":2')
+        expect.stringContaining('"currentStep":2'),
       );
 
       // Restore fake timers
@@ -294,7 +294,7 @@ describe('useProfileWizard', () => {
       mockApiClient.post.mockResolvedValue(
         mockApiResponse({
           is_valid: true,
-        })
+        }),
       );
 
       const { result } = renderHook(() => useProfileWizard());
@@ -311,7 +311,7 @@ describe('useProfileWizard', () => {
         {
           step: 0,
           data: result.current.formData,
-        }
+        },
       );
     });
 
@@ -325,7 +325,7 @@ describe('useProfileWizard', () => {
         mockApiResponse({
           is_valid: false,
           errors: validationErrors,
-        })
+        }),
       );
 
       const { result } = renderHook(() => useProfileWizard());
@@ -351,7 +351,7 @@ describe('useProfileWizard', () => {
 
       expect(isValid).toBe(false);
       expect(result.current.error).toBe(
-        'Validation failed. Please check your input and try again.'
+        'Validation failed. Please check your input and try again.',
       );
     });
   });
@@ -459,7 +459,7 @@ describe('useProfileWizard', () => {
       mockApiClient.post.mockResolvedValue(
         mockApiResponse({
           photo_url: mockPhotoUrl,
-        })
+        }),
       );
 
       const { result } = renderHook(() => useProfileWizard());
@@ -478,7 +478,7 @@ describe('useProfileWizard', () => {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
-        }
+        },
       );
     });
 
@@ -489,7 +489,7 @@ describe('useProfileWizard', () => {
 
       await act(async () => {
         await expect(result.current.uploadProfilePhoto('file://photo.jpg')).rejects.toThrow(
-          'Upload failed'
+          'Upload failed',
         );
       });
     });

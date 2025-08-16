@@ -1,4 +1,4 @@
-import useRouter from '@unitools/router';
+import { useRouter } from 'expo-router';
 import { useLocalSearchParams } from 'expo-router';
 import {
   CheckCircle2,
@@ -220,8 +220,8 @@ export default function OnboardingSuccessScreen() {
                         step.priority === 'high'
                           ? 'bg-blue-100'
                           : step.priority === 'medium'
-                          ? 'bg-yellow-100'
-                          : 'bg-gray-100'
+                            ? 'bg-yellow-100'
+                            : 'bg-gray-100'
                       }`}
                     >
                       <Icon
@@ -230,8 +230,8 @@ export default function OnboardingSuccessScreen() {
                           step.priority === 'high'
                             ? 'text-blue-600'
                             : step.priority === 'medium'
-                            ? 'text-yellow-600'
-                            : 'text-gray-600'
+                              ? 'text-yellow-600'
+                              : 'text-gray-600'
                         }
                         size="lg"
                       />

@@ -113,7 +113,9 @@ export default function PaymentMonitoringDashboard() {
       if (failedCount === results.length) {
         setError('Failed to load dashboard data. Please try again.');
       } else if (failedCount > 0) {
-        setError(`Some dashboard data could not be loaded. ${failedCount} of ${results.length} operations failed.`);
+        setError(
+          `Some dashboard data could not be loaded. ${failedCount} of ${results.length} operations failed.`,
+        );
       }
     } catch (err: any) {
       if (__DEV__) {
@@ -217,8 +219,8 @@ export default function PaymentMonitoringDashboard() {
                     connectionStatus.status === 'connected'
                       ? CheckCircle
                       : connectionStatus.status === 'error'
-                      ? AlertCircle
-                      : Activity
+                        ? AlertCircle
+                        : Activity
                   }
                   size="xs"
                   className="mr-1"

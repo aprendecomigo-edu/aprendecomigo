@@ -107,7 +107,7 @@ describe('PurchaseFlow Component', () => {
         mockUsePurchaseFlow.mockReturnValue(
           createMockUsePurchaseFlow({
             state: createMockPurchaseFlowState({ step }),
-          })
+          }),
         );
 
         const { getByText } = render(<PurchaseFlow {...defaultProps} />);
@@ -131,7 +131,7 @@ describe('PurchaseFlow Component', () => {
       mockUsePurchaseFlow.mockReturnValue(
         createMockUsePurchaseFlow({
           state: createMockPurchaseFlowState({ step: 'success' }),
-        })
+        }),
       );
 
       const { queryByText } = render(<PurchaseFlow {...defaultProps} onCancel={onCancel} />);
@@ -145,7 +145,7 @@ describe('PurchaseFlow Component', () => {
       mockUsePurchaseFlow.mockReturnValue(
         createMockUsePurchaseFlow({
           state: createMockPurchaseFlowState({ step: 'plan-selection' }),
-        })
+        }),
       );
 
       const { getByTestId } = render(<PurchaseFlow {...defaultProps} />);
@@ -167,7 +167,7 @@ describe('PurchaseFlow Component', () => {
               errors: {},
             },
           }),
-        })
+        }),
       );
 
       const { getByTestId } = render(<PurchaseFlow {...defaultProps} />);
@@ -192,7 +192,7 @@ describe('PurchaseFlow Component', () => {
             stripeConfig: { public_key: 'pk_test_123', success: true },
             paymentIntentSecret: 'pi_test_123_secret',
           }),
-        })
+        }),
       );
 
       const { getByTestId } = render(<PurchaseFlow {...defaultProps} />);
@@ -208,7 +208,7 @@ describe('PurchaseFlow Component', () => {
             step: 'payment',
             stripeConfig: null, // Missing config
           }),
-        })
+        }),
       );
 
       const { queryByTestId } = render(<PurchaseFlow {...defaultProps} />);
@@ -235,7 +235,7 @@ describe('PurchaseFlow Component', () => {
             },
             transactionId,
           }),
-        })
+        }),
       );
 
       const { getByText } = render(<PurchaseFlow {...defaultProps} />);
@@ -256,7 +256,7 @@ describe('PurchaseFlow Component', () => {
             step: 'success',
             transactionId,
           }),
-        })
+        }),
       );
 
       render(<PurchaseFlow {...defaultProps} onPurchaseComplete={onPurchaseComplete} />);
@@ -287,7 +287,7 @@ describe('PurchaseFlow Component', () => {
             },
           }),
           actions: mockActions,
-        })
+        }),
       );
 
       const { getByText } = render(<PurchaseFlow {...defaultProps} />);
@@ -308,7 +308,7 @@ describe('PurchaseFlow Component', () => {
             step: 'error',
             errorMessage,
           }),
-        })
+        }),
       );
 
       const { getByText } = render(<PurchaseFlow {...defaultProps} />);
@@ -328,7 +328,7 @@ describe('PurchaseFlow Component', () => {
             step: 'payment',
             errorMessage,
           }),
-        })
+        }),
       );
 
       const { getByText } = render(<PurchaseFlow {...defaultProps} />);
@@ -362,7 +362,7 @@ describe('PurchaseFlow Component', () => {
             paymentIntentSecret: 'pi_test_123_secret',
           }),
           actions: mockActions,
-        })
+        }),
       );
 
       const { getByTestId } = render(<PurchaseFlow {...defaultProps} />);
@@ -389,7 +389,7 @@ describe('PurchaseFlow Component', () => {
             errorMessage: 'Payment failed',
           }),
           actions: mockActions,
-        })
+        }),
       );
 
       const { getByText } = render(<PurchaseFlow {...defaultProps} />);
@@ -405,7 +405,7 @@ describe('PurchaseFlow Component', () => {
       mockUsePurchaseFlow.mockReturnValue(
         createMockUsePurchaseFlow({
           isLoading: true,
-        })
+        }),
       );
 
       const { getByTestId } = render(<PurchaseFlow {...defaultProps} />);
@@ -425,7 +425,7 @@ describe('PurchaseFlow Component', () => {
         mockUsePurchaseFlow.mockReturnValue(
           createMockUsePurchaseFlow({
             state: createMockPurchaseFlowState({ step }),
-          })
+          }),
         );
 
         const { getByTestId } = render(<PurchaseFlow {...defaultProps} />);
@@ -476,7 +476,7 @@ describe('PurchaseFlow Component', () => {
             },
           }),
           actions: mockActions,
-        })
+        }),
       );
 
       const { getByTestId } = render(<PurchaseFlow {...defaultProps} />);
@@ -501,7 +501,7 @@ describe('PurchaseFlow Component', () => {
             stripeConfig: { public_key: 'pk_test_123', success: true },
             paymentIntentSecret: 'pi_test_123_secret',
           }),
-        })
+        }),
       );
 
       const { getByTestId } = render(<PurchaseFlow {...defaultProps} />);
@@ -528,7 +528,7 @@ describe('PurchaseFlow Component', () => {
               errors: {},
             },
           }),
-        })
+        }),
       );
 
       const { queryByTestId } = render(<PurchaseFlow {...defaultProps} />);
@@ -562,7 +562,7 @@ describe('PurchaseFlow Component', () => {
             },
           }),
           actions: mockActions,
-        })
+        }),
       );
 
       const { getByText } = render(<PurchaseFlow {...defaultProps} />);
@@ -595,7 +595,7 @@ describe('PurchaseFlow Component', () => {
             },
           }),
           actions: mockActions,
-        })
+        }),
       );
 
       const { getByText } = render(<PurchaseFlow {...defaultProps} />);

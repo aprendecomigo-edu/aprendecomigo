@@ -98,7 +98,7 @@ export const useTeacherStudents = (): UseTeacherStudentsResult => {
     (id: number) => {
       return students.find(student => student.id === id);
     },
-    [students]
+    [students],
   );
 
   // Filter students based on search query and filter criteria
@@ -110,7 +110,7 @@ export const useTeacherStudents = (): UseTeacherStudentsResult => {
       const query = searchQuery.toLowerCase().trim();
       filtered = filtered.filter(
         student =>
-          student.name.toLowerCase().includes(query) || student.email.toLowerCase().includes(query)
+          student.name.toLowerCase().includes(query) || student.email.toLowerCase().includes(query),
       );
     }
 
@@ -120,7 +120,7 @@ export const useTeacherStudents = (): UseTeacherStudentsResult => {
         filtered = filtered.filter(
           student =>
             student.last_session_date &&
-            new Date(student.last_session_date) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Last 7 days
+            new Date(student.last_session_date) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
         );
         break;
       case 'needs_attention':
@@ -128,7 +128,7 @@ export const useTeacherStudents = (): UseTeacherStudentsResult => {
           student =>
             student.completion_percentage < 50 ||
             !student.last_session_date ||
-            new Date(student.last_session_date) < new Date(Date.now() - 14 * 24 * 60 * 60 * 1000) // More than 14 days ago
+            new Date(student.last_session_date) < new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // More than 14 days ago
         );
         break;
       case 'all':
@@ -182,7 +182,7 @@ export const useStudentDetail = (studentId: number): UseStudentDetailResult => {
     } catch (err: any) {
       console.error('Failed to load student detail:', err);
       setError(
-        err?.response?.data?.detail || err?.message || 'Erro ao carregar detalhes do estudante'
+        err?.response?.data?.detail || err?.message || 'Erro ao carregar detalhes do estudante',
       );
     } finally {
       setIsLoading(false);

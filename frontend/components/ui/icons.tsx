@@ -4,7 +4,7 @@
  */
 
 // Authentication & Security
-export { 
+export {
   AlertTriangle,
   AlertCircle,
   CheckCircle,
@@ -35,31 +35,13 @@ export {
 } from 'lucide-react-native';
 
 // Calendar & Time
-export {
-  Calendar,
-  CalendarDays,
-  CalendarIcon,
-  Clock,
-} from 'lucide-react-native';
+export { Calendar, CalendarDays, CalendarIcon, Clock } from 'lucide-react-native';
 
 // User & Profile
-export {
-  User,
-  UserCheck,
-  UserX,
-  Users,
-  Crown,
-  GraduationCap,
-  School,
-} from 'lucide-react-native';
+export { User, UserCheck, UserX, Users, Crown, GraduationCap, School } from 'lucide-react-native';
 
 // Communication
-export {
-  Mail,
-  MessageCircle,
-  Phone,
-  QrCode,
-} from 'lucide-react-native';
+export { Mail, MessageCircle, Phone, QrCode } from 'lucide-react-native';
 
 // Files & Documents
 export {

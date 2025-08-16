@@ -198,7 +198,7 @@ export const Toast = React.forwardRef<View, IToastProps>(
   ({ className, variant = 'solid', action = 'muted', context, children, ...props }, ref) => {
     const contextValue = useMemo(
       () => ({ variant, action, ...context }),
-      [variant, action, context]
+      [variant, action, context],
     );
 
     return (
@@ -212,7 +212,7 @@ export const Toast = React.forwardRef<View, IToastProps>(
         </ToastRoot>
       </ToastContext.Provider>
     );
-  }
+  },
 );
 
 // ToastTitle component - Direct implementation
@@ -235,7 +235,7 @@ export const ToastTitle = React.forwardRef<Text, IToastTitleProps>(
         })}
       />
     );
-  }
+  },
 );
 
 // ToastDescription component - Direct implementation
@@ -257,7 +257,7 @@ export const ToastDescription = React.forwardRef<Text, IToastDescriptionProps>(
         })}
       />
     );
-  }
+  },
 );
 
 // Toast hook implementation - Direct implementation without factory

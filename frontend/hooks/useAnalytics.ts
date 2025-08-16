@@ -96,7 +96,7 @@ export function useAnalytics(email?: string): UseAnalyticsResult {
         setUsageStatsLoading(false);
       }
     },
-    [email]
+    [email],
   );
 
   // Refresh learning insights
@@ -116,7 +116,7 @@ export function useAnalytics(email?: string): UseAnalyticsResult {
         setInsightsLoading(false);
       }
     },
-    [email]
+    [email],
   );
 
   // Refresh usage patterns
@@ -136,7 +136,7 @@ export function useAnalytics(email?: string): UseAnalyticsResult {
         setPatternsLoading(false);
       }
     },
-    [email]
+    [email],
   );
 
   // Refresh notification preferences
@@ -175,7 +175,7 @@ export function useAnalytics(email?: string): UseAnalyticsResult {
         setPreferencesUpdating(false);
       }
     },
-    [email]
+    [email],
   );
 
   // Mark insight as read
@@ -186,14 +186,14 @@ export function useAnalytics(email?: string): UseAnalyticsResult {
 
         // Update local state
         setInsights(prev =>
-          prev.map(insight => (insight.id === insightId ? { ...insight, is_read: true } : insight))
+          prev.map(insight => (insight.id === insightId ? { ...insight, is_read: true } : insight)),
         );
       } catch (error: any) {
         console.error('Error marking insight as read:', error);
         // Don't show error for this operation as it's not critical
       }
     },
-    [email]
+    [email],
   );
 
   // Refresh all data with graceful degradation
@@ -206,7 +206,12 @@ export function useAnalytics(email?: string): UseAnalyticsResult {
     ]);
 
     // Log any failures for monitoring
-    const operations = ['usage statistics', 'learning insights', 'usage patterns', 'notification preferences'];
+    const operations = [
+      'usage statistics',
+      'learning insights',
+      'usage patterns',
+      'notification preferences',
+    ];
     results.forEach((result, index) => {
       if (result.status === 'rejected') {
         console.error(`Failed to refresh ${operations[index]}:`, result.reason);

@@ -85,8 +85,8 @@ export function BalanceAlertProvider({
         data.type === 'low_balance' || data.type === 'balance_depleted'
           ? 'error'
           : data.type === 'package_expiring'
-          ? 'error'
-          : 'success';
+            ? 'error'
+            : 'success';
 
       showToast(toastType, `${data.title}: ${data.message}`, data.duration);
 
@@ -95,7 +95,7 @@ export function BalanceAlertProvider({
         activeToastsRef.current.delete(data.id);
       }, data.duration || 5000);
     },
-    [settings, showToast]
+    [settings, showToast],
   );
 
   // WebSocket integration for real-time updates
@@ -146,15 +146,15 @@ export function BalanceAlertProvider({
           }
         }
       },
-      [settings, showBalanceToast]
-    )
+      [settings, showBalanceToast],
+    ),
   );
 
   // Calculate balance status
   const balanceStatus = balance
     ? getBalanceStatus(
         parseFloat(balance.balance_summary.remaining_hours),
-        parseFloat(balance.balance_summary.hours_purchased)
+        parseFloat(balance.balance_summary.hours_purchased),
       )
     : null;
 
@@ -187,12 +187,10 @@ export function BalanceAlertProvider({
       ]);
 
       // Extract data with defaults
-      const notificationsResponse = results[0].status === 'fulfilled' 
-        ? results[0].value 
-        : { results: [] };
-      const unreadResponse = results[1].status === 'fulfilled' 
-        ? results[1].value 
-        : { unread_count: 0 };
+      const notificationsResponse =
+        results[0].status === 'fulfilled' ? results[0].value : { results: [] };
+      const unreadResponse =
+        results[1].status === 'fulfilled' ? results[1].value : { unread_count: 0 };
 
       // Log any failures for monitoring
       if (results[0].status === 'rejected') {
@@ -222,7 +220,7 @@ export function BalanceAlertProvider({
     try {
       const response = await NotificationApiClient.pollNotifications(
         lastNotificationCheckRef.current || undefined,
-        { is_read: false }
+        { is_read: false },
       );
 
       // Show toasts for new high-priority notifications
@@ -280,8 +278,8 @@ export function BalanceAlertProvider({
 
       setNotifications(prev =>
         prev.map(n =>
-          n.id === id ? { ...n, is_read: true, read_at: new Date().toISOString() } : n
-        )
+          n.id === id ? { ...n, is_read: true, read_at: new Date().toISOString() } : n,
+        ),
       );
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (err: any) {
@@ -298,7 +296,7 @@ export function BalanceAlertProvider({
       await NotificationApiClient.markAllAsRead();
 
       setNotifications(prev =>
-        prev.map(n => ({ ...n, is_read: true, read_at: new Date().toISOString() }))
+        prev.map(n => ({ ...n, is_read: true, read_at: new Date().toISOString() })),
       );
       setUnreadCount(0);
     } catch (err: any) {
@@ -367,7 +365,7 @@ export function BalanceAlertProvider({
     const remainingHours = parseFloat(balance.balance_summary.remaining_hours);
     const status = getBalanceStatus(
       remainingHours,
-      parseFloat(balance.balance_summary.hours_purchased)
+      parseFloat(balance.balance_summary.hours_purchased),
     );
 
     // Show toast for critical balance

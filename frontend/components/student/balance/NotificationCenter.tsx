@@ -5,7 +5,7 @@
  * read/unread status management, and action buttons.
  */
 
-import useRouter from '@unitools/router';
+import { useRouter } from 'expo-router';
 import {
   Bell,
   AlertTriangle,
@@ -181,8 +181,8 @@ function NotificationItem({
                     notification.notification_type === 'balance_depleted'
                       ? 'Purchase Hours'
                       : notification.notification_type === 'package_expiring'
-                      ? 'Renew Package'
-                      : 'View Details'}
+                        ? 'Renew Package'
+                        : 'View Details'}
                   </ButtonText>
                 </Button>
 

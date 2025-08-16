@@ -86,7 +86,7 @@ const EditTemplatePage = () => {
   ];
 
   const currentTemplateType = templateTypeOptions.find(
-    option => option.value === currentTemplate?.template_type
+    option => option.value === currentTemplate?.template_type,
   );
 
   // Update template field and mark as changed
@@ -96,7 +96,7 @@ const EditTemplatePage = () => {
       setHasUnsavedChanges(true);
       clearError();
     },
-    [updateTemplateField, clearError]
+    [updateTemplateField, clearError],
   );
 
   // Validate template content
@@ -197,7 +197,7 @@ const EditTemplatePage = () => {
             }
           },
         },
-      ]
+      ],
     );
   }, [currentTemplate, templateId, deleteTemplate]);
 
@@ -230,7 +230,7 @@ const EditTemplatePage = () => {
         },
       ],
       'plain-text',
-      `${currentTemplate.name} (Copy)`
+      `${currentTemplate.name} (Copy)`,
     );
   }, [currentTemplate, templateId, duplicateTemplate]);
 

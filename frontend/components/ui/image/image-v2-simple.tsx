@@ -53,7 +53,7 @@ export const Image = React.forwardRef<RNImage, IImageProps>(
         <RNImage ref={ref} {...props} style={[imageStyles, style]} />
       </ImageContext.Provider>
     );
-  }
+  },
 );
 
 // Display names for debugging

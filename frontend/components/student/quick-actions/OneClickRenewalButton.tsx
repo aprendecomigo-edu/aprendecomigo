@@ -65,7 +65,7 @@ export function OneClickRenewalButton({
 
     // Find the most recently expired package
     const mostRecentExpired = balance.package_status.expired_packages.sort(
-      (a, b) => new Date(b.expires_at || '').getTime() - new Date(a.expires_at || '').getTime()
+      (a, b) => new Date(b.expires_at || '').getTime() - new Date(a.expires_at || '').getTime(),
     )[0];
 
     setExpiredPackage(mostRecentExpired || null);

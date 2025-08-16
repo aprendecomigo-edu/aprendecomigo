@@ -250,7 +250,7 @@ export const AdminEditTeacherModal: React.FC<AdminEditTeacherModalProps> = ({
 
   const hasChanges = changedFields.size > 0;
   const hasSensitiveChanges = Array.from(changedFields).some(field =>
-    SENSITIVE_FIELDS.includes(field)
+    SENSITIVE_FIELDS.includes(field),
   );
 
   return (

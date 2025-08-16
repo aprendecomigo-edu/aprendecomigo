@@ -133,8 +133,8 @@ function InsightItem({
                 {isExpanded
                   ? insight.description
                   : insight.description.length > 100
-                  ? `${insight.description.substring(0, 100)}...`
-                  : insight.description}
+                    ? `${insight.description.substring(0, 100)}...`
+                    : insight.description}
               </Text>
 
               {/* Expand/Collapse button for long descriptions */}
@@ -183,10 +183,10 @@ function InsightItem({
               insight.type === 'achievement'
                 ? 'success'
                 : insight.type === 'milestone'
-                ? 'primary'
-                : insight.type === 'warning'
-                ? 'error'
-                : 'secondary'
+                  ? 'primary'
+                  : insight.type === 'warning'
+                    ? 'error'
+                    : 'secondary'
             }
             size="xs"
           >

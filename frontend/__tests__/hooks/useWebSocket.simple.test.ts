@@ -102,9 +102,9 @@ describe('useWebSocket - Core Functionality', () => {
 
     // Suppress console - use proper mocks
     if (__DEV__) {
-    // Suppress console - use proper mocks
+      // Suppress console - use proper mocks
       console.log = jest.fn();
-    // Suppress console - use proper mocks
+      // Suppress console - use proper mocks
     }
     console.error = jest.fn();
     if (__DEV__) {
@@ -117,9 +117,9 @@ describe('useWebSocket - Core Functionality', () => {
   afterEach(() => {
     jest.useRealTimers();
     if (__DEV__) {
-    jest.useRealTimers();
+      jest.useRealTimers();
       console.log = originalConsole.log;
-    jest.useRealTimers();
+      jest.useRealTimers();
     }
     console.error = originalConsole.error;
     if (__DEV__) {
@@ -135,7 +135,7 @@ describe('useWebSocket - Core Functionality', () => {
           url: 'ws://localhost:8000/test/',
           channelName: 'test',
           shouldConnect: true,
-        })
+        }),
       );
 
       expect(result.current.isConnected).toBe(false);
@@ -151,7 +151,7 @@ describe('useWebSocket - Core Functionality', () => {
           url: 'ws://localhost:8000/test/',
           channelName: 'test',
           shouldConnect: false,
-        })
+        }),
       );
 
       expect(global.WebSocket).not.toHaveBeenCalled();
@@ -163,7 +163,7 @@ describe('useWebSocket - Core Functionality', () => {
           url: 'ws://localhost:8000/test/',
           channelName: 'test',
           shouldConnect: true,
-        })
+        }),
       );
 
       // Wait for async operations to complete
@@ -183,7 +183,7 @@ describe('useWebSocket - Core Functionality', () => {
           url: 'ws://localhost:8000/test/',
           channelName: 'test',
           shouldConnect: true,
-        })
+        }),
       );
 
       // Let async operations complete
@@ -206,7 +206,7 @@ describe('useWebSocket - Core Functionality', () => {
           channelName: 'test',
           onMessage: mockOnMessage,
           shouldConnect: true,
-        })
+        }),
       );
 
       // Simulate connection and message
@@ -229,7 +229,7 @@ describe('useWebSocket - Core Functionality', () => {
           channelName: 'test',
           onMessage: mockOnMessage,
           shouldConnect: true,
-        })
+        }),
       );
 
       await act(async () => {
@@ -241,7 +241,7 @@ describe('useWebSocket - Core Functionality', () => {
       expect(mockOnMessage).not.toHaveBeenCalled();
       expect(console.error).toHaveBeenCalledWith(
         'Error parsing WebSocket message:',
-        expect.any(Error)
+        expect.any(Error),
       );
     });
 
@@ -251,7 +251,7 @@ describe('useWebSocket - Core Functionality', () => {
           url: 'ws://localhost:8000/test/',
           channelName: 'test',
           shouldConnect: true,
-        })
+        }),
       );
 
       await act(async () => {
@@ -267,7 +267,7 @@ describe('useWebSocket - Core Functionality', () => {
       });
 
       expect(mockWebSocket.send).toHaveBeenCalledWith(
-        JSON.stringify({ type: 'test', data: 'hello' })
+        JSON.stringify({ type: 'test', data: 'hello' }),
       );
     });
 
@@ -277,7 +277,7 @@ describe('useWebSocket - Core Functionality', () => {
           url: 'ws://localhost:8000/test/',
           channelName: 'test',
           shouldConnect: true,
-        })
+        }),
       );
 
       act(() => {
@@ -301,7 +301,7 @@ describe('useWebSocket - Core Functionality', () => {
           channelName: 'test',
           onOpen: mockOnOpen,
           shouldConnect: true,
-        })
+        }),
       );
 
       await act(async () => {
@@ -322,7 +322,7 @@ describe('useWebSocket - Core Functionality', () => {
           channelName: 'test',
           onClose: mockOnClose,
           shouldConnect: true,
-        })
+        }),
       );
 
       await act(async () => {
@@ -349,7 +349,7 @@ describe('useWebSocket - Core Functionality', () => {
           channelName: 'test',
           onError: mockOnError,
           shouldConnect: true,
-        })
+        }),
       );
 
       await act(async () => {
@@ -369,7 +369,7 @@ describe('useWebSocket - Core Functionality', () => {
           url: 'ws://localhost:8000/test/',
           channelName: 'test',
           shouldConnect: true,
-        })
+        }),
       );
 
       await act(async () => {
@@ -414,9 +414,9 @@ describe('useWebSocketEnhanced - Core Functionality', () => {
   afterEach(() => {
     jest.useRealTimers();
     if (__DEV__) {
-    jest.useRealTimers();
+      jest.useRealTimers();
       console.log = originalConsole.log;
-    jest.useRealTimers();
+      jest.useRealTimers();
     }
     console.error = originalConsole.error;
     if (__DEV__) {

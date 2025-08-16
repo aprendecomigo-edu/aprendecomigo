@@ -157,7 +157,7 @@ export const useTasks = (autoFetch: boolean = true): UseTasksResult => {
         return null;
       }
     },
-    [tasks]
+    [tasks],
   );
 
   useEffect(() => {

@@ -117,7 +117,7 @@ export const Accordion = React.forwardRef<View, IAccordionProps>(
         </View>
       </AccordionContext.Provider>
     );
-  }
+  },
 );
 
 // AccordionItem component
@@ -132,7 +132,7 @@ export const AccordionItem = React.forwardRef<View, IAccordionItemProps>(
         isExpanded,
         onToggle: () => setIsExpanded(!isExpanded),
       }),
-      [isExpanded]
+      [isExpanded],
     );
 
     const itemStyles = getItemStyles(variant);
@@ -144,7 +144,7 @@ export const AccordionItem = React.forwardRef<View, IAccordionItemProps>(
         </View>
       </AccordionItemContext.Provider>
     );
-  }
+  },
 );
 
 // AccordionHeader component
@@ -155,7 +155,7 @@ export const AccordionHeader = React.forwardRef<View, IAccordionHeaderProps>(
         {children}
       </View>
     );
-  }
+  },
 );
 
 // AccordionTrigger component
@@ -175,7 +175,7 @@ export const AccordionTrigger = React.forwardRef<View, IAccordionTriggerProps>(
         {children}
       </Pressable>
     );
-  }
+  },
 );
 
 // AccordionTitleText component
@@ -187,7 +187,7 @@ export const AccordionTitleText = React.forwardRef<Text, IAccordionTitleTextProp
     const titleTextStyles = getTitleTextStyles(size);
 
     return <Text ref={ref} {...props} style={[titleTextStyles, style]} />;
-  }
+  },
 );
 
 // AccordionIcon component - Simple placeholder
@@ -206,7 +206,7 @@ export const AccordionIcon = React.forwardRef<View, IAccordionIconProps>(
         {children}
       </View>
     );
-  }
+  },
 );
 
 // AccordionContent component
@@ -225,7 +225,7 @@ export const AccordionContent = React.forwardRef<View, IAccordionContentProps>(
         {children}
       </View>
     );
-  }
+  },
 );
 
 // AccordionContentText component
@@ -237,7 +237,7 @@ export const AccordionContentText = React.forwardRef<Text, IAccordionContentText
     const contentTextStyles = getContentTextStyles(size);
 
     return <Text ref={ref} {...props} style={[contentTextStyles, style]} />;
-  }
+  },
 );
 
 // Display names for debugging

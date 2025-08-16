@@ -70,7 +70,7 @@ describe('SchoolContext', () => {
       const { getByTestId } = render(
         <SchoolProvider>
           <TestComponent />
-        </SchoolProvider>
+        </SchoolProvider>,
       );
 
       expect(getByTestId('schools-count')).toHaveProp('children', 3);
@@ -81,7 +81,7 @@ describe('SchoolContext', () => {
       const { getByTestId } = render(
         <SchoolProvider>
           <TestComponent />
-        </SchoolProvider>
+        </SchoolProvider>,
       );
 
       // Should default to first school_owner/school_admin role
@@ -114,7 +114,7 @@ describe('SchoolContext', () => {
       const { getByTestId } = render(
         <SchoolProvider>
           <TestComponent />
-        </SchoolProvider>
+        </SchoolProvider>,
       );
 
       expect(getByTestId('current-school')).toHaveProp('children', 'Only Teacher School');
@@ -134,7 +134,7 @@ describe('SchoolContext', () => {
       const { getByTestId } = render(
         <SchoolProvider>
           <TestComponent />
-        </SchoolProvider>
+        </SchoolProvider>,
       );
 
       expect(getByTestId('schools-count')).toHaveProp('children', 0);

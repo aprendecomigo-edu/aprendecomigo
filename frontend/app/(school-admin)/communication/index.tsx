@@ -67,7 +67,7 @@ const CommunicationDashboard = () => {
       const results = await Promise.allSettled([
         refreshAnalytics(),
         refreshTemplates(),
-        fetchBranding()
+        fetchBranding(),
       ]);
 
       // Log any failures for monitoring
@@ -344,8 +344,8 @@ const CommunicationDashboard = () => {
                         analytics.delivery_rate >= 0.95
                           ? 'text-green-600'
                           : analytics.delivery_rate >= 0.85
-                          ? 'text-yellow-600'
-                          : 'text-red-600'
+                            ? 'text-yellow-600'
+                            : 'text-red-600'
                       }`}
                     >
                       {Math.round(analytics.delivery_rate * 100)}%
@@ -363,8 +363,8 @@ const CommunicationDashboard = () => {
                         analytics.open_rate >= 0.25
                           ? 'text-green-600'
                           : analytics.open_rate >= 0.15
-                          ? 'text-yellow-600'
-                          : 'text-red-600'
+                            ? 'text-yellow-600'
+                            : 'text-red-600'
                       }`}
                     >
                       {Math.round(analytics.open_rate * 100)}%
@@ -382,8 +382,8 @@ const CommunicationDashboard = () => {
                         analytics.click_rate >= 0.05
                           ? 'text-green-600'
                           : analytics.click_rate >= 0.02
-                          ? 'text-yellow-600'
-                          : 'text-red-600'
+                            ? 'text-yellow-600'
+                            : 'text-red-600'
                       }`}
                     >
                       {Math.round(analytics.click_rate * 100)}%

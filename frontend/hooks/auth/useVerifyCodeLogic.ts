@@ -86,7 +86,7 @@ export const useVerifyCodeLogic = ({
         return '/onboarding/welcome';
       }
     },
-    [nextRoute, onboardingApi]
+    [nextRoute, onboardingApi],
   );
 
   const submitVerification = useCallback(
@@ -136,7 +136,7 @@ export const useVerifyCodeLogic = ({
         setIsVerifying(false);
       }
     },
-    [contact, contactType, authApi, authContext, toast, router, determineNavigationRoute]
+    [contact, contactType, authApi, authContext, toast, router, determineNavigationRoute],
   );
 
   const resendCode = useCallback(async (): Promise<void> => {

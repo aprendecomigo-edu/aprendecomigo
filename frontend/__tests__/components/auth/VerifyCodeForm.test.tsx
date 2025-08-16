@@ -47,7 +47,7 @@ describe('VerifyCodeForm Pure UI Component - New Architecture', () => {
   describe('Component Rendering - Email Contact', () => {
     it('should render all UI elements for email verification', () => {
       const { getByText, getByPlaceholderText, getByTestId } = render(
-        <VerifyCodeForm {...mockEmailProps} />
+        <VerifyCodeForm {...mockEmailProps} />,
       );
 
       // Header
@@ -203,7 +203,7 @@ describe('VerifyCodeForm Pure UI Component - New Architecture', () => {
 
     it('should prevent multiple submissions while verifying', () => {
       const { getByPlaceholderText, getByText } = render(
-        <VerifyCodeForm {...mockEmailProps} isVerifying={true} />
+        <VerifyCodeForm {...mockEmailProps} isVerifying={true} />,
       );
 
       const codeInput = getByPlaceholderText('Enter the verification code');
@@ -249,7 +249,7 @@ describe('VerifyCodeForm Pure UI Component - New Architecture', () => {
 
     it('should clear validation errors when user starts typing', async () => {
       const { getByText, getByPlaceholderText, queryByText } = render(
-        <VerifyCodeForm {...mockEmailProps} />
+        <VerifyCodeForm {...mockEmailProps} />,
       );
 
       const codeInput = getByPlaceholderText('Enter the verification code');
@@ -338,7 +338,7 @@ describe('VerifyCodeForm Pure UI Component - New Architecture', () => {
   describe('Accessibility', () => {
     it('should have proper accessibility labels and roles', () => {
       const { getByLabelText, getByRole, getByTestId } = render(
-        <VerifyCodeForm {...mockEmailProps} />
+        <VerifyCodeForm {...mockEmailProps} />,
       );
 
       // Code input should have label
@@ -488,7 +488,7 @@ describe('VerifyCodeForm Pure UI Component - New Architecture', () => {
           onSubmitVerification={businessLogic.submitVerification}
           onResendCode={businessLogic.resendCode}
           onBackPress={jest.fn()}
-        />
+        />,
       );
 
       const codeInput = getByPlaceholderText('Enter the verification code');

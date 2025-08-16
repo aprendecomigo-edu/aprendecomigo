@@ -101,15 +101,15 @@ export interface SchoolSettingsFormProps {
 export type { SchoolSettingsFormData } from './validation';
 
 // Section types for navigation
-export type SectionKey = 
-  | 'profile' 
-  | 'educational' 
-  | 'operational' 
-  | 'billing' 
-  | 'schedule' 
-  | 'communication' 
-  | 'permissions' 
-  | 'integrations' 
+export type SectionKey =
+  | 'profile'
+  | 'educational'
+  | 'operational'
+  | 'billing'
+  | 'schedule'
+  | 'communication'
+  | 'permissions'
+  | 'integrations'
   | 'privacy';
 
 export interface Section {

@@ -72,7 +72,7 @@ describe('Service Integration', () => {
       const request = await businessServices.paymentService.processQuickTopUp(
         123,
         null,
-        'test@example.com'
+        'test@example.com',
       );
 
       expect(request.package_id).toBe(123);

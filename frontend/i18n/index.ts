@@ -126,7 +126,7 @@ export const changeLanguage = async (newLanguage: SupportedLanguage): Promise<vo
         'translation',
         translations,
         true, // deep merge
-        true // overwrite
+        true, // overwrite
       );
     }
 

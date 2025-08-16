@@ -130,7 +130,7 @@ const RatePresetModal: React.FC<{
   currency: string;
 }> = ({ isOpen, onClose, onApplyPreset, courses, currency }) => {
   const [selectedLevel, setSelectedLevel] = useState<'beginner' | 'intermediate' | 'advanced'>(
-    'intermediate'
+    'intermediate',
   );
 
   const handleApplyPresets = () => {

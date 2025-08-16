@@ -27,7 +27,7 @@ export const Tooltip = React.forwardRef<View, ITooltipProps>(({ children, ...pro
       onOpen: () => setIsOpen(true),
       onClose: () => setIsOpen(false),
     }),
-    [isOpen]
+    [isOpen],
   );
 
   return (
@@ -59,7 +59,7 @@ export const TooltipTrigger = React.forwardRef<View, ITooltipTriggerProps>(
         {children}
       </Pressable>
     );
-  }
+  },
 );
 
 export const TooltipContent = React.forwardRef<View, ITooltipContentProps>(
@@ -107,7 +107,7 @@ export const TooltipContent = React.forwardRef<View, ITooltipContentProps>(
         </View>
       </Modal>
     );
-  }
+  },
 );
 
 export const TooltipText = React.forwardRef<Text, ITooltipTextProps>(({ style, ...props }, ref) => (

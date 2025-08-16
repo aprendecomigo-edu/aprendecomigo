@@ -59,7 +59,7 @@ describe('useStudentDashboard Hook', () => {
 
     it('starts with loading balance data', () => {
       mockStudentApiCalls.getStudentBalance.mockImplementation(
-        () => new Promise(() => {}) // Never resolves
+        () => new Promise(() => {}), // Never resolves
       );
 
       const { result } = renderHook(() => useStudentDashboard());
@@ -575,7 +575,7 @@ describe('useStudentDashboard Hook', () => {
 
       // Should not trigger API call yet
       expect(mockStudentApiCalls.getTransactionHistory).not.toHaveBeenCalledWith(
-        expect.objectContaining({ search: 'test search' })
+        expect.objectContaining({ search: 'test search' }),
       );
 
       // Advance timers to trigger debounced search
@@ -792,7 +792,7 @@ describe('useStudentDashboard Hook', () => {
 
     it('handles unmount during pending API calls', () => {
       mockStudentApiCalls.getStudentBalance.mockImplementation(
-        () => new Promise(() => {}) // Never resolves
+        () => new Promise(() => {}), // Never resolves
       );
 
       const { unmount } = renderHook(() => useStudentDashboard());
@@ -835,7 +835,7 @@ describe('useStudentDashboard Hook', () => {
 
     it('handles extremely large data sets', async () => {
       const largeTransactionHistory = createMockTransactionHistory({
-        results: Array.from({ length: 1000 }, (_, i) => ({ id: `txn_${i}` } as any)),
+        results: Array.from({ length: 1000 }, (_, i) => ({ id: `txn_${i}` }) as any),
         count: 10000,
       });
 

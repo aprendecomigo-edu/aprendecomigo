@@ -98,7 +98,7 @@ export function usePaymentMethods(email?: string): UsePaymentMethodsResult {
         setAdding(false);
       }
     },
-    [email, refreshPaymentMethods]
+    [email, refreshPaymentMethods],
   );
 
   // Remove payment method
@@ -132,7 +132,7 @@ export function usePaymentMethods(email?: string): UsePaymentMethodsResult {
         setRemoving(false);
       }
     },
-    [email, refreshPaymentMethods]
+    [email, refreshPaymentMethods],
   );
 
   // Set default payment method
@@ -166,7 +166,7 @@ export function usePaymentMethods(email?: string): UsePaymentMethodsResult {
         setSettingDefault(false);
       }
     },
-    [email, refreshPaymentMethods]
+    [email, refreshPaymentMethods],
   );
 
   // Clear all errors

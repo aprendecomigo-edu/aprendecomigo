@@ -91,7 +91,7 @@ export function PurchaseFlow({ onPurchaseComplete, onCancel, className = '' }: P
     (error: string) => {
       actions.setError(error);
     },
-    [actions]
+    [actions],
   );
 
   return (

@@ -160,7 +160,7 @@ export const RatesStep: React.FC<RatesStepProps> = ({
   const calculatePackagePrice = (
     sessions: number,
     individualRate: number,
-    discountPercent: number
+    discountPercent: number,
   ) => {
     const totalBeforeDiscount = sessions * individualRate;
     const discountAmount = totalBeforeDiscount * (discountPercent / 100);
@@ -175,7 +175,7 @@ export const RatesStep: React.FC<RatesStepProps> = ({
     const calculatedPrice = calculatePackagePrice(
       newPackage.sessions!,
       formData.rate_structure.individual_rate,
-      newPackage.discount_percentage!
+      newPackage.discount_percentage!,
     );
 
     const packageDeal: PackageDeal = {
@@ -207,7 +207,7 @@ export const RatesStep: React.FC<RatesStepProps> = ({
 
   const handleDeletePackage = (packageId: string) => {
     const updatedPackages = (formData.rate_structure.package_deals || []).filter(
-      p => p.id !== packageId
+      p => p.id !== packageId,
     );
     handleRateStructureChange('package_deals', updatedPackages);
   };
@@ -260,7 +260,7 @@ export const RatesStep: React.FC<RatesStepProps> = ({
       const calculatedPrice = calculatePackagePrice(
         newPackage.sessions,
         formData.rate_structure.individual_rate,
-        newPackage.discount_percentage
+        newPackage.discount_percentage,
       );
       setNewPackage(prev => ({ ...prev, price: calculatedPrice }));
     }
@@ -472,7 +472,7 @@ export const RatesStep: React.FC<RatesStepProps> = ({
                             ((formData.rate_structure.individual_rate -
                               formData.rate_structure.trial_lesson_rate) /
                               formData.rate_structure.individual_rate) *
-                              100
+                              100,
                           )}
                           % discount from regular rate
                         </Text>

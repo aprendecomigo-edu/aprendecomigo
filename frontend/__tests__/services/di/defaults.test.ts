@@ -170,7 +170,7 @@ describe('Default Implementations', () => {
       const dependencies = createDefaultDependencies();
 
       await expect(
-        dependencies.authApi.requestEmailCode({ email: 'test@example.com' })
+        dependencies.authApi.requestEmailCode({ email: 'test@example.com' }),
       ).rejects.toThrow('Network error');
     });
   });
@@ -214,7 +214,7 @@ describe('Default Implementations', () => {
       const dependencies = createDefaultDependencies();
 
       await expect(dependencies.storageService.getItem('test_key')).rejects.toThrow(
-        'Storage unavailable'
+        'Storage unavailable',
       );
     });
 
@@ -435,7 +435,7 @@ describe('Default Implementations', () => {
       const dependencies = createDefaultDependencies();
 
       await expect(dependencies.onboardingApiService.getNavigationPreferences()).rejects.toThrow(
-        'Onboarding API unavailable'
+        'Onboarding API unavailable',
       );
     });
   });

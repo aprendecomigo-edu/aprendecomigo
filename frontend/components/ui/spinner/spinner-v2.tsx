@@ -48,7 +48,7 @@ export const Spinner = React.forwardRef<ActivityIndicator, ISpinnerProps>(
         />
       </SpinnerContext.Provider>
     );
-  }
+  },
 );
 
 // Display names for debugging

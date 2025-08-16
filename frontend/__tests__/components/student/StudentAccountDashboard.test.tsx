@@ -213,7 +213,7 @@ describe('StudentAccountDashboard Component', () => {
       });
 
       mockUseStudentDashboard.mockReturnValue(
-        createMockUseStudentDashboard({ balance: mockBalance })
+        createMockUseStudentDashboard({ balance: mockBalance }),
       );
 
       const { getByText } = render(<StudentAccountDashboard {...defaultProps} />);
@@ -238,7 +238,7 @@ describe('StudentAccountDashboard Component', () => {
       });
 
       mockUseStudentDashboard.mockReturnValue(
-        createMockUseStudentDashboard({ balance: mockBalance })
+        createMockUseStudentDashboard({ balance: mockBalance }),
       );
 
       const { getByText } = render(<StudentAccountDashboard {...defaultProps} />);
@@ -261,7 +261,7 @@ describe('StudentAccountDashboard Component', () => {
       });
 
       mockUseStudentDashboard.mockReturnValue(
-        createMockUseStudentDashboard({ balance: mockBalance })
+        createMockUseStudentDashboard({ balance: mockBalance }),
       );
 
       const { queryByText } = render(<StudentAccountDashboard {...defaultProps} />);
@@ -454,7 +454,7 @@ describe('StudentAccountDashboard Component', () => {
       // The error boundary should show fallback UI
       expect(getByText('Something went wrong')).toBeTruthy();
       expect(
-        getByText('Unable to load this section. Please try refreshing or switching tabs.')
+        getByText('Unable to load this section. Please try refreshing or switching tabs.'),
       ).toBeTruthy();
       expect(getByText('Refresh Dashboard')).toBeTruthy();
 
@@ -545,7 +545,7 @@ describe('StudentAccountDashboard Component', () => {
 
     it('applies responsive classes correctly', () => {
       const { getByTestId } = render(
-        <StudentAccountDashboard {...defaultProps} testID="dashboard" />
+        <StudentAccountDashboard {...defaultProps} testID="dashboard" />,
       );
 
       const dashboard = getByTestId('dashboard');
@@ -588,7 +588,7 @@ describe('StudentAccountDashboard Component', () => {
       const overviewTab = getByText('Overview');
       expect(overviewTab.closest('*').props.accessibilityRole).toBe('tab');
       expect(overviewTab.closest('*').props.accessibilityLabel).toContain(
-        'Overview - Account summary'
+        'Overview - Account summary',
       );
     });
 

@@ -130,8 +130,8 @@ export const PurchaseApprovalCard: React.FC<PurchaseApprovalCardProps> = ({
                     urgencyLevel === 'expired'
                       ? 'bg-red-100'
                       : urgencyLevel === 'urgent'
-                      ? 'bg-orange-100'
-                      : 'bg-blue-100'
+                        ? 'bg-orange-100'
+                        : 'bg-blue-100'
                   }
                 `}
               >
@@ -142,8 +142,8 @@ export const PurchaseApprovalCard: React.FC<PurchaseApprovalCardProps> = ({
                     urgencyLevel === 'expired'
                       ? 'text-red-600'
                       : urgencyLevel === 'urgent'
-                      ? 'text-orange-600'
-                      : 'text-blue-600'
+                        ? 'text-orange-600'
+                        : 'text-blue-600'
                   }
                 />
               </VStack>
@@ -163,8 +163,8 @@ export const PurchaseApprovalCard: React.FC<PurchaseApprovalCardProps> = ({
                   urgencyLevel === 'expired'
                     ? 'error'
                     : urgencyLevel === 'urgent'
-                    ? 'warning'
-                    : 'info'
+                      ? 'warning'
+                      : 'info'
                 }
                 size="sm"
               >

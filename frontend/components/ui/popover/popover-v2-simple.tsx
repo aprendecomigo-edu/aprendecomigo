@@ -32,7 +32,7 @@ export const Popover = React.forwardRef<View, IPopoverProps>(({ children, ...pro
       onClose: () => setIsOpen(false),
       onToggle: () => setIsOpen(!isOpen),
     }),
-    [isOpen]
+    [isOpen],
   );
 
   return (
@@ -58,7 +58,7 @@ export const PopoverTrigger = React.forwardRef<View, IPopoverTriggerProps>(
         {children}
       </Pressable>
     );
-  }
+  },
 );
 
 export const PopoverContent = React.forwardRef<View, IPopoverContentProps>(
@@ -106,7 +106,7 @@ export const PopoverContent = React.forwardRef<View, IPopoverContentProps>(
         </View>
       </Modal>
     );
-  }
+  },
 );
 
 export const PopoverBackdrop = React.forwardRef<View, IPopoverBackdropProps>(
@@ -123,7 +123,7 @@ export const PopoverBackdrop = React.forwardRef<View, IPopoverBackdropProps>(
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
       />
     );
-  }
+  },
 );
 
 export const PopoverHeader = React.forwardRef<View, IPopoverHeaderProps>(
@@ -138,7 +138,7 @@ export const PopoverHeader = React.forwardRef<View, IPopoverHeaderProps>(
     >
       {children}
     </View>
-  )
+  ),
 );
 
 export const PopoverBody = React.forwardRef<View, IPopoverBodyProps>(
@@ -146,7 +146,7 @@ export const PopoverBody = React.forwardRef<View, IPopoverBodyProps>(
     <View ref={ref} {...props} style={[{ marginBottom: 8 }, style]}>
       {children}
     </View>
-  )
+  ),
 );
 
 export const PopoverFooter = React.forwardRef<View, IPopoverFooterProps>(
@@ -169,7 +169,7 @@ export const PopoverFooter = React.forwardRef<View, IPopoverFooterProps>(
     >
       {children}
     </View>
-  )
+  ),
 );
 
 // Display names

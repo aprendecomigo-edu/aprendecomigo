@@ -15,7 +15,7 @@ export const SCOPE = 'BUTTON';
 export const ButtonWrapper = React.forwardRef<React.ElementRef<typeof Pressable>, PressableProps>(
   ({ ...props }, ref) => {
     return <Pressable {...props} ref={ref} />;
-  }
+  },
 );
 
 export type IPrimitiveIcon = React.ComponentPropsWithoutRef<typeof Svg> & {
@@ -40,7 +40,7 @@ export const PrimitiveIcon = React.forwardRef(
       as: AsComp,
       ...props
     }: IPrimitiveIcon,
-    ref: React.Ref<Svg>
+    ref: React.Ref<Svg>,
   ) => {
     const sizeProps = useMemo(() => {
       if (size) return { size };
@@ -58,7 +58,7 @@ export const PrimitiveIcon = React.forwardRef(
     return (
       <Svg ref={ref} height={height} width={width} fill={fill} stroke={colorProps} {...props} />
     );
-  }
+  },
 );
 
 // Common function to create UIButton with platform-specific Root
@@ -352,7 +352,7 @@ export function createButtonComponents(UIButton: any) {
           context={{ variant, size, action }}
         />
       );
-    }
+    },
   );
 
   const ButtonText = React.forwardRef<React.ElementRef<typeof UIButton.Text>, IButtonTextProps>(
@@ -380,7 +380,7 @@ export function createButtonComponents(UIButton: any) {
           })}
         />
       );
-    }
+    },
   );
 
   const ButtonSpinner = UIButton.Spinner;
@@ -422,7 +422,7 @@ export function createButtonComponents(UIButton: any) {
           ref={ref}
         />
       );
-    }
+    },
   );
 
   const ButtonGroup = React.forwardRef<React.ElementRef<typeof UIButton.Group>, IButtonGroupProps>(
@@ -434,7 +434,7 @@ export function createButtonComponents(UIButton: any) {
           ref={ref}
         />
       );
-    }
+    },
   );
 
   Button.displayName = 'Button';

@@ -65,7 +65,7 @@ const MockSafeAreaProvider: React.FC<{ children: React.ReactNode }> = ({ childre
  */
 export const renderWithProviders = (
   ui: React.ReactElement,
-  options?: Omit<RenderOptions, 'wrapper'>
+  options?: Omit<RenderOptions, 'wrapper'>,
 ) => {
   const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     return (
@@ -259,7 +259,7 @@ export const testFormValidation = async (
   inputTestId: string,
   submitText: string,
   invalidValue: string,
-  expectedErrorMessage: string
+  expectedErrorMessage: string,
 ) => {
   const { fireEvent, waitFor } = require('@testing-library/react-native');
 
@@ -283,7 +283,7 @@ export const testLoadingState = async (
   getByText: any,
   submitText: string,
   loadingText: string,
-  asyncAction: () => Promise<void>
+  asyncAction: () => Promise<void>,
 ) => {
   const { fireEvent, waitFor } = require('@testing-library/react-native');
 

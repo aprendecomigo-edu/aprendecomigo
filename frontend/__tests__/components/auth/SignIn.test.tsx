@@ -82,7 +82,7 @@ describe('SignIn Component Tests', () => {
 
     // Test error handling
     await expect(authApi.requestEmailCode({ email: 'test@example.com' })).rejects.toThrow(
-      'Network error'
+      'Network error',
     );
 
     expect(mockRequestEmailCode).toHaveBeenCalledTimes(1);

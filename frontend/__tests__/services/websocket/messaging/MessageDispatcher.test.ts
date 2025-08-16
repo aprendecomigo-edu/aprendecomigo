@@ -354,7 +354,7 @@ describe('MessageDispatcher', () => {
           type: 'processed.data',
           originalType: 'raw.data',
           processedContent: 'Processed: raw content',
-        })
+        }),
       );
     });
 
@@ -388,7 +388,7 @@ describe('MessageDispatcher', () => {
           content: 'original',
           processedAt: expect.any(Number),
           middleware: 'test',
-        })
+        }),
       );
     });
   });

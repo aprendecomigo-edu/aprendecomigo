@@ -119,7 +119,7 @@ const RichTextTemplateEditor: React.FC<RichTextTemplateEditorProps> = ({
       setCursorPosition(cursorPosition + variable.length);
       setShowVariables(false);
     },
-    [template.html_content, cursorPosition, onChange]
+    [template.html_content, cursorPosition, onChange],
   );
 
   // Format text with HTML tags
@@ -135,7 +135,7 @@ const RichTextTemplateEditor: React.FC<RichTextTemplateEditorProps> = ({
       const newContent = htmlContent.replace(selectedText, formattedText);
       onChange('html_content', newContent);
     },
-    [selectedText, template.html_content, onChange]
+    [selectedText, template.html_content, onChange],
   );
 
   // Insert HTML element
@@ -164,7 +164,7 @@ const RichTextTemplateEditor: React.FC<RichTextTemplateEditorProps> = ({
 
       onChange('html_content', newContent);
     },
-    [template.html_content, cursorPosition, onChange]
+    [template.html_content, cursorPosition, onChange],
   );
 
   // Get validation status color

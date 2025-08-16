@@ -49,7 +49,7 @@ const PrimitiveIcon = React.forwardRef<React.ElementRef<typeof Svg>, IPrimitiveI
       return <AsComp ref={ref} {...sizeProps} {...colorProps} {...props} />;
     }
     return <Svg ref={ref} height={height} width={width} {...colorProps} {...props} />;
-  }
+  },
 );
 
 // Simplified style definitions
@@ -139,7 +139,7 @@ export const Radio = React.forwardRef<View, IRadioProps>(
         </Pressable>
       </RadioContext.Provider>
     );
-  }
+  },
 );
 
 // RadioGroup component
@@ -150,7 +150,7 @@ export const RadioGroup = React.forwardRef<View, IRadioGroupProps>(
         {children}
       </View>
     );
-  }
+  },
 );
 
 // RadioIndicator component
@@ -171,7 +171,7 @@ export const RadioIndicator = React.forwardRef<View, IRadioIndicatorProps>(
         {children}
       </View>
     );
-  }
+  },
 );
 
 // RadioLabel component
@@ -190,7 +190,7 @@ export const RadioLabel = React.forwardRef<Text, IRadioLabelProps>(
         })}
       />
     );
-  }
+  },
 );
 
 // RadioIcon component
@@ -213,7 +213,7 @@ export const RadioIcon = React.forwardRef<any, IRadioIconProps>(
         })}
       />
     );
-  }
+  },
 );
 
 // Display names for debugging

@@ -84,7 +84,7 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
     async (
       page: number = 1,
       append: boolean = false,
-      currentFilters: NotificationFilters = filters
+      currentFilters: NotificationFilters = filters,
     ) => {
       if (!userProfile) return;
 
@@ -97,7 +97,7 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
         const response = await NotificationApiClient.getNotifications(
           currentFilters,
           page,
-          pageSize
+          pageSize,
         );
 
         if (append) {
@@ -117,7 +117,7 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
         setRefreshing(false);
       }
     },
-    [userProfile, filters, pageSize]
+    [userProfile, filters, pageSize],
   );
 
   /**
@@ -140,12 +140,9 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
   const refresh = useCallback(async () => {
     setRefreshing(true);
     setCurrentPage(1);
-    
+
     // Use Promise.allSettled for graceful degradation
-    const results = await Promise.allSettled([
-      fetchNotifications(1, false), 
-      fetchUnreadCount()
-    ]);
+    const results = await Promise.allSettled([fetchNotifications(1, false), fetchUnreadCount()]);
 
     // Log any failures for monitoring
     results.forEach((result, index) => {
@@ -181,8 +178,8 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
           prev.map(notification =>
             notification.id === id
               ? { ...notification, is_read: true, read_at: new Date().toISOString() }
-              : notification
-          )
+              : notification,
+          ),
         );
 
         // Update unread count
@@ -195,7 +192,7 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
         setError(err.message || 'Failed to update notification');
       }
     },
-    [notifications]
+    [notifications],
   );
 
   /**
@@ -211,7 +208,7 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
           ...notification,
           is_read: true,
           read_at: notification.read_at || new Date().toISOString(),
-        }))
+        })),
       );
 
       setUnreadCount(0);
@@ -230,7 +227,7 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
       setCurrentPage(1);
       fetchNotifications(1, false, newFilters);
     },
-    [fetchNotifications]
+    [fetchNotifications],
   );
 
   /**

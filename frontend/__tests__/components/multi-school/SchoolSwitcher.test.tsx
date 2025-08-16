@@ -243,7 +243,7 @@ describe('SchoolSwitcher Component', () => {
             school: expect.objectContaining({
               name: 'Escola Central',
             }),
-          })
+          }),
         );
       });
     });
@@ -312,7 +312,7 @@ describe('SchoolSwitcher Component', () => {
 
       expect(screen.getByText('2 convite(s) pendente(s)')).toBeTruthy();
       expect(
-        screen.getByText('Você tem convites de outras escolas aguardando resposta.')
+        screen.getByText('Você tem convites de outras escolas aguardando resposta.'),
       ).toBeTruthy();
     });
 
@@ -354,7 +354,7 @@ describe('SchoolSwitcher Component', () => {
           school: expect.objectContaining({
             name: 'Escola Internacional',
           }),
-        })
+        }),
       );
     });
   });
@@ -470,8 +470,8 @@ describe('SchoolSwitcher Component', () => {
       expect(screen.getByText('Nenhuma escola encontrada')).toBeTruthy();
       expect(
         screen.getByText(
-          'Aguarde um convite de uma escola ou entre em contato com o administrador.'
-        )
+          'Aguarde um convite de uma escola ou entre em contato com o administrador.',
+        ),
       ).toBeTruthy();
     });
   });

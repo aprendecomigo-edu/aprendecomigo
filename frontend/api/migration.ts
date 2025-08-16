@@ -42,7 +42,7 @@ let globalAuthErrorCallback: (() => void) | null = null;
  */
 export const initializeMigrationLayer = (
   storage: StorageInterface,
-  authErrorCallback?: (() => void) | null
+  authErrorCallback?: (() => void) | null,
 ) => {
   _migrationStorage = storage;
   globalAuthErrorCallback = authErrorCallback || null;
@@ -68,7 +68,7 @@ let _legacyApiGateway: ReturnType<typeof createApiGateway> | null = null;
 function getLegacyApiGateway() {
   if (!_migrationStorage) {
     throw new Error(
-      'Migration layer not initialized. Call initializeMigrationLayer() with storage before using migration functions.'
+      'Migration layer not initialized. Call initializeMigrationLayer() with storage before using migration functions.',
     );
   }
 

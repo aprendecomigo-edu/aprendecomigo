@@ -155,8 +155,8 @@ describe('ChatList Component', () => {
         expect(getByText('Nenhuma conversa ainda')).toBeTruthy();
         expect(
           getByText(
-            'As conversas aparecerão aqui quando você tiver professores e alunos cadastrados na escola.'
-          )
+            'As conversas aparecerão aqui quando você tiver professores e alunos cadastrados na escola.',
+          ),
         ).toBeTruthy();
       });
     });

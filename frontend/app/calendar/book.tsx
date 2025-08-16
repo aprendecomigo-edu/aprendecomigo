@@ -138,7 +138,7 @@ const BookClassScreen: React.FC = () => {
       setLoadingSlots(true);
       const response = await schedulerApi.getAvailableTimeSlots(
         parseInt(formData.teacher_id),
-        formData.scheduled_date
+        formData.scheduled_date,
       );
       setAvailableSlots(response.available_slots);
     } catch (error) {

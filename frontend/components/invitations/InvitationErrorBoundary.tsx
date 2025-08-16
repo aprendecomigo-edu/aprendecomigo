@@ -86,7 +86,7 @@ export class InvitationErrorBoundary extends Component<Props, State> {
 // Higher-order component wrapper for functional components
 export const withInvitationErrorBoundary = <P extends object>(
   Component: React.ComponentType<P>,
-  errorBoundaryProps?: Omit<Props, 'children'>
+  errorBoundaryProps?: Omit<Props, 'children'>,
 ) => {
   const WrappedComponent = (props: P) => (
     <InvitationErrorBoundary {...errorBoundaryProps}>

@@ -334,7 +334,7 @@ export const TeacherAnalyticsDashboard: React.FC<TeacherAnalyticsDashboardProps>
   const topMissingFields = useMemo(() => getTopMissingFields(5), [analytics]);
   const distributionPercentages = useMemo(
     () => getCompletionDistributionPercentages(),
-    [analytics]
+    [analytics],
   );
   const healthStatus = useMemo(() => isHealthy(), [analytics]);
   const attentionNeeded = useMemo(() => needsAttention(), [analytics]);
@@ -437,23 +437,23 @@ export const TeacherAnalyticsDashboard: React.FC<TeacherAnalyticsDashboardProps>
                   completionGrade === 'A' || completionGrade === 'B'
                     ? COLORS.success
                     : completionGrade === 'C'
-                    ? COLORS.warning
-                    : COLORS.danger
+                      ? COLORS.warning
+                      : COLORS.danger
                 }
                 subtitle={`Nota: ${completionGrade}`}
                 trend={
                   completionTrend === 'improving'
                     ? 'up'
                     : completionTrend === 'declining'
-                    ? 'down'
-                    : 'stable'
+                      ? 'down'
+                      : 'stable'
                 }
                 trendValue={
                   completionTrend === 'improving'
                     ? 'Melhorando'
                     : completionTrend === 'declining'
-                    ? 'Piorando'
-                    : 'Estável'
+                      ? 'Piorando'
+                      : 'Estável'
                 }
               />
             </Box>
@@ -467,7 +467,7 @@ export const TeacherAnalyticsDashboard: React.FC<TeacherAnalyticsDashboardProps>
                 icon={CheckCircle}
                 color={COLORS.success}
                 subtitle={`${Math.round(
-                  (analytics.complete_profiles / analytics.total_teachers) * 100
+                  (analytics.complete_profiles / analytics.total_teachers) * 100,
                 )}% do total`}
               />
             </Box>

@@ -105,7 +105,7 @@ export default function TransactionManagement() {
       const response = await PaymentMonitoringApiClient.getTransactions(
         filters || state.searchFilters,
         page || state.currentPage,
-        state.pageSize
+        state.pageSize,
       );
 
       setTransactions(response);
@@ -126,7 +126,7 @@ export default function TransactionManagement() {
 
       transactionUpdates.forEach(update => {
         const existingIndex = updatedTransactions.results.findIndex(
-          t => t.id === update.transaction.id
+          t => t.id === update.transaction.id,
         );
 
         if (update.action === 'created') {
@@ -240,15 +240,18 @@ export default function TransactionManagement() {
         });
 
         const results = await Promise.allSettled(promises);
-        
+
         // Count successful and failed operations
         const successful = results.filter(result => result.status === 'fulfilled').length;
         const failed = results.filter(result => result.status === 'rejected').length;
-        
+
         // Log failed operations for monitoring
         results.forEach((result, index) => {
           if (result.status === 'rejected') {
-            console.error(`Bulk action ${action} failed for transaction ${state.selectedTransactions[index]}:`, result.reason);
+            console.error(
+              `Bulk action ${action} failed for transaction ${state.selectedTransactions[index]}:`,
+              result.reason,
+            );
           }
         });
 
@@ -258,7 +261,9 @@ export default function TransactionManagement() {
         } else if (successful === 0) {
           setError(`All ${action} operations failed. Please try again.`);
         } else {
-          setError(`${action} completed with ${successful} successful and ${failed} failed operations.`);
+          setError(
+            `${action} completed with ${successful} successful and ${failed} failed operations.`,
+          );
         }
 
         // Refresh data and clear selection
@@ -274,7 +279,7 @@ export default function TransactionManagement() {
         setActionLoading(false);
       }
     },
-    [state.selectedTransactions, clearSelection]
+    [state.selectedTransactions, clearSelection],
   );
 
   // Handle pagination

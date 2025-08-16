@@ -44,7 +44,7 @@ export const navigationApi = {
   async globalSearch(
     query: string,
     types?: string[],
-    limit: number = 10
+    limit: number = 10,
   ): Promise<GlobalSearchResponse> {
     const params = new URLSearchParams({
       q: query,
@@ -73,7 +73,7 @@ export const navigationApi = {
 
   // Update user navigation preferences
   async updateNavigationPreferences(
-    preferences: Partial<NavigationPreferences>
+    preferences: Partial<NavigationPreferences>,
   ): Promise<NavigationPreferences> {
     const response = await apiClient.post('accounts/users/navigation_preferences/', preferences);
     return response.data;

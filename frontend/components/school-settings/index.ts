@@ -1,8 +1,8 @@
 /**
  * School Settings module exports
- * 
- * This module provides a refactored school settings form that has been 
- * broken down from a monolithic 1513-line component into focused, 
+ *
+ * This module provides a refactored school settings form that has been
+ * broken down from a monolithic 1513-line component into focused,
  * maintainable pieces.
  */
 
@@ -10,7 +10,7 @@
 export { SchoolSettingsForm } from './SchoolSettingsForm';
 
 // Types
-export type { 
+export type {
   SchoolSettingsFormProps,
   SchoolProfile,
   SchoolSettings,
@@ -18,7 +18,7 @@ export type {
   EducationalSystem,
   SchoolSettingsFormData,
   SectionKey,
-  Section
+  Section,
 } from './types';
 
 // Constants
@@ -30,7 +30,7 @@ export {
   WEEKDAYS,
   CALENDAR_PROVIDERS,
   EMAIL_PROVIDERS,
-  SECTIONS
+  SECTIONS,
 } from './constants';
 
 // Hook

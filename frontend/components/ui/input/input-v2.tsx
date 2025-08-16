@@ -54,7 +54,7 @@ const PrimitiveIcon = React.forwardRef<React.ElementRef<typeof Svg>, IPrimitiveI
       return <AsComp ref={ref} {...sizeProps} {...colorProps} {...props} />;
     }
     return <Svg ref={ref} height={height} width={width} {...colorProps} {...props} />;
-  }
+  },
 );
 
 // Style definitions
@@ -170,11 +170,11 @@ export const Input = React.forwardRef<View, IInputProps>(
       children,
       ...props
     },
-    ref
+    ref,
   ) => {
     const contextValue = useMemo(
       () => ({ size, variant, isDisabled, isInvalid, isFocused, isHovered }),
-      [size, variant, isDisabled, isInvalid, isFocused, isHovered]
+      [size, variant, isDisabled, isInvalid, isFocused, isHovered],
     );
 
     return (
@@ -193,7 +193,7 @@ export const Input = React.forwardRef<View, IInputProps>(
         </View>
       </InputContext.Provider>
     );
-  }
+  },
 );
 
 // InputField component
@@ -216,7 +216,7 @@ export const InputField = React.forwardRef<TextInput, IInputFieldProps>(
         data-invalid={isInvalid}
       />
     );
-  }
+  },
 );
 
 // InputIcon component
@@ -239,7 +239,7 @@ export const InputIcon = React.forwardRef<any, IInputIconProps>(
         })}
       />
     );
-  }
+  },
 );
 
 // InputSlot component
@@ -263,7 +263,7 @@ export const InputSlot = React.forwardRef<View, IInputSlotProps>(
         {children}
       </Pressable>
     );
-  }
+  },
 );
 
 // Display names for debugging

@@ -291,7 +291,7 @@ describe('ConnectionManager', () => {
       expect(errorHandler).toHaveBeenCalledWith(
         expect.objectContaining({
           message: expect.stringContaining('Failed to parse message'),
-        })
+        }),
       );
     });
   });
@@ -414,7 +414,7 @@ describe('ConnectionManager', () => {
 
       // Assert
       expect(global.WebSocket).toHaveBeenCalledWith(
-        'ws://localhost:8000/ws/test?existing=param&token=mock-token'
+        'ws://localhost:8000/ws/test?existing=param&token=mock-token',
       );
     });
 

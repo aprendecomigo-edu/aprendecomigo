@@ -12,7 +12,7 @@ const HStack = React.forwardRef<React.ElementRef<typeof View>, IHStackProps>(
     return (
       <View className={hstackStyle({ space, reversed, class: className })} {...props} ref={ref} />
     );
-  }
+  },
 );
 
 HStack.displayName = 'HStack';

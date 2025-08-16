@@ -167,7 +167,7 @@ describe('UsageAnalyticsSection Component', () => {
       expect(getByText('Usage Analytics')).toBeTruthy();
       expect(getByText('No Analytics Data')).toBeTruthy();
       expect(
-        getByText('Start attending tutoring sessions to see your learning analytics here')
+        getByText('Start attending tutoring sessions to see your learning analytics here'),
       ).toBeTruthy();
     });
   });
@@ -404,7 +404,7 @@ describe('UsageAnalyticsSection Component', () => {
       const quarterStart = new Date(timeRange.start_date);
       const quarterEnd = new Date(timeRange.end_date);
       const quarterDays = Math.ceil(
-        (quarterEnd.getTime() - quarterStart.getTime()) / (1000 * 60 * 60 * 24)
+        (quarterEnd.getTime() - quarterStart.getTime()) / (1000 * 60 * 60 * 24),
       );
       expect(quarterDays).toBeLessThanOrEqual(90);
     });

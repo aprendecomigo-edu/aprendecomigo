@@ -49,7 +49,7 @@ const TeacherAnalyticsPage = () => {
         activeStudents: data.students.filter(
           s =>
             s.last_session_date &&
-            new Date(s.last_session_date) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+            new Date(s.last_session_date) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
         ).length,
         averageProgress: data.progress_metrics.average_student_progress,
         totalSessions: data.quick_stats.sessions_this_week,
@@ -345,8 +345,8 @@ const TeacherAnalyticsPage = () => {
                                 analytics.averageProgress >= 80
                                   ? 'bg-green-100'
                                   : analytics.averageProgress >= 60
-                                  ? 'bg-yellow-100'
-                                  : 'bg-red-100'
+                                    ? 'bg-yellow-100'
+                                    : 'bg-red-100'
                               }`}
                             >
                               <BadgeText
@@ -354,15 +354,15 @@ const TeacherAnalyticsPage = () => {
                                   analytics.averageProgress >= 80
                                     ? 'text-green-800'
                                     : analytics.averageProgress >= 60
-                                    ? 'text-yellow-800'
-                                    : 'text-red-800'
+                                      ? 'text-yellow-800'
+                                      : 'text-red-800'
                                 }`}
                               >
                                 {analytics.averageProgress >= 80
                                   ? 'Excelente'
                                   : analytics.averageProgress >= 60
-                                  ? 'Bom'
-                                  : 'Precisa Melhorar'}
+                                    ? 'Bom'
+                                    : 'Precisa Melhorar'}
                               </BadgeText>
                             </Badge>
                           </HStack>
@@ -374,8 +374,8 @@ const TeacherAnalyticsPage = () => {
                                 analytics.activeStudents / analytics.totalStudents >= 0.8
                                   ? 'bg-green-100'
                                   : analytics.activeStudents / analytics.totalStudents >= 0.6
-                                  ? 'bg-yellow-100'
-                                  : 'bg-red-100'
+                                    ? 'bg-yellow-100'
+                                    : 'bg-red-100'
                               }`}
                             >
                               <BadgeText
@@ -383,12 +383,12 @@ const TeacherAnalyticsPage = () => {
                                   analytics.activeStudents / analytics.totalStudents >= 0.8
                                     ? 'text-green-800'
                                     : analytics.activeStudents / analytics.totalStudents >= 0.6
-                                    ? 'text-yellow-800'
-                                    : 'text-red-800'
+                                      ? 'text-yellow-800'
+                                      : 'text-red-800'
                                 }`}
                               >
                                 {Math.round(
-                                  (analytics.activeStudents / analytics.totalStudents) * 100
+                                  (analytics.activeStudents / analytics.totalStudents) * 100,
                                 )}
                                 %
                               </BadgeText>

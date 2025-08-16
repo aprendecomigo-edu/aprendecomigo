@@ -100,7 +100,7 @@ export const Card = React.forwardRef<View, ICardProps>(
         </View>
       </CardContext.Provider>
     );
-  }
+  },
 );
 
 // CardHeader component
@@ -119,7 +119,7 @@ export const CardHeader = React.forwardRef<View, ICardHeaderProps>(
         })}
       />
     );
-  }
+  },
 );
 
 // CardBody component
@@ -155,7 +155,7 @@ export const CardFooter = React.forwardRef<View, ICardFooterProps>(
         })}
       />
     );
-  }
+  },
 );
 
 // Display names for debugging

@@ -83,7 +83,7 @@ describe('useBalanceWebSocket Hook', () => {
           onClose: expect.any(Function),
           onError: expect.any(Function),
           shouldReconnect: true,
-        })
+        }),
       );
     });
 
@@ -94,7 +94,7 @@ describe('useBalanceWebSocket Hook', () => {
         null,
         expect.objectContaining({
           shouldReconnect: false,
-        })
+        }),
       );
     });
 
@@ -147,7 +147,7 @@ describe('useBalanceWebSocket Hook', () => {
           enabled: true,
           maxReconnectAttempts: 3,
           reconnectInterval: 1000,
-        })
+        }),
       );
 
       // Get the onClose callback and call it
@@ -347,7 +347,7 @@ describe('useBalanceWebSocket Hook', () => {
       expect(consoleSpy).toHaveBeenCalledWith(
         'Failed to parse WebSocket message:',
         expect.any(Error),
-        'invalid json {'
+        'invalid json {',
       );
 
       consoleSpy.mockRestore();
@@ -372,7 +372,7 @@ describe('useBalanceWebSocket Hook', () => {
       expect(result.current.latestNotification).toBeNull();
       expect(consoleSpy).toHaveBeenCalledWith(
         'Unknown WebSocket message type:',
-        'unknown_message_type'
+        'unknown_message_type',
       );
 
       consoleSpy.mockRestore();
@@ -444,7 +444,7 @@ describe('useBalanceWebSocket Hook', () => {
           enabled: true,
           maxReconnectAttempts: maxAttempts,
           reconnectInterval: 100,
-        })
+        }),
       );
 
       const onCloseCallback = mockUseWebSocketEnhanced.mock.calls[0][1].onClose;

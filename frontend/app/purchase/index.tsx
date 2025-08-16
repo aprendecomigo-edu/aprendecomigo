@@ -5,7 +5,7 @@
  * Provides a focused experience for students to purchase tutoring hours.
  */
 
-import useRouter from '@unitools/router';
+import { useRouter } from 'expo-router';
 import React, { lazy, Suspense } from 'react';
 
 import LoadingScreen from '@/components/ui/loading-screen';
@@ -14,7 +14,9 @@ import { ScrollView } from '@/components/ui/scroll-view';
 import { useToast } from '@/components/ui/toast';
 
 // Lazy load the PurchaseFlow component
-const PurchaseFlow = lazy(() => import('@/components/purchase').then(module => ({ default: module.PurchaseFlow })));
+const PurchaseFlow = lazy(() =>
+  import('@/components/purchase').then(module => ({ default: module.PurchaseFlow })),
+);
 
 export default function PurchasePage() {
   const router = useRouter();
@@ -24,7 +26,7 @@ export default function PurchasePage() {
     showToast(
       'success',
       `Payment successful! Transaction ID: ${transactionId}. Redirecting to your dashboard...`,
-      6000
+      6000,
     );
 
     // Navigate to success page or dashboard after a brief delay

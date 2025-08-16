@@ -121,7 +121,7 @@ export const BiographyStep: React.FC<BiographyStepProps> = ({
   const removeSpecialization = (specialization: string) => {
     handleFieldChange(
       'specializations',
-      formData.specializations.filter(s => s !== specialization)
+      formData.specializations.filter(s => s !== specialization),
     );
   };
 
@@ -182,10 +182,10 @@ export const BiographyStep: React.FC<BiographyStepProps> = ({
                     wordCount < 50
                       ? 'bg-red-100'
                       : wordCount > 500
-                      ? 'bg-red-100'
-                      : wordCount > 400
-                      ? 'bg-yellow-100'
-                      : 'bg-green-100'
+                        ? 'bg-red-100'
+                        : wordCount > 400
+                          ? 'bg-yellow-100'
+                          : 'bg-green-100'
                   }`}
                 >
                   <BadgeText
@@ -193,10 +193,10 @@ export const BiographyStep: React.FC<BiographyStepProps> = ({
                       wordCount < 50
                         ? 'text-red-700'
                         : wordCount > 500
-                        ? 'text-red-700'
-                        : wordCount > 400
-                        ? 'text-yellow-700'
-                        : 'text-green-700'
+                          ? 'text-red-700'
+                          : wordCount > 400
+                            ? 'text-yellow-700'
+                            : 'text-green-700'
                     }`}
                   >
                     {wordCount} / 500 words
@@ -384,7 +384,7 @@ export const BiographyStep: React.FC<BiographyStepProps> = ({
                   <Text className="text-sm font-medium text-gray-700">Common Specializations:</Text>
                   <HStack space="xs" className="flex-wrap">
                     {COMMON_SPECIALIZATIONS.filter(
-                      spec => !formData.specializations.includes(spec)
+                      spec => !formData.specializations.includes(spec),
                     ).map(spec => (
                       <Button
                         key={spec}

@@ -111,11 +111,9 @@ const CommunicationAnalyticsPage = () => {
     };
 
     if (__DEV__) {
-
       if (__DEV__) {
         console.log('Export data:', data);
       }
-
     }
     // TODO: Implement actual file download
   }, [analytics]);
@@ -326,7 +324,7 @@ const CommunicationAnalyticsPage = () => {
                     <Text>
                       {
                         templateTypeOptions.find(
-                          opt => opt.value === (filters.template_type || 'all')
+                          opt => opt.value === (filters.template_type || 'all'),
                         )?.label
                       }
                     </Text>
@@ -411,7 +409,7 @@ const CommunicationAnalyticsPage = () => {
                     <Text
                       className={`text-3xl font-bold ${getPerformanceColor(
                         analytics.delivery_rate,
-                        'delivery'
+                        'delivery',
                       )}`}
                     >
                       {Math.round(analytics.delivery_rate * 100)}%
@@ -439,7 +437,7 @@ const CommunicationAnalyticsPage = () => {
                     <Text
                       className={`text-3xl font-bold ${getPerformanceColor(
                         analytics.open_rate,
-                        'open'
+                        'open',
                       )}`}
                     >
                       {Math.round(analytics.open_rate * 100)}%
@@ -467,7 +465,7 @@ const CommunicationAnalyticsPage = () => {
                     <Text
                       className={`text-3xl font-bold ${getPerformanceColor(
                         analytics.click_rate,
-                        'click'
+                        'click',
                       )}`}
                     >
                       {Math.round(analytics.click_rate * 100)}%
@@ -518,7 +516,7 @@ const CommunicationAnalyticsPage = () => {
                               <Text
                                 className={`font-bold ${getPerformanceColor(
                                   template.open_rate,
-                                  'open'
+                                  'open',
                                 )}`}
                               >
                                 {Math.round(template.open_rate * 100)}%
@@ -530,7 +528,7 @@ const CommunicationAnalyticsPage = () => {
                               <Text
                                 className={`font-bold ${getPerformanceColor(
                                   template.click_rate,
-                                  'click'
+                                  'click',
                                 )}`}
                               >
                                 {Math.round(template.click_rate * 100)}%
@@ -581,12 +579,12 @@ const CommunicationAnalyticsPage = () => {
                                   email.status === 'delivered'
                                     ? 'bg-green-100 text-green-800'
                                     : email.status === 'opened'
-                                    ? 'bg-blue-100 text-blue-800'
-                                    : email.status === 'clicked'
-                                    ? 'bg-purple-100 text-purple-800'
-                                    : email.status === 'failed'
-                                    ? 'bg-red-100 text-red-800'
-                                    : 'bg-gray-100 text-gray-800'
+                                      ? 'bg-blue-100 text-blue-800'
+                                      : email.status === 'clicked'
+                                        ? 'bg-purple-100 text-purple-800'
+                                        : email.status === 'failed'
+                                          ? 'bg-red-100 text-red-800'
+                                          : 'bg-gray-100 text-gray-800'
                                 }
                               >
                                 <Text className="text-xs font-medium capitalize">
@@ -643,7 +641,7 @@ const CommunicationAnalyticsPage = () => {
                       <Text
                         className={`font-semibold ${getPerformanceColor(
                           analytics.delivery_rate,
-                          'delivery'
+                          'delivery',
                         )}`}
                       >
                         {Math.round(analytics.delivery_rate * 100)}%
@@ -664,7 +662,7 @@ const CommunicationAnalyticsPage = () => {
                       <Text
                         className={`font-semibold ${getPerformanceColor(
                           analytics.open_rate,
-                          'open'
+                          'open',
                         )}`}
                       >
                         {Math.round(analytics.open_rate * 100)}% open

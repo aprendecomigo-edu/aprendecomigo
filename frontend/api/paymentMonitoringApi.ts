@@ -48,7 +48,7 @@ export class PaymentMonitoringApiClient {
    */
   static async getDashboardMetrics(
     timeRange: 'last_24h' | 'last_7d' | 'last_30d' | 'custom' = 'last_24h',
-    customRange?: { start_date: string; end_date: string }
+    customRange?: { start_date: string; end_date: string },
   ): Promise<PaymentMetrics> {
     try {
       const params: any = { time_range: timeRange };
@@ -86,7 +86,7 @@ export class PaymentMonitoringApiClient {
    */
   static async getPaymentTrends(
     timeRange: 'last_24h' | 'last_7d' | 'last_30d' | 'custom' = 'last_7d',
-    customRange?: { start_date: string; end_date: string }
+    customRange?: { start_date: string; end_date: string },
   ): Promise<PaymentTrendData> {
     try {
       const params: any = { time_range: timeRange };
@@ -149,7 +149,7 @@ export class PaymentMonitoringApiClient {
   static async getTransactions(
     filters: TransactionSearchFilters = {},
     page: number = 1,
-    pageSize: number = 20
+    pageSize: number = 20,
   ): Promise<PaginatedTransactionMonitoring> {
     try {
       const params: any = {
@@ -255,7 +255,7 @@ export class PaymentMonitoringApiClient {
   static async getRefunds(
     page: number = 1,
     pageSize: number = 20,
-    filters: { status?: string; date_from?: string; date_to?: string } = {}
+    filters: { status?: string; date_from?: string; date_to?: string } = {},
   ): Promise<{
     count: number;
     next: string | null;
@@ -293,7 +293,7 @@ export class PaymentMonitoringApiClient {
   static async getDisputes(
     page: number = 1,
     pageSize: number = 20,
-    filters: { status?: string; evidence_due?: boolean } = {}
+    filters: { status?: string; evidence_due?: boolean } = {},
   ): Promise<{
     count: number;
     next: string | null;
@@ -327,12 +327,12 @@ export class PaymentMonitoringApiClient {
    * @throws Error with descriptive message if request fails
    */
   static async submitDisputeEvidence(
-    request: DisputeEvidenceRequest
+    request: DisputeEvidenceRequest,
   ): Promise<DisputeEvidenceResponse> {
     try {
       const response = await apiClient.post(
         `/api/admin/payments/disputes/${request.dispute_id}/evidence/`,
-        request
+        request,
       );
       return response.data;
     } catch (error: any) {
@@ -372,7 +372,7 @@ export class PaymentMonitoringApiClient {
   static async getFraudAlerts(
     page: number = 1,
     pageSize: number = 20,
-    filters: { status?: string; risk_level?: string } = {}
+    filters: { status?: string; risk_level?: string } = {},
   ): Promise<{
     count: number;
     next: string | null;
@@ -409,7 +409,7 @@ export class PaymentMonitoringApiClient {
     try {
       const response = await apiClient.patch(
         `/api/admin/payments/fraud/${action.alert_id}/`,
-        action
+        action,
       );
       return response.data;
     } catch (error: any) {
@@ -449,7 +449,7 @@ export class PaymentMonitoringApiClient {
   static async getPaymentRetries(
     page: number = 1,
     pageSize: number = 20,
-    filters: { status?: string } = {}
+    filters: { status?: string } = {},
   ): Promise<{
     count: number;
     next: string | null;
@@ -529,7 +529,7 @@ export class PaymentMonitoringApiClient {
       performed_by?: string;
       date_from?: string;
       date_to?: string;
-    } = {}
+    } = {},
   ): Promise<PaginatedAuditLog> {
     try {
       const params = { page, page_size: pageSize, ...filters };

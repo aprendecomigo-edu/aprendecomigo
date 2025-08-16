@@ -81,7 +81,7 @@ const StepIndicator: React.FC<StepIndicatorProps> = ({
               {/* Step Circle */}
               <Box
                 className={`w-8 h-8 rounded-full border-2 items-center justify-center ${getStepColor(
-                  status
+                  status,
                 )}`}
               >
                 {isCompleted ? (

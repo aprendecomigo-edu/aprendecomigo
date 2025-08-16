@@ -41,11 +41,11 @@ interface UseQuickActionsResult {
   // Computed values
   canRenew: (
     expiredPackage: PackageInfo | null,
-    defaultPaymentMethod: PaymentMethod | null
+    defaultPaymentMethod: PaymentMethod | null,
   ) => boolean;
   canTopUp: (
     selectedPackage: TopUpPackage | null,
-    defaultPaymentMethod: PaymentMethod | null
+    defaultPaymentMethod: PaymentMethod | null,
   ) => boolean;
 }
 
@@ -157,7 +157,7 @@ export function useQuickActions(email?: string): UseQuickActionsResult {
         }));
       }
     },
-    [email]
+    [email],
   );
 
   // Process quick top-up
@@ -202,7 +202,7 @@ export function useQuickActions(email?: string): UseQuickActionsResult {
         }));
       }
     },
-    [email]
+    [email],
   );
 
   // Set error
@@ -232,7 +232,7 @@ export function useQuickActions(email?: string): UseQuickActionsResult {
     (expiredPackage: PackageInfo | null, defaultPaymentMethod: PaymentMethod | null): boolean => {
       return !!(expiredPackage && defaultPaymentMethod && !actionState.isProcessing);
     },
-    [actionState.isProcessing]
+    [actionState.isProcessing],
   );
 
   // Check if top-up is possible
@@ -240,7 +240,7 @@ export function useQuickActions(email?: string): UseQuickActionsResult {
     (selectedPackage: TopUpPackage | null, defaultPaymentMethod: PaymentMethod | null): boolean => {
       return !!(selectedPackage && defaultPaymentMethod && !actionState.isProcessing);
     },
-    [actionState.isProcessing]
+    [actionState.isProcessing],
   );
 
   // Load top-up packages on mount

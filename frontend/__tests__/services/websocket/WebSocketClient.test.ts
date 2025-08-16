@@ -129,14 +129,14 @@ describe('WebSocketClient', () => {
       expect(MockConnectionManager).toHaveBeenCalledWith(
         expect.objectContaining({
           url: 'ws://localhost:8000/ws/minimal',
-        })
+        }),
       );
       expect(MockExponentialBackoffStrategy).toHaveBeenCalledWith(
         expect.objectContaining({
           strategy: 'exponential',
           initialDelay: 1000,
           maxDelay: 30000,
-        })
+        }),
       );
     });
 
@@ -226,7 +226,7 @@ describe('WebSocketClient', () => {
       expect(mockMessageDispatcher.addHandler).toHaveBeenCalledWith(
         'chat.message',
         handler,
-        undefined
+        undefined,
       );
     });
 
@@ -253,7 +253,7 @@ describe('WebSocketClient', () => {
       expect(mockMessageDispatcher.addHandler).toHaveBeenCalledWith(
         'priority.message',
         handler,
-        options
+        options,
       );
     });
   });
@@ -459,7 +459,7 @@ describe('WebSocketClient', () => {
       await expect(client.connect()).rejects.toThrow('WebSocketClient has been disposed');
       expect(() => client.send({ type: 'test' })).toThrow('WebSocketClient has been disposed');
       expect(() => client.addMessageHandler('test', jest.fn())).toThrow(
-        'WebSocketClient has been disposed'
+        'WebSocketClient has been disposed',
       );
     });
 
@@ -519,7 +519,7 @@ describe('WebSocketClient', () => {
           url: config.url,
           auth: config.auth,
           reconnection: expect.objectContaining(newConfig.reconnection),
-        })
+        }),
       );
     });
 
@@ -545,7 +545,7 @@ describe('WebSocketClient', () => {
 
       // Assert - Should update connection manager config
       expect(MockConnectionManager).toHaveBeenCalledWith(
-        expect.objectContaining({ auth: newAuth })
+        expect.objectContaining({ auth: newAuth }),
       );
     });
   });

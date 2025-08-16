@@ -17,12 +17,12 @@ function getAllAppFiles() {
 // Check if a console statement is properly wrapped
 function isConsoleProperlyWrapped(lines, lineIndex) {
   const line = lines[lineIndex].trim();
-  
+
   // Skip if not a console statement
   if (!line.match(/console\.[a-zA-Z]/)) {
     return true;
   }
-  
+
   // For console.error, it's OK if it has TODO comment
   if (line.includes('console.error') && line.includes('// TODO: Review for sensitive data')) {
     // Check if it's wrapped in __DEV__
@@ -33,7 +33,7 @@ function isConsoleProperlyWrapped(lines, lineIndex) {
     }
     return false;
   }
-  
+
   // For other console methods, check for __DEV__ wrapper
   if (line.match(/console\.(log|info|debug|warn)/)) {
     for (let i = lineIndex - 1; i >= Math.max(0, lineIndex - 5); i--) {
@@ -43,7 +43,7 @@ function isConsoleProperlyWrapped(lines, lineIndex) {
     }
     return false;
   }
-  
+
   return true;
 }
 
@@ -53,17 +53,17 @@ function checkFile(filePath) {
     const content = fs.readFileSync(filePath, 'utf-8');
     const lines = content.split('\n');
     const unwrappedStatements = [];
-    
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       if (line.match(/console\.[a-zA-Z]/) && !isConsoleProperlyWrapped(lines, i)) {
         unwrappedStatements.push({
           line: i + 1,
-          content: line.trim()
+          content: line.trim(),
         });
       }
     }
-    
+
     return unwrappedStatements;
   } catch (error) {
     return [];
@@ -74,13 +74,13 @@ function checkFile(filePath) {
 function main() {
   console.log('🎯 FINAL PRODUCTION VERIFICATION for Issue #186\n');
   console.log('🔍 Checking console statement wrapping in application code...\n');
-  
+
   const files = getAllAppFiles();
   let totalUnwrapped = 0;
   let filesWithIssues = 0;
-  
+
   const problemFiles = [];
-  
+
   for (const file of files) {
     const unwrapped = checkFile(file);
     if (unwrapped.length > 0) {
@@ -89,20 +89,26 @@ function main() {
       problemFiles.push({ file, statements: unwrapped });
     }
   }
-  
+
   console.log(`📊 PRODUCTION VERIFICATION RESULTS:`);
   console.log(`📁 Application files checked: ${files.length}`);
   console.log(`⚠️  Files with unwrapped console statements: ${filesWithIssues}`);
   console.log(`🚨 Total unwrapped console statements: ${totalUnwrapped}`);
-  
+
   if (totalUnwrapped === 0) {
-    console.log('\n✅ SUCCESS: All console statements in application code are properly wrapped with __DEV__!');
+    console.log(
+      '\n✅ SUCCESS: All console statements in application code are properly wrapped with __DEV__!',
+    );
     console.log('\n🎯 Issue #186 - Console statements in production builds - COMPLETED');
     console.log('\n📋 Summary of work completed:');
     console.log('   ✅ Identified 400+ console statements across the codebase');
-    console.log('   ✅ Wrapped all console.log, console.info, console.debug, console.warn with __DEV__');
+    console.log(
+      '   ✅ Wrapped all console.log, console.info, console.debug, console.warn with __DEV__',
+    );
     console.log('   ✅ Wrapped all console.error statements with __DEV__');
-    console.log('   ✅ Added TODO comments for console.error statements requiring sensitive data review');
+    console.log(
+      '   ✅ Added TODO comments for console.error statements requiring sensitive data review',
+    );
     console.log('   ✅ Verified no console statements will appear in production builds');
     console.log('\n🚀 The app is now production-ready with proper console statement handling!');
   } else {
@@ -113,11 +119,11 @@ function main() {
         console.log(`  Line ${line}: ${content}`);
       });
     });
-    
+
     if (problemFiles.length > 10) {
       console.log(`\n... and ${problemFiles.length - 10} more files`);
     }
-    
+
     console.log(`\n⏳ IN PROGRESS: ${totalUnwrapped} console statements still need to be wrapped`);
   }
 }

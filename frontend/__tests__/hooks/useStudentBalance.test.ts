@@ -34,7 +34,7 @@ describe('useStudentBalance Hook', () => {
   describe('Initial Load', () => {
     it('starts with loading state', () => {
       mockStudentApiCalls.getStudentBalance.mockImplementation(
-        () => new Promise(() => {}) // Never resolves
+        () => new Promise(() => {}), // Never resolves
       );
 
       const { result } = renderHook(() => useStudentBalance());
@@ -458,7 +458,7 @@ describe('useStudentBalance Hook', () => {
     it('handles unmount during pending API call', async () => {
       // Mock a slow API call
       mockStudentApiCalls.getStudentBalance.mockImplementation(
-        () => new Promise(resolve => setTimeout(resolve, 1000))
+        () => new Promise(resolve => setTimeout(resolve, 1000)),
       );
 
       const { unmount } = renderHook(() => useStudentBalance());

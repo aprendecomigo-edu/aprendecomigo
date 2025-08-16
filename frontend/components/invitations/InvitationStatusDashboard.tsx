@@ -43,7 +43,7 @@ export const InvitationStatusDashboard: React.FC<InvitationStatusDashboardProps>
 
   const { isPolling, startPolling, stopPolling } = useInvitationPolling(
     refreshInvitations,
-    refreshInterval
+    refreshInterval,
   );
 
   // Start/stop polling based on autoRefresh prop
@@ -90,10 +90,13 @@ export const InvitationStatusDashboard: React.FC<InvitationStatusDashboardProps>
   };
 
   const getStatsData = () => {
-    const statusCounts = (invitations || []).reduce((acc, invitation) => {
-      acc[invitation.status] = (acc[invitation.status] || 0) + 1;
-      return acc;
-    }, {} as Record<InvitationStatus, number>);
+    const statusCounts = (invitations || []).reduce(
+      (acc, invitation) => {
+        acc[invitation.status] = (acc[invitation.status] || 0) + 1;
+        return acc;
+      },
+      {} as Record<InvitationStatus, number>,
+    );
 
     return [
       {

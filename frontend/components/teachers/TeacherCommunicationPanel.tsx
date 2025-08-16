@@ -141,8 +141,8 @@ const TeacherRow: React.FC<{
     hasCritical || completionPercentage < 30
       ? 'critical'
       : isComplete && completionPercentage >= 80
-      ? 'complete'
-      : 'incomplete';
+        ? 'complete'
+        : 'incomplete';
 
   const statusBadge = getCompletionStatusBadge(completionStatus);
 
@@ -249,7 +249,7 @@ export const TeacherCommunicationPanel: React.FC<TeacherCommunicationPanelProps>
         teacher =>
           teacher.user.name.toLowerCase().includes(query) ||
           teacher.user.email.toLowerCase().includes(query) ||
-          teacher.specialty?.toLowerCase().includes(query)
+          teacher.specialty?.toLowerCase().includes(query),
       );
     }
 
@@ -286,7 +286,7 @@ export const TeacherCommunicationPanel: React.FC<TeacherCommunicationPanelProps>
 
         const activityDate = new Date(teacher.last_activity);
         const diffDays = Math.floor(
-          (now.getTime() - activityDate.getTime()) / (1000 * 60 * 60 * 24)
+          (now.getTime() - activityDate.getTime()) / (1000 * 60 * 60 * 24),
         );
 
         switch (filters.lastActivity) {

@@ -33,7 +33,12 @@ const getWeekDates = (date: Date): Date[] => {
   return week;
 };
 
-export const WeekView: React.FC<WeekViewProps> = ({ currentDate, classes, tasks, onClassPress }) => {
+export const WeekView: React.FC<WeekViewProps> = ({
+  currentDate,
+  classes,
+  tasks,
+  onClassPress,
+}) => {
   // Add null check and default to empty array
   const safeClasses = classes || [];
   const safeTasks = tasks || [];
@@ -48,7 +53,7 @@ export const WeekView: React.FC<WeekViewProps> = ({ currentDate, classes, tasks,
             const dateStr = date.toISOString().split('T')[0];
             const dayClasses = safeClasses.filter(c => c.scheduled_date === dateStr);
             const dayTasks = safeTasks.filter(
-              t => t.due_date && t.due_date.split('T')[0] === dateStr
+              t => t.due_date && t.due_date.split('T')[0] === dateStr,
             );
 
             const hasContent = dayClasses.length > 0 || dayTasks.length > 0;

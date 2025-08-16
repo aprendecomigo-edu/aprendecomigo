@@ -80,7 +80,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       expect(result.current.isSubmitting).toBe(false);
@@ -99,7 +99,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       expect(result.current.userType).toBe('school');
@@ -119,7 +119,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
           authContext: customAuthContext,
           router: customRouter,
           toast: customToast,
-        })
+        }),
       );
 
       expect(result.current.isSubmitting).toBe(false);
@@ -136,7 +136,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       const schoolName = result.current.generateSchoolName('John Doe', 'tutor');
@@ -151,7 +151,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       const schoolName = result.current.generateSchoolName('Jane Smith', 'school');
@@ -166,7 +166,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       expect(result.current.generateSchoolName('', 'tutor')).toBe('');
@@ -184,7 +184,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       expect(result.current.validateUserType('tutor')).toBe('tutor');
@@ -199,7 +199,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       expect(result.current.validateUserType('invalid')).toBe('tutor');
@@ -219,7 +219,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -242,7 +242,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
       expect(mockCheckAuthStatus).toHaveBeenCalled();
       expect(mockShowToast).toHaveBeenCalledWith(
         'success',
-        'Registration successful! Please verify your email.'
+        'Registration successful! Please verify your email.',
       );
       expect(mockReplace).toHaveBeenCalledWith(expect.stringContaining('/auth/verify-code'));
     });
@@ -257,7 +257,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -280,7 +280,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
       expect(mockCheckAuthStatus).toHaveBeenCalled();
       expect(mockShowToast).toHaveBeenCalledWith(
         'success',
-        'Registration successful! Please verify your email.'
+        'Registration successful! Please verify your email.',
       );
     });
 
@@ -295,7 +295,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -304,7 +304,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
 
       expect(mockShowToast).toHaveBeenCalledWith(
         'error',
-        'Failed to complete registration. Please try again.'
+        'Failed to complete registration. Please try again.',
       );
       expect(result.current.error).toBe(apiError);
       expect(mockReplace).not.toHaveBeenCalled();
@@ -324,7 +324,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -333,7 +333,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
 
       expect(mockShowToast).toHaveBeenCalledWith(
         'error',
-        'An account with this email already exists. Try signing in instead.'
+        'An account with this email already exists. Try signing in instead.',
       );
     });
 
@@ -351,7 +351,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       // Start submission
@@ -381,7 +381,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -400,7 +400,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -425,7 +425,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -452,7 +452,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -476,7 +476,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -501,7 +501,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -512,7 +512,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
         expect.objectContaining({
           name: 'John Doe',
           email: 'john@example.com',
-        })
+        }),
       );
     });
   });
@@ -529,7 +529,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       // Test the complete business logic flow
@@ -542,7 +542,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
       expect(mockCheckAuthStatus).toHaveBeenCalledTimes(1);
       expect(mockShowToast).toHaveBeenCalledWith(
         'success',
-        'Registration successful! Please verify your email.'
+        'Registration successful! Please verify your email.',
       );
       expect(mockReplace).toHaveBeenCalledTimes(1);
     });
@@ -555,7 +555,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
           authContext: mockAuthContext,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       // Test business logic functions directly
@@ -564,7 +564,7 @@ describe('useSignUpLogic Hook - New Architecture', () => {
       expect(result.current.validateUserType('invalid')).toBe('tutor');
 
       expect(result.current.generateSchoolName('Test User', 'tutor')).toBe(
-        "Test User's Tutoring Practice"
+        "Test User's Tutoring Practice",
       );
       expect(result.current.generateSchoolName('Test User', 'school')).toBe('');
     });

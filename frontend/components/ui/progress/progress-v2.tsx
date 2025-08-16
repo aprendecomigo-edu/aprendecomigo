@@ -77,7 +77,7 @@ export const Progress = React.forwardRef<View, IProgressProps>(
         value,
         max,
       }),
-      [size, value, max]
+      [size, value, max],
     );
 
     return (
@@ -95,7 +95,7 @@ export const Progress = React.forwardRef<View, IProgressProps>(
         </View>
       </ProgressContext.Provider>
     );
-  }
+  },
 );
 
 // ProgressFilledTrack component
@@ -121,7 +121,7 @@ export const ProgressFilledTrack = React.forwardRef<View, IProgressFilledTrackPr
         }}
       />
     );
-  }
+  },
 );
 
 // Display names for debugging

@@ -86,7 +86,7 @@ export class ReceiptApiClient {
    */
   static async generateReceipt(
     transactionId: string,
-    email?: string
+    email?: string,
   ): Promise<ReceiptGenerationResponse> {
     try {
       const data = email

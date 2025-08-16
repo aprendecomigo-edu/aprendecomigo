@@ -56,7 +56,7 @@ const AcceptInvitationProfileWizardPage = () => {
       // Check if user needs to authenticate and if invitation email matches current user
       if (isLoggedIn && userProfile && invitation.email !== userProfile.email) {
         setError(
-          'Este convite não é para o usuário atualmente autenticado. Por favor, faça login com o email correto.'
+          'Este convite não é para o usuário atualmente autenticado. Por favor, faça login com o email correto.',
         );
         return;
       }
@@ -71,10 +71,10 @@ const AcceptInvitationProfileWizardPage = () => {
               text: 'Fazer Login',
               onPress: () =>
                 router.push(
-                  `/auth/signin?redirect=/accept-invitation/profile-wizard?token=${token}`
+                  `/auth/signin?redirect=/accept-invitation/profile-wizard?token=${token}`,
                 ),
             },
-          ]
+          ],
         );
         return;
       }
@@ -116,7 +116,7 @@ const AcceptInvitationProfileWizardPage = () => {
             router.back();
           },
         },
-      ]
+      ],
     );
   };
 

@@ -248,119 +248,122 @@ const FilterButtons: React.FC<{
   </HStack>
 );
 
-const UpcomingEventsTable = React.memo<UpcomingEventsTableProps>(({ onRefresh }) => {
-  const [activeFilter, setActiveFilter] = useState<FilterType>('week');
+const UpcomingEventsTable = React.memo<UpcomingEventsTableProps>(
+  ({ onRefresh }) => {
+    const [activeFilter, setActiveFilter] = useState<FilterType>('week');
 
-  // Use the API hook
-  const { schedules, loading, error, refreshSchedules } = useSchedules();
+    // Use the API hook
+    const { schedules, loading, error, refreshSchedules } = useSchedules();
 
-  // Convert API schedules to UI events
-  const events = useMemo(() => {
-    return schedules.map(mapClassScheduleToUIEvent);
-  }, [schedules]);
+    // Convert API schedules to UI events
+    const events = useMemo(() => {
+      return schedules.map(mapClassScheduleToUIEvent);
+    }, [schedules]);
 
-  const filteredEvents = useMemo(() => {
-    return filterEventsByPeriod(events, activeFilter).sort((a, b) => {
-      const dateA = new Date(`${a.date} ${a.time}`);
-      const dateB = new Date(`${b.date} ${b.time}`);
-      return dateA.getTime() - dateB.getTime();
-    });
-  }, [events, activeFilter]);
+    const filteredEvents = useMemo(() => {
+      return filterEventsByPeriod(events, activeFilter).sort((a, b) => {
+        const dateA = new Date(`${a.date} ${a.time}`);
+        const dateB = new Date(`${b.date} ${b.time}`);
+        return dateA.getTime() - dateB.getTime();
+      });
+    }, [events, activeFilter]);
 
-  // Handle refresh - use API refresh or custom callback
-  const handleRefresh = useCallback(async () => {
-    if (onRefresh) {
-      onRefresh();
-    } else {
-      await refreshSchedules();
-    }
-  }, [onRefresh, refreshSchedules]);
+    // Handle refresh - use API refresh or custom callback
+    const handleRefresh = useCallback(async () => {
+      if (onRefresh) {
+        onRefresh();
+      } else {
+        await refreshSchedules();
+      }
+    }, [onRefresh, refreshSchedules]);
 
-  return (
-    <Box className="glass-container p-6 rounded-xl w-full">
-      <VStack space="md" className="w-full">
-        {/* Header */}
-        <HStack className="justify-between items-start w-full">
-          <VStack space="xs">
-            <Heading size="md" className="font-primary text-gray-900">
-              <Text className="bg-gradient-accent">Próximas Aulas</Text>
-            </Heading>
-            <Text className="text-sm font-body text-gray-600">
-              {filteredEvents.length} aulas agendadas
-            </Text>
-          </VStack>
+    return (
+      <Box className="glass-container p-6 rounded-xl w-full">
+        <VStack space="md" className="w-full">
+          {/* Header */}
+          <HStack className="justify-between items-start w-full">
+            <VStack space="xs">
+              <Heading size="md" className="font-primary text-gray-900">
+                <Text className="bg-gradient-accent">Próximas Aulas</Text>
+              </Heading>
+              <Text className="text-sm font-body text-gray-600">
+                {filteredEvents.length} aulas agendadas
+              </Text>
+            </VStack>
 
-          <HStack space="xs" className="items-center">
-            <Icon as={FilterIcon} size="sm" className="text-gray-500" />
+            <HStack space="xs" className="items-center">
+              <Icon as={FilterIcon} size="sm" className="text-gray-500" />
+            </HStack>
           </HStack>
-        </HStack>
 
-        {/* Filters */}
-        <FilterButtons activeFilter={activeFilter} onFilterChange={setActiveFilter} />
+          {/* Filters */}
+          <FilterButtons activeFilter={activeFilter} onFilterChange={setActiveFilter} />
 
-        {/* Events List */}
-        <Box className="bg-white rounded-xl border border-gray-100 w-full">
-          {loading ? (
-            <VStack space="md" className="p-8">
-              <Text className="text-center font-body text-gray-500">Carregando aulas...</Text>
-            </VStack>
-          ) : error ? (
-            <VStack space="md" className="items-center py-8">
-              <Text className="text-center font-body text-red-600">Erro: {error}</Text>
-              <Button variant="outline" size="sm" onPress={handleRefresh}>
-                <ButtonText>Tentar Novamente</ButtonText>
-              </Button>
-            </VStack>
-          ) : filteredEvents.length === 0 ? (
-            <EmptyState filter={activeFilter} />
-          ) : (
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              style={{ maxHeight: 400 }}
-              className="w-full"
-            >
-              <VStack className="w-full">
-                {filteredEvents.map((event, index) => (
-                  <EventRow
-                    key={event.id}
-                    event={event}
-                    isLast={index === filteredEvents.length - 1}
-                  />
-                ))}
+          {/* Events List */}
+          <Box className="bg-white rounded-xl border border-gray-100 w-full">
+            {loading ? (
+              <VStack space="md" className="p-8">
+                <Text className="text-center font-body text-gray-500">Carregando aulas...</Text>
               </VStack>
-            </ScrollView>
+            ) : error ? (
+              <VStack space="md" className="items-center py-8">
+                <Text className="text-center font-body text-red-600">Erro: {error}</Text>
+                <Button variant="outline" size="sm" onPress={handleRefresh}>
+                  <ButtonText>Tentar Novamente</ButtonText>
+                </Button>
+              </VStack>
+            ) : filteredEvents.length === 0 ? (
+              <EmptyState filter={activeFilter} />
+            ) : (
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                style={{ maxHeight: 400 }}
+                className="w-full"
+              >
+                <VStack className="w-full">
+                  {filteredEvents.map((event, index) => (
+                    <EventRow
+                      key={event.id}
+                      event={event}
+                      isLast={index === filteredEvents.length - 1}
+                    />
+                  ))}
+                </VStack>
+              </ScrollView>
+            )}
+          </Box>
+
+          {/* Actions */}
+          {filteredEvents.length > 0 && (
+            <HStack space="md" className="justify-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onPress={() => {
+                  // Navigate to full calendar view
+                  if (__DEV__) {
+                    console.log('Navigate to calendar');
+                  }
+                }}
+              >
+                <ButtonText>Ver Calendário</ButtonText>
+              </Button>
+
+              <Button variant="solid" size="sm" onPress={handleRefresh}>
+                <ButtonText>Atualizar</ButtonText>
+              </Button>
+            </HStack>
           )}
-        </Box>
-
-        {/* Actions */}
-        {filteredEvents.length > 0 && (
-          <HStack space="md" className="justify-center">
-            <Button
-              variant="outline"
-              size="sm"
-              onPress={() => {
-                // Navigate to full calendar view
-                if (__DEV__) {
-                  console.log('Navigate to calendar');
-                }
-              }}
-            >
-              <ButtonText>Ver Calendário</ButtonText>
-            </Button>
-
-            <Button variant="solid" size="sm" onPress={handleRefresh}>
-              <ButtonText>Atualizar</ButtonText>
-            </Button>
-          </HStack>
-        )}
-      </VStack>
-    </Box>
-  );
-}, (prevProps, nextProps) => {
-  // Custom comparison function for UpcomingEventsTable
-  // Since onRefresh is likely a stable function, we don't need deep comparison
-  return true; // Let React handle the comparison for the callback
-});
+        </VStack>
+      </Box>
+    );
+  },
+  (prevProps, nextProps) => {
+    // Custom comparison function for UpcomingEventsTable
+    // Since onRefresh is likely a stable function, we don't need deep comparison
+    return true; // Let React handle the comparison for the callback
+  },
+);
 
 export { UpcomingEventsTable };
 export default UpcomingEventsTable;

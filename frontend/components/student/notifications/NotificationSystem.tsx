@@ -5,7 +5,7 @@
  * and other important student account notifications.
  */
 
-import useRouter from '@unitools/router';
+import { useRouter } from 'expo-router';
 import {
   Bell,
   AlertTriangle,
@@ -163,10 +163,10 @@ function NotificationItem({
               notification.priority === 'urgent'
                 ? 'error'
                 : notification.priority === 'high'
-                ? 'warning'
-                : notification.priority === 'medium'
-                ? 'primary'
-                : 'secondary'
+                  ? 'warning'
+                  : notification.priority === 'medium'
+                    ? 'primary'
+                    : 'secondary'
             }
             size="xs"
           >

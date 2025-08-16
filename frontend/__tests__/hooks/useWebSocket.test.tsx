@@ -47,7 +47,7 @@ describe('useWebSocket Hook', () => {
           url: 'ws://localhost:8000/ws/test/',
           channelName: 'test-channel',
           shouldConnect: true,
-        })
+        }),
       );
 
       // Wait for AsyncStorage.getItem to resolve first
@@ -76,7 +76,7 @@ describe('useWebSocket Hook', () => {
           url: 'ws://localhost:8000/ws/test/',
           channelName: 'test-channel',
           shouldConnect: true,
-        })
+        }),
       );
 
       await act(async () => {
@@ -95,7 +95,7 @@ describe('useWebSocket Hook', () => {
           url: 'ws://localhost:8000/ws/test/',
           channelName: 'test-channel',
           shouldConnect: false,
-        })
+        }),
       );
 
       await act(async () => {
@@ -115,7 +115,7 @@ describe('useWebSocket Hook', () => {
           url: 'ws://localhost:8000/ws/test/',
           channelName: 'test-channel',
           shouldConnect: true,
-        })
+        }),
       );
 
       await act(async () => {
@@ -142,7 +142,7 @@ describe('useWebSocket Hook', () => {
           channelName: 'test-channel',
           onMessage,
           shouldConnect: true,
-        })
+        }),
       );
 
       await act(async () => {
@@ -170,7 +170,7 @@ describe('useWebSocket Hook', () => {
           channelName: 'test-channel',
           onMessage,
           shouldConnect: true,
-        })
+        }),
       );
 
       await act(async () => {
@@ -186,7 +186,7 @@ describe('useWebSocket Hook', () => {
       expect(onMessage).not.toHaveBeenCalled();
       expect(consoleSpy).toHaveBeenCalledWith(
         'Error parsing WebSocket message:',
-        expect.any(Error)
+        expect.any(Error),
       );
 
       consoleSpy.mockRestore();
@@ -200,7 +200,7 @@ describe('useWebSocket Hook', () => {
           url: 'ws://localhost:8000/ws/test/',
           channelName: 'test-channel',
           shouldConnect: true,
-        })
+        }),
       );
 
       await act(async () => {
@@ -227,7 +227,7 @@ describe('useWebSocket Hook', () => {
           url: 'ws://localhost:8000/ws/test/',
           channelName: 'test-channel',
           shouldConnect: false,
-        })
+        }),
       );
 
       const testMessage = { type: 'test', data: 'hello' };
@@ -253,7 +253,7 @@ describe('useWebSocket Hook', () => {
           url: 'ws://localhost:8000/ws/test/',
           channelName: 'test-channel',
           shouldConnect: true,
-        })
+        }),
       );
 
       await act(async () => {
@@ -292,7 +292,7 @@ describe('useWebSocket Hook', () => {
           url: 'ws://localhost:8000/ws/test/',
           channelName: 'test-channel',
           shouldConnect: true,
-        })
+        }),
       );
 
       await act(async () => {
@@ -325,7 +325,7 @@ describe('useWebSocket Hook', () => {
           url: 'ws://localhost:8000/ws/test/',
           channelName: 'test-channel',
           shouldConnect: true,
-        })
+        }),
       );
 
       await act(async () => {
@@ -355,7 +355,7 @@ describe('useWebSocket Hook', () => {
           url: 'ws://localhost:8000/ws/test/',
           channelName: 'test-channel',
           shouldConnect: true,
-        })
+        }),
       );
 
       await act(async () => {
@@ -412,7 +412,7 @@ describe('useWebSocket Hook', () => {
           url: 'ws://localhost:8000/ws/test/',
           channelName: 'test-channel',
           shouldConnect: true,
-        })
+        }),
       );
 
       await act(async () => {
@@ -437,7 +437,7 @@ describe('useWebSocket Hook', () => {
           channelName: 'test-channel',
           onError,
           shouldConnect: true,
-        })
+        }),
       );
 
       await act(async () => {
@@ -468,7 +468,7 @@ describe('useWebSocket Hook', () => {
           onClose,
           onError,
           shouldConnect: true,
-        })
+        }),
       );
 
       await act(async () => {
@@ -509,7 +509,7 @@ describe('useWebSocket Hook', () => {
           url: 'ws://localhost:8000/ws/test/',
           channelName: 'test-channel',
           shouldConnect: false,
-        })
+        }),
       );
 
       expect(result.current.isConnected).toBe(false);
@@ -530,7 +530,7 @@ describe('useWebSocket Hook', () => {
           url: 'ws://localhost:8000/ws/test/',
           channelName: 'test-channel',
           shouldConnect: true,
-        })
+        }),
       );
 
       await act(async () => {
@@ -571,7 +571,7 @@ describe('useWebSocketEnhanced Hook', () => {
           onOpen,
           onClose,
           shouldReconnect: true,
-        })
+        }),
       );
 
       await act(async () => {
@@ -630,7 +630,7 @@ describe('useWebSocketEnhanced Hook', () => {
       const { result } = renderHook(() =>
         useWebSocketEnhanced(wsUrl, {
           shouldReconnect: false,
-        })
+        }),
       );
 
       await act(async () => {
@@ -722,7 +722,7 @@ describe('WebSocket Hook Performance', () => {
         url: 'ws://localhost:8000/ws/test/',
         channelName: 'test-channel',
         shouldConnect: true,
-      })
+      }),
     );
 
     await act(async () => {
@@ -742,7 +742,7 @@ describe('WebSocket Hook Performance', () => {
         url: 'ws://localhost:8000/ws/test/',
         channelName: 'test-channel',
         shouldConnect: true,
-      })
+      }),
     );
 
     await act(async () => {

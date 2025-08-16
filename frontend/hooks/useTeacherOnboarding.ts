@@ -88,7 +88,7 @@ export const useTeacherOnboarding = (teacherId?: number, autoFetch = true) => {
         return false;
       }
     },
-    [progress, updateProgress]
+    [progress, updateProgress],
   );
 
   const previousStep = useCallback(async () => {
@@ -116,7 +116,7 @@ export const useTeacherOnboarding = (teacherId?: number, autoFetch = true) => {
         return false;
       }
     },
-    [progress, updateProgress]
+    [progress, updateProgress],
   );
 
   useEffect(() => {
@@ -174,7 +174,7 @@ export const useFAQSystem = (autoFetch = true) => {
         setLoading(false);
       }
     },
-    []
+    [],
   );
 
   const fetchCategories = useCallback(async () => {
@@ -208,7 +208,7 @@ export const useFAQSystem = (autoFetch = true) => {
         setLoading(false);
       }
     },
-    [fetchFAQs]
+    [fetchFAQs],
   );
 
   const markFAQHelpful = useCallback(async (faqId: number, helpful: boolean) => {
@@ -223,8 +223,8 @@ export const useFAQSystem = (autoFetch = true) => {
                 ...faq,
                 helpful_count: helpful ? faq.helpful_count + 1 : Math.max(0, faq.helpful_count - 1),
               }
-            : faq
-        )
+            : faq,
+        ),
       );
     } catch (err: any) {
       console.error('Error marking FAQ as helpful:', err);
@@ -239,7 +239,7 @@ export const useFAQSystem = (autoFetch = true) => {
         search: searchQuery || undefined,
       });
     },
-    [fetchFAQs, searchQuery]
+    [fetchFAQs, searchQuery],
   );
 
   const clearFilters = useCallback(() => {

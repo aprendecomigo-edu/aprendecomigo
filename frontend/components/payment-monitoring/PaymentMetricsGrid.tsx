@@ -193,8 +193,8 @@ export default function PaymentMetricsGrid({
       timeRange === 'last_24h'
         ? metrics.success_rate_7d / 7
         : timeRange === 'last_7d'
-        ? metrics.success_rate_30d / 4
-        : 95; // Fallback average
+          ? metrics.success_rate_30d / 4
+          : 95; // Fallback average
 
     const change = ((current - previous) / previous) * 100;
     return {
@@ -256,8 +256,8 @@ export default function PaymentMetricsGrid({
         metrics.success_rate_24h >= 95
           ? { text: 'Excellent', variant: 'success' as const }
           : metrics.success_rate_24h >= 90
-          ? { text: 'Good', variant: 'info' as const }
-          : { text: 'Needs Attention', variant: 'warning' as const },
+            ? { text: 'Good', variant: 'info' as const }
+            : { text: 'Needs Attention', variant: 'warning' as const },
     },
     {
       title: 'Transaction Volume',

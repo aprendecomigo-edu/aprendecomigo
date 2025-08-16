@@ -153,10 +153,10 @@ export function BalanceStatusBar({
         status.level === 'critical'
           ? 'error'
           : status.level === 'low'
-          ? 'warning'
-          : status.level === 'medium'
-          ? 'primary'
-          : 'success'
+            ? 'warning'
+            : status.level === 'medium'
+              ? 'primary'
+              : 'success'
       }-500 ${status.bgColor} ${className}`}
     >
       <VStack space="sm">

@@ -48,18 +48,18 @@ export default function DashboardRouter() {
       // Use primary_role from cached user data for immediate redirect
       const redirectPath = determineUserDashboardFromPrimaryRole(
         userProfile.primary_role,
-        userProfile.user_type
+        userProfile.user_type,
       );
 
       if (redirectPath) {
         if (__DEV__) {
           if (__DEV__) {
             console.log(
-            '🔄 Dashboard router: Immediate redirect to',
-            redirectPath,
-            'based on primary_role:',
-            userProfile.primary_role
-          );
+              '🔄 Dashboard router: Immediate redirect to',
+              redirectPath,
+              'based on primary_role:',
+              userProfile.primary_role,
+            );
           }
         }
         router.replace(redirectPath);
@@ -121,7 +121,7 @@ export default function DashboardRouter() {
  */
 function determineUserDashboardFromPrimaryRole(
   primaryRole: string | undefined,
-  userType: string
+  userType: string,
 ): string | null {
   // Route based on primary role from cached user data
   switch (primaryRole) {

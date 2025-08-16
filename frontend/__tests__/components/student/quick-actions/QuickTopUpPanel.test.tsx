@@ -85,7 +85,7 @@ describe('QuickTopUpPanel Component', () => {
   describe('Loading State', () => {
     it('renders component when packages are loading', () => {
       mockStudentApiCalls.getTopUpPackages.mockImplementation(
-        () => new Promise(() => {}) // Never resolves, stays loading
+        () => new Promise(() => {}), // Never resolves, stays loading
       );
 
       const { toJSON } = render(<QuickTopUpPanel {...defaultProps} />);

@@ -87,7 +87,7 @@ export const createMockPricingPlans = (): PricingPlan[] => [
 ];
 
 export const createMockStudentBalance = (
-  overrides: Partial<StudentBalanceResponse> = {}
+  overrides: Partial<StudentBalanceResponse> = {},
 ): StudentBalanceResponse => ({
   student_info: {
     id: 1,
@@ -199,7 +199,7 @@ export const createMockStripeConfig = (): StripeConfig => ({
 });
 
 export const createMockPurchaseInitiationResponse = (
-  overrides: Partial<PurchaseInitiationResponse> = {}
+  overrides: Partial<PurchaseInitiationResponse> = {},
 ): PurchaseInitiationResponse => ({
   success: true,
   client_secret: 'pi_test_123_secret_abc',
@@ -211,7 +211,7 @@ export const createMockPurchaseInitiationResponse = (
 });
 
 export const createMockPurchaseFlowState = (
-  overrides: Partial<PurchaseFlowState> = {}
+  overrides: Partial<PurchaseFlowState> = {},
 ): PurchaseFlowState => ({
   step: 'plan-selection',
   formData: {
@@ -363,7 +363,7 @@ export const INVALID_TEST_DATA = {
 
 // Mock usePurchaseFlow hook
 export const createMockUsePurchaseFlow = (
-  overrides: Partial<UsePurchaseFlowResult> = {}
+  overrides: Partial<UsePurchaseFlowResult> = {},
 ): UsePurchaseFlowResult => ({
   state: createMockPurchaseFlowState(),
   actions: {
@@ -463,7 +463,7 @@ export const simulateCompleteePurchaseFlow = async (
   getByText: any,
   getByPlaceholderText: any,
   fireEvent: any,
-  waitFor: any
+  waitFor: any,
 ) => {
   // Step 1: Select a plan
   fireEvent.press(getByText('Standard Package'));

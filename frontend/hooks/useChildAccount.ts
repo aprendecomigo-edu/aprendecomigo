@@ -92,12 +92,10 @@ export const useChildAccount = (childId: string) => {
           getChildPurchaseHistory(childId, { limit: 20 }),
         ]);
 
-        const transactionHistory = historyResults[0].status === 'fulfilled' 
-          ? historyResults[0].value 
-          : { results: [] };
-        const purchaseHistory = historyResults[1].status === 'fulfilled' 
-          ? historyResults[1].value 
-          : { results: [] };
+        const transactionHistory =
+          historyResults[0].status === 'fulfilled' ? historyResults[0].value : { results: [] };
+        const purchaseHistory =
+          historyResults[1].status === 'fulfilled' ? historyResults[1].value : { results: [] };
 
         // Log history failures
         if (historyResults[0].status === 'rejected') {
@@ -129,7 +127,7 @@ export const useChildAccount = (childId: string) => {
         }));
       }
     },
-    [childId]
+    [childId],
   );
 
   // Initial data load
@@ -156,7 +154,7 @@ export const useChildAccount = (childId: string) => {
           // Update existing budget control
           updatedBudgetControl = await updateBudgetControl(
             state.childData.budgetControl.id.toString(),
-            budgetData
+            budgetData,
           );
         } else {
           // Create new budget control
@@ -183,7 +181,7 @@ export const useChildAccount = (childId: string) => {
         throw error;
       }
     },
-    [childId, state.childData.budgetControl]
+    [childId, state.childData.budgetControl],
   );
 
   // Load more transaction history
@@ -216,7 +214,7 @@ export const useChildAccount = (childId: string) => {
         }));
       }
     },
-    [childId]
+    [childId],
   );
 
   // Load more purchase history
@@ -249,7 +247,7 @@ export const useChildAccount = (childId: string) => {
         }));
       }
     },
-    [childId]
+    [childId],
   );
 
   const actions: UseChildAccountActions = {

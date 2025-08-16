@@ -262,7 +262,7 @@ export class InvitationApi {
    */
   static async acceptInvitation(
     token: string,
-    profileData?: TeacherProfileData
+    profileData?: TeacherProfileData,
   ): Promise<{
     message: string;
     teacher: any;
@@ -278,7 +278,7 @@ export class InvitationApi {
   }> {
     const response = await apiClient.post(
       `/accounts/teacher-invitations/${token}/accept/`,
-      profileData || {}
+      profileData || {},
     );
     return response.data;
   }
@@ -333,7 +333,7 @@ export class InvitationApi {
     data: {
       custom_message?: string;
       role?: SchoolRole;
-    }
+    },
   ): Promise<TeacherInvitation> {
     const response = await apiClient.patch(`/accounts/teacher-invitations/${token}/`, data);
     return response.data;

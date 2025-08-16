@@ -164,7 +164,7 @@ describe('Multi-School Workflow Integration Tests', () => {
 
       // Render initial state with invitation
       const { rerender } = render(
-        <SchoolSwitcher showPendingInvitations onInvitationAccept={mockAcceptInvitation} />
+        <SchoolSwitcher showPendingInvitations onInvitationAccept={mockAcceptInvitation} />,
       );
 
       // Step 2: Teacher sees pending invitation
@@ -214,7 +214,7 @@ describe('Multi-School Workflow Integration Tests', () => {
           school: expect.objectContaining({
             name: 'New School',
           }),
-        })
+        }),
       );
     });
 
@@ -374,7 +374,7 @@ describe('Multi-School Workflow Integration Tests', () => {
           school: expect.objectContaining({
             name: 'Admin School',
           }),
-        })
+        }),
       );
 
       // Test school stats retrieval for different roles
@@ -456,7 +456,7 @@ describe('Multi-School Workflow Integration Tests', () => {
         () => {
           expect(mockSwitchSchool).toHaveBeenCalledTimes(2);
         },
-        { timeout: 300 }
+        { timeout: 300 },
       );
 
       // Should have called switch for both schools
@@ -464,13 +464,13 @@ describe('Multi-School Workflow Integration Tests', () => {
         1,
         expect.objectContaining({
           school: expect.objectContaining({ name: 'School B' }),
-        })
+        }),
       );
       expect(mockSwitchSchool).toHaveBeenNthCalledWith(
         2,
         expect.objectContaining({
           school: expect.objectContaining({ name: 'School C' }),
-        })
+        }),
       );
     });
 

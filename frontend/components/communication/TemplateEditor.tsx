@@ -201,7 +201,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({ templateId, onSave, onC
 
       updateTemplateField('html_content', newText);
     },
-    [currentTemplate, updateTemplateField]
+    [currentTemplate, updateTemplateField],
   );
 
   if (loading) {
@@ -338,7 +338,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({ templateId, onSave, onC
                         <SelectTrigger>
                           <Text>
                             {templateTypeOptions.find(
-                              opt => opt.value === currentTemplate.template_type
+                              opt => opt.value === currentTemplate.template_type,
                             )?.label || 'Select type'}
                           </Text>
                         </SelectTrigger>

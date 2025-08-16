@@ -153,7 +153,7 @@ export const EducationStep: React.FC<EducationStepProps> = ({
 
   const updateDegree = (id: string, updatedDegree: Omit<Degree, 'id'>) => {
     const degrees = formData.degrees.map(degree =>
-      degree.id === id ? { ...updatedDegree, id } : degree
+      degree.id === id ? { ...updatedDegree, id } : degree,
     );
     handleFieldChange('degrees', degrees);
     setShowDegreeForm(false);
@@ -163,7 +163,7 @@ export const EducationStep: React.FC<EducationStepProps> = ({
   const removeDegree = (id: string) => {
     handleFieldChange(
       'degrees',
-      formData.degrees.filter(degree => degree.id !== id)
+      formData.degrees.filter(degree => degree.id !== id),
     );
   };
 
@@ -179,7 +179,7 @@ export const EducationStep: React.FC<EducationStepProps> = ({
 
   const updateCertification = (id: string, updatedCertification: Omit<Certification, 'id'>) => {
     const certifications = formData.certifications.map(cert =>
-      cert.id === id ? { ...updatedCertification, id } : cert
+      cert.id === id ? { ...updatedCertification, id } : cert,
     );
     handleFieldChange('certifications', certifications);
     setShowCertificationForm(false);
@@ -189,7 +189,7 @@ export const EducationStep: React.FC<EducationStepProps> = ({
   const removeCertification = (id: string) => {
     handleFieldChange(
       'certifications',
-      formData.certifications.filter(cert => cert.id !== id)
+      formData.certifications.filter(cert => cert.id !== id),
     );
   };
 

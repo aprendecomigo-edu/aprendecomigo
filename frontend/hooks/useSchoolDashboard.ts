@@ -187,7 +187,7 @@ export const useSchoolDashboard = ({
         setIsLoadingMore(false);
       }
     },
-    [schoolId, error?.type]
+    [schoolId, error?.type],
   );
 
   const loadMoreActivities = useCallback(() => {
@@ -208,7 +208,7 @@ export const useSchoolDashboard = ({
         throw new Error(dashboardError.message);
       }
     },
-    [schoolId]
+    [schoolId],
   );
 
   const refreshAll = useCallback(async () => {
@@ -220,7 +220,7 @@ export const useSchoolDashboard = ({
       const results = await Promise.allSettled([
         fetchMetrics(),
         fetchSchoolInfo(),
-        fetchActivities(1, false)
+        fetchActivities(1, false),
       ]);
 
       // Log any failures for monitoring
@@ -311,7 +311,7 @@ export const useSchoolDashboard = ({
         const results = await Promise.allSettled([
           fetchMetrics(),
           fetchSchoolInfo(),
-          fetchActivities(1, false)
+          fetchActivities(1, false),
         ]);
 
         // Log any failures for monitoring

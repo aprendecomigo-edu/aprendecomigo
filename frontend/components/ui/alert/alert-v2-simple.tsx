@@ -50,7 +50,7 @@ const PrimitiveIcon = React.forwardRef<React.ElementRef<typeof Svg>, IPrimitiveI
       return <AsComp ref={ref} {...sizeProps} {...colorProps} {...props} />;
     }
     return <Svg ref={ref} height={height} width={width} {...colorProps} {...props} />;
-  }
+  },
 );
 
 // Simplified style definitions
@@ -139,7 +139,7 @@ export const Alert = React.forwardRef<View, IAlertProps>(
         </View>
       </AlertContext.Provider>
     );
-  }
+  },
 );
 
 // AlertText component
@@ -159,7 +159,7 @@ export const AlertText = React.forwardRef<Text, IAlertTextProps>(
         })}
       />
     );
-  }
+  },
 );
 
 // AlertIcon component
@@ -183,7 +183,7 @@ export const AlertIcon = React.forwardRef<any, IAlertIconProps>(
         })}
       />
     );
-  }
+  },
 );
 
 // Display names for debugging

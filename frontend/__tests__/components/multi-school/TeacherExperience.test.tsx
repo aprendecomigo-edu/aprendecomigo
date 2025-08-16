@@ -85,7 +85,7 @@ describe('Teacher Multi-School Experience', () => {
       result.current.memberships.forEach(membership => {
         expect(membership.role).toBe('teacher');
         expect(['view_students', 'create_sessions', 'grade_assignments']).toEqual(
-          expect.arrayContaining(membership.permissions)
+          expect.arrayContaining(membership.permissions),
         );
       });
     });
@@ -402,7 +402,7 @@ describe('Teacher Multi-School Experience', () => {
 
       // Earnings should be different
       expect(school1Earnings.data.monthly_earnings).not.toEqual(
-        school2Earnings.data.monthly_earnings
+        school2Earnings.data.monthly_earnings,
       );
 
       // Total earnings calculation should be separate
@@ -662,7 +662,7 @@ describe('Teacher Multi-School Experience', () => {
         createMockSchoolStats({
           total_students: 25,
           active_sessions_count: 5,
-        })
+        }),
       );
 
       mockUseMultiSchool.mockReturnValue({
@@ -718,7 +718,7 @@ describe('Teacher Multi-School Experience', () => {
             createMockSchoolStats({
               total_students: 20,
               active_sessions_count: 3,
-            })
+            }),
           );
         }
         if (schoolId === 2) {
@@ -726,7 +726,7 @@ describe('Teacher Multi-School Experience', () => {
             createMockSchoolStats({
               total_students: 35,
               active_sessions_count: 8,
-            })
+            }),
           );
         }
         return Promise.resolve(null);

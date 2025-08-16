@@ -207,8 +207,8 @@ function PurchaseItem({ purchase }: { purchase: PurchaseHistoryItem }) {
                   usagePercentage >= 90
                     ? 'bg-error-500'
                     : usagePercentage >= 70
-                    ? 'bg-warning-500'
-                    : 'bg-success-500'
+                      ? 'bg-warning-500'
+                      : 'bg-success-500'
                 }`}
                 style={{ width: `${Math.min(usagePercentage, 100)}%` }}
               />
@@ -257,8 +257,8 @@ function PurchaseItem({ purchase }: { purchase: PurchaseHistoryItem }) {
                     purchase.is_expired
                       ? 'text-error-600'
                       : purchase.days_until_expiry && purchase.days_until_expiry <= 7
-                      ? 'text-warning-600'
-                      : 'text-typography-600'
+                        ? 'text-warning-600'
+                        : 'text-typography-600'
                   }`}
                 >
                   {new Date(purchase.expires_at).toLocaleDateString('en-US', {

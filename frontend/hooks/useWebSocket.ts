@@ -118,7 +118,7 @@ export const useWebSocket = ({
         }
       }
     },
-    [isConnected]
+    [isConnected],
   );
 
   useEffect(() => {
@@ -148,7 +148,7 @@ export const useWebSocket = ({
  */
 export function useWebSocketEnhanced(
   wsUrl: string | null,
-  options: UseWebSocketOptions = {}
+  options: UseWebSocketOptions = {},
 ): UseWebSocketResult {
   const [isConnected, setIsConnected] = useState(false);
   const [lastMessage, setLastMessage] = useState<string | null>(null);
@@ -228,8 +228,8 @@ export function useWebSocketEnhanced(
             typeof message === 'string'
               ? { type: 'raw', data: message }
               : message.type
-              ? message
-              : { type: 'message', data: message };
+                ? message
+                : { type: 'message', data: message };
 
           clientRef.current.send(wsMessage);
         } catch (err) {
@@ -241,7 +241,7 @@ export function useWebSocketEnhanced(
         }
       }
     },
-    [isConnected]
+    [isConnected],
   );
 
   // Connect when URL is available

@@ -266,7 +266,7 @@ export const createStudent = async (data: CreateStudentData): Promise<StudentPro
  */
 export const updateStudent = async (
   id: number,
-  data: UpdateStudentData
+  data: UpdateStudentData,
 ): Promise<StudentProfile> => {
   const response = await apiClient.patch<StudentProfile>(`/accounts/students/${id}/`, data);
   return response.data;
@@ -292,7 +292,7 @@ export const getStudentById = async (id: number): Promise<StudentProfile> => {
  */
 export const updateStudentStatus = async (
   id: number,
-  status: 'active' | 'inactive' | 'graduated'
+  status: 'active' | 'inactive' | 'graduated',
 ): Promise<StudentProfile> => {
   const response = await apiClient.patch<StudentProfile>(`/accounts/students/${id}/`, { status });
   return response.data;
@@ -312,7 +312,7 @@ export const bulkImportStudents = async (file: File): Promise<BulkImportResult> 
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-    }
+    },
   );
   return response.data;
 };
@@ -471,7 +471,7 @@ export const getSchoolActivity = async (
     activity_types?: string[];
     date_from?: string;
     date_to?: string;
-  }
+  },
 ): Promise<SchoolActivityResponse> => {
   const queryParams = new URLSearchParams();
 
@@ -494,7 +494,7 @@ export const getSchoolActivity = async (
  */
 export const updateSchoolInfo = async (
   schoolId: number,
-  data: Partial<SchoolInfo>
+  data: Partial<SchoolInfo>,
 ): Promise<SchoolInfo> => {
   const response = await apiClient.patch<SchoolInfo>(`/accounts/schools/${schoolId}/`, data);
   return response.data;
@@ -547,7 +547,7 @@ export const getUserAdminSchools = async (): Promise<SchoolMembership[]> => {
   return memberships.filter(
     membership =>
       membership.is_active &&
-      (membership.role === 'school_owner' || membership.role === 'school_admin')
+      (membership.role === 'school_owner' || membership.role === 'school_admin'),
   );
 };
 
@@ -647,7 +647,7 @@ export interface UpdateTeacherData {
  * Get enhanced list of teachers with filtering and pagination
  */
 export const getTeachersEnhanced = async (
-  filters?: TeacherFilters
+  filters?: TeacherFilters,
 ): Promise<TeacherListResponse> => {
   const queryParams = new URLSearchParams();
 
@@ -674,7 +674,7 @@ export const getTeachersEnhanced = async (
  */
 export const getTeacherAnalytics = async (schoolId: number): Promise<TeacherAnalytics> => {
   const response = await apiClient.get<TeacherAnalytics>(
-    `/accounts/schools/${schoolId}/teacher-analytics/`
+    `/accounts/schools/${schoolId}/teacher-analytics/`,
   );
   return response.data;
 };
@@ -683,11 +683,11 @@ export const getTeacherAnalytics = async (schoolId: number): Promise<TeacherAnal
  * Perform bulk actions on teachers
  */
 export const performBulkTeacherActions = async (
-  action: BulkTeacherAction
+  action: BulkTeacherAction,
 ): Promise<BulkActionResult> => {
   const response = await apiClient.post<BulkActionResult>(
     '/accounts/teachers/bulk-actions/',
-    action
+    action,
   );
   return response.data;
 };
@@ -697,7 +697,7 @@ export const performBulkTeacherActions = async (
  */
 export const getTeacherMessageTemplates = async (): Promise<TeacherMessageTemplate[]> => {
   const response = await apiClient.get<TeacherMessageTemplate[]>(
-    '/accounts/teachers/message-templates/'
+    '/accounts/teachers/message-templates/',
   );
   return response.data;
 };
@@ -707,7 +707,7 @@ export const getTeacherMessageTemplates = async (): Promise<TeacherMessageTempla
  */
 export const updateTeacherProfileAdmin = async (
   id: number,
-  data: UpdateTeacherData
+  data: UpdateTeacherData,
 ): Promise<TeacherProfile> => {
   const response = await apiClient.patch<TeacherProfile>(`/accounts/teachers/${id}/`, data);
   return response.data;
@@ -854,7 +854,7 @@ export const saveTeacherProfileWizardProgress = async (data: {
 }): Promise<WizardProgressResponse> => {
   const response = await apiClient.post<WizardProgressResponse>(
     '/accounts/teachers/profile-wizard/save-progress/',
-    data
+    data,
   );
   return response.data;
 };
@@ -868,7 +868,7 @@ export const validateTeacherProfileWizardStep = async (data: {
 }): Promise<WizardValidationResponse> => {
   const response = await apiClient.post<WizardValidationResponse>(
     '/accounts/teachers/profile-wizard/validate-step/',
-    data
+    data,
   );
   return response.data;
 };
@@ -881,7 +881,7 @@ export const submitTeacherProfile = async (data: {
 }): Promise<{ success: boolean; profile_id: number }> => {
   const response = await apiClient.post<{ success: boolean; profile_id: number }>(
     '/accounts/teachers/profile-wizard/submit/',
-    data
+    data,
   );
   return response.data;
 };
@@ -903,7 +903,7 @@ export const getRateSuggestions = async (params: {
  * Upload teacher profile photo
  */
 export const uploadTeacherProfilePhoto = async (
-  file: File | Blob
+  file: File | Blob,
 ): Promise<{ photo_url: string }> => {
   const formData = new FormData();
   formData.append('photo', file);
@@ -915,7 +915,7 @@ export const uploadTeacherProfilePhoto = async (
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-    }
+    },
   );
   return response.data;
 };
@@ -925,7 +925,7 @@ export const uploadTeacherProfilePhoto = async (
  */
 export const getTeacherProfileCompletionScore = async (): Promise<ProfileCompletion> => {
   const response = await apiClient.get<ProfileCompletion>(
-    '/accounts/teachers/profile-completion-score/'
+    '/accounts/teachers/profile-completion-score/',
   );
   return response.data;
 };

@@ -50,7 +50,7 @@ export const Divider = React.forwardRef<View, IDividerProps>(
         />
       </DividerContext.Provider>
     );
-  }
+  },
 );
 
 // Display names for debugging

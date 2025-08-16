@@ -106,9 +106,9 @@ describe('useWebSocket', () => {
 
     // Suppress console logs during tests
     if (__DEV__) {
-    // Suppress console logs during tests
+      // Suppress console logs during tests
       console.log = jest.fn();
-    // Suppress console logs during tests
+      // Suppress console logs during tests
     }
     console.error = jest.fn();
 
@@ -120,9 +120,9 @@ describe('useWebSocket', () => {
 
     // Restore console methods
     if (__DEV__) {
-    // Restore console methods
+      // Restore console methods
       console.log = originalConsoleLog;
-    // Restore console methods
+      // Restore console methods
     }
     console.error = originalConsoleError;
 
@@ -141,7 +141,7 @@ describe('useWebSocket', () => {
           channelName: 'test',
           onOpen: mockOnOpen,
           shouldConnect: true,
-        })
+        }),
       );
 
       // Initially should be disconnected
@@ -167,7 +167,7 @@ describe('useWebSocket', () => {
           channelName: 'test',
           onOpen: mockOnOpen,
           shouldConnect: false,
-        })
+        }),
       );
 
       // Wait for potential connection
@@ -188,7 +188,7 @@ describe('useWebSocket', () => {
           url: 'ws://localhost:8000/test/',
           channelName: 'test',
           shouldConnect: true,
-        })
+        }),
       );
 
       await act(async () => {
@@ -205,7 +205,7 @@ describe('useWebSocket', () => {
           url: 'ws://localhost:8000/test/',
           channelName: 'test',
           shouldConnect: true,
-        })
+        }),
       );
 
       // Wait for connection
@@ -235,7 +235,7 @@ describe('useWebSocket', () => {
           channelName: 'test',
           onMessage: mockOnMessage,
           shouldConnect: true,
-        })
+        }),
       );
 
       // Wait for connection
@@ -261,7 +261,7 @@ describe('useWebSocket', () => {
           channelName: 'test',
           onMessage: mockOnMessage,
           shouldConnect: true,
-        })
+        }),
       );
 
       // Wait for connection
@@ -278,7 +278,7 @@ describe('useWebSocket', () => {
       expect(mockOnMessage).not.toHaveBeenCalled();
       expect(console.error).toHaveBeenCalledWith(
         'Error parsing WebSocket message:',
-        expect.any(Error)
+        expect.any(Error),
       );
     });
 
@@ -290,7 +290,7 @@ describe('useWebSocket', () => {
           url: 'ws://localhost:8000/test/',
           channelName: 'test',
           shouldConnect: true,
-        })
+        }),
       );
 
       // Wait for connection
@@ -314,7 +314,7 @@ describe('useWebSocket', () => {
           url: 'ws://localhost:8000/test/',
           channelName: 'test',
           shouldConnect: false,
-        })
+        }),
       );
 
       const testMessage = { type: 'test', data: 'hello' };
@@ -347,7 +347,7 @@ describe('useWebSocket', () => {
           channelName: 'test',
           onClose: mockOnClose,
           shouldConnect: true,
-        })
+        }),
       );
 
       // Wait for initial connection
@@ -385,7 +385,7 @@ describe('useWebSocket', () => {
           url: 'ws://localhost:8000/test/',
           channelName: 'test',
           shouldConnect: true,
-        })
+        }),
       );
 
       // Initial connection
@@ -422,7 +422,7 @@ describe('useWebSocket', () => {
           url: 'ws://localhost:8000/test/',
           channelName: 'test',
           shouldConnect: true,
-        })
+        }),
       );
 
       // Wait for connection
@@ -452,7 +452,7 @@ describe('useWebSocket', () => {
           channelName: 'test',
           onError: mockOnError,
           shouldConnect: true,
-        })
+        }),
       );
 
       // Simulate connection error
@@ -473,7 +473,7 @@ describe('useWebSocket', () => {
           channelName: 'test',
           onError: mockOnError,
           shouldConnect: true,
-        })
+        }),
       );
 
       // Wait for connection
@@ -493,7 +493,7 @@ describe('useWebSocket', () => {
       // Should handle the error gracefully
       expect(console.error).toHaveBeenCalledWith(
         'Error sending WebSocket message:',
-        expect.any(Error)
+        expect.any(Error),
       );
     });
 
@@ -505,7 +505,7 @@ describe('useWebSocket', () => {
           url: 'ws://localhost:8000/test/',
           channelName: 'test',
           shouldConnect: true,
-        })
+        }),
       );
 
       await act(async () => {
@@ -524,7 +524,7 @@ describe('useWebSocket', () => {
           url: 'ws://localhost:8000/test/',
           channelName: 'test',
           shouldConnect: false, // Start disconnected
-        })
+        }),
       );
 
       expect(result.current.isConnected).toBe(false);
@@ -544,7 +544,7 @@ describe('useWebSocket', () => {
           url: 'ws://localhost:8000/test/',
           channelName: 'test',
           shouldConnect: true,
-        })
+        }),
       );
 
       // Wait for connection
@@ -571,9 +571,9 @@ describe('useWebSocketEnhanced', () => {
     mockWebSocket = new MockWebSocket('ws://test');
     (global as any).WebSocket = jest.fn(() => mockWebSocket);
     if (__DEV__) {
-    (global as any).WebSocket = jest.fn(() => mockWebSocket);
+      (global as any).WebSocket = jest.fn(() => mockWebSocket);
       console.log = jest.fn();
-    (global as any).WebSocket = jest.fn(() => mockWebSocket);
+      (global as any).WebSocket = jest.fn(() => mockWebSocket);
     }
     console.error = jest.fn();
     jest.useFakeTimers();
@@ -582,9 +582,9 @@ describe('useWebSocketEnhanced', () => {
   afterEach(() => {
     jest.useRealTimers();
     if (__DEV__) {
-    jest.useRealTimers();
+      jest.useRealTimers();
       console.log = originalConsoleLog;
-    jest.useRealTimers();
+      jest.useRealTimers();
     }
     console.error = originalConsoleError;
     jest.clearAllMocks();
@@ -665,7 +665,7 @@ describe('useWebSocketEnhanced', () => {
       const { result } = renderHook(() =>
         useWebSocketEnhanced(testUrl, {
           shouldReconnect: false,
-        })
+        }),
       );
 
       // Wait for connection
@@ -719,7 +719,7 @@ describe('useWebSocketEnhanced', () => {
           onOpen: jest.fn(),
           onClose: jest.fn(),
           onError: jest.fn(),
-        })
+        }),
       );
 
       // Wait for connection

@@ -11,7 +11,7 @@ const VStack = React.forwardRef<React.ElementRef<typeof View>, IVStackProps>(
     return (
       <View className={vstackStyle({ space, reversed, class: className })} {...props} ref={ref} />
     );
-  }
+  },
 );
 
 VStack.displayName = 'VStack';

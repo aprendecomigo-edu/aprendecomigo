@@ -90,7 +90,7 @@ export class WebSocketClient implements EventEmitterInterface {
   addMessageHandler(
     messageType: string,
     handler: MessageHandler,
-    options?: MessageHandlerOptions
+    options?: MessageHandlerOptions,
   ): void {
     this.ensureNotDisposed();
     this.messageDispatcher.addHandler(messageType, handler, options);

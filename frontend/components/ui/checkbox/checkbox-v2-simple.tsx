@@ -49,7 +49,7 @@ const PrimitiveIcon = React.forwardRef<React.ElementRef<typeof Svg>, IPrimitiveI
       return <AsComp ref={ref} {...sizeProps} {...colorProps} {...props} />;
     }
     return <Svg ref={ref} height={height} width={width} {...colorProps} {...props} />;
-  }
+  },
 );
 
 // Simplified style definitions
@@ -143,7 +143,7 @@ export const Checkbox = React.forwardRef<View, ICheckboxProps>(
         </Pressable>
       </CheckboxContext.Provider>
     );
-  }
+  },
 );
 
 // CheckboxIndicator component
@@ -164,7 +164,7 @@ export const CheckboxIndicator = React.forwardRef<View, ICheckboxIndicatorProps>
         {children}
       </View>
     );
-  }
+  },
 );
 
 // CheckboxLabel component
@@ -183,7 +183,7 @@ export const CheckboxLabel = React.forwardRef<Text, ICheckboxLabelProps>(
         })}
       />
     );
-  }
+  },
 );
 
 // CheckboxIcon component
@@ -206,7 +206,7 @@ export const CheckboxIcon = React.forwardRef<any, ICheckboxIconProps>(
         })}
       />
     );
-  }
+  },
 );
 
 // CheckboxGroup component
@@ -217,7 +217,7 @@ export const CheckboxGroup = React.forwardRef<View, ICheckboxGroupProps>(
         {children}
       </View>
     );
-  }
+  },
 );
 
 // Display names for debugging

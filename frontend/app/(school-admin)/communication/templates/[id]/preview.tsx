@@ -115,7 +115,7 @@ const TemplatePreviewPage = () => {
   ];
 
   const currentTemplateType = templateTypeOptions.find(
-    option => option.value === currentTemplate?.template_type
+    option => option.value === currentTemplate?.template_type,
   );
 
   // Handle test email
@@ -394,7 +394,7 @@ const TemplatePreviewPage = () => {
                             },
                           ],
                           'plain-text',
-                          value.toString()
+                          value.toString(),
                         );
                       }}
                     >
@@ -491,7 +491,7 @@ const TemplatePreviewPage = () => {
                           <Button
                             onPress={() =>
                               router.push(
-                                `/(school-admin)/communication/templates/${templateId}/edit`
+                                `/(school-admin)/communication/templates/${templateId}/edit`,
                               )
                             }
                           >

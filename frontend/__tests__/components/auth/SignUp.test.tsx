@@ -156,7 +156,7 @@ describe('SignUp Component Tests', () => {
         primary_contact: 'email',
         user_type: 'tutor',
         school: { name: 'Test' },
-      })
+      }),
     ).rejects.toMatchObject(mockError);
   });
 
@@ -178,7 +178,7 @@ describe('SignUp Component Tests', () => {
         primary_contact: 'email',
         user_type: 'tutor',
         school: { name: 'Test' },
-      })
+      }),
     ).rejects.toMatchObject(mockError);
   });
 
@@ -194,7 +194,7 @@ describe('SignUp Component Tests', () => {
         primary_contact: 'email',
         user_type: 'tutor',
         school: { name: 'Test' },
-      })
+      }),
     ).rejects.toThrow('Network error');
   });
 
@@ -230,11 +230,11 @@ describe('SignUp Component Tests', () => {
     const email = 'tutor@example.com';
     const primaryContact = 'email';
     const expectedUrl = `/auth/verify-code?contact=${encodeURIComponent(
-      email
+      email,
     )}&contactType=${primaryContact}&nextRoute=${encodeURIComponent('/onboarding/tutor-flow')}`;
 
     expect(expectedUrl).toBe(
-      '/auth/verify-code?contact=tutor%40example.com&contactType=email&nextRoute=%2Fonboarding%2Ftutor-flow'
+      '/auth/verify-code?contact=tutor%40example.com&contactType=email&nextRoute=%2Fonboarding%2Ftutor-flow',
     );
   });
 
@@ -242,7 +242,7 @@ describe('SignUp Component Tests', () => {
     const email = 'admin@school.com';
     const primaryContact = 'email';
     const expectedUrl = `/auth/verify-code?contact=${encodeURIComponent(
-      email
+      email,
     )}&contactType=${primaryContact}`;
 
     expect(expectedUrl).toBe('/auth/verify-code?contact=admin%40school.com&contactType=email');
@@ -255,7 +255,7 @@ describe('SignUp Component Tests', () => {
     router.replace('/auth/verify-code?contact=test%40example.com&contactType=email');
 
     expect(mockReplace).toHaveBeenCalledWith(
-      '/auth/verify-code?contact=test%40example.com&contactType=email'
+      '/auth/verify-code?contact=test%40example.com&contactType=email',
     );
   });
 
@@ -268,26 +268,26 @@ describe('SignUp Component Tests', () => {
     toastInstance.showToast('success', 'Registration successful! Please verify your email.');
     expect(mockShowToast).toHaveBeenCalledWith(
       'success',
-      'Registration successful! Please verify your email.'
+      'Registration successful! Please verify your email.',
     );
 
     // Error messages
     toastInstance.showToast(
       'error',
-      'Invalid information provided. Please check your details and try again.'
+      'Invalid information provided. Please check your details and try again.',
     );
     expect(mockShowToast).toHaveBeenCalledWith(
       'error',
-      'Invalid information provided. Please check your details and try again.'
+      'Invalid information provided. Please check your details and try again.',
     );
 
     toastInstance.showToast(
       'error',
-      'An account with this email already exists. Try signing in instead.'
+      'An account with this email already exists. Try signing in instead.',
     );
     expect(mockShowToast).toHaveBeenCalledWith(
       'error',
-      'An account with this email already exists. Try signing in instead.'
+      'An account with this email already exists. Try signing in instead.',
     );
   });
 

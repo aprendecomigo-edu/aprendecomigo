@@ -45,7 +45,7 @@ export const AlertDialog = React.forwardRef<View, IAlertDialogProps>(
         </Modal>
       </AlertDialogContext.Provider>
     );
-  }
+  },
 );
 
 export const AlertDialogBackdrop = React.forwardRef<View, IAlertDialogBackdropProps>(
@@ -62,7 +62,7 @@ export const AlertDialogBackdrop = React.forwardRef<View, IAlertDialogBackdropPr
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
       />
     );
-  }
+  },
 );
 
 export const AlertDialogContent = React.forwardRef<View, IAlertDialogContentProps>(
@@ -77,7 +77,7 @@ export const AlertDialogContent = React.forwardRef<View, IAlertDialogContentProp
     >
       {children}
     </View>
-  )
+  ),
 );
 
 export const AlertDialogHeader = React.forwardRef<View, IAlertDialogHeaderProps>(
@@ -85,7 +85,7 @@ export const AlertDialogHeader = React.forwardRef<View, IAlertDialogHeaderProps>
     <View ref={ref} {...props} style={[{ marginBottom: 16 }, style]}>
       {children}
     </View>
-  )
+  ),
 );
 
 export const AlertDialogBody = React.forwardRef<View, IAlertDialogBodyProps>(
@@ -93,7 +93,7 @@ export const AlertDialogBody = React.forwardRef<View, IAlertDialogBodyProps>(
     <View ref={ref} {...props} style={[{ marginBottom: 20 }, style]}>
       {children}
     </View>
-  )
+  ),
 );
 
 export const AlertDialogFooter = React.forwardRef<View, IAlertDialogFooterProps>(
@@ -105,7 +105,7 @@ export const AlertDialogFooter = React.forwardRef<View, IAlertDialogFooterProps>
     >
       {children}
     </View>
-  )
+  ),
 );
 
 // Display names

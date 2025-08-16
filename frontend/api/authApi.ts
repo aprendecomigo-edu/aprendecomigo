@@ -107,11 +107,11 @@ const removeToken = async () => {
  * Request verification code (TOTP)
  */
 export const requestEmailCode = async (
-  params: RequestEmailCodeParams | RequestPhoneCodeParams
+  params: RequestEmailCodeParams | RequestPhoneCodeParams,
 ): Promise<TOTPEmailCodeResponse> => {
   const response = await apiClient.post<TOTPEmailCodeResponse>(
     '/accounts/auth/request-code/',
-    params
+    params,
   );
   return response.data;
 };

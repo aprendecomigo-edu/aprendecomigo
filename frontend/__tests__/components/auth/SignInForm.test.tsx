@@ -113,7 +113,7 @@ describe('SignInForm - Working Tests', () => {
       render(
         <TestWrapper>
           <SignInForm {...mockProps} />
-        </TestWrapper>
+        </TestWrapper>,
       );
 
       expect(renderSpy).toHaveBeenCalledTimes(1);

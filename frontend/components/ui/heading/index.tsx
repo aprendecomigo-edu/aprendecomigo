@@ -34,7 +34,7 @@ const MappedHeading = memo(
         highlight,
         ...props
       },
-      ref
+      ref,
     ) => {
       switch (size) {
         case '5xl':
@@ -167,8 +167,8 @@ const MappedHeading = memo(
             />
           );
       }
-    }
-  )
+    },
+  ),
 );
 
 const Heading = memo(
@@ -196,8 +196,8 @@ const Heading = memo(
       }
 
       return <MappedHeading className={className} size={size} ref={ref} {...props} />;
-    }
-  )
+    },
+  ),
 );
 
 Heading.displayName = 'Heading';

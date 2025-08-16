@@ -337,7 +337,7 @@ describe('ApiGateway', () => {
       mockAuthService.requestEmailCode.mockRejectedValue(error);
 
       await expect(gateway.auth.requestEmailCode({ email: 'test@example.com' })).rejects.toThrow(
-        'Auth service error'
+        'Auth service error',
       );
     });
 
@@ -346,7 +346,7 @@ describe('ApiGateway', () => {
       mockPaymentService.processPayment.mockRejectedValue(error);
 
       await expect(gateway.payment.processPayment({ amount: 100 })).rejects.toThrow(
-        'Payment service error'
+        'Payment service error',
       );
     });
 

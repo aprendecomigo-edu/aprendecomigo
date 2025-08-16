@@ -2,7 +2,7 @@
  * Default implementations of service interfaces using existing API clients
  */
 
-import useRouter from '@unitools/router';
+import { useRouter } from 'expo-router';
 
 import {
   AuthApiService,

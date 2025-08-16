@@ -83,10 +83,10 @@ export const SpendingControlsCard: React.FC<SpendingControlsCardProps> = ({
           percentage >= 100
             ? 'exceeded'
             : percentage >= 90
-            ? 'danger'
-            : percentage >= 75
-            ? 'warning'
-            : 'safe',
+              ? 'danger'
+              : percentage >= 75
+                ? 'warning'
+                : 'safe',
         daysRemaining:
           new Date().getDate() <= 15
             ? new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate() -
@@ -112,10 +112,10 @@ export const SpendingControlsCard: React.FC<SpendingControlsCardProps> = ({
           percentage >= 100
             ? 'exceeded'
             : percentage >= 90
-            ? 'danger'
-            : percentage >= 75
-            ? 'warning'
-            : 'safe',
+              ? 'danger'
+              : percentage >= 75
+                ? 'warning'
+                : 'safe',
         daysRemaining: 7 - new Date().getDay(),
       });
     }
@@ -127,7 +127,7 @@ export const SpendingControlsCard: React.FC<SpendingControlsCardProps> = ({
       const daysInMonth = new Date(
         new Date().getFullYear(),
         new Date().getMonth() + 1,
-        0
+        0,
       ).getDate();
       const dailySpent = currentSpent / new Date().getDate();
       const percentage = (dailySpent / dailyLimit) * 100;
@@ -141,10 +141,10 @@ export const SpendingControlsCard: React.FC<SpendingControlsCardProps> = ({
           percentage >= 100
             ? 'exceeded'
             : percentage >= 90
-            ? 'danger'
-            : percentage >= 75
-            ? 'warning'
-            : 'safe',
+              ? 'danger'
+              : percentage >= 75
+                ? 'warning'
+                : 'safe',
       });
     }
 
@@ -262,10 +262,10 @@ export const SpendingControlsCard: React.FC<SpendingControlsCardProps> = ({
                 overallStatus === 'exceeded' || overallStatus === 'danger'
                   ? 'error'
                   : overallStatus === 'warning'
-                  ? 'warning'
-                  : overallStatus === 'safe'
-                  ? 'success'
-                  : 'secondary'
+                    ? 'warning'
+                    : overallStatus === 'safe'
+                      ? 'success'
+                      : 'secondary'
               }
               size="sm"
             >
@@ -273,12 +273,12 @@ export const SpendingControlsCard: React.FC<SpendingControlsCardProps> = ({
                 {overallStatus === 'exceeded'
                   ? 'Over Budget'
                   : overallStatus === 'danger'
-                  ? 'High Usage'
-                  : overallStatus === 'warning'
-                  ? 'Watch Usage'
-                  : overallStatus === 'safe'
-                  ? 'On Track'
-                  : 'No Limits'}
+                    ? 'High Usage'
+                    : overallStatus === 'warning'
+                      ? 'Watch Usage'
+                      : overallStatus === 'safe'
+                        ? 'On Track'
+                        : 'No Limits'}
               </Text>
             </Badge>
 
@@ -310,8 +310,8 @@ export const SpendingControlsCard: React.FC<SpendingControlsCardProps> = ({
                         budget.type === 'monthly'
                           ? Calendar
                           : budget.type === 'weekly'
-                          ? Calendar
-                          : Clock
+                            ? Calendar
+                            : Clock
                       }
                       size={14}
                       className="text-gray-500"
@@ -329,8 +329,8 @@ export const SpendingControlsCard: React.FC<SpendingControlsCardProps> = ({
                         budget.status === 'exceeded' || budget.status === 'danger'
                           ? 'error'
                           : budget.status === 'warning'
-                          ? 'warning'
-                          : 'success'
+                            ? 'warning'
+                            : 'success'
                       }
                       size="sm"
                     >

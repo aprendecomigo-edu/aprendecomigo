@@ -159,7 +159,7 @@ export class ApiValidator {
 // Higher-order function to wrap API calls with validation
 export function withValidation<T extends any[], R>(
   apiFunction: (...args: T) => Promise<R>,
-  validator: (...args: T) => ValidationResult
+  validator: (...args: T) => ValidationResult,
 ) {
   return async (...args: T): Promise<R> => {
     const validation = validator(...args);

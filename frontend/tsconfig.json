@@ -4,13 +4,8 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./*"
-      ],
-      "@/assets/*": [
-        "../../packages/shared/assets/*",
-        "./assets/*"
-      ]
+      "@/*": ["./*"],
+      "@/assets/*": ["../../packages/shared/assets/*", "./assets/*"]
     },
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
@@ -20,15 +15,6 @@
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "nativewind-env.d.ts",
-    "jest-setup.d.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "build"
-  ]
+  "include": ["**/*.ts", "**/*.tsx", "nativewind-env.d.ts", "jest-setup.d.ts"],
+  "exclude": ["node_modules", "dist", "build"]
 }

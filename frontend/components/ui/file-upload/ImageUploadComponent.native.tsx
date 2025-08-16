@@ -42,7 +42,7 @@ const ImageUploadComponent: React.FC<ImageUploadComponentProps> = ({
       Alert.alert(
         'Permissions Required',
         'We need camera and photo library permissions to upload profile photos.',
-        [{ text: 'OK', style: 'default' }]
+        [{ text: 'OK', style: 'default' }],
       );
       return false;
     }

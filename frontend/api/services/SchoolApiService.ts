@@ -128,7 +128,7 @@ export class SchoolApiService {
   async updateMemberRole(schoolId: number, userId: number, role: string): Promise<SchoolMember> {
     const response = await this.apiClient.patch<SchoolMember>(
       `/schools/${schoolId}/members/${userId}/`,
-      { role }
+      { role },
     );
     return response.data;
   }

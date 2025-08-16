@@ -153,16 +153,16 @@ const EarningsBreakdown: React.FC<{ earnings: EarningsData }> = ({ earnings }) =
                     monthlyChange > 0
                       ? TrendingUpIcon
                       : monthlyChange < 0
-                      ? TrendingDownIcon
-                      : MinusIcon
+                        ? TrendingDownIcon
+                        : MinusIcon
                   }
                   size="xs"
                   className={
                     monthlyChange > 0
                       ? 'text-green-600'
                       : monthlyChange < 0
-                      ? 'text-red-600'
-                      : 'text-gray-500'
+                        ? 'text-red-600'
+                        : 'text-gray-500'
                   }
                 />
                 <Text
@@ -170,8 +170,8 @@ const EarningsBreakdown: React.FC<{ earnings: EarningsData }> = ({ earnings }) =
                     monthlyChange > 0
                       ? 'text-green-600'
                       : monthlyChange < 0
-                      ? 'text-red-600'
-                      : 'text-gray-500'
+                        ? 'text-red-600'
+                        : 'text-gray-500'
                   }`}
                 >
                   {Math.abs(Math.round(monthlyChange))}%
@@ -240,7 +240,7 @@ const PerformanceAnalytics: React.FC<PerformanceAnalyticsProps> = ({
   const metrics = useMemo(() => {
     const avgSessionsPerWeek = quickStats.sessions_this_week;
     const efficiencyScore = Math.round(
-      (quickStats.completion_rate + progressMetrics.average_student_progress) / 2
+      (quickStats.completion_rate + progressMetrics.average_student_progress) / 2,
     );
 
     return {
@@ -381,7 +381,7 @@ const PerformanceAnalytics: React.FC<PerformanceAnalyticsProps> = ({
                     Ótimo impacto:{' '}
                     {Math.round(
                       (progressMetrics.students_improved_this_month / quickStats.total_students) *
-                        100
+                        100,
                     )}
                     % dos estudantes melhoraram este mês.
                   </Text>
@@ -396,7 +396,7 @@ const PerformanceAnalytics: React.FC<PerformanceAnalyticsProps> = ({
                     {Math.round(
                       ((earnings.current_month_total - earnings.last_month_total) /
                         earnings.last_month_total) *
-                        100
+                        100,
                     )}
                     % este mês.
                   </Text>

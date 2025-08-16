@@ -85,15 +85,13 @@ describe('Authentication Flow Integration Tests', () => {
       mockRequestEmailCode.mockResolvedValue({ success: true });
 
       const { getByPlaceholderText, getByText, getByTestId, debug } = renderWithProviders(
-        <SignIn />
+        <SignIn />,
       );
 
       if (__DEV__) {
-
         if (__DEV__) {
           console.log('SignIn component rendered:');
         }
-
       }
       debug();
 
@@ -122,11 +120,11 @@ describe('Authentication Flow Integration Tests', () => {
       await waitFor(() => {
         expect(mockRequestEmailCode).toHaveBeenCalledWith({ email: 'existing@example.com' });
         expect(mockRouter._mocks.push).toHaveBeenCalledWith(
-          '/auth/verify-code?email=existing%40example.com'
+          '/auth/verify-code?email=existing%40example.com',
         );
         expect(mockToast._mocks.showToast).toHaveBeenCalledWith(
           'success',
-          'Verification code sent to your email!'
+          'Verification code sent to your email!',
         );
       });
 
@@ -335,7 +333,7 @@ describe('Authentication Flow Integration Tests', () => {
       await waitFor(() => {
         expect(mockToast._mocks.showToast).toHaveBeenCalledWith(
           'error',
-          'Failed to send verification code. Please try again.'
+          'Failed to send verification code. Please try again.',
         );
         // User should be able to retry
         expect(getByText('Send Login Code')).toBeTruthy();
@@ -366,7 +364,7 @@ describe('Authentication Flow Integration Tests', () => {
       await waitFor(() => {
         expect(mockToast._mocks.showToast).toHaveBeenCalledWith(
           'error',
-          'Invalid verification code. Please try again.'
+          'Invalid verification code. Please try again.',
         );
       });
 
@@ -415,7 +413,7 @@ describe('Authentication Flow Integration Tests', () => {
       await waitFor(() => {
         expect(mockToast._mocks.showToast).toHaveBeenCalledWith(
           'error',
-          'Failed to create account. Please try again.'
+          'Failed to create account. Please try again.',
         );
       });
 
@@ -458,7 +456,7 @@ describe('Authentication Flow Integration Tests', () => {
       // Verify navigation includes email parameter
       await waitFor(() => {
         expect(mockRouter._mocks.push).toHaveBeenCalledWith(
-          '/auth/verify-code?email=context%40example.com'
+          '/auth/verify-code?email=context%40example.com',
         );
       });
 

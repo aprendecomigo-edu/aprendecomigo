@@ -28,8 +28,8 @@ jest.mock('@/components/ui/box', () => {
           'data-testid': props.testID || 'Box',
           className: 'mock-box',
         },
-        children
-      )
+        children,
+      ),
     ),
   };
 });
@@ -47,7 +47,7 @@ jest.mock('@/components/ui/button', () => {
           onPress: onPress,
           accessibilityRole: 'button',
         },
-        children
+        children,
       );
     },
     ButtonText: ({ children, ...props }) => {
@@ -57,7 +57,7 @@ jest.mock('@/components/ui/button', () => {
           testID: props.testID || 'ButtonText',
           ...props,
         },
-        children
+        children,
       );
     },
     ButtonIcon: ({ children, ...props }) => {
@@ -66,7 +66,7 @@ jest.mock('@/components/ui/button', () => {
         {
           testID: 'ButtonIcon',
         },
-        children
+        children,
       );
     },
   };
@@ -84,8 +84,8 @@ jest.mock('@/components/ui/card', () => {
           'data-testid': props.testID,
           className: `gluestack-card ${props.className || ''}`,
         },
-        children
-      )
+        children,
+      ),
     ),
   };
 });
@@ -103,7 +103,7 @@ jest.mock('@/components/ui/heading', () => {
           accessibilityRole: 'header',
           ...props,
         },
-        children
+        children,
       );
     }),
   };
@@ -121,8 +121,8 @@ jest.mock('@/components/ui/hstack', () => {
           'data-testid': props.testID || 'HStack',
           className: 'mock-hstack',
         },
-        children
-      )
+        children,
+      ),
     ),
   };
 });
@@ -136,14 +136,14 @@ jest.mock('@/components/ui/icon', () => {
         ...props,
         ref,
         testID: props.testID || 'Icon',
-      })
+      }),
     ),
     ArrowLeftIcon: React.forwardRef((props, ref) =>
       React.createElement(View, {
         ...props,
         ref,
         testID: props.testID || 'ArrowLeftIcon',
-      })
+      }),
     ),
   };
 });
@@ -161,7 +161,7 @@ jest.mock('@/components/ui/text', () => {
           testID: props.testID || 'Text',
           ...props,
         },
-        children
+        children,
       );
     }),
   };
@@ -179,8 +179,8 @@ jest.mock('@/components/ui/vstack', () => {
           ref,
           testID: props.testID || 'VStack',
         },
-        children
-      )
+        children,
+      ),
     ),
   };
 });
@@ -198,7 +198,7 @@ jest.mock('@/components/ui/view', () => {
           ref,
           testID: props.testID || 'View',
         },
-        children
+        children,
       );
     }),
   };
@@ -217,7 +217,7 @@ jest.mock('@/components/ui/safe-area-view', () => {
           ref,
           testID: props.testID || 'SafeAreaView',
         },
-        children
+        children,
       );
     }),
   };
@@ -235,7 +235,7 @@ jest.mock('@/components/ui/input', () => {
         {
           testID: 'Input',
         },
-        children
+        children,
       );
     },
     InputField: ({
@@ -273,7 +273,7 @@ jest.mock('@/components/ui/form-control', () => {
         {
           testID: 'FormControl',
         },
-        children
+        children,
       );
     },
     FormControlLabel: ({ children, ...props }) => {
@@ -282,7 +282,7 @@ jest.mock('@/components/ui/form-control', () => {
         {
           testID: 'FormControlLabel',
         },
-        children
+        children,
       );
     },
     FormControlLabelText: ({ children, ...props }) => {
@@ -292,7 +292,7 @@ jest.mock('@/components/ui/form-control', () => {
           testID: props.testID || 'FormControlLabelText',
           ...props,
         },
-        children
+        children,
       );
     },
     FormControlError: ({ children, ...props }) => {
@@ -301,7 +301,7 @@ jest.mock('@/components/ui/form-control', () => {
         {
           testID: 'FormControlError',
         },
-        children
+        children,
       );
     },
     FormControlErrorIcon: ({ children, ...props }) => {
@@ -310,7 +310,7 @@ jest.mock('@/components/ui/form-control', () => {
         {
           testID: 'FormControlErrorIcon',
         },
-        children
+        children,
       );
     },
     FormControlErrorText: ({ children, ...props }) => {
@@ -320,7 +320,7 @@ jest.mock('@/components/ui/form-control', () => {
           testID: props.testID || 'FormControlErrorText',
           ...props,
         },
-        children
+        children,
       );
     },
     FormControlHelper: ({ children, ...props }) => {
@@ -329,7 +329,7 @@ jest.mock('@/components/ui/form-control', () => {
         {
           testID: 'FormControlHelper',
         },
-        children
+        children,
       );
     },
     FormControlHelperText: ({ children, ...props }) => {
@@ -339,7 +339,7 @@ jest.mock('@/components/ui/form-control', () => {
           testID: props.testID || 'FormControlHelperText',
           ...props,
         },
-        children
+        children,
       );
     },
   };
@@ -360,8 +360,8 @@ jest.mock('@/components/ui/pressable', () => {
           onPress: props.onPress,
           disabled: props.disabled,
         },
-        children
-      )
+        children,
+      ),
     ),
   };
 });
@@ -391,8 +391,8 @@ jest.mock('@/components/ui/radio', () => {
                 onClick: () => handleChildClick(child.props.value),
                 'data-selected': child.props.value === value,
               })
-            : child
-        )
+            : child,
+        ),
       );
     }),
     Radio: React.forwardRef(({ children, value, ...props }, ref) =>
@@ -406,8 +406,8 @@ jest.mock('@/components/ui/radio', () => {
           className: `gluestack-radio ${props.className || ''}`,
           'aria-label': props.value,
         },
-        children
-      )
+        children,
+      ),
     ),
     RadioIndicator: React.forwardRef(({ children, ...props }, ref) =>
       React.createElement(
@@ -418,8 +418,8 @@ jest.mock('@/components/ui/radio', () => {
           'data-testid': props.testID,
           className: `gluestack-radio-indicator ${props.className || ''}`,
         },
-        children
-      )
+        children,
+      ),
     ),
     RadioIcon: React.forwardRef(({ children, ...props }, ref) =>
       React.createElement(
@@ -430,8 +430,8 @@ jest.mock('@/components/ui/radio', () => {
           'data-testid': props.testID,
           className: `gluestack-radio-icon ${props.className || ''}`,
         },
-        children
-      )
+        children,
+      ),
     ),
     RadioLabel: React.forwardRef(({ children, ...props }, ref) =>
       React.createElement(
@@ -442,8 +442,8 @@ jest.mock('@/components/ui/radio', () => {
           'data-testid': props.testID,
           className: `gluestack-radio-label ${props.className || ''}`,
         },
-        children
-      )
+        children,
+      ),
     ),
   };
 });
@@ -481,12 +481,12 @@ jest.mock('@/components/ui/tabs', () => {
                   'aria-label': item.label,
                   className: 'tab-button',
                 },
-                item.label
-              )
+                item.label,
+              ),
             ),
           // Render children
           children,
-        ]
+        ],
       );
     }),
   };
@@ -501,7 +501,7 @@ jest.mock('@/components/ui/divider', () => {
         ref,
         'data-testid': props.testID,
         className: `gluestack-divider ${props.className || ''}`,
-      })
+      }),
     ),
   };
 });
@@ -518,7 +518,7 @@ jest.mock('@/components/ui/toast', () => {
         ref,
         'data-testid': props.testID,
         className: `gluestack-toast ${props.className || ''}`,
-      })
+      }),
     ),
   };
 });
@@ -536,8 +536,8 @@ jest.mock('@/components/ui/link', () => {
           href: props.href,
           className: `gluestack-link ${props.className || ''}`,
         },
-        children
-      )
+        children,
+      ),
     ),
     LinkText: React.forwardRef(({ children, ...props }, ref) =>
       React.createElement(
@@ -548,8 +548,8 @@ jest.mock('@/components/ui/link', () => {
           'data-testid': props.testID,
           className: `gluestack-link-text ${props.className || ''}`,
         },
-        children
-      )
+        children,
+      ),
     ),
   };
 });
@@ -567,7 +567,7 @@ jest.mock('@/components/auth/AuthLayout', () => {
           ...props,
           testID: 'AuthLayout',
         },
-        typeof children === 'function' ? null : children
+        typeof children === 'function' ? null : children,
       );
     },
   };
@@ -585,41 +585,13 @@ jest.mock('@/components/ErrorBoundary', () => {
           'data-testid': 'ErrorBoundary',
           className: 'error-boundary',
         },
-        children
-      )
+        children,
+      ),
     ),
   };
 });
 
-// Mock @unitools/router and @unitools/link
-jest.mock('@unitools/router', () => ({
-  __esModule: true,
-  default: jest.fn(() => ({
-    push: jest.fn(),
-    back: jest.fn(),
-    replace: jest.fn(),
-    canGoBack: jest.fn(() => true),
-  })),
-}));
-
-jest.mock('@unitools/link', () => {
-  const React = require('react');
-  return {
-    __esModule: true,
-    default: React.forwardRef(({ children, ...props }, ref) =>
-      React.createElement(
-        'a',
-        {
-          ...props,
-          ref,
-          'data-testid': props.testID,
-          href: props.href,
-        },
-        children
-      )
-    ),
-  };
-});
+// @unitools mocks removed - using expo-router instead
 
 jest.mock('@/components/ui/gluestack-ui-provider', () => ({
   GluestackUIProvider: ({ children }) => children,
@@ -1026,7 +998,7 @@ jest.mock('lucide-react-native', () => {
             ref,
             'data-testid': props.testID,
             className: `lucide-icon lucide-${prop.toLowerCase()}`,
-          })
+          }),
         );
       }
       return target[prop];
@@ -1053,7 +1025,7 @@ jest.mock('expo-router', () => {
         ref,
         'data-testid': props.testID,
         href: props.href,
-      })
+      }),
     ),
     Stack: ({ children, ...props }) => React.createElement('div', props, children),
     Tabs: ({ children, ...props }) => React.createElement('div', props, children),

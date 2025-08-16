@@ -46,7 +46,7 @@ describe('WizardErrorBoundary', () => {
       const { getByTestId } = render(
         <WizardErrorBoundary {...defaultProps}>
           <ThrowError shouldThrow={false} />
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       expect(getByTestId('success-component')).toBeTruthy();
@@ -69,7 +69,7 @@ describe('WizardErrorBoundary', () => {
       const { getByTestId } = render(
         <WizardErrorBoundary {...defaultProps}>
           <TestComponent />
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       expect(getByTestId('counter')).toHaveTextContent('0');
@@ -85,7 +85,7 @@ describe('WizardErrorBoundary', () => {
       const { getByText, getByTestId } = render(
         <WizardErrorBoundary {...defaultProps}>
           <ThrowError shouldThrow={true} />
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       expect(getByTestId('error-boundary-container')).toBeTruthy();
@@ -101,7 +101,7 @@ describe('WizardErrorBoundary', () => {
       const { getByText } = render(
         <WizardErrorBoundary {...defaultProps}>
           <ThrowError shouldThrow={true} />
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       expect(getByText('Test error')).toBeTruthy();
@@ -118,7 +118,7 @@ describe('WizardErrorBoundary', () => {
       const { queryByTestId } = render(
         <WizardErrorBoundary {...defaultProps}>
           <ThrowError shouldThrow={true} />
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       expect(queryByTestId('error-details')).toBeNull();
@@ -130,7 +130,7 @@ describe('WizardErrorBoundary', () => {
       const { getByTestId, rerender } = render(
         <WizardErrorBoundary {...defaultProps} maxRetries={2}>
           <ThrowError shouldThrow={true} />
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       // First error
@@ -142,7 +142,7 @@ describe('WizardErrorBoundary', () => {
       rerender(
         <WizardErrorBoundary {...defaultProps} maxRetries={2}>
           <ThrowError shouldThrow={true} />
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       // Second error - should still show retry
@@ -154,7 +154,7 @@ describe('WizardErrorBoundary', () => {
       rerender(
         <WizardErrorBoundary {...defaultProps} maxRetries={2}>
           <ThrowError shouldThrow={true} />
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       // Third error - should not show retry (exceeded maxRetries)
@@ -165,7 +165,7 @@ describe('WizardErrorBoundary', () => {
       const { getByTestId, getByText } = render(
         <WizardErrorBoundary {...defaultProps} maxRetries={0}>
           <ThrowError shouldThrow={true} />
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       expect(() => getByTestId('retry-button')).toThrow();
@@ -178,7 +178,7 @@ describe('WizardErrorBoundary', () => {
       const { getByTestId } = render(
         <WizardErrorBoundary {...defaultProps}>
           <ThrowError shouldThrow={true} />
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       fireEvent.press(getByTestId('retry-button'));
@@ -190,7 +190,7 @@ describe('WizardErrorBoundary', () => {
       const { getByTestId } = render(
         <WizardErrorBoundary {...defaultProps}>
           <ThrowError shouldThrow={true} />
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       fireEvent.press(getByTestId('save-exit-button'));
@@ -202,7 +202,7 @@ describe('WizardErrorBoundary', () => {
       const { getByTestId } = render(
         <WizardErrorBoundary {...defaultProps}>
           <ThrowError shouldThrow={true} />
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       fireEvent.press(getByTestId('dashboard-button'));
@@ -250,12 +250,12 @@ describe('WizardErrorBoundary', () => {
       const { getByText } = render(
         <WizardErrorBoundary {...defaultProps}>
           <ThrowError shouldThrow={true} />
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       expect(getByText('Something went wrong')).toBeTruthy();
       expect(
-        getByText(/We encountered an unexpected error while processing your profile/)
+        getByText(/We encountered an unexpected error while processing your profile/),
       ).toBeTruthy();
     });
 
@@ -263,7 +263,7 @@ describe('WizardErrorBoundary', () => {
       const { getByText } = render(
         <WizardErrorBoundary {...defaultProps}>
           <ThrowError shouldThrow={true} />
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       expect(getByText(/You can try the following options/)).toBeTruthy();
@@ -276,7 +276,7 @@ describe('WizardErrorBoundary', () => {
       const { getByText } = render(
         <WizardErrorBoundary {...defaultProps} maxRetries={3}>
           <ThrowError shouldThrow={true} />
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       expect(getByText(/Attempts remaining: 3/)).toBeTruthy();
@@ -286,7 +286,7 @@ describe('WizardErrorBoundary', () => {
       const { getByText } = render(
         <WizardErrorBoundary {...defaultProps} maxRetries={0}>
           <ThrowError shouldThrow={true} />
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       expect(getByText('Maximum retry attempts exceeded')).toBeTruthy();
@@ -299,7 +299,7 @@ describe('WizardErrorBoundary', () => {
       const { getByTestId } = render(
         <WizardErrorBoundary {...defaultProps}>
           <ThrowError shouldThrow={true} />
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       const retryButton = getByTestId('retry-button');
@@ -315,7 +315,7 @@ describe('WizardErrorBoundary', () => {
       const { getByTestId } = render(
         <WizardErrorBoundary {...defaultProps}>
           <ThrowError shouldThrow={true} />
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       const errorAnnouncement = getByTestId('error-announcement');
@@ -327,7 +327,7 @@ describe('WizardErrorBoundary', () => {
       const { getByTestId } = render(
         <WizardErrorBoundary {...defaultProps}>
           <ThrowError shouldThrow={true} />
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       const errorHeading = getByTestId('error-heading');
@@ -343,13 +343,13 @@ describe('WizardErrorBoundary', () => {
       render(
         <WizardErrorBoundary {...defaultProps}>
           <ThrowError shouldThrow={true} />
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       expect(consoleSpy).toHaveBeenCalledWith(
         'WizardErrorBoundary caught an error:',
         expect.any(Error),
-        expect.any(Object) // Error info
+        expect.any(Object), // Error info
       );
 
       consoleSpy.mockRestore();
@@ -361,7 +361,7 @@ describe('WizardErrorBoundary', () => {
       render(
         <WizardErrorBoundary {...defaultProps}>
           <ThrowError shouldThrow={true} />
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       expect(consoleSpy).toHaveBeenCalledWith(
@@ -369,7 +369,7 @@ describe('WizardErrorBoundary', () => {
         expect.any(Error),
         expect.objectContaining({
           componentStack: expect.any(String),
-        })
+        }),
       );
 
       consoleSpy.mockRestore();
@@ -381,7 +381,7 @@ describe('WizardErrorBoundary', () => {
       const { getByTestId } = render(
         <WizardErrorBoundary>
           <ThrowError shouldThrow={true} />
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       // Should still render error UI
@@ -414,7 +414,7 @@ describe('WizardErrorBoundary', () => {
       const { getByTestId } = render(
         <BuggyErrorBoundary>
           <ThrowError shouldThrow={true} />
-        </BuggyErrorBoundary>
+        </BuggyErrorBoundary>,
       );
 
       // Should catch the initial error
@@ -457,7 +457,7 @@ describe('WizardErrorBoundary', () => {
       const { getByTestId } = render(
         <WizardErrorBoundary {...defaultProps}>
           <AsyncErrorComponent />
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       // Initially should render normally
@@ -484,7 +484,7 @@ describe('WizardErrorBoundary', () => {
       const { rerender } = render(
         <WizardErrorBoundary {...defaultProps}>
           <TestComponent />
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       expect(renderSpy).toHaveBeenCalledTimes(1);
@@ -493,7 +493,7 @@ describe('WizardErrorBoundary', () => {
       rerender(
         <WizardErrorBoundary {...defaultProps}>
           <TestComponent />
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       expect(renderSpy).toHaveBeenCalledTimes(2); // Only one additional render
@@ -505,7 +505,7 @@ describe('WizardErrorBoundary', () => {
           <View>
             <Text>Test</Text>
           </View>
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
@@ -530,7 +530,7 @@ describe('WizardErrorBoundary', () => {
       const { getByText } = render(
         <WizardErrorBoundary {...customProps}>
           <ThrowError shouldThrow={true} />
-        </WizardErrorBoundary>
+        </WizardErrorBoundary>,
       );
 
       expect(getByText('Custom error message')).toBeTruthy();
@@ -559,7 +559,7 @@ describe('WizardErrorBoundary', () => {
       const { getByText } = render(
         <CustomErrorBoundary {...defaultProps}>
           <NetworkError />
-        </CustomErrorBoundary>
+        </CustomErrorBoundary>,
       );
 
       expect(getByText('Network connection error')).toBeTruthy();

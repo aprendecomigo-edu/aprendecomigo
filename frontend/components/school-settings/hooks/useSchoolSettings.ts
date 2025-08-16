@@ -3,11 +3,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Alert } from 'react-native';
 
-import type { 
-  ComprehensiveSchoolSettings, 
-  EducationalSystem, 
+import type {
+  ComprehensiveSchoolSettings,
+  EducationalSystem,
   SchoolSettingsFormData,
-  SectionKey 
+  SectionKey,
 } from '../types';
 import { schoolSettingsSchema } from '../validation';
 
@@ -17,13 +17,14 @@ export interface UseSchoolSettingsProps {
   onSave: (data: SchoolSettingsFormData) => Promise<void>;
 }
 
-export const useSchoolSettings = ({ 
-  initialData, 
-  educationalSystems = [], 
-  onSave 
+export const useSchoolSettings = ({
+  initialData,
+  educationalSystems = [],
+  onSave,
 }: UseSchoolSettingsProps) => {
   const [activeSection, setActiveSection] = useState<SectionKey>('profile');
-  const [selectedEducationalSystem, setSelectedEducationalSystem] = useState<EducationalSystem | null>(null);
+  const [selectedEducationalSystem, setSelectedEducationalSystem] =
+    useState<EducationalSystem | null>(null);
 
   const form = useForm<SchoolSettingsFormData>({
     resolver: zodResolver(schoolSettingsSchema),
@@ -56,7 +57,8 @@ export const useSchoolSettings = ({
         working_days: initialData?.settings?.working_days || [0, 1, 2, 3, 4],
         email_notifications_enabled: initialData?.settings?.email_notifications_enabled ?? true,
         sms_notifications_enabled: initialData?.settings?.sms_notifications_enabled ?? false,
-        allow_student_self_enrollment: initialData?.settings?.allow_student_self_enrollment ?? false,
+        allow_student_self_enrollment:
+          initialData?.settings?.allow_student_self_enrollment ?? false,
         require_parent_approval: initialData?.settings?.require_parent_approval ?? true,
         auto_assign_teachers: initialData?.settings?.auto_assign_teachers ?? false,
         class_reminder_hours: initialData?.settings?.class_reminder_hours || 24,
@@ -67,7 +69,8 @@ export const useSchoolSettings = ({
         data_retention_policy: initialData?.settings?.data_retention_policy || '2_years',
         gdpr_compliance_enabled: initialData?.settings?.gdpr_compliance_enabled ?? true,
         allow_data_export: initialData?.settings?.allow_data_export ?? true,
-        require_data_processing_consent: initialData?.settings?.require_data_processing_consent ?? true,
+        require_data_processing_consent:
+          initialData?.settings?.require_data_processing_consent ?? true,
         dashboard_refresh_interval: initialData?.settings?.dashboard_refresh_interval || 30,
         activity_retention_days: initialData?.settings?.activity_retention_days || 90,
       },
@@ -84,33 +87,36 @@ export const useSchoolSettings = ({
     setSelectedEducationalSystem(system || null);
   }, [watchedEducationalSystem, educationalSystems]);
 
-  const handleSubmit = useCallback(async (data: SchoolSettingsFormData) => {
-    try {
-      await onSave(data);
-    } catch (error) {
-      console.error('Error saving school settings:', error);
-      Alert.alert('Error', 'Failed to save school settings. Please try again.');
-    }
-  }, [onSave]);
+  const handleSubmit = useCallback(
+    async (data: SchoolSettingsFormData) => {
+      try {
+        await onSave(data);
+      } catch (error) {
+        console.error('Error saving school settings:', error);
+        Alert.alert('Error', 'Failed to save school settings. Please try again.');
+      }
+    },
+    [onSave],
+  );
 
   return {
     // Form state
     form,
-    
+
     // Section navigation
     activeSection,
     setActiveSection,
-    
+
     // Educational system
     selectedEducationalSystem,
-    
+
     // Watched values for conditional rendering
     watchedEnableCalendar,
     watchedEnableEmail,
-    
+
     // Form submission
     handleSubmit,
-    
+
     // Computed state
     isSubmitting: form.formState.isSubmitting,
     errors: form.formState.errors,

@@ -199,7 +199,7 @@ export const SubjectsStep: React.FC<SubjectsStepProps> = ({
   const filteredSubjects = PREDEFINED_SUBJECTS.filter(
     subject =>
       subject.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      !formData.teaching_subjects.some(ts => ts.subject === subject)
+      !formData.teaching_subjects.some(ts => ts.subject === subject),
   );
 
   const handleFieldChange = (field: keyof SubjectsFormData, value: any) => {
@@ -236,7 +236,7 @@ export const SubjectsStep: React.FC<SubjectsStepProps> = ({
     let updatedSubjects;
     if (editingSubject) {
       updatedSubjects = formData.teaching_subjects.map(s =>
-        s.id === editingSubject.id ? subject : s
+        s.id === editingSubject.id ? subject : s,
       );
     } else {
       updatedSubjects = [...formData.teaching_subjects, subject];
@@ -343,7 +343,7 @@ export const SubjectsStep: React.FC<SubjectsStepProps> = ({
                     onPress={() =>
                       handleCategoryToggle(
                         category,
-                        !formData.subject_categories?.includes(category)
+                        !formData.subject_categories?.includes(category),
                       )
                     }
                     className="mb-2"
@@ -405,7 +405,7 @@ export const SubjectsStep: React.FC<SubjectsStepProps> = ({
                                   {subject.grade_levels
                                     .map(
                                       level =>
-                                        GRADE_LEVELS.find(gl => gl.value === level)?.label || level
+                                        GRADE_LEVELS.find(gl => gl.value === level)?.label || level,
                                     )
                                     .join(', ')}
                                 </Text>

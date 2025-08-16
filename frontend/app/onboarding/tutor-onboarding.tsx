@@ -1,4 +1,4 @@
-import useRouter from '@unitools/router';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 
 import {
@@ -99,8 +99,8 @@ const StepProgressIndicator: React.FC<StepProgressIndicatorProps> = ({
                 isCurrent
                   ? 'border-blue-500 bg-blue-50'
                   : isCompleted
-                  ? 'border-green-200 bg-green-50'
-                  : 'border-gray-200 bg-white'
+                    ? 'border-green-200 bg-green-50'
+                    : 'border-gray-200 bg-white'
               }
               ${canNavigate ? 'hover:bg-gray-50' : 'opacity-50'}
             `}

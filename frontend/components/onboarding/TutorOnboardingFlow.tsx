@@ -1,4 +1,4 @@
-import useRouter from '@unitools/router';
+import { useRouter } from 'expo-router';
 import { AlertCircle, ArrowLeft } from 'lucide-react-native';
 import React, { useState, useEffect, useCallback } from 'react';
 import { Platform } from 'react-native';

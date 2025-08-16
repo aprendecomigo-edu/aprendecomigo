@@ -156,7 +156,7 @@ const Popover = React.forwardRef<React.ElementRef<typeof UIPopover>, IPopoverPro
         pointerEvents="box-none"
       />
     );
-  }
+  },
 );
 
 const PopoverContent = React.forwardRef<
@@ -216,7 +216,7 @@ const PopoverArrow = React.forwardRef<React.ElementRef<typeof UIPopover.Arrow>, 
         })}
       />
     );
-  }
+  },
 );
 
 const PopoverBackdrop = React.forwardRef<
@@ -265,7 +265,7 @@ const PopoverBody = React.forwardRef<React.ElementRef<typeof UIPopover.Body>, IP
         })}
       />
     );
-  }
+  },
 );
 
 const PopoverCloseButton = React.forwardRef<

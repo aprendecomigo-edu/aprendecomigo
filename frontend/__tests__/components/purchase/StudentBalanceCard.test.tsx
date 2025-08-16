@@ -159,7 +159,7 @@ describe('StudentBalanceCard Component', () => {
       });
 
       const { queryByTestId } = render(
-        <StudentBalanceCard {...defaultProps} showStatusBar={false} />
+        <StudentBalanceCard {...defaultProps} showStatusBar={false} />,
       );
 
       expect(queryByTestId('balance-status-bar')).toBeNull();
@@ -175,7 +175,7 @@ describe('StudentBalanceCard Component', () => {
       });
 
       const { queryByText } = render(
-        <StudentBalanceCard {...defaultProps} showStudentInfo={false} />
+        <StudentBalanceCard {...defaultProps} showStudentInfo={false} />,
       );
 
       expect(queryByText('John Doe (john@example.com)')).toBeNull();
@@ -191,7 +191,7 @@ describe('StudentBalanceCard Component', () => {
       });
 
       const { getByTestId } = render(
-        <StudentBalanceCard {...defaultProps} compact={false} showStatusBar={true} />
+        <StudentBalanceCard {...defaultProps} compact={false} showStatusBar={true} />,
       );
 
       expect(getByTestId('status-details')).toBeTruthy();
@@ -499,7 +499,7 @@ describe('StudentBalanceCard Component', () => {
       });
 
       const { getByTestId } = render(
-        <StudentBalanceCard {...defaultProps} onRefresh={mockOnRefresh} />
+        <StudentBalanceCard {...defaultProps} onRefresh={mockOnRefresh} />,
       );
 
       fireEvent.press(getByTestId('refresh-button'));
@@ -536,7 +536,7 @@ describe('StudentBalanceCard Component', () => {
       });
 
       const { queryByTestId } = render(
-        <StudentBalanceCard {...defaultProps} compact={true} showStatusBar={true} />
+        <StudentBalanceCard {...defaultProps} compact={true} showStatusBar={true} />,
       );
 
       // In compact mode, details should be hidden from status bar

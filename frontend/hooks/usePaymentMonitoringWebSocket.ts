@@ -90,7 +90,7 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
         setWebhookStatus(current => {
           const updated = [...current];
           const existingIndex = updated.findIndex(
-            w => w.endpoint_url === webhookUpdate.webhook_status.endpoint_url
+            w => w.endpoint_url === webhookUpdate.webhook_status.endpoint_url,
           );
 
           if (existingIndex !== -1) {
@@ -113,7 +113,7 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
               updated.unshift(fraudUpdate.alert);
               // Keep only active alerts
               return updated.filter(
-                alert => alert.status === 'active' || alert.status === 'investigating'
+                alert => alert.status === 'active' || alert.status === 'investigating',
               );
             }
           } else if (fraudUpdate.action === 'updated') {
@@ -202,7 +202,7 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
           JSON.stringify({
             type: 'subscribe',
             channels: ['metrics', 'transactions', 'webhooks', 'fraud_alerts', 'disputes'],
-          })
+          }),
         );
       };
 
@@ -229,7 +229,7 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
             console.log(
               `Reconnecting payment monitoring WebSocket in ${timeout}ms (attempt ${
                 reconnectAttemptsRef.current + 1
-              })`
+              })`,
             );
           }
 
@@ -282,7 +282,7 @@ export function usePaymentMonitoringWebSocket(enabled: boolean = true) {
         }
       }
     },
-    [isConnected]
+    [isConnected],
   );
 
   // Initialize connection
@@ -489,7 +489,7 @@ export function useWebhookMonitoringWebSocket(enabled: boolean = true) {
             setWebhookStatus(current => {
               const updated = [...current];
               const existingIndex = updated.findIndex(
-                w => w.endpoint_url === update.webhook_status.endpoint_url
+                w => w.endpoint_url === update.webhook_status.endpoint_url,
               );
 
               if (existingIndex !== -1) {

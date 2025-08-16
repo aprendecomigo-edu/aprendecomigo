@@ -51,7 +51,7 @@ describe('WizardNavigation', () => {
       });
 
       const { getByTestId } = render(
-        <WizardNavigation {...defaultProps} currentStep={2} completionData={completionData} />
+        <WizardNavigation {...defaultProps} currentStep={2} completionData={completionData} />,
       );
 
       expect(getByTestId('step-completed-0')).toBeTruthy();
@@ -94,7 +94,7 @@ describe('WizardNavigation', () => {
       });
 
       const { getByText } = render(
-        <WizardNavigation {...defaultProps} completionData={completionData} />
+        <WizardNavigation {...defaultProps} completionData={completionData} />,
       );
 
       expect(getByText('75%')).toBeTruthy();
@@ -134,7 +134,7 @@ describe('WizardNavigation', () => {
       });
 
       const { getByTestId } = render(
-        <WizardNavigation {...defaultProps} currentStep={2} completionData={completionData} />
+        <WizardNavigation {...defaultProps} currentStep={2} completionData={completionData} />,
       );
 
       fireEvent.press(getByTestId('step-button-0'));
@@ -159,7 +159,7 @@ describe('WizardNavigation', () => {
       });
 
       const { getByTestId } = render(
-        <WizardNavigation {...defaultProps} currentStep={0} completionData={completionData} />
+        <WizardNavigation {...defaultProps} currentStep={0} completionData={completionData} />,
       );
 
       const nextStepButton = getByTestId('step-button-1');
@@ -176,7 +176,7 @@ describe('WizardNavigation', () => {
       });
 
       const { getByTestId } = render(
-        <WizardNavigation {...defaultProps} currentStep={1} completionData={completionData} />
+        <WizardNavigation {...defaultProps} currentStep={1} completionData={completionData} />,
       );
 
       const completedStepButton = getByTestId('step-button-0');
@@ -213,7 +213,7 @@ describe('WizardNavigation', () => {
       });
 
       const { getByTestId } = render(
-        <WizardNavigation {...defaultProps} currentStep={2} completionData={completionData} />
+        <WizardNavigation {...defaultProps} currentStep={2} completionData={completionData} />,
       );
 
       const connector1 = getByTestId('step-connector-0');
@@ -246,7 +246,7 @@ describe('WizardNavigation', () => {
       });
 
       const { getByTestId } = render(
-        <WizardNavigation {...defaultProps} currentStep={1} completionData={completionData} />
+        <WizardNavigation {...defaultProps} currentStep={1} completionData={completionData} />,
       );
 
       const completedStepButton = getByTestId('step-button-0');
@@ -278,7 +278,7 @@ describe('WizardNavigation', () => {
 
     it('should show abbreviated step titles in compact mode', () => {
       const { queryByText, getByText } = render(
-        <WizardNavigation {...defaultProps} compact={true} />
+        <WizardNavigation {...defaultProps} compact={true} />,
       );
 
       // Should show abbreviated titles
@@ -323,7 +323,7 @@ describe('WizardNavigation', () => {
       };
 
       const { getByTestId } = render(
-        <WizardNavigation {...defaultProps} completionData={partialCompletionData} />
+        <WizardNavigation {...defaultProps} completionData={partialCompletionData} />,
       );
 
       // Should handle missing step completion data

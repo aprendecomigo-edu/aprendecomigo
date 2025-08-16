@@ -45,7 +45,7 @@ describe('useSignInLogic Hook - New Architecture', () => {
           authApi: mockAuthApi,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       expect(result.current.isRequesting).toBe(false);
@@ -64,7 +64,7 @@ describe('useSignInLogic Hook - New Architecture', () => {
           authApi: customAuthApi,
           router: customRouter,
           toast: customToast,
-        })
+        }),
       );
 
       // Hook should be initialized successfully with injected dependencies
@@ -82,7 +82,7 @@ describe('useSignInLogic Hook - New Architecture', () => {
           authApi: mockAuthApi,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -92,7 +92,7 @@ describe('useSignInLogic Hook - New Architecture', () => {
       expect(mockRequestEmailCode).toHaveBeenCalledWith({ email: 'test@example.com' });
       expect(mockShowToast).toHaveBeenCalledWith(
         'success',
-        'Verification code sent to your email!'
+        'Verification code sent to your email!',
       );
       expect(mockPush).toHaveBeenCalledWith('/auth/verify-code?email=test%40example.com');
       expect(result.current.error).toBeNull();
@@ -107,7 +107,7 @@ describe('useSignInLogic Hook - New Architecture', () => {
           authApi: mockAuthApi,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -117,7 +117,7 @@ describe('useSignInLogic Hook - New Architecture', () => {
       expect(mockRequestEmailCode).toHaveBeenCalledWith({ email: 'test@example.com' });
       expect(mockShowToast).toHaveBeenCalledWith(
         'error',
-        'Failed to send verification code. Please try again.'
+        'Failed to send verification code. Please try again.',
       );
       expect(result.current.error).toBe(apiError);
       expect(mockPush).not.toHaveBeenCalled();
@@ -135,7 +135,7 @@ describe('useSignInLogic Hook - New Architecture', () => {
           authApi: mockAuthApi,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       // Start submission
@@ -163,7 +163,7 @@ describe('useSignInLogic Hook - New Architecture', () => {
           authApi: mockAuthApi,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -181,7 +181,7 @@ describe('useSignInLogic Hook - New Architecture', () => {
           authApi: mockAuthApi,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       expect(typeof result.current.handleKeyPress).toBe('function');
@@ -200,7 +200,7 @@ describe('useSignInLogic Hook - New Architecture', () => {
           authApi: mockAuthApi,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       // First, cause an error
@@ -227,7 +227,7 @@ describe('useSignInLogic Hook - New Architecture', () => {
           authApi: mockAuthApi,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       await act(async () => {
@@ -237,7 +237,7 @@ describe('useSignInLogic Hook - New Architecture', () => {
       expect(result.current.error).toBe(networkError);
       expect(mockShowToast).toHaveBeenCalledWith(
         'error',
-        'Failed to send verification code. Please try again.'
+        'Failed to send verification code. Please try again.',
       );
     });
   });
@@ -252,7 +252,7 @@ describe('useSignInLogic Hook - New Architecture', () => {
           authApi: mockAuthApi,
           router: mockRouter,
           toast: mockToast,
-        })
+        }),
       );
 
       // Test the complete business logic flow
@@ -266,7 +266,7 @@ describe('useSignInLogic Hook - New Architecture', () => {
       expect(mockRequestEmailCode).toHaveBeenCalledWith({ email });
       expect(mockShowToast).toHaveBeenCalledWith(
         'success',
-        'Verification code sent to your email!'
+        'Verification code sent to your email!',
       );
       expect(mockPush).toHaveBeenCalledWith(`/auth/verify-code?email=${encodeURIComponent(email)}`);
     });

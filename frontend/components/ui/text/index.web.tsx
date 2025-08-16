@@ -19,7 +19,7 @@ const Text = React.forwardRef<React.ElementRef<'span'>, ITextProps>(
       highlight,
       ...props
     }: { className?: string } & ITextProps,
-    ref
+    ref,
   ) => {
     return (
       <span
@@ -38,7 +38,7 @@ const Text = React.forwardRef<React.ElementRef<'span'>, ITextProps>(
         ref={ref}
       />
     );
-  }
+  },
 );
 
 Text.displayName = 'Text';

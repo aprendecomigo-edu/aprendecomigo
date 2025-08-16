@@ -41,7 +41,7 @@ const PrimitiveIcon = React.forwardRef(
       as: AsComp,
       ...props
     }: IPrimitiveIcon,
-    ref: React.Ref<Svg>
+    ref: React.Ref<Svg>,
   ) => {
     const sizeProps = useMemo(() => {
       if (size) return { size };
@@ -59,7 +59,7 @@ const PrimitiveIcon = React.forwardRef(
     return (
       <Svg ref={ref} height={height} width={width} fill={fill} stroke={colorProps} {...props} />
     );
-  }
+  },
 );
 
 // Style definitions (reuse existing styles)
@@ -311,7 +311,7 @@ export const Button = React.forwardRef<View, IButtonProps>(
         </ButtonRoot>
       </ButtonContext.Provider>
     );
-  }
+  },
 );
 
 // ButtonText component - Direct implementation
@@ -337,7 +337,7 @@ export const ButtonText = React.forwardRef<Text, IButtonTextProps>(
         })}
       />
     );
-  }
+  },
 );
 
 // ButtonSpinner component
@@ -366,7 +366,7 @@ export const ButtonIcon = React.forwardRef<any, IButtonIcon>(
         })}
       />
     );
-  }
+  },
 );
 
 // ButtonGroup component
@@ -379,7 +379,7 @@ export const ButtonGroup = React.forwardRef<View, IButtonGroupProps>(
         className={buttonGroupStyle({ space, isAttached, class: className })}
       />
     );
-  }
+  },
 );
 
 // Display names for debugging

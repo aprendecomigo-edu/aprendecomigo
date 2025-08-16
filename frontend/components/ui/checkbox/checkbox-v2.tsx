@@ -55,7 +55,7 @@ const PrimitiveIcon = React.forwardRef<React.ElementRef<typeof Svg>, IPrimitiveI
       return <AsComp ref={ref} {...sizeProps} {...colorProps} {...props} />;
     }
     return <Svg ref={ref} height={height} width={width} {...colorProps} {...props} />;
-  }
+  },
 );
 
 // Style definitions (reuse existing styles)
@@ -154,11 +154,11 @@ export const Checkbox = React.forwardRef<View, ICheckboxProps>(
       children,
       ...props
     },
-    ref
+    ref,
   ) => {
     const contextValue = useMemo(
       () => ({ size, isDisabled, isInvalid, isChecked, isHovered, isActive, isFocused }),
-      [size, isDisabled, isInvalid, isChecked, isHovered, isActive, isFocused]
+      [size, isDisabled, isInvalid, isChecked, isHovered, isActive, isFocused],
     );
 
     const Component = Platform.OS === 'web' ? View : Pressable;
@@ -182,7 +182,7 @@ export const Checkbox = React.forwardRef<View, ICheckboxProps>(
         </Component>
       </CheckboxContext.Provider>
     );
-  }
+  },
 );
 
 // CheckboxIndicator component
@@ -209,7 +209,7 @@ export const CheckboxIndicator = React.forwardRef<View, ICheckboxIndicatorProps>
         {children}
       </View>
     );
-  }
+  },
 );
 
 // CheckboxLabel component
@@ -233,7 +233,7 @@ export const CheckboxLabel = React.forwardRef<Text, ICheckboxLabelProps>(
         data-active={isActive}
       />
     );
-  }
+  },
 );
 
 // CheckboxIcon component
@@ -256,7 +256,7 @@ export const CheckboxIcon = React.forwardRef<any, ICheckboxIconProps>(
         })}
       />
     );
-  }
+  },
 );
 
 // CheckboxGroup component
@@ -267,7 +267,7 @@ export const CheckboxGroup = React.forwardRef<View, ICheckboxGroupProps>(
         {children}
       </View>
     );
-  }
+  },
 );
 
 // Display names for debugging

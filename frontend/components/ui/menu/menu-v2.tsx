@@ -134,7 +134,7 @@ export const Menu = React.forwardRef<View, IMenuProps>(
         </Animated.View>
       </MenuContext.Provider>
     );
-  }
+  },
 );
 
 // MenuItem component
@@ -149,7 +149,7 @@ export const MenuItem = React.forwardRef<View, IMenuItemProps>(
       children,
       ...props
     },
-    ref
+    ref,
   ) => {
     const Component = Platform.OS === 'web' ? Pressable : Pressable;
 
@@ -169,7 +169,7 @@ export const MenuItem = React.forwardRef<View, IMenuItemProps>(
         {children}
       </Component>
     );
-  }
+  },
 );
 
 // MenuBackdrop component
@@ -180,14 +180,14 @@ export const MenuBackdrop = React.forwardRef<View, IMenuBackdropProps>(
         {children}
       </Pressable>
     );
-  }
+  },
 );
 
 // MenuSeparator component
 export const MenuSeparator = React.forwardRef<View, IMenuSeparatorProps>(
   ({ className, ...props }, ref) => {
     return <View ref={ref} {...props} className={menuSeparatorStyle({ class: className })} />;
-  }
+  },
 );
 
 // MenuItemLabel component
@@ -205,7 +205,7 @@ export const MenuItemLabel = React.forwardRef<Text, IMenuItemLabelProps>(
       highlight,
       ...props
     },
-    ref
+    ref,
   ) => {
     return (
       <Text
@@ -224,7 +224,7 @@ export const MenuItemLabel = React.forwardRef<Text, IMenuItemLabelProps>(
         })}
       />
     );
-  }
+  },
 );
 
 // Display names for debugging

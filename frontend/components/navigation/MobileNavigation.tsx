@@ -85,7 +85,7 @@ export const MobileNavigation = ({ className = '' }: MobileNavigationProps) => {
         'justify-between w-full fixed left-0 bottom-0 right-0 p-3 items-center border-t-border-300 md:hidden border-t z-50',
         { 'pb-5': Platform.OS === 'ios' },
         { 'pb-5': Platform.OS === 'android' },
-        className
+        className,
       )}
       style={{ backgroundColor: NAVIGATION_COLORS.primary }}
       data-testid="bottom-navigation"
@@ -101,7 +101,7 @@ export const MobileNavigation = ({ className = '' }: MobileNavigationProps) => {
                 'px-0.5 flex-col items-center py-2 rounded-lg mx-1',
                 'active:bg-white/10 active:scale-95',
                 // Larger touch target for better accessibility
-                'min-h-[48px] justify-center'
+                'min-h-[48px] justify-center',
               )}
               onPress={() => handleNavigation(item.route)}
               style={{
@@ -131,7 +131,7 @@ export const MobileNavigation = ({ className = '' }: MobileNavigationProps) => {
               <Text
                 className={cn(
                   'text-xs text-center mt-1 font-medium',
-                  isSelected ? 'text-orange-400' : 'text-white'
+                  isSelected ? 'text-orange-400' : 'text-white',
                 )}
                 numberOfLines={1}
               >

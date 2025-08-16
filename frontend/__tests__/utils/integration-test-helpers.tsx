@@ -435,7 +435,7 @@ export function createIntegrationTestHelpers(): IntegrationTestHelpers {
           fireEvent.changeText(getByPlaceholderText('Student name'), mockValidFormData.studentName);
           fireEvent.changeText(
             getByPlaceholderText('Student email'),
-            mockValidFormData.studentEmail
+            mockValidFormData.studentEmail,
           );
           fireEvent.press(getByText('Continue to Payment'));
 
@@ -474,7 +474,7 @@ export function createIntegrationTestHelpers(): IntegrationTestHelpers {
               case 'payment':
                 const mockStripe = createMockStripe();
                 mockStripe.confirmPayment.mockResolvedValue(
-                  createMockStripeError('Payment failed')
+                  createMockStripeError('Payment failed'),
                 );
                 break;
             }
@@ -532,7 +532,7 @@ export function createIntegrationTestHelpers(): IntegrationTestHelpers {
           const Platform = require('react-native').Platform;
           Platform.OS = platform;
           Platform.select = jest.fn(
-            (platforms: any) => platforms[platform] || platforms.native || platforms.default
+            (platforms: any) => platforms[platform] || platforms.native || platforms.default,
           );
         },
         setupPlatformMocks: () => {

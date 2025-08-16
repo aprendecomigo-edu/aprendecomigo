@@ -39,7 +39,7 @@ type ITableCaptionProps = React.ComponentProps<typeof ExpoTCaption>;
 const Table = React.forwardRef<React.ElementRef<typeof ExpoTable>, ITableProps>(
   ({ className, ...props }, ref) => {
     return <ExpoTable ref={ref} className={tableStyle({ class: className })} {...props} />;
-  }
+  },
 );
 
 const TableHeader = React.forwardRef<React.ElementRef<typeof ExpoTHead>, ITableHeaderProps>(
@@ -54,13 +54,13 @@ const TableHeader = React.forwardRef<React.ElementRef<typeof ExpoTHead>, ITableH
         <ExpoTHead ref={ref} className={tableHeaderStyle({ class: className })} {...props} />
       </TableHeaderContext.Provider>
     );
-  }
+  },
 );
 
 const TableBody = React.forwardRef<React.ElementRef<typeof ExpoTBody>, ITableBodyProps>(
   ({ className, ...props }, ref) => {
     return <ExpoTBody ref={ref} className={tableBodyStyle({ class: className })} {...props} />;
-  }
+  },
 );
 
 const TableFooter = React.forwardRef<React.ElementRef<typeof ExpoTFoot>, ITableFooterProps>(
@@ -75,7 +75,7 @@ const TableFooter = React.forwardRef<React.ElementRef<typeof ExpoTFoot>, ITableF
         <ExpoTFoot ref={ref} className={tableFooterStyle({ class: className })} {...props} />
       </TableFooterContext.Provider>
     );
-  }
+  },
 );
 
 const TableHead = React.forwardRef<React.ElementRef<typeof View | typeof Text>, ITableHeadProps>(
@@ -85,7 +85,7 @@ const TableHead = React.forwardRef<React.ElementRef<typeof View | typeof Text>, 
     } else {
       return <Text ref={ref} className={tableHeadStyle({ class: className })} {...props} />;
     }
-  }
+  },
 );
 
 const TableRow = React.forwardRef<React.ElementRef<typeof ExpoTR>, ITableRowProps>(
@@ -104,7 +104,7 @@ const TableRow = React.forwardRef<React.ElementRef<typeof ExpoTR>, ITableRowProp
         {...props}
       />
     );
-  }
+  },
 );
 
 const TableData = React.forwardRef<React.ElementRef<typeof View | typeof Text>, ITableDataProps>(
@@ -114,7 +114,7 @@ const TableData = React.forwardRef<React.ElementRef<typeof View | typeof Text>, 
     } else {
       return <Text ref={ref} className={tableDataStyle({ class: className })} {...props} />;
     }
-  }
+  },
 );
 
 const TableCaption = React.forwardRef<React.ElementRef<typeof ExpoTCaption>, ITableCaptionProps>(
@@ -122,7 +122,7 @@ const TableCaption = React.forwardRef<React.ElementRef<typeof ExpoTCaption>, ITa
     return (
       <ExpoTCaption ref={ref} className={tableCaptionStyle({ class: className })} {...props} />
     );
-  }
+  },
 );
 
 Table.displayName = 'Table';

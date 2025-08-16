@@ -84,7 +84,7 @@ const getFabLabelStyles = (
   size?: string,
   bold?: boolean,
   underline?: boolean,
-  strikeThrough?: boolean
+  strikeThrough?: boolean,
 ) => {
   const fontSize = size === 'sm' ? 14 : size === 'lg' ? 18 : 16;
 
@@ -95,8 +95,8 @@ const getFabLabelStyles = (
     textDecorationLine: underline
       ? ('underline' as const)
       : strikeThrough
-      ? ('line-through' as const)
-      : ('none' as const),
+        ? ('line-through' as const)
+        : ('none' as const),
     marginHorizontal: 8,
   };
 };
@@ -125,7 +125,7 @@ export const Fab = React.forwardRef<View, IFabProps>(
         </Pressable>
       </FabContext.Provider>
     );
-  }
+  },
 );
 
 // FabLabel component
@@ -139,7 +139,7 @@ export const FabLabel = React.forwardRef<Text, IFabLabelProps>(
       style,
       ...props
     },
-    ref
+    ref,
   ) => {
     const context = useContext(FabContext);
     const { size } = context || {};
@@ -155,7 +155,7 @@ export const FabLabel = React.forwardRef<Text, IFabLabelProps>(
         ellipsizeMode={isTruncated ? 'tail' : undefined}
       />
     );
-  }
+  },
 );
 
 // FabIcon component - Simple placeholder
@@ -171,7 +171,7 @@ export const FabIcon = React.forwardRef<View, IFabIconProps>(
         {children}
       </View>
     );
-  }
+  },
 );
 
 // Display names for debugging

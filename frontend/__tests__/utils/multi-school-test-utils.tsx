@@ -4,7 +4,7 @@ import { SchoolMembership, PendingInvitation, SchoolStats } from '@/hooks/useMul
 
 // Mock data for multi-school testing
 export const createMockSchoolMembership = (
-  overrides: Partial<SchoolMembership> = {}
+  overrides: Partial<SchoolMembership> = {},
 ): SchoolMembership => ({
   id: 1,
   school: {
@@ -26,7 +26,7 @@ export const createMockSchoolMembership = (
 });
 
 export const createMockSchoolOwnerMembership = (
-  overrides: Partial<SchoolMembership> = {}
+  overrides: Partial<SchoolMembership> = {},
 ): SchoolMembership => ({
   ...createMockSchoolMembership(),
   id: 2,
@@ -53,7 +53,7 @@ export const createMockSchoolOwnerMembership = (
 });
 
 export const createMockSchoolAdminMembership = (
-  overrides: Partial<SchoolMembership> = {}
+  overrides: Partial<SchoolMembership> = {},
 ): SchoolMembership => ({
   ...createMockSchoolMembership(),
   id: 3,
@@ -72,7 +72,7 @@ export const createMockSchoolAdminMembership = (
 });
 
 export const createMockPendingInvitation = (
-  overrides: Partial<PendingInvitation> = {}
+  overrides: Partial<PendingInvitation> = {},
 ): PendingInvitation => ({
   id: 'inv_123',
   school: {
@@ -252,7 +252,7 @@ export const createMockApiClient = (responses: Record<string, any> = {}) => ({
     return Promise.resolve({ data: {} });
   }),
   patch: jest.fn(() =>
-    Promise.resolve({ data: responses.switch || mockApiResponses.switchSchool.success })
+    Promise.resolve({ data: responses.switch || mockApiResponses.switchSchool.success }),
   ),
   delete: jest.fn(() => Promise.resolve({ data: { success: true } })),
   post: jest.fn(() => Promise.resolve({ data: { success: true } })),
@@ -261,7 +261,7 @@ export const createMockApiClient = (responses: Record<string, any> = {}) => ({
 // Custom render helper for multi-school components
 export const renderWithMultiSchoolContext = (
   ui: ReactNode,
-  scenario = multiSchoolScenarios.singleSchoolTeacher
+  scenario = multiSchoolScenarios.singleSchoolTeacher,
 ) => {
   // This would normally wrap with providers, but since we're mocking the hook,
   // we'll just return the UI for now
@@ -298,7 +298,7 @@ export const multiSchoolAssertions = {
   shouldRespectPermissions: (
     userRole: string,
     attemptedAction: string,
-    expectedResult: boolean
+    expectedResult: boolean,
   ) => {
     // This would check if the user can perform the action based on their role
     const rolePermissions: Record<string, string[]> = {

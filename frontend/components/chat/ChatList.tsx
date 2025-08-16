@@ -57,7 +57,7 @@ const ChannelListContent = () => {
       const filtered = channelsArray.filter(
         channel =>
           channel.name.toLowerCase().includes(searchTermLower) ||
-          (channel.last_message?.content || '').toLowerCase().includes(searchTermLower)
+          (channel.last_message?.content || '').toLowerCase().includes(searchTermLower),
       );
       setFilteredChannels(filtered);
     }

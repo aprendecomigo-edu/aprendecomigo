@@ -75,7 +75,7 @@ class OnboardingApi {
   }
 
   async updateNavigationPreferences(
-    data: UpdateNavigationPreferencesData
+    data: UpdateNavigationPreferencesData,
   ): Promise<NavigationPreferences> {
     const response = await apiClient.post('/accounts/users/navigation_preferences/', data);
     return response.data;

@@ -113,7 +113,7 @@ class TasksApi {
     if (endDate) params.append('end_date', endDate);
 
     const response = await apiClient.get(
-      `/tasks/calendar/${params.toString() ? '?' + params.toString() : ''}`
+      `/tasks/calendar/${params.toString() ? '?' + params.toString() : ''}`,
     );
     return response.data.results || response.data;
   }

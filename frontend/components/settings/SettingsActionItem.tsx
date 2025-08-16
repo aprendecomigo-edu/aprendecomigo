@@ -35,75 +35,82 @@ interface SettingsActionItemProps {
   className?: string;
 }
 
-export const SettingsActionItem = React.memo<SettingsActionItemProps>(({
-  title,
-  description,
-  icon,
-  onPress,
-  disabled = false,
-  badge,
-  showChevron = true,
-  className = '',
-}) => {
-  const handlePress = useCallback(() => {
-    if (!disabled) {
-      onPress();
-    }
-  }, [onPress, disabled]);
+export const SettingsActionItem = React.memo<SettingsActionItemProps>(
+  ({
+    title,
+    description,
+    icon,
+    onPress,
+    disabled = false,
+    badge,
+    showChevron = true,
+    className = '',
+  }) => {
+    const handlePress = useCallback(() => {
+      if (!disabled) {
+        onPress();
+      }
+    }, [onPress, disabled]);
 
-  return (
-    <Pressable
-      onPress={handlePress}
-      disabled={disabled}
-      className={`glass-light rounded-2xl p-4 active:scale-98 transition-all ${
-        disabled ? 'opacity-50' : ''
-      } ${className}`}
-    >
-      <HStack className="items-center justify-between">
-        <HStack className="items-center space-x-3 flex-1">
-          {icon && (
-            <Box className="w-8 h-8 bg-gray-100 rounded-lg items-center justify-center">
-              <Icon as={icon} size="sm" className="text-gray-600" />
-            </Box>
-          )}
-          <VStack className="flex-1">
-            <Text className={`font-medium ${disabled ? 'text-gray-400' : 'text-gray-900'}`}>
-              {title}
-            </Text>
-            {description && (
-              <Text size="sm" className={`${disabled ? 'text-gray-300' : 'text-gray-600'}`}>
-                {description}
-              </Text>
+    return (
+      <Pressable
+        onPress={handlePress}
+        disabled={disabled}
+        className={`glass-light rounded-2xl p-4 active:scale-98 transition-all ${
+          disabled ? 'opacity-50' : ''
+        } ${className}`}
+      >
+        <HStack className="items-center justify-between">
+          <HStack className="items-center space-x-3 flex-1">
+            {icon && (
+              <Box className="w-8 h-8 bg-gray-100 rounded-lg items-center justify-center">
+                <Icon as={icon} size="sm" className="text-gray-600" />
+              </Box>
             )}
-          </VStack>
-        </HStack>
+            <VStack className="flex-1">
+              <Text className={`font-medium ${disabled ? 'text-gray-400' : 'text-gray-900'}`}>
+                {title}
+              </Text>
+              {description && (
+                <Text size="sm" className={`${disabled ? 'text-gray-300' : 'text-gray-600'}`}>
+                  {description}
+                </Text>
+              )}
+            </VStack>
+          </HStack>
 
-        <HStack className="items-center space-x-2">
-          {badge && (
-            <Badge variant={badge.variant || 'outline'} action={badge.action || 'muted'} size="sm">
-              <BadgeText>{badge.text}</BadgeText>
-            </Badge>
-          )}
+          <HStack className="items-center space-x-2">
+            {badge && (
+              <Badge
+                variant={badge.variant || 'outline'}
+                action={badge.action || 'muted'}
+                size="sm"
+              >
+                <BadgeText>{badge.text}</BadgeText>
+              </Badge>
+            )}
 
-          {showChevron && (
-            <Icon
-              as={ChevronRight}
-              size="sm"
-              className={disabled ? 'text-gray-300' : 'text-gray-400'}
-            />
-          )}
+            {showChevron && (
+              <Icon
+                as={ChevronRight}
+                size="sm"
+                className={disabled ? 'text-gray-300' : 'text-gray-400'}
+              />
+            )}
+          </HStack>
         </HStack>
-      </HStack>
-    </Pressable>
-  );
-}, (prevProps, nextProps) => {
-  // Custom comparison function for SettingsActionItem
-  return (
-    prevProps.title === nextProps.title &&
-    prevProps.description === nextProps.description &&
-    prevProps.disabled === nextProps.disabled &&
-    prevProps.showChevron === nextProps.showChevron &&
-    prevProps.className === nextProps.className &&
-    JSON.stringify(prevProps.badge) === JSON.stringify(nextProps.badge)
-  );
-});
+      </Pressable>
+    );
+  },
+  (prevProps, nextProps) => {
+    // Custom comparison function for SettingsActionItem
+    return (
+      prevProps.title === nextProps.title &&
+      prevProps.description === nextProps.description &&
+      prevProps.disabled === nextProps.disabled &&
+      prevProps.showChevron === nextProps.showChevron &&
+      prevProps.className === nextProps.className &&
+      JSON.stringify(prevProps.badge) === JSON.stringify(nextProps.badge)
+    );
+  },
+);

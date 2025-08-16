@@ -172,8 +172,8 @@ describe('TeacherStudentsPage', () => {
       expect(screen.getByText('Nenhum Estudante Encontrado')).toBeTruthy();
       expect(
         screen.getByText(
-          'Ainda não tem estudantes atribuídos. Entre em contacto com a administração da escola.'
-        )
+          'Ainda não tem estudantes atribuídos. Entre em contacto com a administração da escola.',
+        ),
       ).toBeTruthy();
       expect(screen.getByText('Agendar Primeira Aula')).toBeTruthy();
     });
@@ -324,7 +324,7 @@ describe('TeacherStudentsPage', () => {
 
       expect(screen.getByText('Nenhum estudante encontrado')).toBeTruthy();
       expect(
-        screen.getByText('Nenhum resultado para "xyz". Tente ajustar os filtros de pesquisa.')
+        screen.getByText('Nenhum resultado para "xyz". Tente ajustar os filtros de pesquisa.'),
       ).toBeTruthy();
     });
   });

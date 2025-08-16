@@ -1,4 +1,4 @@
-import Link from '@unitools/link';
+import { Link } from 'expo-router';
 import React from 'react';
 
 import { PurchaseFlow } from '@/components/purchase';
@@ -18,7 +18,7 @@ export default function LandingPage() {
     showToast(
       'success',
       `Payment successful! Transaction ID: ${transactionId}. You can now access your tutoring hours.`,
-      6000
+      6000,
     );
   };
 

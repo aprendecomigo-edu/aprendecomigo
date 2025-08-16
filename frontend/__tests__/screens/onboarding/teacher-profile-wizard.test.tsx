@@ -125,7 +125,7 @@ describe('TeacherProfileWizard', () => {
         createMockUseProfileWizard({
           hasUnsavedChanges: true,
           isSaving: false,
-        })
+        }),
       );
 
       const { getByTestId } = render(<TeacherProfileWizard {...mockProps} />);
@@ -138,7 +138,7 @@ describe('TeacherProfileWizard', () => {
         createMockUseProfileWizard({
           hasUnsavedChanges: true,
           isSaving: false,
-        })
+        }),
       );
 
       const { getByTestId } = render(<TeacherProfileWizard {...mockProps} />);
@@ -227,7 +227,7 @@ describe('TeacherProfileWizard', () => {
         createMockUseProfileWizard({
           currentStep: 2,
           hasUnsavedChanges: true,
-        })
+        }),
       );
 
       const { getByTestId } = render(<TeacherProfileWizard {...mockProps} />);
@@ -268,7 +268,7 @@ describe('TeacherProfileWizard', () => {
         createMockUseProfileWizard({
           currentStep: 6,
           isSaving: true,
-        })
+        }),
       );
 
       const { getByTestId } = render(<TeacherProfileWizard {...mockProps} />);
@@ -294,7 +294,7 @@ describe('TeacherProfileWizard', () => {
       mockUseProfileWizard.mockReturnValue(
         createMockUseProfileWizard({
           error: 'Something went wrong',
-        })
+        }),
       );
 
       const { getByText } = render(<TeacherProfileWizard {...mockProps} />);
@@ -331,7 +331,7 @@ describe('TeacherProfileWizard', () => {
 
       expect(consoleSpy).toHaveBeenCalledWith(
         'Error completing profile wizard:',
-        expect.any(Error)
+        expect.any(Error),
       );
 
       consoleSpy.mockRestore();
@@ -351,14 +351,14 @@ describe('TeacherProfileWizard', () => {
       expect(getByText('Save Your Progress?')).toBeTruthy();
       expect(
         getByText(
-          'You have unsaved changes to your profile. Would you like to save your progress before leaving?'
-        )
+          'You have unsaved changes to your profile. Would you like to save your progress before leaving?',
+        ),
       ).toBeTruthy();
     });
 
     it('should exit without confirmation when no unsaved changes', async () => {
       mockUseProfileWizard.mockReturnValue(
-        createMockUseProfileWizard({ hasUnsavedChanges: false })
+        createMockUseProfileWizard({ hasUnsavedChanges: false }),
       );
 
       const { getByTestId } = render(<TeacherProfileWizard {...mockProps} />);
@@ -450,7 +450,7 @@ describe('TeacherProfileWizard', () => {
           formData,
           validationErrors,
           isSaving: true,
-        })
+        }),
       );
 
       const { getByTestId } = render(<TeacherProfileWizard {...mockProps} />);
@@ -500,7 +500,7 @@ describe('TeacherProfileWizard', () => {
         createMockUseProfileWizard({
           currentStep: 2,
           completionData,
-        })
+        }),
       );
 
       const { getByTestId } = render(<TeacherProfileWizard {...mockProps} />);

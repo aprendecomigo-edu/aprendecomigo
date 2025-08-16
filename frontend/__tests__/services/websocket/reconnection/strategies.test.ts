@@ -140,7 +140,7 @@ describe('ReconnectionStrategy Interface', () => {
               maxDelay: 30000,
               backoffFactor: 2,
               maxAttempts: 5,
-            })
+            }),
         ).toThrow('Initial delay must be positive');
 
         // Test zero max attempts
@@ -151,7 +151,7 @@ describe('ReconnectionStrategy Interface', () => {
               maxDelay: 30000,
               backoffFactor: 2,
               maxAttempts: 0,
-            })
+            }),
         ).toThrow('Max attempts must be positive');
 
         // Test invalid backoff factor
@@ -162,7 +162,7 @@ describe('ReconnectionStrategy Interface', () => {
               maxDelay: 30000,
               backoffFactor: 0.5,
               maxAttempts: 5,
-            })
+            }),
         ).toThrow('Backoff factor must be greater than 1');
       });
     });
@@ -309,7 +309,7 @@ describe('ReconnectionStrategy Interface', () => {
 
       // Act & Assert
       expect(() => ReconnectionStrategy.create(invalidConfig)).toThrow(
-        'Unknown strategy type: invalid-strategy'
+        'Unknown strategy type: invalid-strategy',
       );
     });
   });

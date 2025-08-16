@@ -53,7 +53,7 @@ const PrimitiveIcon = React.forwardRef<
 const ItemWrapper = React.forwardRef<React.ElementRef<typeof Pressable>, PressableProps>(
   ({ ...props }, ref) => {
     return <Pressable {...props} ref={ref} />;
-  }
+  },
 );
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -301,7 +301,7 @@ const Actionsheet = React.forwardRef<React.ElementRef<typeof UIActionsheet>, IAc
         {...props}
       />
     );
-  }
+  },
 );
 
 const ActionsheetContent = React.forwardRef<
@@ -485,7 +485,7 @@ const ActionsheetSectionHeaderText = React.forwardRef<
       highlight,
       ...props
     },
-    ref
+    ref,
   ) => {
     return (
       <UIActionsheet.SectionHeaderText
@@ -504,7 +504,7 @@ const ActionsheetSectionHeaderText = React.forwardRef<
         {...props}
       />
     );
-  }
+  },
 );
 
 const ActionsheetIcon = React.forwardRef<

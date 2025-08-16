@@ -271,7 +271,7 @@ export function usePurchaseFlow(): UsePurchaseFlowResult {
         }));
       }
     },
-    [state.paymentIntentSecret]
+    [state.paymentIntentSecret],
   );
 
   const resetFlow = useCallback(() => {

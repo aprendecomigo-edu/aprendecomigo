@@ -301,7 +301,7 @@ export const TutorOnboardingProgress: React.FC<TutorOnboardingProgressProps> = (
 }) => {
   const currentStep = onboarding.steps.find(step => step.id === onboarding.currentStepId);
   const nextStep = onboarding.steps.find(
-    step => !step.isCompleted && step.canAccess && step.id !== onboarding.currentStepId
+    step => !step.isCompleted && step.canAccess && step.id !== onboarding.currentStepId,
   );
 
   const isCompleted = onboarding.overallProgress >= 100;

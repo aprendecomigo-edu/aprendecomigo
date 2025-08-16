@@ -73,9 +73,9 @@ describe('usePurchaseApprovalWebSocket', () => {
 
     // Suppress console logs during tests
     if (__DEV__) {
-    // Suppress console logs during tests
+      // Suppress console logs during tests
       console.log = jest.fn();
-    // Suppress console logs during tests
+      // Suppress console logs during tests
     }
     console.error = jest.fn();
 
@@ -91,9 +91,9 @@ describe('usePurchaseApprovalWebSocket', () => {
   afterEach(() => {
     jest.useRealTimers();
     if (__DEV__) {
-    jest.useRealTimers();
+      jest.useRealTimers();
       console.log = originalConsoleLog;
-    jest.useRealTimers();
+      jest.useRealTimers();
     }
     console.error = originalConsoleError;
     jest.clearAllMocks();
@@ -145,7 +145,7 @@ describe('usePurchaseApprovalWebSocket', () => {
         usePurchaseApprovalWebSocket({
           parentId: 'parent_123',
           enablePushNotifications: true,
-        })
+        }),
       );
 
       await act(async () => {
@@ -164,7 +164,7 @@ describe('usePurchaseApprovalWebSocket', () => {
         usePurchaseApprovalWebSocket({
           parentId: 'parent_123',
           onNewRequest: mockOnNewRequest,
-        })
+        }),
       );
 
       // Simulate incoming message
@@ -196,7 +196,7 @@ describe('usePurchaseApprovalWebSocket', () => {
           type: 'new_request',
           title: 'New Purchase Request',
           read: false,
-        })
+        }),
       );
     });
 
@@ -207,7 +207,7 @@ describe('usePurchaseApprovalWebSocket', () => {
         usePurchaseApprovalWebSocket({
           parentId: 'parent_123',
           onRequestStatusChange: mockOnRequestStatusChange,
-        })
+        }),
       );
 
       const testMessage = WebSocketTestUtils.createTestMessage.purchaseApproval({
@@ -234,7 +234,7 @@ describe('usePurchaseApprovalWebSocket', () => {
         expect.objectContaining({
           type: 'request_approved',
           title: 'Request Approved',
-        })
+        }),
       );
     });
 
@@ -245,7 +245,7 @@ describe('usePurchaseApprovalWebSocket', () => {
         usePurchaseApprovalWebSocket({
           parentId: 'parent_123',
           onBudgetAlert: mockOnBudgetAlert,
-        })
+        }),
       );
 
       const testMessage = WebSocketTestUtils.createTestMessage.purchaseApproval({
@@ -272,7 +272,7 @@ describe('usePurchaseApprovalWebSocket', () => {
         expect.objectContaining({
           type: 'budget_alert',
           priority: 'high',
-        })
+        }),
       );
     });
 
@@ -283,7 +283,7 @@ describe('usePurchaseApprovalWebSocket', () => {
         usePurchaseApprovalWebSocket({
           parentId: 'parent_123',
           onAutoApproval: mockOnAutoApproval,
-        })
+        }),
       );
 
       const testMessage = WebSocketTestUtils.createTestMessage.purchaseApproval({
@@ -310,7 +310,7 @@ describe('usePurchaseApprovalWebSocket', () => {
         expect.objectContaining({
           type: 'auto_approved',
           title: 'Auto-Approved Purchase',
-        })
+        }),
       );
     });
 
@@ -318,7 +318,7 @@ describe('usePurchaseApprovalWebSocket', () => {
       const { result } = renderHook(() =>
         usePurchaseApprovalWebSocket({
           parentId: 'parent_123',
-        })
+        }),
       );
 
       const onMessageCallback = mockUseWebSocket.mock.calls[0][0].onMessage;
@@ -347,7 +347,7 @@ describe('usePurchaseApprovalWebSocket', () => {
       const { result } = renderHook(() =>
         usePurchaseApprovalWebSocket({
           parentId: 'parent_123',
-        })
+        }),
       );
 
       const onMessageCallback = mockUseWebSocket.mock.calls[0][0].onMessage;
@@ -360,7 +360,7 @@ describe('usePurchaseApprovalWebSocket', () => {
       expect(result.current.notifications).toHaveLength(0);
       expect(console.error).toHaveBeenCalledWith(
         'Error processing purchase approval notification:',
-        expect.any(Error)
+        expect.any(Error),
       );
     });
   });
@@ -371,7 +371,7 @@ describe('usePurchaseApprovalWebSocket', () => {
         usePurchaseApprovalWebSocket({
           parentId: 'parent_123',
           enablePushNotifications: true,
-        })
+        }),
       );
 
       const testMessage = WebSocketTestUtils.createTestMessage.purchaseApproval({
@@ -396,7 +396,7 @@ describe('usePurchaseApprovalWebSocket', () => {
           icon: '/icon.png',
           badge: '/badge.png',
           requireInteraction: false,
-        })
+        }),
       );
     });
 
@@ -405,7 +405,7 @@ describe('usePurchaseApprovalWebSocket', () => {
         usePurchaseApprovalWebSocket({
           parentId: 'parent_123',
           enablePushNotifications: true,
-        })
+        }),
       );
 
       const testMessage = WebSocketTestUtils.createTestMessage.purchaseApproval({
@@ -427,7 +427,7 @@ describe('usePurchaseApprovalWebSocket', () => {
         'Critical Budget Alert',
         expect.objectContaining({
           requireInteraction: true,
-        })
+        }),
       );
     });
 
@@ -436,7 +436,7 @@ describe('usePurchaseApprovalWebSocket', () => {
         usePurchaseApprovalWebSocket({
           parentId: 'parent_123',
           enablePushNotifications: false,
-        })
+        }),
       );
 
       const testMessage = WebSocketTestUtils.createTestMessage.purchaseApproval({
@@ -464,7 +464,7 @@ describe('usePurchaseApprovalWebSocket', () => {
         usePurchaseApprovalWebSocket({
           parentId: 'parent_123',
           enablePushNotifications: true,
-        })
+        }),
       );
 
       const testMessage = WebSocketTestUtils.createTestMessage.purchaseApproval({
@@ -489,7 +489,7 @@ describe('usePurchaseApprovalWebSocket', () => {
         usePurchaseApprovalWebSocket({
           parentId: 'parent_123',
           enablePushNotifications: true,
-        })
+        }),
       );
 
       const testMessage = WebSocketTestUtils.createTestMessage.purchaseApproval({
@@ -524,7 +524,7 @@ describe('usePurchaseApprovalWebSocket', () => {
       const { result } = renderHook(() =>
         usePurchaseApprovalWebSocket({
           parentId: 'parent_123',
-        })
+        }),
       );
 
       // Add a notification
@@ -557,7 +557,7 @@ describe('usePurchaseApprovalWebSocket', () => {
       const { result } = renderHook(() =>
         usePurchaseApprovalWebSocket({
           parentId: 'parent_123',
-        })
+        }),
       );
 
       // Add multiple notifications
@@ -594,7 +594,7 @@ describe('usePurchaseApprovalWebSocket', () => {
       const { result } = renderHook(() =>
         usePurchaseApprovalWebSocket({
           parentId: 'parent_123',
-        })
+        }),
       );
 
       // Add notifications
@@ -634,7 +634,7 @@ describe('usePurchaseApprovalWebSocket', () => {
       const { result } = renderHook(() =>
         usePurchaseApprovalWebSocket({
           parentId: 'parent_123',
-        })
+        }),
       );
 
       // Add notifications
@@ -675,7 +675,7 @@ describe('usePurchaseApprovalWebSocket', () => {
       const { result } = renderHook(() =>
         usePurchaseApprovalWebSocket({
           parentId: 'parent_123',
-        })
+        }),
       );
 
       act(() => {
@@ -699,7 +699,7 @@ describe('usePurchaseApprovalWebSocket', () => {
       const { result } = renderHook(() =>
         usePurchaseApprovalWebSocket({
           parentId: 'parent_123',
-        })
+        }),
       );
 
       act(() => {
@@ -720,7 +720,7 @@ describe('usePurchaseApprovalWebSocket', () => {
       const { result } = renderHook(() =>
         usePurchaseApprovalWebSocket({
           parentId: 'parent_123',
-        })
+        }),
       );
 
       expect(result.current.isConnected).toBe(true);

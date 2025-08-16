@@ -35,7 +35,7 @@ export interface PaymentServiceInterface {
   processQuickTopUp(
     packageId: number,
     paymentMethodId: string | null,
-    email?: string | null
+    email?: string | null,
   ): Promise<QuickTopUpRequest>;
 
   /**
@@ -114,7 +114,7 @@ export interface BalanceServiceInterface {
    */
   predictExpiryDate(
     balance: RemainingHoursCalculation,
-    consumptionHistory: ConsumptionRecord[]
+    consumptionHistory: ConsumptionRecord[],
   ): ExpiryPrediction;
 }
 

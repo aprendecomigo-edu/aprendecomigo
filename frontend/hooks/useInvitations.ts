@@ -92,7 +92,7 @@ const isRetryableError = (code?: string): boolean => {
 // Retry utility with exponential backoff
 const retryWithBackoff = async <T>(
   fn: () => Promise<T>,
-  config: RetryConfig = DEFAULT_RETRY_CONFIG
+  config: RetryConfig = DEFAULT_RETRY_CONFIG,
 ): Promise<T> => {
   let lastError: any;
 
@@ -173,7 +173,7 @@ export const useInvitations = (autoFetch = true) => {
         setLoading(false);
       }
     },
-    []
+    [],
   );
 
   const refreshInvitations = useCallback(() => {
@@ -228,7 +228,7 @@ export const useInviteTeacher = () => {
         setLoading(false);
       }
     },
-    []
+    [],
   );
 
   return {
@@ -344,7 +344,7 @@ export const useInvitationActions = () => {
 
         const result = await retryWithBackoff(
           () => InvitationApi.acceptInvitation(token, profileData),
-          { ...DEFAULT_RETRY_CONFIG, ...retryConfig }
+          { ...DEFAULT_RETRY_CONFIG, ...retryConfig },
         );
 
         return result;
@@ -362,7 +362,7 @@ export const useInvitationActions = () => {
         setLoading(false);
       }
     },
-    []
+    [],
   );
 
   const declineInvitation = useCallback(
@@ -387,7 +387,7 @@ export const useInvitationActions = () => {
         setLoading(false);
       }
     },
-    []
+    [],
   );
 
   const getInvitationStatus = useCallback(
@@ -411,7 +411,7 @@ export const useInvitationActions = () => {
         setLoading(false);
       }
     },
-    []
+    [],
   );
 
   // Retry last failed operation
@@ -448,7 +448,7 @@ export const useInvitationActions = () => {
 // Hook for polling invitation status updates
 export const useInvitationPolling = (
   refreshCallback: () => void,
-  intervalMs = INVITATION_CONSTANTS.STATUS_POLLING_INTERVAL
+  intervalMs = INVITATION_CONSTANTS.STATUS_POLLING_INTERVAL,
 ) => {
   const [isPolling, setIsPolling] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);

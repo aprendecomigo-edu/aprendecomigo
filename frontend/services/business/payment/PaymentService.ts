@@ -25,7 +25,7 @@ export class PaymentService implements PaymentServiceInterface {
   async processQuickTopUp(
     packageId: number,
     paymentMethodId: string | null,
-    email?: string | null
+    email?: string | null,
   ): Promise<QuickTopUpRequest> {
     // Validate inputs
     if (!packageId || packageId <= 0) {

@@ -42,7 +42,7 @@ interface UseTeacherProfileReturn {
 }
 
 export const useTeacherProfile = (
-  options: UseTeacherProfileOptions = {}
+  options: UseTeacherProfileOptions = {},
 ): UseTeacherProfileReturn => {
   const { teacherId, autoFetch = true } = options;
 
@@ -72,7 +72,7 @@ export const useTeacherProfile = (
         setLoading(false);
       }
     },
-    [teacherId]
+    [teacherId],
   );
 
   const updateProfile = useCallback(
@@ -96,7 +96,7 @@ export const useTeacherProfile = (
         setUpdating(false);
       }
     },
-    [profile?.id]
+    [profile?.id],
   );
 
   const refresh = useCallback(async () => {

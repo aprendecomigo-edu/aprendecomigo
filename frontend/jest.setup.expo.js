@@ -26,21 +26,7 @@ jest.mock('expo-router', () => ({
   },
 }));
 
-// Mock @unitools packages
-jest.mock('@unitools/router', () => ({
-  __esModule: true,
-  default: jest.fn(() => ({
-    push: jest.fn(),
-    back: jest.fn(),
-    replace: jest.fn(),
-    canGoBack: jest.fn(() => true),
-  })),
-}));
-
-jest.mock('@unitools/link', () => ({
-  __esModule: true,
-  default: 'Link',
-}));
+// @unitools mocks removed - using expo-router instead
 
 // Mock Gluestack UI components
 jest.mock('@/components/ui/form-control', () => ({

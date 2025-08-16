@@ -279,7 +279,7 @@ export const useTutorOnboarding = (): UseTutorOnboardingReturn => {
         console.error('Failed to load guidance:', error);
       }
     },
-    [state.currentStep, state.formData, state.selectedCourses.length, state.customSubjects.length]
+    [state.currentStep, state.formData, state.selectedCourses.length, state.customSubjects.length],
   );
 
   // Update form data
@@ -330,7 +330,7 @@ export const useTutorOnboarding = (): UseTutorOnboardingReturn => {
         });
       }
     },
-    [loadCourses, updateFormData]
+    [loadCourses, updateFormData],
   );
 
   // Set selected courses
@@ -362,7 +362,7 @@ export const useTutorOnboarding = (): UseTutorOnboardingReturn => {
         },
       });
     },
-    [state.selectedEducationalSystem?.id, updateFormData]
+    [state.selectedEducationalSystem?.id, updateFormData],
   );
 
   // Navigation functions
@@ -375,7 +375,7 @@ export const useTutorOnboarding = (): UseTutorOnboardingReturn => {
         loadStepGuidance(stepConfig.id);
       }
     },
-    [loadStepGuidance]
+    [loadStepGuidance],
   );
 
   const goToStep = useCallback(
@@ -385,7 +385,7 @@ export const useTutorOnboarding = (): UseTutorOnboardingReturn => {
         setCurrentStep(stepIndex);
       }
     },
-    [setCurrentStep]
+    [setCurrentStep],
   );
 
   // Validation
@@ -520,7 +520,7 @@ export const useTutorOnboarding = (): UseTutorOnboardingReturn => {
         throw error;
       }
     },
-    [state.stepData, state.onboardingId, state.formData]
+    [state.stepData, state.onboardingId, state.formData],
   );
 
   // Reset onboarding

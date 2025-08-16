@@ -52,7 +52,7 @@ export const Toast = React.forwardRef<View, IToastProps>(
     const combinedClasses = `${baseClasses} ${actionClasses[action]} ${variantClasses[variant]} ${className}`;
 
     return <Animated.View ref={ref} {...props} className={combinedClasses} />;
-  }
+  },
 );
 
 // Simple Toast Title
@@ -76,7 +76,7 @@ export const ToastTitle = React.forwardRef<Text, IToastTitleProps>(
     const combinedClasses = `${baseClasses} ${sizeClasses[size]} ${className}`;
 
     return <Text ref={ref} {...props} className={combinedClasses} />;
-  }
+  },
 );
 
 // Simple Toast Description
@@ -100,7 +100,7 @@ export const ToastDescription = React.forwardRef<Text, IToastDescriptionProps>(
     const combinedClasses = `${baseClasses} ${sizeClasses[size]} ${className}`;
 
     return <Text ref={ref} {...props} className={combinedClasses} />;
-  }
+  },
 );
 
 // Simple toast hook - Direct implementation without factory

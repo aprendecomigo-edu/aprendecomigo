@@ -108,8 +108,8 @@ export const AutoApprovalSettings: React.FC<AutoApprovalSettingsProps> = ({
       prev.map(rule =>
         rule.id === ruleId
           ? { ...rule, conditions: { ...rule.conditions, [condition]: value } }
-          : rule
-      )
+          : rule,
+      ),
     );
   };
 
@@ -284,8 +284,8 @@ export const AutoApprovalSettings: React.FC<AutoApprovalSettingsProps> = ({
                                       status.status === 'active'
                                         ? 'success'
                                         : status.status === 'incomplete'
-                                        ? 'warning'
-                                        : 'secondary'
+                                          ? 'warning'
+                                          : 'secondary'
                                     }
                                     size="sm"
                                   >
@@ -376,7 +376,7 @@ export const AutoApprovalSettings: React.FC<AutoApprovalSettingsProps> = ({
                                           updateRuleCondition(
                                             rule.id,
                                             'max_amount',
-                                            parseFloat(value) || 0
+                                            parseFloat(value) || 0,
                                           )
                                         }
                                         keyboardType="numeric"
@@ -432,7 +432,7 @@ export const AutoApprovalSettings: React.FC<AutoApprovalSettingsProps> = ({
                                           updateRule(rule.id, { child_specific: undefined });
                                         } else {
                                           const child = children.find(
-                                            c => c.id.toString() === value
+                                            c => c.id.toString() === value,
                                           );
                                           if (child) {
                                             updateRule(rule.id, {
@@ -475,7 +475,7 @@ export const AutoApprovalSettings: React.FC<AutoApprovalSettingsProps> = ({
                                             updateRuleCondition(
                                               rule.id,
                                               'child_balance_required',
-                                              parseFloat(value) || 0
+                                              parseFloat(value) || 0,
                                             )
                                           }
                                           keyboardType="numeric"
@@ -535,8 +535,8 @@ export const AutoApprovalSettings: React.FC<AutoApprovalSettingsProps> = ({
                           {child.trustLevel === 'high'
                             ? '50'
                             : child.trustLevel === 'medium'
-                            ? '25'
-                            : '10'}
+                              ? '25'
+                              : '10'}
                         </Text>
                       </HStack>
                     ))}

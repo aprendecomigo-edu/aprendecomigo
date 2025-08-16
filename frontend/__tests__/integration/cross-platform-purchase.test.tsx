@@ -168,7 +168,7 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
         expect(mockHistory.pushState).toHaveBeenCalledWith(
           expect.any(Object),
           '',
-          expect.stringContaining('/purchase/user-info')
+          expect.stringContaining('/purchase/user-info'),
         );
       });
 
@@ -178,7 +178,7 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
       fireEvent.changeText(getByPlaceholderText('Student email'), VALID_TEST_DATA.studentEmail);
 
       mockPurchaseApiClient.initiatePurchase.mockResolvedValue(
-        createMockPurchaseInitiationResponse()
+        createMockPurchaseInitiationResponse(),
       );
       fireEvent.press(getByText('Continue to Payment'));
 
@@ -186,7 +186,7 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
         expect(mockHistory.pushState).toHaveBeenCalledWith(
           expect.any(Object),
           '',
-          expect.stringContaining('/purchase/payment')
+          expect.stringContaining('/purchase/payment'),
         );
       });
     });
@@ -246,8 +246,8 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
               studentName: VALID_TEST_DATA.studentName,
               studentEmail: VALID_TEST_DATA.studentEmail,
             }),
-          })
-        )
+          }),
+        ),
       );
     });
 
@@ -263,7 +263,7 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
       Platform.OS = 'ios';
       Platform.Version = '17.0';
       Platform.select = jest.fn(
-        (platforms: any) => platforms.ios || platforms.native || platforms.default
+        (platforms: any) => platforms.ios || platforms.native || platforms.default,
       );
     });
 
@@ -349,11 +349,11 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
       await waitFor(() => {
         expect(getByPlaceholderText('Student name')).toHaveProperty(
           'value',
-          VALID_TEST_DATA.studentName
+          VALID_TEST_DATA.studentName,
         );
         expect(getByPlaceholderText('Student email')).toHaveProperty(
           'value',
-          VALID_TEST_DATA.studentEmail
+          VALID_TEST_DATA.studentEmail,
         );
       });
     });
@@ -381,7 +381,7 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
       fireEvent.changeText(getByPlaceholderText('Student email'), VALID_TEST_DATA.studentEmail);
 
       mockPurchaseApiClient.initiatePurchase.mockResolvedValue(
-        createMockPurchaseInitiationResponse()
+        createMockPurchaseInitiationResponse(),
       );
       fireEvent.press(getByText('Continue to Payment'));
 
@@ -403,7 +403,7 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
       Platform.OS = 'android';
       Platform.Version = 33; // Android 13
       Platform.select = jest.fn(
-        (platforms: any) => platforms.android || platforms.native || platforms.default
+        (platforms: any) => platforms.android || platforms.native || platforms.default,
       );
     });
 
@@ -564,7 +564,7 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
         // Set platform
         Platform.OS = platform as any;
         Platform.select = jest.fn(
-          (platforms: any) => platforms[platform] || platforms.native || platforms.default
+          (platforms: any) => platforms[platform] || platforms.native || platforms.default,
         );
 
         const { getByText, getByPlaceholderText } = render(<PurchaseFlow />);
@@ -581,7 +581,7 @@ describe('Cross-Platform Purchase Flow Integration Tests', () => {
         fireEvent.press(getByText('Continue to Payment'));
 
         mockPurchaseApiClient.initiatePurchase.mockResolvedValue(
-          createMockPurchaseInitiationResponse()
+          createMockPurchaseInitiationResponse(),
         );
         await waitFor(() => {
           expect(getByText('Payment')).toBeTruthy();

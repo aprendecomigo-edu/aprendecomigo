@@ -55,8 +55,8 @@ const getButtonStyles = (variant?: string, size?: string, action?: string) => {
     variant === 'link'
       ? 'transparent'
       : variant === 'outline'
-      ? 'transparent'
-      : colors[action || 'primary'];
+        ? 'transparent'
+        : colors[action || 'primary'];
 
   const borderWidth = variant === 'outline' ? 1 : 0;
   const borderColor = colors[action || 'primary'];
@@ -101,7 +101,7 @@ export const Button = React.forwardRef<View, IButtonProps>(
         </Pressable>
       </ButtonContext.Provider>
     );
-  }
+  },
 );
 
 // ButtonText component
@@ -141,7 +141,7 @@ export const ButtonGroup = React.forwardRef<View, IButtonGroupProps>(
         ]}
       />
     );
-  }
+  },
 );
 
 // Display names for debugging

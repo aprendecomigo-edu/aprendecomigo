@@ -1,4 +1,4 @@
-import useRouter from '@unitools/router';
+import { useRouter } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 
 import { AuthLayout } from './AuthLayout';

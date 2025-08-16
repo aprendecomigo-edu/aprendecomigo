@@ -152,7 +152,7 @@ export const SchoolStats: React.FC<SchoolStatsProps> = ({
               <Box
                 className={`text-center p-3 rounded-lg ${getStatColor(
                   stats.average_rating,
-                  'rating'
+                  'rating',
                 )}`}
               >
                 <Icon
@@ -324,7 +324,7 @@ export const SchoolStats: React.FC<SchoolStatsProps> = ({
                   <Box
                     className={`text-center p-4 rounded-lg ${getStatColor(
                       stats.student_satisfaction,
-                      'percentage'
+                      'percentage',
                     )}`}
                   >
                     <Icon
@@ -349,7 +349,7 @@ export const SchoolStats: React.FC<SchoolStatsProps> = ({
                   <Box
                     className={`text-center p-4 rounded-lg ${getStatColor(
                       stats.teacher_retention_rate,
-                      'percentage'
+                      'percentage',
                     )}`}
                   >
                     <Icon

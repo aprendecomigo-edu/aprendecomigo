@@ -141,7 +141,7 @@ export const schedulerApi = {
     data: Omit<
       TeacherAvailability,
       'id' | 'teacher_name' | 'school_name' | 'day_of_week_display' | 'created_at' | 'updated_at'
-    >
+    >,
   ): Promise<TeacherAvailability> => {
     const response = await apiClient.post('/scheduler/api/availability/', data);
     return response.data;
@@ -149,7 +149,7 @@ export const schedulerApi = {
 
   updateTeacherAvailability: async (
     id: number,
-    data: Partial<TeacherAvailability>
+    data: Partial<TeacherAvailability>,
   ): Promise<TeacherAvailability> => {
     const response = await apiClient.patch(`/scheduler/api/availability/${id}/`, data);
     return response.data;
@@ -179,7 +179,7 @@ export const schedulerApi = {
   },
 
   createTeacherUnavailability: async (
-    data: Omit<TeacherUnavailability, 'id' | 'teacher_name' | 'school_name' | 'created_at'>
+    data: Omit<TeacherUnavailability, 'id' | 'teacher_name' | 'school_name' | 'created_at'>,
   ): Promise<TeacherUnavailability> => {
     const response = await apiClient.post('/scheduler/api/unavailability/', data);
     return response.data;
@@ -187,7 +187,7 @@ export const schedulerApi = {
 
   updateTeacherUnavailability: async (
     id: number,
-    data: Partial<TeacherUnavailability>
+    data: Partial<TeacherUnavailability>,
   ): Promise<TeacherUnavailability> => {
     const response = await apiClient.patch(`/scheduler/api/unavailability/${id}/`, data);
     return response.data;
@@ -233,7 +233,7 @@ export const schedulerApi = {
 
   updateClassSchedule: async (
     id: number,
-    data: Partial<CreateClassScheduleData>
+    data: Partial<CreateClassScheduleData>,
   ): Promise<ClassSchedule> => {
     const response = await apiClient.patch(`/scheduler/api/schedules/${id}/`, data);
     return response.data;
@@ -280,7 +280,7 @@ export const schedulerApi = {
   // Get available time slots
   getAvailableTimeSlots: async (
     teacherId: number,
-    date: string
+    date: string,
   ): Promise<AvailableTimeSlotsResponse> => {
     const response = await apiClient.get('/scheduler/api/schedules/available_slots/', {
       params: { teacher_id: teacherId, date },
@@ -318,7 +318,7 @@ export const schedulerApi = {
       | 'class_type_display'
       | 'created_at'
       | 'updated_at'
-    >
+    >,
   ): Promise<RecurringClassSchedule> => {
     const response = await apiClient.post('/scheduler/api/recurring/', data);
     return response.data;
@@ -326,7 +326,7 @@ export const schedulerApi = {
 
   updateRecurringSchedule: async (
     id: number,
-    data: Partial<RecurringClassSchedule>
+    data: Partial<RecurringClassSchedule>,
   ): Promise<RecurringClassSchedule> => {
     const response = await apiClient.patch(`/scheduler/api/recurring/${id}/`, data);
     return response.data;
@@ -338,7 +338,7 @@ export const schedulerApi = {
 
   generateSchedulesFromRecurring: async (
     id: number,
-    weeksAhead?: number
+    weeksAhead?: number,
   ): Promise<{ message: string; schedules: ClassSchedule[] }> => {
     const response = await apiClient.post(`/scheduler/api/recurring/${id}/generate_schedules/`, {
       weeks_ahead: weeksAhead || 4,

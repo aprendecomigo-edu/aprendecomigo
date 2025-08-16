@@ -67,7 +67,7 @@ export class BalanceApiService {
    */
   async getTransaction(transactionId: string): Promise<Transaction> {
     const response = await this.apiClient.get<Transaction>(
-      `/balance/transactions/${transactionId}/`
+      `/balance/transactions/${transactionId}/`,
     );
     return response.data;
   }

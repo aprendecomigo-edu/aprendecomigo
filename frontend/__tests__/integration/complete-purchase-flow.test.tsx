@@ -125,8 +125,8 @@ describe('Complete Purchase Flow Integration Tests', () => {
 
       const { getByText, getByPlaceholderText, queryByText } = render(
         createAuthTestWrapper(
-          <PurchaseFlow onPurchaseComplete={onPurchaseComplete} onCancel={onCancel} />
-        )
+          <PurchaseFlow onPurchaseComplete={onPurchaseComplete} onCancel={onCancel} />,
+        ),
       );
 
       // Initial state - user not authenticated, should see auth prompts
@@ -193,8 +193,8 @@ describe('Complete Purchase Flow Integration Tests', () => {
           expect.objectContaining({
             user: mockNewUser,
             token: expect.any(String),
-          })
-        )
+          }),
+        ),
       );
     });
 
@@ -208,13 +208,13 @@ describe('Complete Purchase Flow Integration Tests', () => {
           token: 'valid_jwt_token',
           refreshToken: 'valid_refresh_token',
           expiresAt: Date.now() + 3600000, // 1 hour from now
-        })
+        }),
       );
 
       const onPurchaseComplete = jest.fn();
 
       const { getByText, getByPlaceholderText, queryByText } = render(
-        createAuthTestWrapper(<PurchaseFlow onPurchaseComplete={onPurchaseComplete} />)
+        createAuthTestWrapper(<PurchaseFlow onPurchaseComplete={onPurchaseComplete} />),
       );
 
       // Should immediately show purchase flow without auth prompt
@@ -231,7 +231,7 @@ describe('Complete Purchase Flow Integration Tests', () => {
         expect(getByPlaceholderText('Student name')).toHaveProperty('value', mockExistingUser.name);
         expect(getByPlaceholderText('Student email')).toHaveProperty(
           'value',
-          mockExistingUser.email
+          mockExistingUser.email,
         );
       });
 
@@ -249,7 +249,7 @@ describe('Complete Purchase Flow Integration Tests', () => {
           token: 'expired_jwt_token',
           refreshToken: 'valid_refresh_token',
           expiresAt: Date.now() - 1000, // Expired
-        })
+        }),
       );
 
       // Mock successful token refresh
@@ -284,8 +284,8 @@ describe('Complete Purchase Flow Integration Tests', () => {
         JSON.stringify(
           expect.objectContaining({
             token: expect.not.stringMatching('expired_jwt_token'),
-          })
-        )
+          }),
+        ),
       );
     });
 
@@ -298,7 +298,7 @@ describe('Complete Purchase Flow Integration Tests', () => {
           user: mockExistingUser,
           token: 'valid_token',
           expiresAt: Date.now() + 3600000,
-        })
+        }),
       );
 
       const { getByText, getByPlaceholderText } = render(createAuthTestWrapper(<PurchaseFlow />));
@@ -316,7 +316,7 @@ describe('Complete Purchase Flow Integration Tests', () => {
         // Trigger AppState change event
         require('react-native').AppState.currentState = 'background';
         require('react-native').AppState._eventHandlers.change.forEach((handler: any) =>
-          handler('background')
+          handler('background'),
         );
       });
 
@@ -324,7 +324,7 @@ describe('Complete Purchase Flow Integration Tests', () => {
       act(() => {
         require('react-native').AppState.currentState = 'active';
         require('react-native').AppState._eventHandlers.change.forEach((handler: any) =>
-          handler('active')
+          handler('active'),
         );
       });
 
@@ -333,17 +333,17 @@ describe('Complete Purchase Flow Integration Tests', () => {
         expect(getByText('Student Information')).toBeTruthy();
         expect(getByPlaceholderText('Student name')).toHaveProperty(
           'value',
-          VALID_TEST_DATA.studentName
+          VALID_TEST_DATA.studentName,
         );
         expect(getByPlaceholderText('Student email')).toHaveProperty(
           'value',
-          VALID_TEST_DATA.studentEmail
+          VALID_TEST_DATA.studentEmail,
         );
       });
 
       // Should still be able to complete purchase
       mockPurchaseApiClient.initiatePurchase.mockResolvedValue(
-        createMockPurchaseInitiationResponse()
+        createMockPurchaseInitiationResponse(),
       );
       fireEvent.press(getByText('Continue to Payment'));
 
@@ -397,11 +397,11 @@ describe('Complete Purchase Flow Integration Tests', () => {
         expect(getByText('Student Information')).toBeTruthy();
         expect(getByPlaceholderText('Student name')).toHaveProperty(
           'value',
-          VALID_TEST_DATA.studentName
+          VALID_TEST_DATA.studentName,
         );
         expect(getByPlaceholderText('Student email')).toHaveProperty(
           'value',
-          VALID_TEST_DATA.studentEmail
+          VALID_TEST_DATA.studentEmail,
         );
       });
 
@@ -413,7 +413,7 @@ describe('Complete Purchase Flow Integration Tests', () => {
     it('handles authentication failure scenarios gracefully', async () => {
       // Mock authentication failure
       mockAuthApiClient.requestEmailVerification.mockRejectedValue(
-        new Error('Email service unavailable')
+        new Error('Email service unavailable'),
       );
 
       const { getByText, queryByText } = render(createAuthTestWrapper(<PurchaseFlow />));
@@ -437,12 +437,12 @@ describe('Complete Purchase Flow Integration Tests', () => {
           user: mockExistingUser,
           token: 'valid_token',
           expiresAt: Date.now() + 3600000,
-        })
+        }),
       );
 
       const onPurchaseComplete = jest.fn();
       const { getByText, getByPlaceholderText } = render(
-        createAuthTestWrapper(<PurchaseFlow onPurchaseComplete={onPurchaseComplete} />)
+        createAuthTestWrapper(<PurchaseFlow onPurchaseComplete={onPurchaseComplete} />),
       );
 
       // Complete full flow
@@ -491,7 +491,7 @@ describe('Complete Purchase Flow Integration Tests', () => {
           user: mockExistingUser,
           token: 'valid_token',
           expiresAt: Date.now() + 3600000,
-        })
+        }),
       );
 
       // Mock API returning 401 (session invalidated elsewhere)
@@ -501,7 +501,7 @@ describe('Complete Purchase Flow Integration Tests', () => {
       });
 
       const { getByText, getByPlaceholderText, queryByText } = render(
-        createAuthTestWrapper(<PurchaseFlow />)
+        createAuthTestWrapper(<PurchaseFlow />),
       );
 
       await waitFor(() => getByText('Select Plan'));
@@ -547,7 +547,7 @@ describe('Complete Purchase Flow Integration Tests', () => {
             user: mockExistingUser,
             token: 'new_token',
             expiresAt: Date.now() + 3600000,
-          })
+          }),
         );
       });
 
@@ -555,11 +555,11 @@ describe('Complete Purchase Flow Integration Tests', () => {
       await waitFor(() => {
         expect(getByPlaceholderText('Student name')).toHaveProperty(
           'value',
-          VALID_TEST_DATA.studentName
+          VALID_TEST_DATA.studentName,
         );
         expect(getByPlaceholderText('Student email')).toHaveProperty(
           'value',
-          VALID_TEST_DATA.studentEmail
+          VALID_TEST_DATA.studentEmail,
         );
       });
     });

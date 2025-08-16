@@ -70,7 +70,7 @@ const StudentCard: React.FC<StudentCardProps> = ({
 
     const lastSessionDate = new Date(student.last_session_date);
     const daysSinceLastSession = Math.floor(
-      (Date.now() - lastSessionDate.getTime()) / (1000 * 60 * 60 * 24)
+      (Date.now() - lastSessionDate.getTime()) / (1000 * 60 * 60 * 24),
     );
 
     if (daysSinceLastSession <= 3) {
@@ -248,7 +248,7 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
       const query = searchQuery.toLowerCase().trim();
       filtered = filtered.filter(
         student =>
-          student.name.toLowerCase().includes(query) || student.email.toLowerCase().includes(query)
+          student.name.toLowerCase().includes(query) || student.email.toLowerCase().includes(query),
       );
     }
 
@@ -258,7 +258,7 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
         filtered = filtered.filter(
           student =>
             student.last_session_date &&
-            new Date(student.last_session_date) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+            new Date(student.last_session_date) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
         );
         break;
       case 'needs_attention':
@@ -266,7 +266,7 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
           student =>
             student.completion_percentage < 50 ||
             !student.last_session_date ||
-            new Date(student.last_session_date) < new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
+            new Date(student.last_session_date) < new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
         );
         break;
       case 'high_performers':
@@ -306,19 +306,19 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
     const active = students.filter(
       s =>
         s.last_session_date &&
-        new Date(s.last_session_date) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        new Date(s.last_session_date) >= new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
     ).length;
     const needsAttention = students.filter(
       s =>
         s.completion_percentage < 50 ||
         !s.last_session_date ||
         (s.last_session_date &&
-          new Date(s.last_session_date) < new Date(Date.now() - 14 * 24 * 60 * 60 * 1000))
+          new Date(s.last_session_date) < new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)),
     ).length;
     const avgProgress =
       students.length > 0
         ? Math.round(
-            students.reduce((sum, s) => sum + s.completion_percentage, 0) / students.length
+            students.reduce((sum, s) => sum + s.completion_percentage, 0) / students.length,
           )
         : 0;
 
@@ -416,10 +416,10 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
                         {filterBy === 'active'
                           ? 'Ativos'
                           : filterBy === 'needs_attention'
-                          ? 'Precisam Atenção'
-                          : filterBy === 'high_performers'
-                          ? 'Alto Desempenho'
-                          : 'Novos Estudantes'}
+                            ? 'Precisam Atenção'
+                            : filterBy === 'high_performers'
+                              ? 'Alto Desempenho'
+                              : 'Novos Estudantes'}
                       </BadgeText>
                     </Badge>
                   )}
@@ -475,14 +475,14 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
                 {searchQuery
                   ? `Nenhum resultado para "${searchQuery}". Tente ajustar os filtros de pesquisa.`
                   : filterBy === 'active'
-                  ? 'Nenhum estudante ativo encontrado.'
-                  : filterBy === 'needs_attention'
-                  ? 'Nenhum estudante que precisa de atenção encontrado.'
-                  : filterBy === 'high_performers'
-                  ? 'Nenhum estudante de alto desempenho encontrado.'
-                  : filterBy === 'new_students'
-                  ? 'Nenhum novo estudante encontrado.'
-                  : 'Ainda não tem estudantes atribuídos.'}
+                    ? 'Nenhum estudante ativo encontrado.'
+                    : filterBy === 'needs_attention'
+                      ? 'Nenhum estudante que precisa de atenção encontrado.'
+                      : filterBy === 'high_performers'
+                        ? 'Nenhum estudante de alto desempenho encontrado.'
+                        : filterBy === 'new_students'
+                          ? 'Nenhum novo estudante encontrado.'
+                          : 'Ainda não tem estudantes atribuídos.'}
               </Text>
             </VStack>
             {(searchQuery || filterBy !== 'all') && (

@@ -7,7 +7,7 @@ describe('Button v2 Component', () => {
     const { getByText } = render(
       <Button>
         <ButtonText>Click me</ButtonText>
-      </Button>
+      </Button>,
     );
     expect(getByText('Click me')).toBeTruthy();
   });
@@ -17,7 +17,7 @@ describe('Button v2 Component', () => {
     const { getByText } = render(
       <Button onPress={onPress}>
         <ButtonText>Click me</ButtonText>
-      </Button>
+      </Button>,
     );
 
     fireEvent.press(getByText('Click me'));
@@ -28,21 +28,21 @@ describe('Button v2 Component', () => {
     const { getByTestId, rerender } = render(
       <Button testID="button" variant="solid">
         <ButtonText>Solid Button</ButtonText>
-      </Button>
+      </Button>,
     );
     expect(getByTestId('button')).toBeTruthy();
 
     rerender(
       <Button testID="button" variant="outline">
         <ButtonText>Outline Button</ButtonText>
-      </Button>
+      </Button>,
     );
     expect(getByTestId('button')).toBeTruthy();
 
     rerender(
       <Button testID="button" variant="link">
         <ButtonText>Link Button</ButtonText>
-      </Button>
+      </Button>,
     );
     expect(getByTestId('button')).toBeTruthy();
   });
@@ -51,14 +51,14 @@ describe('Button v2 Component', () => {
     const { getByTestId, rerender } = render(
       <Button testID="button" size="xs">
         <ButtonText>XS Button</ButtonText>
-      </Button>
+      </Button>,
     );
     expect(getByTestId('button')).toBeTruthy();
 
     rerender(
       <Button testID="button" size="lg">
         <ButtonText>LG Button</ButtonText>
-      </Button>
+      </Button>,
     );
     expect(getByTestId('button')).toBeTruthy();
   });
@@ -68,7 +68,7 @@ describe('Button v2 Component', () => {
       <Button>
         <ButtonSpinner testID="spinner" />
         <ButtonText>Loading</ButtonText>
-      </Button>
+      </Button>,
     );
     expect(getByTestId('spinner')).toBeTruthy();
   });
@@ -82,7 +82,7 @@ describe('Button v2 Component', () => {
         <Button>
           <ButtonText>Button 2</ButtonText>
         </Button>
-      </ButtonGroup>
+      </ButtonGroup>,
     );
     expect(getByText('Button 1')).toBeTruthy();
     expect(getByText('Button 2')).toBeTruthy();
@@ -93,7 +93,7 @@ describe('Button v2 Component', () => {
     const { getByText } = render(
       <Button disabled onPress={onPress}>
         <ButtonText>Disabled Button</ButtonText>
-      </Button>
+      </Button>,
     );
 
     fireEvent.press(getByText('Disabled Button'));

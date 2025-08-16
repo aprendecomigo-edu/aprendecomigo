@@ -297,26 +297,7 @@ jest.mock('react-native-reanimated/lib/module/reanimated2/NativeReanimated', () 
 
 // Remove duplicate expo-router mock (already defined later)
 
-// Mock @unitools/router (used by SignIn component)
-jest.mock('@unitools/router', () => ({
-  __esModule: true,
-  default: () => ({
-    push: jest.fn(),
-    back: jest.fn(),
-    replace: jest.fn(),
-  }),
-}));
-
-// Mock @unitools/link (used by SignIn component)
-jest.mock('@unitools/link', () => {
-  const React = require('react');
-  return {
-    __esModule: true,
-    default: React.forwardRef(({ href, children, ...props }, ref) =>
-      React.createElement('a', { href, ref, ...props }, children)
-    ),
-  };
-});
+// @unitools mocks removed - using expo-router instead
 
 // Mock react-native-safe-area-context first (must come before other mocks)
 jest.mock('react-native-safe-area-context', () => {
@@ -369,28 +350,7 @@ jest.mock('expo-router', () => {
   };
 });
 
-jest.mock('@unitools/router', () => ({
-  __esModule: true,
-  default: jest.fn(() => ({
-    push: jest.fn(),
-    back: jest.fn(),
-    replace: jest.fn(),
-    canGoBack: jest.fn(() => true),
-  })),
-}));
-
-jest.mock('@unitools/link', () => {
-  const React = require('react');
-  const mockLink = React.forwardRef((props, ref) => {
-    const { href, children, ...otherProps } = props;
-    return React.createElement('a', { ...otherProps, ref, href }, children);
-  });
-  mockLink.displayName = 'UnitoolsLink';
-  return {
-    __esModule: true,
-    default: mockLink,
-  };
-});
+// @unitools mocks removed - using expo-router instead
 
 // Mock AsyncStorage
 jest.mock('@react-native-async-storage/async-storage', () => ({

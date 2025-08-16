@@ -11,81 +11,180 @@ module.exports = {
   presets: [nativewind],
   safelist: [
     // Existing classes
-    'gap-x-2', 'gap-y-6', 'pl-4', 'flex-wrap', 'mb-12', 'basis-[10%]',
-    
+    'gap-x-2',
+    'gap-y-6',
+    'pl-4',
+    'flex-wrap',
+    'mb-12',
+    'basis-[10%]',
+
     // Dynamic color patterns - Background classes
-    'bg-red-50', 'bg-red-100', 'bg-red-200', 'bg-red-600',
-    'bg-green-50', 'bg-green-100', 'bg-green-200', 'bg-green-600',
-    'bg-blue-50', 'bg-blue-100', 'bg-blue-200', 'bg-blue-600',
-    'bg-yellow-50', 'bg-yellow-100', 'bg-yellow-200', 'bg-yellow-600',
-    'bg-orange-50', 'bg-orange-100', 'bg-orange-200', 'bg-orange-600',
-    'bg-purple-50', 'bg-purple-100', 'bg-purple-200', 'bg-purple-600',
-    'bg-indigo-50', 'bg-indigo-100', 'bg-indigo-200', 'bg-indigo-600',
-    'bg-teal-50', 'bg-teal-100', 'bg-teal-200', 'bg-teal-600',
-    'bg-gray-50', 'bg-gray-100', 'bg-gray-200', 'bg-gray-600',
-    
+    'bg-red-50',
+    'bg-red-100',
+    'bg-red-200',
+    'bg-red-600',
+    'bg-green-50',
+    'bg-green-100',
+    'bg-green-200',
+    'bg-green-600',
+    'bg-blue-50',
+    'bg-blue-100',
+    'bg-blue-200',
+    'bg-blue-600',
+    'bg-yellow-50',
+    'bg-yellow-100',
+    'bg-yellow-200',
+    'bg-yellow-600',
+    'bg-orange-50',
+    'bg-orange-100',
+    'bg-orange-200',
+    'bg-orange-600',
+    'bg-purple-50',
+    'bg-purple-100',
+    'bg-purple-200',
+    'bg-purple-600',
+    'bg-indigo-50',
+    'bg-indigo-100',
+    'bg-indigo-200',
+    'bg-indigo-600',
+    'bg-teal-50',
+    'bg-teal-100',
+    'bg-teal-200',
+    'bg-teal-600',
+    'bg-gray-50',
+    'bg-gray-100',
+    'bg-gray-200',
+    'bg-gray-600',
+
     // Dynamic color patterns - Text classes
-    'text-red-600', 'text-red-700',
-    'text-green-600', 'text-green-700',
-    'text-blue-600', 'text-blue-700',
-    'text-yellow-600', 'text-yellow-700',
-    'text-orange-600', 'text-orange-700',
-    'text-purple-600', 'text-purple-700',
-    'text-indigo-600', 'text-indigo-700',
-    'text-teal-600', 'text-teal-700',
-    'text-gray-600', 'text-gray-700',
-    
+    'text-red-600',
+    'text-red-700',
+    'text-green-600',
+    'text-green-700',
+    'text-blue-600',
+    'text-blue-700',
+    'text-yellow-600',
+    'text-yellow-700',
+    'text-orange-600',
+    'text-orange-700',
+    'text-purple-600',
+    'text-purple-700',
+    'text-indigo-600',
+    'text-indigo-700',
+    'text-teal-600',
+    'text-teal-700',
+    'text-gray-600',
+    'text-gray-700',
+
     // Dynamic color patterns - Border classes
-    'border-red-200', 'border-red-300',
-    'border-green-200', 'border-green-300',
-    'border-blue-200', 'border-blue-300',
-    'border-yellow-200', 'border-yellow-300',
-    'border-orange-200', 'border-orange-300',
-    'border-purple-200', 'border-purple-300',
-    'border-indigo-200', 'border-indigo-300',
-    'border-teal-200', 'border-teal-300',
-    'border-gray-200', 'border-gray-300',
-    
+    'border-red-200',
+    'border-red-300',
+    'border-green-200',
+    'border-green-300',
+    'border-blue-200',
+    'border-blue-300',
+    'border-yellow-200',
+    'border-yellow-300',
+    'border-orange-200',
+    'border-orange-300',
+    'border-purple-200',
+    'border-purple-300',
+    'border-indigo-200',
+    'border-indigo-300',
+    'border-teal-200',
+    'border-teal-300',
+    'border-gray-200',
+    'border-gray-300',
+
     // Dynamic color patterns - Hover states
-    'hover:bg-red-100', 'hover:bg-green-100', 'hover:bg-blue-100',
-    'hover:bg-yellow-100', 'hover:bg-orange-100', 'hover:bg-purple-100',
-    'hover:bg-indigo-100', 'hover:bg-teal-100', 'hover:bg-gray-100',
-    
+    'hover:bg-red-100',
+    'hover:bg-green-100',
+    'hover:bg-blue-100',
+    'hover:bg-yellow-100',
+    'hover:bg-orange-100',
+    'hover:bg-purple-100',
+    'hover:bg-indigo-100',
+    'hover:bg-teal-100',
+    'hover:bg-gray-100',
+
     // Custom theme colors with dynamic usage
-    'text-primary-600', 'text-primary-700',
-    'text-secondary-600', 'text-secondary-700',
-    'text-tertiary-600', 'text-tertiary-700',
-    'text-success-600', 'text-success-700',
-    'text-error-600', 'text-error-700',
-    'text-warning-600', 'text-warning-700',
-    'text-info-600', 'text-info-700',
-    
+    'text-primary-600',
+    'text-primary-700',
+    'text-secondary-600',
+    'text-secondary-700',
+    'text-tertiary-600',
+    'text-tertiary-700',
+    'text-success-600',
+    'text-success-700',
+    'text-error-600',
+    'text-error-700',
+    'text-warning-600',
+    'text-warning-700',
+    'text-info-600',
+    'text-info-700',
+
     // Landing page accent colors
-    'text-accent-600', 'text-accent-700', 'bg-accent-600', 'border-accent-600',
-    'text-accent-dark-600', 'text-accent-dark-700', 'bg-accent-dark-600', 'border-accent-dark-600',
-    'text-accent-pink-600', 'text-accent-pink-700', 'bg-accent-pink-600', 'border-accent-pink-600',
-    
+    'text-accent-600',
+    'text-accent-700',
+    'bg-accent-600',
+    'border-accent-600',
+    'text-accent-dark-600',
+    'text-accent-dark-700',
+    'bg-accent-dark-600',
+    'border-accent-dark-600',
+    'text-accent-pink-600',
+    'text-accent-pink-700',
+    'bg-accent-pink-600',
+    'border-accent-pink-600',
+
     // Design System Patterns - Gradients
-    'bg-gradient-primary', 'bg-gradient-accent', 'bg-gradient-accent-dark', 'bg-gradient-subtle',
-    'bg-gradient-page', 'bg-gradient-section-light', 'bg-gradient-dark',
-    
+    'bg-gradient-primary',
+    'bg-gradient-accent',
+    'bg-gradient-accent-dark',
+    'bg-gradient-subtle',
+    'bg-gradient-page',
+    'bg-gradient-section-light',
+    'bg-gradient-dark',
+
     // Design System Patterns - Glass Effects
-    'glass-nav', 'glass-container', 'glass-light', 'glass-strong', 'glass-card',
-    
+    'glass-nav',
+    'glass-container',
+    'glass-light',
+    'glass-strong',
+    'glass-card',
+
     // Design System Patterns - Cards
-    'hero-card', 'feature-card', 'feature-card-gradient',
-    
+    'hero-card',
+    'feature-card',
+    'feature-card-gradient',
+
     // Progress and status indicators
-    'bg-primary-600', 'bg-secondary-600', 'bg-tertiary-600',
-    'bg-success-600', 'bg-error-600', 'bg-warning-600', 'bg-info-600',
-    
+    'bg-primary-600',
+    'bg-secondary-600',
+    'bg-tertiary-600',
+    'bg-success-600',
+    'bg-error-600',
+    'bg-warning-600',
+    'bg-info-600',
+
     // Animation classes that might be dynamic
-    'animate-spin', 'animate-pulse',
-    
+    'animate-spin',
+    'animate-pulse',
+
     // Common dynamic utility classes
-    'opacity-50', 'opacity-75', 'opacity-100',
-    'w-1/2', 'w-1/3', 'w-2/3', 'w-1/4', 'w-3/4',
-    'h-1/2', 'h-1/3', 'h-2/3', 'h-1/4', 'h-3/4',
+    'opacity-50',
+    'opacity-75',
+    'opacity-100',
+    'w-1/2',
+    'w-1/3',
+    'w-2/3',
+    'w-1/4',
+    'w-3/4',
+    'h-1/2',
+    'h-1/3',
+    'h-2/3',
+    'h-1/4',
+    'h-3/4',
   ],
   theme: {
     screens: {
@@ -346,85 +445,85 @@ module.exports = {
     },
   },
   plugins: [
-    function({ addUtilities }) {
+    function ({ addUtilities }) {
       const newUtilities = {
         // Glass Effect Utilities
         '.glass-nav': {
-          'background': 'var(--glass-nav-bg)',
+          background: 'var(--glass-nav-bg)',
           'backdrop-filter': 'var(--glass-nav-blur)',
           '-webkit-backdrop-filter': 'var(--glass-nav-blur)',
-          'border': '1px solid var(--glass-nav-border)',
+          border: '1px solid var(--glass-nav-border)',
           'box-shadow': '0 8px 32px rgba(0, 0, 0, 0.1)',
         },
         '.glass-container': {
-          'background': 'var(--glass-container-bg)',
+          background: 'var(--glass-container-bg)',
           'backdrop-filter': 'var(--glass-container-blur)',
           '-webkit-backdrop-filter': 'var(--glass-container-blur)',
-          'border': '1px solid var(--glass-container-border)',
+          border: '1px solid var(--glass-container-border)',
           'box-shadow': '0 4px 16px rgba(0, 0, 0, 0.05)',
         },
         '.glass-light': {
-          'background': 'var(--glass-light-bg)',
+          background: 'var(--glass-light-bg)',
           'backdrop-filter': 'var(--glass-light-blur)',
           '-webkit-backdrop-filter': 'var(--glass-light-blur)',
-          'border': '1px solid var(--glass-light-border)',
+          border: '1px solid var(--glass-light-border)',
         },
         '.glass-strong': {
-          'background': 'var(--glass-strong-bg)',
+          background: 'var(--glass-strong-bg)',
           'backdrop-filter': 'var(--glass-strong-blur)',
           '-webkit-backdrop-filter': 'var(--glass-strong-blur)',
-          'border': '1px solid var(--glass-strong-border)',
+          border: '1px solid var(--glass-strong-border)',
           'box-shadow': '0 12px 40px rgba(0, 0, 0, 0.15)',
         },
-        
+
         // Card Effect Utilities
         '.hero-card': {
-          'background': 'linear-gradient(135deg, #ffffff 0%, #f9fafb 100%)',
-          'border': '1px solid #e5e7eb',
+          background: 'linear-gradient(135deg, #ffffff 0%, #f9fafb 100%)',
+          border: '1px solid #e5e7eb',
           'border-radius': '1.5rem',
           'box-shadow': '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-          'transition': 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+          transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
         },
         '.hero-card:hover': {
-          'transform': 'translateY(-6px) scale(1.02)',
+          transform: 'translateY(-6px) scale(1.02)',
           'box-shadow': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
         },
-        
+
         '.feature-card': {
-          'background': '#ffffff',
-          'border': '1px solid #e5e7eb',
+          background: '#ffffff',
+          border: '1px solid #e5e7eb',
           'border-radius': '1.5rem',
           'box-shadow': '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-          'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         },
         '.feature-card:hover': {
-          'transform': 'translateY(-4px)',
+          transform: 'translateY(-4px)',
           'box-shadow': '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
         },
-        
+
         '.feature-card-gradient': {
-          'background': 'var(--gradient-subtle)',
-          'border': '1px solid #e2e8f0',
+          background: 'var(--gradient-subtle)',
+          border: '1px solid #e2e8f0',
           'border-radius': '1.5rem',
-          'transition': 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         },
         '.feature-card-gradient:hover': {
-          'transform': 'translateY(-4px)',
+          transform: 'translateY(-4px)',
           'box-shadow': '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
           'border-color': '#10b981',
         },
-        
+
         '.glass-card': {
-          'background': 'var(--glass-container-bg)',
+          background: 'var(--glass-container-bg)',
           'backdrop-filter': 'var(--glass-container-blur)',
           '-webkit-backdrop-filter': 'var(--glass-container-blur)',
-          'border': '1px solid var(--glass-container-border)',
+          border: '1px solid var(--glass-container-border)',
           'border-radius': '1.5rem',
           'box-shadow': '0 8px 32px rgba(0, 0, 0, 0.1)',
         },
       };
-      
+
       addUtilities(newUtilities, ['responsive', 'hover']);
-    }
+    },
   ],
 };

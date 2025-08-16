@@ -108,7 +108,7 @@ const TemplateManagement = () => {
         }
       });
     },
-    [confirmDelete, refreshTemplates]
+    [confirmDelete, refreshTemplates],
   );
 
   const handleToggleStatus = useCallback(
@@ -117,7 +117,7 @@ const TemplateManagement = () => {
         refreshTemplates();
       });
     },
-    [toggleTemplateStatus, refreshTemplates]
+    [toggleTemplateStatus, refreshTemplates],
   );
 
   const handleSendTest = useCallback((template: SchoolEmailTemplate) => {
@@ -216,8 +216,8 @@ const TemplateManagement = () => {
                       {filterStatus === 'all'
                         ? 'All Status'
                         : filterStatus === 'active'
-                        ? 'Active Only'
-                        : 'Inactive Only'}
+                          ? 'Active Only'
+                          : 'Inactive Only'}
                     </Text>
                   </SelectTrigger>
                   <SelectContent>

@@ -87,7 +87,7 @@ export function createTooltipComponents(UITooltip: any) {
   const Tooltip = React.forwardRef<React.ElementRef<typeof UITooltip>, ITooltipProps>(
     ({ className, ...props }, ref) => {
       return <UITooltip ref={ref} className={tooltipStyle({ class: className })} {...props} />;
-    }
+    },
   );
 
   const TooltipContent = React.forwardRef<

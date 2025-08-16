@@ -184,13 +184,13 @@ describe('ApiClient', () => {
         1,
         expect.objectContaining({
           baseURL: 'https://api1.example.com',
-        })
+        }),
       );
       expect(mockedAxios.create).toHaveBeenNthCalledWith(
         2,
         expect.objectContaining({
           baseURL: 'https://api2.example.com',
-        })
+        }),
       );
     });
 

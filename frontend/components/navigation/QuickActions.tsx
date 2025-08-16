@@ -302,7 +302,7 @@ const QuickActionItem: React.FC<QuickActionItemProps> = ({ action, onSelect }) =
       onPress={() => onSelect(action)}
       className={cn(
         'p-3 rounded-lg flex-row items-center space-x-3',
-        'hover:bg-background-50 active:bg-background-100'
+        'hover:bg-background-50 active:bg-background-100',
       )}
     >
       <Icon as={action.icon} size="sm" className={variantClasses[action.variant || 'outline']} />

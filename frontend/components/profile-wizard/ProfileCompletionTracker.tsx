@@ -102,10 +102,10 @@ export const ProfileCompletionTracker: React.FC<ProfileCompletionTrackerProps> =
                   is_complete
                     ? 'bg-green-100'
                     : completion_percentage >= 70
-                    ? 'bg-blue-100'
-                    : completion_percentage >= 50
-                    ? 'bg-yellow-100'
-                    : 'bg-red-100'
+                      ? 'bg-blue-100'
+                      : completion_percentage >= 50
+                        ? 'bg-yellow-100'
+                        : 'bg-red-100'
                 }`}
               >
                 <BadgeText className={getCompletionColor()}>
@@ -183,10 +183,10 @@ export const ProfileCompletionTracker: React.FC<ProfileCompletionTrackerProps> =
               is_complete
                 ? 'bg-green-100'
                 : completion_percentage >= 70
-                ? 'bg-blue-100'
-                : completion_percentage >= 50
-                ? 'bg-yellow-100'
-                : 'bg-red-100'
+                  ? 'bg-blue-100'
+                  : completion_percentage >= 50
+                    ? 'bg-yellow-100'
+                    : 'bg-red-100'
             }`}
           >
             <BadgeText className={getCompletionColor()}>{getCompletionStatus()}</BadgeText>

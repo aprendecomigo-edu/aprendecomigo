@@ -583,10 +583,10 @@ const ParentContactCard: React.FC<ParentContactCardProps> = ({
                 {student.parent_contact.relationship === 'father'
                   ? 'Pai'
                   : student.parent_contact.relationship === 'mother'
-                  ? 'Mãe'
-                  : student.parent_contact.relationship === 'guardian'
-                  ? 'Responsável Legal'
-                  : 'Outro'}
+                    ? 'Mãe'
+                    : student.parent_contact.relationship === 'guardian'
+                      ? 'Responsável Legal'
+                      : 'Outro'}
               </Text>
             </HStack>
           </VStack>

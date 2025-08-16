@@ -212,7 +212,7 @@ describe('Parent Approval Integration Flow Tests', () => {
 
       await waitFor(() => {
         expect(mockPurchaseApiClient.cancelApprovalRequest).toHaveBeenCalledWith(
-          approvalRequest.id
+          approvalRequest.id,
         );
         expect(queryByText('Approval Request Pending')).toBeNull();
         expect(getByText('Select Plan')).toBeTruthy(); // Back to plan selection
@@ -256,7 +256,7 @@ describe('Parent Approval Integration Flow Tests', () => {
 
       const onPurchaseComplete = jest.fn();
       const { getByText, queryByText } = render(
-        <PurchaseFlow onPurchaseComplete={onPurchaseComplete} />
+        <PurchaseFlow onPurchaseComplete={onPurchaseComplete} />,
       );
 
       // Show waiting state
@@ -508,7 +508,7 @@ describe('Parent Approval Integration Flow Tests', () => {
 
       // Mock email delivery failure
       mockEmailService.sendParentApprovalRequest.mockRejectedValue(
-        new Error('Email delivery failed')
+        new Error('Email delivery failed'),
       );
 
       const { getByText, queryByText } = render(<PurchaseFlow />);
@@ -625,7 +625,7 @@ describe('Parent Approval Integration Flow Tests', () => {
 
       // Should reject invalid token
       await expect(handleApprovalClick('invalid_token')).rejects.toThrow(
-        'Invalid or expired approval token'
+        'Invalid or expired approval token',
       );
     });
 
@@ -634,7 +634,7 @@ describe('Parent Approval Integration Flow Tests', () => {
 
       // Mock network failure
       mockPurchaseApiClient.createApprovalRequest.mockRejectedValue(
-        new Error('Network request failed')
+        new Error('Network request failed'),
       );
 
       const { getByText } = render(<PurchaseFlow />);

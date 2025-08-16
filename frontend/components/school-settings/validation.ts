@@ -87,7 +87,7 @@ export const schoolSettingsSchema = z.object({
       {
         message: 'End time must be after start time',
         path: ['working_hours_end'],
-      }
+      },
     )
     .refine(
       data => {
@@ -103,7 +103,7 @@ export const schoolSettingsSchema = z.object({
       {
         message: 'Integration type is required when integration is enabled',
         path: ['calendar_integration_type'],
-      }
+      },
     ),
 });
 

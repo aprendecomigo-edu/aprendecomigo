@@ -78,7 +78,7 @@ export class PurchaseApiClient {
    * @throws Error with descriptive message if request fails
    */
   static async initiatePurchase(
-    request: PurchaseInitiationRequest
+    request: PurchaseInitiationRequest,
   ): Promise<PurchaseInitiationResponse> {
     try {
       const response = await apiClient.post('/finances/purchase/initiate/', request);
@@ -243,7 +243,7 @@ export class PurchaseApiClient {
       page?: number;
       page_size?: number;
       email?: string;
-    } = {}
+    } = {},
   ): Promise<PaginatedTransactionHistory> {
     try {
       const response = await apiClient.get('/finances/student-balance/history/', {
@@ -279,7 +279,7 @@ export class PurchaseApiClient {
       page?: number;
       page_size?: number;
       email?: string;
-    } = {}
+    } = {},
   ): Promise<PaginatedPurchaseHistory> {
     try {
       const params: any = { ...options };
@@ -382,7 +382,7 @@ export class PurchaseApiClient {
   static async addPaymentMethod(
     paymentMethodId: string,
     setAsDefault: boolean = false,
-    email?: string
+    email?: string,
   ): Promise<any> {
     try {
       const data = {
@@ -408,7 +408,7 @@ export class PurchaseApiClient {
    */
   static async getUsageAnalytics(
     timeRange?: { start_date: string; end_date: string },
-    email?: string
+    email?: string,
   ): Promise<any> {
     try {
       const params: any = {};
@@ -479,7 +479,7 @@ export class PurchaseApiClient {
    */
   static async renewSubscription(
     request: RenewalRequest,
-    email?: string
+    email?: string,
   ): Promise<RenewalResponse> {
     try {
       const data = email ? { ...request, email } : request;

@@ -126,8 +126,8 @@ const FileUploadProgress: React.FC<FileUploadProgressProps> = ({
                 {status === 'uploading'
                   ? `${Math.round(progress)}% uploaded`
                   : status === 'success'
-                  ? 'Upload complete'
-                  : ''}
+                    ? 'Upload complete'
+                    : ''}
               </Text>
 
               {status === 'uploading' && (

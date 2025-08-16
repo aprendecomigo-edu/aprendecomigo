@@ -58,7 +58,7 @@ export const Icon = React.forwardRef<React.ElementRef<typeof Svg>, IIconProps>(
       as: AsComp,
       ...props
     },
-    ref
+    ref,
   ) => {
     const contextValue = useMemo(() => ({ size }), [size]);
 
@@ -96,7 +96,7 @@ export const Icon = React.forwardRef<React.ElementRef<typeof Svg>, IIconProps>(
         />
       </IconContext.Provider>
     );
-  }
+  },
 );
 
 // Display names for debugging

@@ -95,7 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         error.code === 'ERR_CONNECTION_REFUSED'
       ) {
         setServerError(
-          'Unable to connect to server. Please check your internet connection or contact your administrator if this error persists.'
+          'Unable to connect to server. Please check your internet connection or contact your administrator if this error persists.',
         );
         setServerAlert({
           type: 'error',
@@ -149,7 +149,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     setIsLoggedIn(false);
     setUserProfileState(null);
-    storage.removeItem('user_profile').catch((error) => {
+    storage.removeItem('user_profile').catch(error => {
       if (__DEV__) {
         console.error(error);
       }

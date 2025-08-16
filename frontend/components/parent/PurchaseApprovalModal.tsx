@@ -220,8 +220,8 @@ export const PurchaseApprovalModal: React.FC<PurchaseApprovalModalProps> = ({
                   urgency === 'expired'
                     ? 'text-red-600'
                     : urgency === 'urgent'
-                    ? 'text-orange-600'
-                    : 'text-blue-600'
+                      ? 'text-orange-600'
+                      : 'text-blue-600'
                 }
               />
               <VStack>
@@ -261,8 +261,8 @@ export const PurchaseApprovalModal: React.FC<PurchaseApprovalModalProps> = ({
                           urgency === 'expired'
                             ? 'error'
                             : urgency === 'urgent'
-                            ? 'warning'
-                            : 'info'
+                              ? 'warning'
+                              : 'info'
                         }
                         size="md"
                       >
@@ -270,10 +270,10 @@ export const PurchaseApprovalModal: React.FC<PurchaseApprovalModalProps> = ({
                           {urgency === 'expired'
                             ? 'Expired'
                             : urgency === 'urgent'
-                            ? 'Urgent'
-                            : urgency === 'soon'
-                            ? 'Soon'
-                            : 'Normal'}
+                              ? 'Urgent'
+                              : urgency === 'soon'
+                                ? 'Soon'
+                                : 'Normal'}
                         </Text>
                       </Badge>
                     </HStack>

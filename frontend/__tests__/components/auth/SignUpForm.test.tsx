@@ -148,7 +148,7 @@ describe('SignUpForm Pure UI Component - New Architecture', () => {
   describe('Form Interactions', () => {
     it('should call onSubmit with correct data when form is submitted', async () => {
       const { getByPlaceholderText, getByText, getByLabelText } = render(
-        <SignUpForm {...mockTutorProps} />
+        <SignUpForm {...mockTutorProps} />,
       );
 
       // Fill out the form
@@ -267,7 +267,7 @@ describe('SignUpForm Pure UI Component - New Architecture', () => {
 
     it('should prevent multiple submissions while submitting', () => {
       const { getByPlaceholderText, getByText, getByLabelText } = render(
-        <SignUpForm {...mockTutorProps} isSubmitting={true} />
+        <SignUpForm {...mockTutorProps} isSubmitting={true} />,
       );
 
       // Fill out form
@@ -299,7 +299,7 @@ describe('SignUpForm Pure UI Component - New Architecture', () => {
 
     it('should clear errors when user starts typing', async () => {
       const { getByPlaceholderText, getByText, queryByText, rerender } = render(
-        <SignUpForm {...mockTutorProps} />
+        <SignUpForm {...mockTutorProps} />,
       );
 
       // First trigger validation errors
@@ -401,7 +401,7 @@ describe('SignUpForm Pure UI Component - New Architecture', () => {
       // All business logic should be handled by the parent component via props
 
       const { getByPlaceholderText, getByText, getByLabelText } = render(
-        <SignUpForm {...mockTutorProps} />
+        <SignUpForm {...mockTutorProps} />,
       );
 
       // Fill out form and submit
@@ -463,7 +463,7 @@ describe('SignUpForm Pure UI Component - New Architecture', () => {
           onUserTypeChange={jest.fn()}
           onBackPress={jest.fn()}
           generateSchoolName={businessLogic.generateSchoolName}
-        />
+        />,
       );
 
       // Fill out form

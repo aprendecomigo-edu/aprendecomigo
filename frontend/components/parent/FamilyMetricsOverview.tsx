@@ -101,8 +101,8 @@ const MetricCard: React.FC<MetricCardProps> = ({
               trend.direction === 'up'
                 ? 'text-green-600'
                 : trend.direction === 'down'
-                ? 'text-red-600'
-                : 'text-gray-600'
+                  ? 'text-red-600'
+                  : 'text-gray-600'
             }
           />
           <Text
@@ -112,8 +112,8 @@ const MetricCard: React.FC<MetricCardProps> = ({
                 trend.direction === 'up'
                   ? 'text-green-600'
                   : trend.direction === 'down'
-                  ? 'text-red-600'
-                  : 'text-gray-600'
+                    ? 'text-red-600'
+                    : 'text-gray-600'
               }
             `}
           >

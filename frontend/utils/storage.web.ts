@@ -22,9 +22,9 @@ class WebStorage implements StorageInterface {
       } catch (asyncStorageError) {
         if (__DEV__) {
           console.error('Both localStorage and AsyncStorage failed:', {
-          localStorageError,
-          asyncStorageError,
-        }); // TODO: Review for sensitive data
+            localStorageError,
+            asyncStorageError,
+          }); // TODO: Review for sensitive data
         }
         return null;
       }
@@ -45,9 +45,9 @@ class WebStorage implements StorageInterface {
       } catch (asyncStorageError) {
         if (__DEV__) {
           console.error('Both localStorage and AsyncStorage failed:', {
-          localStorageError,
-          asyncStorageError,
-        }); // TODO: Review for sensitive data
+            localStorageError,
+            asyncStorageError,
+          }); // TODO: Review for sensitive data
         }
         throw new Error('Failed to store data');
       }
@@ -68,9 +68,9 @@ class WebStorage implements StorageInterface {
       } catch (asyncStorageError) {
         if (__DEV__) {
           console.error('Both localStorage and AsyncStorage failed:', {
-          localStorageError,
-          asyncStorageError,
-        }); // TODO: Review for sensitive data
+            localStorageError,
+            asyncStorageError,
+          }); // TODO: Review for sensitive data
         }
         throw new Error('Failed to remove data');
       }
@@ -91,9 +91,9 @@ class WebStorage implements StorageInterface {
       } catch (asyncStorageError) {
         if (__DEV__) {
           console.error('Both localStorage and AsyncStorage failed:', {
-          localStorageError,
-          asyncStorageError,
-        }); // TODO: Review for sensitive data
+            localStorageError,
+            asyncStorageError,
+          }); // TODO: Review for sensitive data
         }
         throw new Error('Failed to clear storage');
       }
@@ -114,9 +114,9 @@ class WebStorage implements StorageInterface {
       } catch (asyncStorageError) {
         if (__DEV__) {
           console.error('Both localStorage and AsyncStorage failed:', {
-          localStorageError,
-          asyncStorageError,
-        }); // TODO: Review for sensitive data
+            localStorageError,
+            asyncStorageError,
+          }); // TODO: Review for sensitive data
         }
         return [];
       }

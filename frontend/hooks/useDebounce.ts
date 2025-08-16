@@ -13,7 +13,7 @@ import { useCallback, useEffect, useRef } from 'react';
 export function useDebounce<T extends (...args: any[]) => any>(
   callback: T,
   delay: number,
-  dependencies: any[] = []
+  dependencies: any[] = [],
 ): [T, () => void, () => void] {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const callbackRef = useRef<T>(callback);
@@ -51,7 +51,7 @@ export function useDebounce<T extends (...args: any[]) => any>(
         timeoutRef.current = null;
       }, delay);
     }) as T,
-    [delay, cancel]
+    [delay, cancel],
   );
 
   // Cleanup on unmount
@@ -107,7 +107,7 @@ export function useDebouncedValue<T>(value: T, delay: number): T {
 export function useDebouncedAsync<T extends (...args: any[]) => Promise<any>>(
   asyncCallback: T,
   delay: number,
-  dependencies: any[] = []
+  dependencies: any[] = [],
 ): {
   debouncedFn: T;
   isLoading: boolean;
@@ -151,7 +151,7 @@ export function useDebouncedAsync<T extends (...args: any[]) => Promise<any>>(
         }
       }
     },
-    [asyncCallback, ...dependencies]
+    [asyncCallback, ...dependencies],
   );
 
   const [debouncedFn, cancel, flush] = useDebounce(wrappedCallback as T, delay, dependencies);
@@ -211,7 +211,7 @@ export function useSmartAutoSave<T>(
     onSaveStart?: () => void;
     onSaveSuccess?: () => void;
     onSaveError?: (error: Error) => void;
-  } = {}
+  } = {},
 ): {
   isSaving: boolean;
   error: Error | null;
@@ -254,13 +254,13 @@ export function useSmartAutoSave<T>(
         }
       }
     },
-    [saveFunction, enabled, onSaveStart, onSaveSuccess, onSaveError]
+    [saveFunction, enabled, onSaveStart, onSaveSuccess, onSaveError],
   );
 
   const { debouncedFn, isLoading, error, cancel, flush } = useDebouncedAsync(
     wrappedSaveFunction,
     delay,
-    dependencies
+    dependencies,
   );
 
   // Check if data has changed
