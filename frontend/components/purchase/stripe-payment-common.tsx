@@ -115,7 +115,7 @@ export function SecurityNotice() {
     <HStack space="xs" className="items-center justify-center p-3 bg-success-50 rounded-lg">
       <Icon as={Lock} size="sm" className="text-success-600" />
       <Text className="text-sm text-success-800">
-        Your payment information is secure and encrypted
+        Secure Payment - Your payment information is secure and encrypted
       </Text>
     </HStack>
   );
@@ -128,7 +128,7 @@ export function PaymentFormHeader({ selectedPlan }: { selectedPlan: PricingPlan 
       <HStack space="sm" className="items-center">
         <Icon as={CreditCard} size="lg" className="text-primary-600" />
         <Heading size="lg" className="text-typography-900">
-          Payment Details
+          Complete Payment
         </Heading>
       </HStack>
       <OrderSummary selectedPlan={selectedPlan} />
@@ -191,7 +191,7 @@ export function SubmitButton({
 export function TermsNotice() {
   return (
     <Text className="text-xs text-typography-500 text-center">
-      By completing this purchase, you agree to our Terms of Service and acknowledge our Privacy
+      By clicking "Pay", you agree to our Terms of Service and acknowledge our Privacy
       Policy. Your payment will be processed securely by Stripe.
     </Text>
   );

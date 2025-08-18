@@ -416,6 +416,10 @@ export const WebSocketTestUtils = {
     if (!(global as any).__mockWebSocketClients) {
       (global as any).__mockWebSocketClients = [];
     }
+    
+    // Clear previous global state
+    (global as any).__lastMockWebSocketClient = null;
+    (global as any).__webSocketGlobalFailure = false;
   },
 
   /**
@@ -448,9 +452,19 @@ export const WebSocketTestUtils = {
    * Get the most recently created WebSocket instance
    */
   getLastWebSocket(): any {
-    // For the new architecture, we need to get the mock client from the hook render
-    // This will be updated by the hook when it creates a client
-    return (global as any).__lastMockWebSocketClient || MockWebSocket.getLastInstance();
+    // First try to get the mock client
+    const mockClient = (global as any).__lastMockWebSocketClient;
+    if (mockClient) {
+      // If the client has a WebSocket, return it
+      if (mockClient.getWebSocket && mockClient.getWebSocket()) {
+        return mockClient.getWebSocket();
+      }
+      // Otherwise, return the client itself as it has the same interface
+      return mockClient;
+    }
+    
+    // Fallback to direct MockWebSocket instances
+    return MockWebSocket.getLastInstance();
   },
 
   /**

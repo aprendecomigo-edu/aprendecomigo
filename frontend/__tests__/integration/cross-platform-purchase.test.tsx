@@ -25,6 +25,18 @@ import { PaymentMethodApiClient } from '@/api/paymentMethodApi';
 import { PurchaseApiClient } from '@/api/purchaseApi';
 import { PurchaseFlow } from '@/components/purchase/PurchaseFlow';
 
+// Mock NativeWind - CRITICAL for Gluestack UI v2
+jest.mock('nativewind', () => ({
+  vars: jest.fn(() => ({})),
+  styled: jest.fn(() => ({})),
+  cssInterop: jest.fn(() => {}),
+}));
+
+// Mock Gluestack UI provider
+jest.mock('@/components/ui/gluestack-ui-provider', () => ({
+  GluestackUIProvider: ({ children }: any) => children,
+}));
+
 // Mock APIs
 jest.mock('@/api/purchaseApi');
 jest.mock('@/api/paymentMethodApi');
@@ -46,7 +58,8 @@ const mockPush = jest.fn();
 const mockReplace = jest.fn();
 jest.mock('expo-router', () => ({
   __esModule: true,
-  default: () => ({ push: mockPush, replace: mockReplace }),
+  useRouter: () => ({ push: mockPush, replace: mockReplace }),
+  useLocalSearchParams: () => ({}),
 }));
 
 // Platform-specific mocks

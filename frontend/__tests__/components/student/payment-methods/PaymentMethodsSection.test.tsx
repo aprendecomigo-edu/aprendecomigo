@@ -50,7 +50,7 @@ jest.mock('@/components/student/payment-methods/PaymentMethodCard', () => ({
   }: any) => (
     <div testID={`payment-method-${paymentMethod.id}`}>
       <span>
-        {paymentMethod.card.brand} ****{paymentMethod.card.last4}
+        {paymentMethod.card?.brand || 'Unknown'} ****{paymentMethod.card?.last4 || '0000'}
       </span>
       {paymentMethod.is_default && <span testID="default-badge">Default</span>}
       <button

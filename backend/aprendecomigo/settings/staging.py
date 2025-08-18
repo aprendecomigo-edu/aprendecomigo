@@ -36,7 +36,7 @@ EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
 email_host = os.getenv("EMAIL_HOST", "")
 if not email_host:
-    print("EMAIL_HOST environment variable is not set")
+    raise ValueError("EMAIL_HOST environment variable is not set")
 EMAIL_HOST = str(email_host)
 
 EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
@@ -44,12 +44,12 @@ EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
 
 email_host_user = os.getenv("EMAIL_HOST_USER")
 if not email_host_user:
-    print("EMAIL_HOST_USER environment variable is not set")
+    raise ValueError("EMAIL_HOST_USER environment variable is not set")
 EMAIL_HOST_USER = str(email_host_user)
 
 email_host_password = os.getenv("EMAIL_HOST_PASSWORD")
 if not email_host_password:
-    print("EMAIL_HOST_PASSWORD environment variable is not set")
+    raise ValueError("EMAIL_HOST_PASSWORD environment variable is not set")
 EMAIL_HOST_PASSWORD = str(email_host_password)
 
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@aprendecomigo.com")

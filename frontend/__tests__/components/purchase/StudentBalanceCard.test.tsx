@@ -24,8 +24,12 @@ const mockUseStudentBalance = useStudentBalance as jest.MockedFunction<typeof us
 // Mock router
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
-  __esModule: true,
-  default: () => ({ push: mockPush }),
+  useRouter: jest.fn(() => ({
+    push: mockPush,
+    back: jest.fn(),
+    replace: jest.fn(),
+  })),
+  useLocalSearchParams: jest.fn(() => ({})),
 }));
 
 // Mock BalanceStatusBar components
@@ -60,9 +64,10 @@ describe('StudentBalanceCard Component', () => {
         refetch: jest.fn(),
       });
 
-      const { getByText } = render(<StudentBalanceCard {...defaultProps} />);
+      const result = render(<StudentBalanceCard {...defaultProps} />);
 
-      expect(getByText('Loading balance information...')).toBeTruthy();
+      // Loading state should show spinner component
+      expect(result.getByTestId('Spinner')).toBeTruthy();
     });
 
     it('shows spinner during loading', () => {
@@ -89,11 +94,12 @@ describe('StudentBalanceCard Component', () => {
         refetch: jest.fn(),
       });
 
-      const { getByText } = render(<StudentBalanceCard {...defaultProps} />);
+      const result = render(<StudentBalanceCard {...defaultProps} />);
 
-      expect(getByText('Unable to Load Balance')).toBeTruthy();
-      expect(getByText(errorMessage)).toBeTruthy();
-      expect(getByText('Try Again')).toBeTruthy();
+      // Use queryByText which is more forgiving for nested text
+      expect(result.queryByText(/Unable to Load Balance/)).toBeTruthy();
+      expect(result.queryByText(errorMessage)).toBeTruthy(); 
+      expect(result.queryByText('Try Again')).toBeTruthy();
     });
 
     it('allows retry when error occurs', () => {

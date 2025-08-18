@@ -95,8 +95,13 @@ jest.mock('react-native', () => {
     FlatList: createMockComponent('FlatList'),
     Image: createMockComponent('Image'),
     SafeAreaView: createMockComponent('SafeAreaView'),
+    ActivityIndicator: createMockComponent('ActivityIndicator'),
     Platform: { OS: 'web', select: (spec) => spec.web || spec.default },
-    Dimensions: { get: () => ({ width: 375, height: 667 }) },
+    Dimensions: { 
+      get: () => ({ width: 375, height: 667 }),
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+    },
     StyleSheet: { create: (styles) => styles, flatten: (style) => style },
   };
 });
@@ -118,8 +123,12 @@ const createUIComponentFactory = (componentNames) => {
         'data-testid': testID || name,
         onClick: onPress,
         className: `gluestack-${name.toLowerCase()}`,
+        // Ensure text content is accessible for testing
+        role: onPress ? 'button' : undefined,
       }, children);
     });
+    // Give proper display name for better debugging
+    components[name].displayName = `Mock${name}`;
   });
   return components;
 };
@@ -137,6 +146,10 @@ jest.mock('@/components/ui/safe-area-view', () => createUIComponentFactory(['Saf
 jest.mock('@/components/ui/pressable', () => createUIComponentFactory(['Pressable']));
 jest.mock('@/components/ui/divider', () => createUIComponentFactory(['Divider']));
 jest.mock('@/components/ui/link', () => createUIComponentFactory(['Link', 'LinkText']));
+jest.mock('@/components/ui/badge', () => createUIComponentFactory(['Badge', 'BadgeText', 'BadgeIcon']));
+jest.mock('@/components/ui/progress', () => createUIComponentFactory(['Progress', 'ProgressFilledTrack']));
+jest.mock('@/components/ui/spinner', () => createUIComponentFactory(['Spinner']));
+jest.mock('@/components/ui/select', () => createUIComponentFactory(['Select', 'SelectTrigger', 'SelectInput', 'SelectIcon', 'SelectPortal', 'SelectBackdrop', 'SelectContent', 'SelectDragIndicatorWrapper', 'SelectDragIndicator', 'SelectItem', 'SelectItemText', 'SelectScrollView']));
 
 // Mock form components (critical for business functionality)
 jest.mock('@/components/ui/input', () => {
@@ -154,7 +167,7 @@ jest.mock('@/components/ui/input', () => {
 
 jest.mock('@/components/ui/form-control', () => createUIComponentFactory([
   'FormControl', 'FormControlLabel', 'FormControlLabelText',
-  'FormControlError', 'FormControlErrorText', 'FormControlHelper', 'FormControlHelperText'
+  'FormControlError', 'FormControlErrorText', 'FormControlErrorIcon', 'FormControlHelper', 'FormControlHelperText'
 ]));
 
 // ================================
@@ -196,30 +209,287 @@ jest.mock('@/services/websocket/WebSocketClient', () => {
   class MockWebSocketClient extends EventEmitter {
     constructor(config = {}) {
       super();
+      this.config = config;
       this.isConnectedState = false;
       this.sentMessages = [];
+      this.disposed = false;
+      this.messageHandlers = new Map();
+      this._readyState = 0; // CONNECTING
+      this.reconnectAttempts = 0;
+      this.maxReconnectAttempts = 5;
+      this.reconnectTimeouts = new Set();
       
-      // Auto-connect for tests
-      setTimeout(() => {
-        this.isConnectedState = true;
-        this.emit('connect');
-      }, 10);
+      // Register this instance globally for test utilities
+      if (!global.__mockWebSocketClients) {
+        global.__mockWebSocketClients = [];
+      }
+      global.__mockWebSocketClients.push(this);
+      global.__lastMockWebSocketClient = this;
+    }
+
+    async connect() {
+      if (this.disposed) {
+        throw new Error('WebSocketClient has been disposed');
+      }
+
+      // Check for global connection failure
+      if (global.__webSocketGlobalFailure) {
+        this.emit('error', new Error('Connection failed'));
+        return;
+      }
+
+      // Check for auth token if auth provider is configured
+      if (this.config.auth) {
+        try {
+          const token = await this.config.auth.getToken();
+          if (!token) {
+            this.emit('error', new Error('No authentication token found'));
+            return;
+          }
+          // Append token to URL if we have one
+          this.config.url = `${this.config.url}?token=${token}`;
+        } catch (error) {
+          this.emit('error', error);
+          return;
+        }
+      }
+
+      // Simulate connection
+      this.isConnectedState = true;
+      this._readyState = 1; // OPEN
+      this.reconnectAttempts = 0; // Reset on successful connection
+      this.emit('connect');
     }
 
     send(message) {
       if (this.isConnectedState) {
         this.sentMessages.push(JSON.stringify(message));
+      } else {
+        throw new Error('WebSocket not connected');
       }
     }
 
-    isConnected() { return this.isConnectedState; }
-    disconnect() { this.isConnectedState = false; this.emit('disconnect'); }
-    onMessage(listener) { this.on('message', listener); }
-    dispose() { this.removeAllListeners(); }
+    disconnect() {
+      this.isConnectedState = false;
+      this._readyState = 2; // CLOSING
+      this.emit('disconnect');
+      
+      // After a brief delay, set to CLOSED
+      setTimeout(() => {
+        this._readyState = 3; // CLOSED
+      }, 10);
+    }
+
+    dispose() {
+      this.disconnect();
+      this.removeAllListeners();
+      this.messageHandlers.clear();
+      
+      // Clear all reconnection timeouts
+      this.reconnectTimeouts.forEach(timeoutId => {
+        clearTimeout(timeoutId);
+      });
+      this.reconnectTimeouts.clear();
+      
+      this.disposed = true;
+    }
+
+    isConnected() {
+      return this.isConnectedState;
+    }
+
+    getState() {
+      return this.isConnectedState ? 'CONNECTED' : 'DISCONNECTED';
+    }
+
+    // Backwards compatibility methods
+    onConnect(listener) {
+      this.on('connect', listener);
+    }
+
+    onDisconnect(listener) {
+      this.on('disconnect', listener);
+    }
+
+    onMessage(listener) {
+      if (!this.messageHandlers.has('*')) {
+        this.messageHandlers.set('*', []);
+      }
+      this.messageHandlers.get('*').push(listener);
+    }
+
+    onError(listener) {
+      this.on('error', listener);
+    }
     
     // Test helpers
-    simulateMessage(data) { this.emit('message', data); }
-    getSentMessages() { return this.sentMessages; }
+    simulateMessage(data) {
+      this.emit('message', data);
+      
+      // Call message handlers
+      const handlers = this.messageHandlers.get('*') || [];
+      handlers.forEach(handler => {
+        try {
+          handler(data);
+        } catch (err) {
+          console.error('Message handler error:', err);
+        }
+      });
+    }
+
+    simulateError(error) {
+      this.emit('error', error || new Error('WebSocket error'));
+    }
+
+    simulateNetworkFailure() {
+      this.isConnectedState = false;
+      this.simulateError(new Error('Network failure'));
+      this.emit('disconnect');
+    }
+
+    simulateNetworkFailureWithReconnectBlocking() {
+      global.__webSocketGlobalFailure = true;
+      this.simulateNetworkFailure();
+    }
+
+    getSentMessages() {
+      return this.sentMessages;
+    }
+
+    getMessageQueue() {
+      return this.sentMessages.map((msg, index) => ({
+        data: msg,
+        timestamp: Date.now() + index
+      }));
+    }
+
+    // Mock WebSocket interface methods for direct interaction
+    get readyState() {
+      return this._readyState;
+    }
+
+    set readyState(value) {
+      const previousState = this._readyState;
+      this._readyState = value;
+      this.isConnectedState = value === 1; // OPEN
+      
+      // Emit events when state changes
+      if (previousState !== value) {
+        if (value === 1) { // OPEN
+          this.emit('connect');
+        } else if (value === 3) { // CLOSED
+          this.emit('disconnect');
+        }
+      }
+    }
+
+    get url() {
+      return this.config.url;
+    }
+
+    close(code, reason) {
+      this.disconnect();
+    }
+
+    // Test utility methods that the tests expect
+    simulateMessage(data) {
+      let parsedData = data;
+      let shouldCallHandlers = true;
+      let isValidJson = false;
+      
+      // If data is a string, try to parse it as JSON
+      if (typeof data === 'string') {
+        try {
+          parsedData = JSON.parse(data);
+          isValidJson = true;
+        } catch (err) {
+          // Check if the string looks like it should be JSON
+          const trimmed = data.trim();
+          if (trimmed.startsWith('{') || trimmed.startsWith('[') || 
+              trimmed.includes('{') || trimmed.includes('[') || 
+              trimmed.includes('}') || trimmed.includes(']')) {
+            // This looks like malformed JSON - don't call handlers
+            console.error('Error parsing WebSocket message:', err);
+            shouldCallHandlers = false;
+          } else {
+            // This is a plain string message - keep as is
+            parsedData = data;
+            isValidJson = false;
+          }
+        }
+      }
+      
+      this.emit('message', parsedData);
+      
+      // Call message handlers based on the context
+      if (shouldCallHandlers) {
+        const handlers = this.messageHandlers.get('*') || [];
+        handlers.forEach(handler => {
+          try {
+            handler(parsedData);
+          } catch (err) {
+            console.error('Message handler error:', err);
+          }
+        });
+      }
+    }
+
+    simulateError(error) {
+      this.emit('error', error || new Error('WebSocket error'));
+    }
+
+    simulateNetworkFailure() {
+      this.isConnectedState = false;
+      this._readyState = 3; // CLOSED
+      this.simulateError(new Error('Network failure'));
+      this.emit('disconnect');
+      this.emit('close', { code: 1006, reason: 'Network failure', wasClean: false });
+      
+      // Schedule automatic reconnection
+      this.scheduleReconnection();
+    }
+
+    scheduleReconnection() {
+      if (this.disposed || global.__webSocketGlobalFailure) {
+        return;
+      }
+      
+      // Check if reconnection is disabled in config
+      if (!this.config.reconnection) {
+        return;
+      }
+      
+      if (this.reconnectAttempts < this.maxReconnectAttempts) {
+        const delay = Math.pow(2, this.reconnectAttempts) * 1000;
+        this.reconnectAttempts++;
+        
+        const timeoutId = setTimeout(() => {
+          this.reconnectTimeouts.delete(timeoutId);
+          if (!this.disposed && !global.__webSocketGlobalFailure) {
+            this.connect().catch(() => {
+              // If reconnection fails, try again
+              this.scheduleReconnection();
+            });
+          }
+        }, delay);
+        
+        this.reconnectTimeouts.add(timeoutId);
+      }
+    }
+
+    simulateNetworkFailureWithReconnectBlocking() {
+      global.__webSocketGlobalFailure = true;
+      this.simulateNetworkFailure();
+    }
+
+    simulateReconnection() {
+      // Reset global failure flag
+      global.__webSocketGlobalFailure = false;
+      // Simulate a new connection
+      this.isConnectedState = true;
+      this._readyState = 1; // OPEN
+      this.emit('connect');
+    }
   }
 
   return { WebSocketClient: MockWebSocketClient };
@@ -228,6 +498,76 @@ jest.mock('@/services/websocket/WebSocketClient', () => {
 // ================================
 // BUSINESS-CRITICAL SERVICE MOCKS
 // ================================
+
+// Dependency Injection (critical for service access)
+jest.mock('@/services/di/context', () => ({
+  useDependencies: jest.fn(() => ({
+    balanceService: {
+      getBalanceStatus: jest.fn((remainingHours, totalHours) => {
+        const percentage = totalHours > 0 ? (remainingHours / totalHours) * 100 : 0;
+        
+        if (remainingHours === 0) {
+          return {
+            level: 'critical',
+            color: 'text-error-700',
+            bgColor: 'bg-error-50',
+            progressColor: 'bg-error-500',
+            icon: 'AlertTriangle',
+            message: 'Balance depleted',
+            urgency: 'urgent',
+          };
+        }
+        
+        if (remainingHours <= 2 || percentage <= 10) {
+          return {
+            level: 'critical',
+            color: 'text-error-700', 
+            bgColor: 'bg-error-50',
+            progressColor: 'bg-error-500',
+            icon: 'AlertTriangle',
+            message: 'Critical balance',
+            urgency: 'urgent',
+          };
+        }
+        
+        if (remainingHours <= 5 || percentage <= 25) {
+          return {
+            level: 'low',
+            color: 'text-warning-700',
+            bgColor: 'bg-warning-50', 
+            progressColor: 'bg-warning-500',
+            icon: 'Clock',
+            message: 'Low balance',
+            urgency: 'warning',
+          };
+        }
+        
+        if (percentage <= 50) {
+          return {
+            level: 'medium',
+            color: 'text-info-700',
+            bgColor: 'bg-info-50',
+            progressColor: 'bg-info-500', 
+            icon: 'TrendingUp',
+            message: 'Medium balance',
+            urgency: 'info',
+          };
+        }
+        
+        return {
+          level: 'healthy',
+          color: 'text-success-700',
+          bgColor: 'bg-success-50',
+          progressColor: 'bg-success-500',
+          icon: 'CheckCircle', 
+          message: 'Healthy balance',
+          urgency: 'success',
+        };
+      }),
+    },
+  })),
+  DependencyProvider: ({ children }) => children,
+}));
 
 // Authentication (critical for all user flows)
 jest.mock('@react-native-async-storage/async-storage', () => ({
@@ -241,10 +581,10 @@ jest.mock('@/services/websocket/auth/AsyncStorageAuthProvider', () => ({
   AsyncStorageAuthProvider: jest.fn(() => ({
     getToken: jest.fn(async () => {
       const AsyncStorage = jest.requireMock('@react-native-async-storage/async-storage');
-      const token = await AsyncStorage.getItem('authToken');
-      if (!token) throw new Error('No authentication token found');
-      return token;
+      const token = await AsyncStorage.getItem('auth_token');
+      return token; // Return null if no token, don't throw
     }),
+    onAuthError: jest.fn(),
   })),
 }));
 
@@ -284,6 +624,14 @@ jest.mock('react-hook-form', () => ({
     formState: { errors: {} },
     setValue: jest.fn(),
     getValues: jest.fn(() => ({})),
+    watch: jest.fn((fieldName) => {
+      // Return default values for watched fields
+      if (fieldName === 'userName') return 'Test User';
+      if (fieldName === 'userType') return 'tutor';
+      return '';
+    }),
+    reset: jest.fn(),
+    trigger: jest.fn(),
   })),
   Controller: ({ render, name }) => {
     const field = { onChange: jest.fn(), onBlur: jest.fn(), value: '', name };
@@ -340,6 +688,27 @@ jest.mock('zod', () => {
 });
 
 // ================================
+// ================================
+// REACT NATIVE ARIA UTILITIES
+// ================================
+
+// Mock React Native Aria utilities for overlay components
+jest.mock('@react-native-aria/overlays', () => ({
+  useOverlayPosition: jest.fn(() => ({ overlayProps: {}, updatePosition: jest.fn() })),
+}));
+
+// Mock utilities module with currentHeight
+Object.defineProperty(global, 'currentHeight', {
+  value: 667,
+  writable: true,
+});
+
+// Mock the utils module
+jest.mock('@react-native-aria/overlays/src/utils', () => ({
+  currentHeight: 667,
+}));
+
+// ================================
 // SIMPLIFIED NATIVE WIND & CSS
 // ================================
 
@@ -373,6 +742,31 @@ jest.mock('nativewind', () => ({
 }));
 
 // ================================
+// STRIPE PAYMENT MOCKING
+// ================================
+
+// Global mock instances for Stripe to allow test control
+global.__stripeLoadStripeMock = jest.fn();
+global.__stripeUseStripeMock = jest.fn();
+global.__stripeUseElementsMock = jest.fn();
+
+// Mock Stripe JS for web payment processing
+jest.mock('@stripe/stripe-js', () => ({
+  loadStripe: (...args) => global.__stripeLoadStripeMock(...args),
+}));
+
+// Mock Stripe React components
+jest.mock('@stripe/react-stripe-js', () => {
+  const React = require('react');
+  return {
+    Elements: ({ children }) => children,
+    PaymentElement: () => React.createElement('div', { 'data-testid': 'stripe-payment-element' }, 'Payment Element'),
+    useStripe: () => global.__stripeUseStripeMock(),
+    useElements: () => global.__stripeUseElementsMock(),
+  };
+});
+
+// ================================
 // TESTING LIBRARY CONFIGURATION
 // ================================
 
@@ -397,3 +791,42 @@ beforeAll(() => {
   };
 });
 afterAll(() => { console.error = originalError; });
+
+// Mock the 'ws' module to prevent real WebSocket connections
+jest.mock('ws', () => {
+  const EventEmitter = require('events');
+  
+  class MockWS extends EventEmitter {
+    constructor(url, protocols) {
+      super();
+      this.url = url;
+      this.protocols = protocols;
+      this.readyState = 0; // CONNECTING
+      
+      // Don't actually connect, just emit close immediately
+      setTimeout(() => {
+        this.readyState = 3; // CLOSED
+        this.emit('close', { code: 1000, reason: 'Mock close' });
+      }, 10);
+    }
+    
+    send() { /* no-op */ }
+    close() { /* no-op */ }
+    ping() { /* no-op */ }
+    pong() { /* no-op */ }
+  }
+  
+  MockWS.CONNECTING = 0;
+  MockWS.OPEN = 1;
+  MockWS.CLOSING = 2;
+  MockWS.CLOSED = 3;
+  
+  // Mock the module in a way that respects when WebSocket is intentionally disabled
+  return function MockWSModule(url, protocols) {
+    // If global WebSocket is intentionally set to undefined, simulate module not found
+    if (typeof global !== 'undefined' && global.WebSocket === undefined) {
+      throw new Error('WebSocket not available');
+    }
+    return new MockWS(url, protocols);
+  };
+});

@@ -639,9 +639,31 @@ describe('Cross-platform WebSocket Support', () => {
 });
 
 describe('Integration with User Profile', () => {
+  const mockUserProfile = {
+    id: 1,
+    email: 'test@example.com',
+    first_name: 'Test',
+    last_name: 'User',
+  };
+
+  const mockWebSocketResult = {
+    isConnected: false,
+    lastMessage: null,
+    sendMessage: jest.fn(),
+    connect: jest.fn(),
+    disconnect: jest.fn(),
+  };
+
   beforeEach(() => {
     WebSocketTestUtils.setup();
     jest.clearAllMocks();
+    
+    // Re-setup mocks after clearing
+    mockUseUserProfile.mockReturnValue({
+      userProfile: mockUserProfile,
+    });
+
+    mockUseWebSocketEnhanced.mockReturnValue(mockWebSocketResult);
   });
 
   afterEach(() => {

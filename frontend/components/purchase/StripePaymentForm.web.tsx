@@ -16,11 +16,13 @@ import {
   PaymentFormHeader,
   PaymentErrorDisplay,
   SecurityNotice,
-  SubmitButton,
   TermsNotice,
+  formatPrice,
 } from './stripe-payment-common';
 
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { View } from '@/components/ui/view';
 import { VStack } from '@/components/ui/vstack';
@@ -172,7 +174,7 @@ function PaymentFormContent({
 
   return (
     <Card className={`p-6 ${className}`}>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} role="form">
         <VStack space="lg">
           {/* Payment form header */}
           <PaymentFormHeader selectedPlan={selectedPlan} />
@@ -192,12 +194,24 @@ function PaymentFormContent({
           <SecurityNotice />
 
           {/* Submit button */}
-          <SubmitButton
-            isProcessing={isProcessing}
-            disabled={!stripe || !elements || disabled}
-            selectedPlan={selectedPlan}
-            onSubmit={() => {}}
-          />
+          <Button
+            action="primary"
+            variant="solid"
+            size="lg"
+            className="w-full"
+            disabled={!stripe || !elements || disabled || isProcessing}
+            type="submit"
+            role="button"
+          >
+            {isProcessing ? (
+              <>
+                <Spinner size="sm" />
+                <Text className="ml-2">Processing...</Text>
+              </>
+            ) : (
+              <Text>Pay €{formatPrice(selectedPlan.price_eur)}</Text>
+            )}
+          </Button>
 
           {/* Terms notice */}
           <TermsNotice />

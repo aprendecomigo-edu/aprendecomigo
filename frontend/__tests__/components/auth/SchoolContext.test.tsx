@@ -67,25 +67,41 @@ describe('SchoolContext', () => {
     };
 
     it('should extract schools from user profile roles', () => {
-      const { getByTestId } = render(
+      let schoolData: any = {};
+
+      const TestComponent = () => {
+        const { userSchools, currentSchool } = useSchool();
+        schoolData = { userSchools, currentSchool };
+        return null; // We don't need to render anything for this test
+      };
+
+      render(
         <SchoolProvider>
           <TestComponent />
         </SchoolProvider>,
       );
 
-      expect(getByTestId('schools-count')).toHaveProp('children', 3);
-      expect(getByTestId('current-school')).toHaveProp('children', 'Escola Vila Nova'); // First admin school
+      expect(schoolData.userSchools).toHaveLength(3);
+      expect(schoolData.currentSchool?.name).toBe('Escola Vila Nova'); // First admin school
     });
 
     it('should prioritize admin schools for default current school', () => {
-      const { getByTestId } = render(
+      let schoolData: any = {};
+
+      const TestComponent = () => {
+        const { currentSchool } = useSchool();
+        schoolData = { currentSchool };
+        return null;
+      };
+
+      render(
         <SchoolProvider>
           <TestComponent />
         </SchoolProvider>,
       );
 
       // Should default to first school_owner/school_admin role
-      expect(getByTestId('current-school')).toHaveProp('children', 'Escola Vila Nova');
+      expect(schoolData.currentSchool?.name).toBe('Escola Vila Nova');
     });
 
     it('should fallback to first school if no admin schools', () => {
@@ -111,13 +127,21 @@ describe('SchoolContext', () => {
         refreshProfile: jest.fn(),
       } as any);
 
-      const { getByTestId } = render(
+      let schoolData: any = {};
+
+      const TestComponent = () => {
+        const { currentSchool } = useSchool();
+        schoolData = { currentSchool };
+        return null;
+      };
+
+      render(
         <SchoolProvider>
           <TestComponent />
         </SchoolProvider>,
       );
 
-      expect(getByTestId('current-school')).toHaveProp('children', 'Only Teacher School');
+      expect(schoolData.currentSchool?.name).toBe('Only Teacher School');
     });
 
     it('should clear school data when user profile is null', () => {
@@ -131,14 +155,22 @@ describe('SchoolContext', () => {
         refreshProfile: jest.fn(),
       } as any);
 
-      const { getByTestId } = render(
+      let schoolData: any = {};
+
+      const TestComponent = () => {
+        const { userSchools, currentSchool } = useSchool();
+        schoolData = { userSchools, currentSchool };
+        return null;
+      };
+
+      render(
         <SchoolProvider>
           <TestComponent />
         </SchoolProvider>,
       );
 
-      expect(getByTestId('schools-count')).toHaveProp('children', 0);
-      expect(getByTestId('current-school')).toHaveProp('children', 'None');
+      expect(schoolData.userSchools).toHaveLength(0);
+      expect(schoolData.currentSchool).toBeNull();
     });
   });
 

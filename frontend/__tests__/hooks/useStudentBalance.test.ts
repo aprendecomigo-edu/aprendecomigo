@@ -12,12 +12,10 @@ import {
   createMockLowBalanceStudent,
   createMockCriticalBalanceStudent,
   createMockEmptyBalanceStudent,
-  mockStudentApiCalls,
-  mockSuccessfulStudentApi,
-  mockFailedStudentApi,
   cleanupStudentMocks,
 } from '@/__tests__/utils/student-test-utils';
 import { useStudentBalance } from '@/hooks/useStudentBalance';
+import { PurchaseApiClient } from '@/api/purchaseApi';
 
 // Mock the PurchaseApiClient
 jest.mock('@/api/purchaseApi', () => ({
@@ -33,7 +31,7 @@ describe('useStudentBalance Hook', () => {
 
   describe('Initial Load', () => {
     it('starts with loading state', () => {
-      mockStudentApiCalls.getStudentBalance.mockImplementation(
+      (PurchaseApiClient.getStudentBalance as jest.Mock).mockImplementation(
         () => new Promise(() => {}), // Never resolves
       );
 
@@ -46,7 +44,7 @@ describe('useStudentBalance Hook', () => {
 
     it('loads balance data successfully', async () => {
       const mockBalance = createMockStudentBalance();
-      mockStudentApiCalls.getStudentBalance.mockResolvedValue(mockBalance);
+      (PurchaseApiClient.getStudentBalance as jest.Mock).mockResolvedValue(mockBalance);
 
       const { result } = renderHook(() => useStudentBalance());
 
@@ -56,13 +54,13 @@ describe('useStudentBalance Hook', () => {
 
       expect(result.current.balance).toEqual(mockBalance);
       expect(result.current.error).toBeNull();
-      expect(mockStudentApiCalls.getStudentBalance).toHaveBeenCalledWith(undefined);
+      expect(PurchaseApiClient.getStudentBalance).toHaveBeenCalledWith(undefined);
     });
 
     it('loads balance data with email parameter', async () => {
       const mockBalance = createMockStudentBalance();
       const testEmail = 'student@test.com';
-      mockStudentApiCalls.getStudentBalance.mockResolvedValue(mockBalance);
+      (PurchaseApiClient.getStudentBalance as jest.Mock).mockResolvedValue(mockBalance);
 
       const { result } = renderHook(() => useStudentBalance(testEmail));
 
@@ -71,12 +69,12 @@ describe('useStudentBalance Hook', () => {
       });
 
       expect(result.current.balance).toEqual(mockBalance);
-      expect(mockStudentApiCalls.getStudentBalance).toHaveBeenCalledWith(testEmail);
+      expect(PurchaseApiClient.getStudentBalance).toHaveBeenCalledWith(testEmail);
     });
 
     it('handles API error on initial load', async () => {
       const errorMessage = 'Failed to load balance information';
-      mockStudentApiCalls.getStudentBalance.mockRejectedValue(new Error(errorMessage));
+      (PurchaseApiClient.getStudentBalance as jest.Mock).mockRejectedValue(new Error(errorMessage));
 
       const { result } = renderHook(() => useStudentBalance());
 
@@ -90,7 +88,7 @@ describe('useStudentBalance Hook', () => {
 
     it('handles API error with custom message', async () => {
       const customError = new Error('Network connection failed');
-      mockStudentApiCalls.getStudentBalance.mockRejectedValue(customError);
+      (PurchaseApiClient.getStudentBalance as jest.Mock).mockRejectedValue(customError);
 
       const { result } = renderHook(() => useStudentBalance());
 
@@ -102,7 +100,7 @@ describe('useStudentBalance Hook', () => {
     });
 
     it('handles API error without message', async () => {
-      mockStudentApiCalls.getStudentBalance.mockRejectedValue(new Error());
+      (PurchaseApiClient.getStudentBalance as jest.Mock).mockRejectedValue(new Error());
 
       const { result } = renderHook(() => useStudentBalance());
 
@@ -123,7 +121,7 @@ describe('useStudentBalance Hook', () => {
         student_info: { id: 2, name: 'Student 2', email: 'student2@test.com' },
       });
 
-      mockStudentApiCalls.getStudentBalance
+      (PurchaseApiClient.getStudentBalance as jest.Mock)
         .mockResolvedValueOnce(mockBalance1)
         .mockResolvedValueOnce(mockBalance2);
 
@@ -137,7 +135,7 @@ describe('useStudentBalance Hook', () => {
       });
 
       expect(result.current.balance).toEqual(mockBalance1);
-      expect(mockStudentApiCalls.getStudentBalance).toHaveBeenCalledWith('student1@test.com');
+      expect(PurchaseApiClient.getStudentBalance).toHaveBeenCalledWith('student1@test.com');
 
       // Change email parameter
       rerender({ email: 'student2@test.com' });
@@ -146,13 +144,13 @@ describe('useStudentBalance Hook', () => {
         expect(result.current.balance).toEqual(mockBalance2);
       });
 
-      expect(mockStudentApiCalls.getStudentBalance).toHaveBeenCalledWith('student2@test.com');
-      expect(mockStudentApiCalls.getStudentBalance).toHaveBeenCalledTimes(2);
+      expect(PurchaseApiClient.getStudentBalance).toHaveBeenCalledWith('student2@test.com');
+      expect(PurchaseApiClient.getStudentBalance).toHaveBeenCalledTimes(2);
     });
 
     it('handles email parameter changing from undefined to defined', async () => {
       const mockBalance = createMockStudentBalance();
-      mockStudentApiCalls.getStudentBalance.mockResolvedValue(mockBalance);
+      (PurchaseApiClient.getStudentBalance as jest.Mock).mockResolvedValue(mockBalance);
 
       const { result, rerender } = renderHook(({ email }) => useStudentBalance(email), {
         initialProps: { email: undefined },
@@ -162,7 +160,7 @@ describe('useStudentBalance Hook', () => {
         expect(result.current.loading).toBe(false);
       });
 
-      expect(mockStudentApiCalls.getStudentBalance).toHaveBeenCalledWith(undefined);
+      expect(PurchaseApiClient.getStudentBalance).toHaveBeenCalledWith(undefined);
 
       // Change from undefined to defined email
       rerender({ email: 'student@test.com' });
@@ -171,12 +169,12 @@ describe('useStudentBalance Hook', () => {
         expect(result.current.balance).toEqual(mockBalance);
       });
 
-      expect(mockStudentApiCalls.getStudentBalance).toHaveBeenCalledWith('student@test.com');
+      expect(PurchaseApiClient.getStudentBalance).toHaveBeenCalledWith('student@test.com');
     });
 
     it('handles email parameter changing from defined to undefined', async () => {
       const mockBalance = createMockStudentBalance();
-      mockStudentApiCalls.getStudentBalance.mockResolvedValue(mockBalance);
+      (PurchaseApiClient.getStudentBalance as jest.Mock).mockResolvedValue(mockBalance);
 
       const { result, rerender } = renderHook(({ email }) => useStudentBalance(email), {
         initialProps: { email: 'student@test.com' },
@@ -186,7 +184,7 @@ describe('useStudentBalance Hook', () => {
         expect(result.current.loading).toBe(false);
       });
 
-      expect(mockStudentApiCalls.getStudentBalance).toHaveBeenCalledWith('student@test.com');
+      expect(PurchaseApiClient.getStudentBalance).toHaveBeenCalledWith('student@test.com');
 
       // Change from defined email to undefined
       rerender({ email: undefined });
@@ -195,7 +193,7 @@ describe('useStudentBalance Hook', () => {
         expect(result.current.balance).toEqual(mockBalance);
       });
 
-      expect(mockStudentApiCalls.getStudentBalance).toHaveBeenCalledWith(undefined);
+      expect(PurchaseApiClient.getStudentBalance).toHaveBeenCalledWith(undefined);
     });
   });
 
@@ -208,7 +206,7 @@ describe('useStudentBalance Hook', () => {
         balance_summary: { remaining_hours: '8.0' } as any,
       });
 
-      mockStudentApiCalls.getStudentBalance
+      (PurchaseApiClient.getStudentBalance as jest.Mock)
         .mockResolvedValueOnce(initialBalance)
         .mockResolvedValueOnce(updatedBalance);
 
@@ -227,12 +225,12 @@ describe('useStudentBalance Hook', () => {
       });
 
       expect(result.current.balance).toEqual(updatedBalance);
-      expect(mockStudentApiCalls.getStudentBalance).toHaveBeenCalledTimes(2);
+      expect(PurchaseApiClient.getStudentBalance).toHaveBeenCalledTimes(2);
     });
 
     it('handles refetch error', async () => {
       const initialBalance = createMockStudentBalance();
-      mockStudentApiCalls.getStudentBalance
+      (PurchaseApiClient.getStudentBalance as jest.Mock)
         .mockResolvedValueOnce(initialBalance)
         .mockRejectedValueOnce(new Error('Refetch failed'));
 
@@ -262,7 +260,7 @@ describe('useStudentBalance Hook', () => {
         resolveRefetch = resolve;
       });
 
-      mockStudentApiCalls.getStudentBalance
+      (PurchaseApiClient.getStudentBalance as jest.Mock)
         .mockResolvedValueOnce(initialBalance)
         .mockImplementationOnce(() => refetchPromise);
 
@@ -292,7 +290,7 @@ describe('useStudentBalance Hook', () => {
     });
 
     it('clears error on successful refetch', async () => {
-      mockStudentApiCalls.getStudentBalance
+      (PurchaseApiClient.getStudentBalance as jest.Mock)
         .mockRejectedValueOnce(new Error('Initial error'))
         .mockResolvedValueOnce(createMockStudentBalance());
 
@@ -318,7 +316,7 @@ describe('useStudentBalance Hook', () => {
   describe('Different Balance Scenarios', () => {
     it('handles low balance scenario', async () => {
       const lowBalance = createMockLowBalanceStudent();
-      mockStudentApiCalls.getStudentBalance.mockResolvedValue(lowBalance);
+      (PurchaseApiClient.getStudentBalance as jest.Mock).mockResolvedValue(lowBalance);
 
       const { result } = renderHook(() => useStudentBalance());
 
@@ -332,7 +330,7 @@ describe('useStudentBalance Hook', () => {
 
     it('handles critical balance scenario', async () => {
       const criticalBalance = createMockCriticalBalanceStudent();
-      mockStudentApiCalls.getStudentBalance.mockResolvedValue(criticalBalance);
+      (PurchaseApiClient.getStudentBalance as jest.Mock).mockResolvedValue(criticalBalance);
 
       const { result } = renderHook(() => useStudentBalance());
 
@@ -346,7 +344,7 @@ describe('useStudentBalance Hook', () => {
 
     it('handles empty balance scenario', async () => {
       const emptyBalance = createMockEmptyBalanceStudent();
-      mockStudentApiCalls.getStudentBalance.mockResolvedValue(emptyBalance);
+      (PurchaseApiClient.getStudentBalance as jest.Mock).mockResolvedValue(emptyBalance);
 
       const { result } = renderHook(() => useStudentBalance());
 
@@ -388,7 +386,7 @@ describe('useStudentBalance Hook', () => {
         },
       });
 
-      mockStudentApiCalls.getStudentBalance.mockResolvedValue(multiPackageBalance);
+      (PurchaseApiClient.getStudentBalance as jest.Mock).mockResolvedValue(multiPackageBalance);
 
       const { result } = renderHook(() => useStudentBalance());
 
@@ -403,7 +401,7 @@ describe('useStudentBalance Hook', () => {
 
   describe('Performance', () => {
     it('executes hook quickly', async () => {
-      mockStudentApiCalls.getStudentBalance.mockResolvedValue(createMockStudentBalance());
+      (PurchaseApiClient.getStudentBalance as jest.Mock).mockResolvedValue(createMockStudentBalance());
 
       const start = performance.now();
       const { result } = renderHook(() => useStudentBalance());
@@ -418,7 +416,7 @@ describe('useStudentBalance Hook', () => {
 
     it('handles multiple rapid refetches gracefully', async () => {
       const mockBalance = createMockStudentBalance();
-      mockStudentApiCalls.getStudentBalance.mockResolvedValue(mockBalance);
+      (PurchaseApiClient.getStudentBalance as jest.Mock).mockResolvedValue(mockBalance);
 
       const { result } = renderHook(() => useStudentBalance());
 
@@ -443,7 +441,7 @@ describe('useStudentBalance Hook', () => {
 
   describe('Memory Management', () => {
     it('cleans up properly when unmounted', async () => {
-      mockStudentApiCalls.getStudentBalance.mockResolvedValue(createMockStudentBalance());
+      (PurchaseApiClient.getStudentBalance as jest.Mock).mockResolvedValue(createMockStudentBalance());
 
       const { result, unmount } = renderHook(() => useStudentBalance());
 
@@ -457,7 +455,7 @@ describe('useStudentBalance Hook', () => {
 
     it('handles unmount during pending API call', async () => {
       // Mock a slow API call
-      mockStudentApiCalls.getStudentBalance.mockImplementation(
+      (PurchaseApiClient.getStudentBalance as jest.Mock).mockImplementation(
         () => new Promise(resolve => setTimeout(resolve, 1000)),
       );
 
@@ -471,7 +469,7 @@ describe('useStudentBalance Hook', () => {
   describe('Edge Cases', () => {
     it('handles malformed API response gracefully', async () => {
       // Mock malformed response
-      mockStudentApiCalls.getStudentBalance.mockResolvedValue({
+      (PurchaseApiClient.getStudentBalance as jest.Mock).mockResolvedValue({
         // Missing required fields
         student_info: null,
       });
@@ -490,7 +488,7 @@ describe('useStudentBalance Hook', () => {
     it('handles API timeout scenario', async () => {
       const timeoutError = new Error('Request timeout');
       timeoutError.name = 'TimeoutError';
-      mockStudentApiCalls.getStudentBalance.mockRejectedValue(timeoutError);
+      (PurchaseApiClient.getStudentBalance as jest.Mock).mockRejectedValue(timeoutError);
 
       const { result } = renderHook(() => useStudentBalance());
 
@@ -505,7 +503,7 @@ describe('useStudentBalance Hook', () => {
     it('handles network error scenario', async () => {
       const networkError = new Error('Network Error');
       networkError.name = 'NetworkError';
-      mockStudentApiCalls.getStudentBalance.mockRejectedValue(networkError);
+      (PurchaseApiClient.getStudentBalance as jest.Mock).mockRejectedValue(networkError);
 
       const { result } = renderHook(() => useStudentBalance());
 
@@ -526,7 +524,7 @@ describe('useStudentBalance Hook', () => {
         },
       });
 
-      mockStudentApiCalls.getStudentBalance.mockResolvedValue(largeBalance);
+      (PurchaseApiClient.getStudentBalance as jest.Mock).mockResolvedValue(largeBalance);
 
       const { result } = renderHook(() => useStudentBalance());
 

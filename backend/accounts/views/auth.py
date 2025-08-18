@@ -78,7 +78,6 @@ class RequestCodeView(APIView):
             logger.warning(
                 f"Authentication attempt with unregistered email: {email} from IP: {request.META.get('REMOTE_ADDR', 'unknown')}"
             )
-            print(f"[SECURITY] Login attempt with unregistered email: {email}")
 
             # Perform a dummy code generation for non-existent users to ensure constant time
             # This prevents email enumeration attacks
@@ -91,7 +90,6 @@ class RequestCodeView(APIView):
 
         # User exists - generate real verification code
         logger.info(f"Verification code requested for registered email: {email}")
-        print(f"[INFO] Generating verification code for registered user: {email}")
 
         verification = VerificationCode.generate_code(email)
         code = verification.get_current_code()
@@ -99,7 +97,6 @@ class RequestCodeView(APIView):
         try:
             send_email_verification_code(email, code)
             logger.info(f"Verification code sent successfully to: {email}")
-            print(f"[INFO] Verification code sent to: {email}")
         except Exception as e:
             logger.error(f"Failed to send verification code to {email}: {e}")
             return Response(

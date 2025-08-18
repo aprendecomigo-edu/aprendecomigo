@@ -40,23 +40,46 @@ jest.mock('@/api/onboardingApi', () => ({
   },
 }));
 
-// Mock router
+// Mock expo-router with all needed functions
 const mockRouter = createMockRouter();
-jest.mock('expo-router', () => ({
-  __esModule: true,
-  default: () => mockRouter,
-}));
-
-// Mock expo-router
 const mockUseLocalSearchParams = jest.fn();
 jest.mock('expo-router', () => ({
+  __esModule: true,
+  useRouter: () => mockRouter,
   useLocalSearchParams: mockUseLocalSearchParams,
+  Link: ({ children, href, ...props }: any) => (
+    <div testID={`link-${href}`} {...props}>
+      {children}
+    </div>
+  ),
 }));
 
 // Mock toast
 const mockToast = createMockToast();
 jest.mock('@/components/ui/toast', () => ({
   useToast: () => mockToast,
+}));
+
+// Mock critical UI components
+jest.mock('@/components/ui/icon', () => ({
+  Icon: ({ children, ...props }: any) => <div testID="icon" {...props}>{children}</div>,
+  ArrowLeftIcon: (props: any) => <div testID="arrow-left-icon" {...props} />,
+}));
+
+jest.mock('@/components/ui/pressable', () => ({
+  Pressable: ({ children, ...props }: any) => <div testID="pressable" {...props}>{children}</div>,
+}));
+
+// Mock lucide-react-native icons
+jest.mock('lucide-react-native', () => ({
+  AlertTriangle: (props: any) => <div testID="alert-triangle" {...props} />,
+}));
+
+// Mock NativeWind for Gluestack UI v2
+jest.mock('nativewind', () => ({
+  vars: jest.fn(() => ({})),
+  styled: jest.fn(() => ({})),
+  cssInterop: jest.fn(() => {}),
 }));
 
 // Use the global React Native mock from jest.setup.minimal.js
@@ -75,8 +98,10 @@ describe('Authentication Flow Integration Tests', () => {
     mockRouter._mocks.back.mockClear();
     mockToast._mocks.showToast.mockClear();
 
-    // Default mocks
-    mockUseLocalSearchParams.mockReturnValue({});
+    // Default mocks - ensure proper object is returned
+    mockUseLocalSearchParams.mockReturnValue({
+      type: 'tutor', // Default user type for SignUp
+    });
   });
 
   describe('Complete Sign In Flow', () => {
@@ -84,30 +109,12 @@ describe('Authentication Flow Integration Tests', () => {
       // Step 1: User enters email and requests code
       mockRequestEmailCode.mockResolvedValue({ success: true });
 
-      const { getByPlaceholderText, getByText, getByTestId, debug } = renderWithProviders(
+      const { getByPlaceholderText, getByText, getByTestId, getByDisplayValue, getByRole, debug } = renderWithProviders(
         <SignIn />,
       );
 
-      if (__DEV__) {
-        if (__DEV__) {
-          console.log('SignIn component rendered:');
-        }
-      }
-      debug();
-
-      // Try testID first since we know it works
-      try {
-        const emailInput = getByTestId('email-input');
-        if (__DEV__) {
-          console.log('Found email input by testID:', !!emailInput);
-        }
-      } catch (e) {
-        if (__DEV__) {
-          console.log('Could not find email-input by testID:', e.message);
-        }
-      }
-
-      const emailInput = getByPlaceholderText('your_email@example.com');
+      // Find input by role
+      const emailInput = getByRole('textbox');
       const sendCodeButton = getByText('Send Login Code');
 
       fireEvent.changeText(emailInput, 'existing@example.com');
@@ -141,10 +148,10 @@ describe('Authentication Flow Integration Tests', () => {
       });
       mockCheckOnboardingStatus.mockResolvedValue({ needsOnboarding: false });
 
-      const { getByPlaceholderText: getCodeInput, getByText: getVerifyButton } =
+      const { getByPlaceholderText: getCodeInput, getByText: getVerifyButton, getByTestId: getVerifyTestId } =
         renderWithProviders(<VerifyCode />);
 
-      const codeInput = getCodeInput('000000');
+      const codeInput = getVerifyTestId('code-input');
       const verifyButton = getVerifyButton('Verify Code');
 
       fireEvent.changeText(codeInput, '123456');
@@ -174,7 +181,7 @@ describe('Authentication Flow Integration Tests', () => {
       // Step 1: Email submission
       mockRequestEmailCode.mockResolvedValue({ success: true });
 
-      const { getByPlaceholderText, getByText } = renderWithProviders(<SignIn />);
+      const { getByPlaceholderText, getByText, getByTestId } = renderWithProviders(<SignIn />);
 
       const emailInput = getByPlaceholderText('your_email@example.com');
       const sendCodeButton = getByText('Send Login Code');
@@ -198,10 +205,10 @@ describe('Authentication Flow Integration Tests', () => {
       });
       mockCheckOnboardingStatus.mockResolvedValue({ needsOnboarding: true });
 
-      const { getByPlaceholderText: getCodeInput, getByText: getVerifyButton } =
+      const { getByPlaceholderText: getCodeInput, getByText: getVerifyButton, getByTestId: getVerifyTestId } =
         renderWithProviders(<VerifyCode />);
 
-      const codeInput = getCodeInput('000000');
+      const codeInput = getVerifyTestId('code-input');
       const verifyButton = getVerifyButton('Verify Code');
 
       fireEvent.changeText(codeInput, '654321');
@@ -319,7 +326,7 @@ describe('Authentication Flow Integration Tests', () => {
       // Simulate network timeout
       mockRequestEmailCode.mockRejectedValue(new Error('Request timeout'));
 
-      const { getByPlaceholderText, getByText } = renderWithProviders(<SignIn />);
+      const { getByPlaceholderText, getByText, getByTestId } = renderWithProviders(<SignIn />);
 
       const emailInput = getByPlaceholderText('your_email@example.com');
       const sendCodeButton = getByText('Send Login Code');
@@ -350,9 +357,9 @@ describe('Authentication Flow Integration Tests', () => {
       // First attempt fails
       mockVerifyEmailCode.mockRejectedValueOnce(new Error('Invalid code'));
 
-      const { getByPlaceholderText, getByText } = renderWithProviders(<VerifyCode />);
+      const { getByPlaceholderText, getByText, getByTestId: getVerifyTestId } = renderWithProviders(<VerifyCode />);
 
-      const codeInput = getByPlaceholderText('000000');
+      const codeInput = getVerifyTestId('code-input');
       const verifyButton = getByText('Verify Code');
 
       fireEvent.changeText(codeInput, '000000');
@@ -441,7 +448,7 @@ describe('Authentication Flow Integration Tests', () => {
       // Sign in flow
       mockRequestEmailCode.mockResolvedValue({ success: true });
 
-      const { getByPlaceholderText, getByText } = renderWithProviders(<SignIn />);
+      const { getByPlaceholderText, getByText, getByTestId } = renderWithProviders(<SignIn />);
 
       const emailInput = getByPlaceholderText('your_email@example.com');
       const sendCodeButton = getByText('Send Login Code');
@@ -517,10 +524,10 @@ describe('Authentication Flow Integration Tests', () => {
       mockVerifyEmailCode.mockResolvedValue(authData);
       mockCheckOnboardingStatus.mockResolvedValue({ needsOnboarding: false });
 
-      const { getByPlaceholderText: getCodeInput, getByText: getVerifyButton } =
+      const { getByPlaceholderText: getCodeInput, getByText: getVerifyButton, getByTestId: getVerifyTestId } =
         renderWithProviders(<VerifyCode />);
 
-      const codeInput = getCodeInput('000000');
+      const codeInput = getVerifyTestId('code-input');
       const verifyButton = getVerifyButton('Verify Code');
 
       fireEvent.changeText(codeInput, '123456');
@@ -540,7 +547,7 @@ describe('Authentication Flow Integration Tests', () => {
     it('should handle rapid user interactions gracefully', async () => {
       mockRequestEmailCode.mockResolvedValue({ success: true });
 
-      const { getByPlaceholderText, getByText } = renderWithProviders(<SignIn />);
+      const { getByPlaceholderText, getByText, getByTestId } = renderWithProviders(<SignIn />);
 
       const emailInput = getByPlaceholderText('your_email@example.com');
       const sendCodeButton = getByText('Send Login Code');
@@ -568,7 +575,7 @@ describe('Authentication Flow Integration Tests', () => {
       });
       mockRequestEmailCode.mockReturnValue(delayedPromise);
 
-      const { getByPlaceholderText, getByText } = renderWithProviders(<SignIn />);
+      const { getByPlaceholderText, getByText, getByTestId } = renderWithProviders(<SignIn />);
 
       const emailInput = getByPlaceholderText('your_email@example.com');
       const sendCodeButton = getByText('Send Login Code');
