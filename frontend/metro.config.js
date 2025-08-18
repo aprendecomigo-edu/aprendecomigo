@@ -7,63 +7,33 @@ const config = getDefaultConfig(projectRoot, {
   isCSSEnabled: true,
 });
 
-// Enhanced resolver configuration for React Native Web compatibility
-config.resolver.nodeModulesPaths = [path.resolve(projectRoot, 'node_modules')];
-
-// Ensure proper aliasing for @ imports
+// Simple @ alias for imports + React Native SVG polyfill
 config.resolver.alias = {
   '@': path.resolve(projectRoot),
+  'react-native-svg/src/web/utils': path.resolve(projectRoot, 'react-native-svg-utils-polyfill.js'),
 };
 
-// Add platform-specific extensions for React Native Web
+// Basic React 19 compatibility - use defaults mostly
+config.resolver.unstable_enablePackageExports = false; // Disable for compatibility
 config.resolver.platforms = ['ios', 'android', 'native', 'web'];
 
-// Add TypeScript and JSX extensions
+// Basic source extensions
 config.resolver.sourceExts = [
   ...config.resolver.sourceExts,
   'ts',
   'tsx',
-  'js',
-  'jsx',
-  'json',
-  'wasm',
-  'svg',
 ];
-
-// Transform configuration for React Native Web
-config.transformer = {
-  ...config.transformer,
-  babelTransformerPath: require.resolve('@expo/metro-config/babel-transformer'),
-  assetRegistryPath: 'react-native/Libraries/Image/AssetRegistry',
-};
-
-// Better module resolution for React Native Web compatibility
-config.resolver.resolverMainFields = ['react-native', 'browser', 'main'];
 
 // Exclude test files from production bundle
 config.resolver.blockList = [
-  // Test files
   /.*\/__tests__\/.*/,
   /.*\.test\.(js|jsx|ts|tsx)$/,
   /.*\.spec\.(js|jsx|ts|tsx)$/,
   /jest\.setup\.js$/,
   /jest\.config\.js$/,
-  // QA test files
-  /.*\/qa-tests\/.*/,
-  // Development files
-  /.*\.development\.(js|jsx|ts|tsx)$/,
-  /.*\.dev\.(js|jsx|ts|tsx)$/,
 ];
 
-// Watchman and file watching configuration to prevent EMFILE errors
-config.watchFolders = [projectRoot];
-
-// Simple server configuration
-config.server = {
-  enhanceMiddleware: middleware => {
-    return middleware;
-  },
-};
-
 // Apply the NativeWind transformer
+// Note: This configuration supports React 19 + Expo SDK 53 with platform-specific optimizations
+// Web builds are production-only due to react-refresh incompatibility
 module.exports = withNativeWind(config, { input: './global.css' });

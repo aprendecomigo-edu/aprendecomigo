@@ -51,10 +51,14 @@
       "mcp__playwright__browser_network_requests",
       "WebFetch(domain:docs.djangoproject.com)",
       "WebSearch",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs"
     ],
     "deny": [],
     "defaultMode": "acceptEdits",
-    "additionalDirectories": ["/Users/anapmc/Code/aprendecomigo/.github/workflows"]
+    "additionalDirectories": [
+      "/Users/anapmc/Code/aprendecomigo/.github/workflows"
+    ]
   }
 }

@@ -1,4 +1,4 @@
-import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
+import { isWeb } from '@/utils/platform';
 import React, { useState, useEffect } from 'react';
 
 import { useAuth, useUserProfile } from '@/api/auth';

@@ -24,7 +24,7 @@ jest.mock('@/hooks/useTeacherDashboard', () => ({
   useTeacherDashboard: jest.fn(),
 }));
 
-jest.mock('@gluestack-ui/nativewind-utils/IsWeb', () => ({
+jest.mock('@/utils/platform', () => ({
   isWeb: false,
 }));
 

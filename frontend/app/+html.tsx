@@ -53,12 +53,16 @@ const cssFix = `
 (function() {
   if (typeof window === 'undefined') return;
 
-  if (__DEV__) {
+  // Safe development environment detection for browser context
+  var isDev = false;
+  try {
+    isDev = typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development';
+  } catch (e) {
+    isDev = false;
+  }
 
-    if (__DEV__) {
-      console.log('🔧 Applying enhanced CSS compatibility patch for NativeWind v4 + React Native Web...');
-    }
-
+  if (isDev) {
+    console.log('🔧 Applying enhanced CSS compatibility patch for NativeWind v4 + React Native Web...');
   }
 
   // Store original CSSStyleDeclaration for safekeeping
@@ -92,7 +96,7 @@ const cssFix = `
         Object.defineProperty(instance, i.toString(), {
           get: function() { return undefined; },
           set: function(value) {
-            if (__DEV__) {
+            if (isDev) {
               console.warn(\`Ignored CSS numeric property assignment at index \${i}: \${value}\`);
             }
             return;
@@ -116,7 +120,7 @@ const cssFix = `
         return originalSetProperty.call(this, property, value, priority);
       } catch (e) {
         if (isCSSError(e.message)) {
-          if (__DEV__) {
+          if (isDev) {
             console.warn('Prevented CSS setProperty error:', e.message, { property, value, priority });
           }
           return;
@@ -129,7 +133,7 @@ const cssFix = `
   // Global unhandled rejection handler for CSS promises
   window.addEventListener('unhandledrejection', function(event) {
     if (event.reason && isCSSError(event.reason.message)) {
-      if (__DEV__) {
+      if (isDev) {
         console.warn('Prevented CSS promise rejection:', event.reason.message);
       }
       event.preventDefault();
@@ -140,7 +144,7 @@ const cssFix = `
   // Enhanced global error handler for CSS-related errors
   window.addEventListener('error', function(event) {
     if (event.error && isCSSError(event.error.message)) {
-      if (__DEV__) {
+      if (isDev) {
         console.warn('Prevented CSS StyleDeclaration error:', event.error.message);
       }
       event.preventDefault();
@@ -154,7 +158,7 @@ const cssFix = `
   console.error = function(...args) {
     const message = args.join(' ');
     if (isCSSError(message)) {
-      if (__DEV__) {
+      if (isDev) {
         console.warn('Suppressed CSS console error:', message);
       }
       return;
@@ -166,7 +170,7 @@ const cssFix = `
   const originalOnError = window.onerror;
   window.onerror = function(message, source, lineno, colno, error) {
     if (isCSSError(message)) {
-      if (__DEV__) {
+      if (isDev) {
         console.warn('Caught and suppressed CSS error:', message);
       }
       return true; // Prevent default error handling
@@ -185,7 +189,7 @@ const cssFix = `
         return originalCreate.call(this, styles);
       } catch (e) {
         if (isCSSError(e.message)) {
-          if (__DEV__) {
+          if (isDev) {
             console.warn('Prevented ReactNativeWeb StyleSheet error:', e.message);
           }
           return {}; // Return empty stylesheet as fallback
@@ -204,7 +208,7 @@ const cssFix = `
           return callback(mutations, observer);
         } catch (e) {
           if (isCSSError(e.message)) {
-            if (__DEV__) {
+            if (isDev) {
               console.warn('Prevented CSS mutation observer error:', e.message);
             }
             return;
@@ -224,7 +228,7 @@ const cssFix = `
       return originalSetAttribute.call(this, name, value);
     } catch (e) {
       if (isCSSError(e.message) && (name === 'style' || name === 'class')) {
-        if (__DEV__) {
+        if (isDev) {
           console.warn('Prevented CSS setAttribute error:', e.message, { name, value });
         }
         return;
@@ -233,9 +237,9 @@ const cssFix = `
     }
   };
 
-  if (__DEV__) {
+  if (isDev) {
 
-    if (__DEV__) {
+    if (isDev) {
       console.log('✅ Enhanced CSS compatibility patch applied successfully');
     }
 

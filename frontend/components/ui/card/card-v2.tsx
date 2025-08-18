@@ -1,5 +1,5 @@
 import type { VariantProps } from '@gluestack-ui/nativewind-utils';
-import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
+import { isWeb } from '@/utils/platform';
 import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import React, { createContext, useContext, useMemo } from 'react';
 import type { ViewProps } from 'react-native';

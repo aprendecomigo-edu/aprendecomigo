@@ -1,3 +1,4 @@
+import '../polyfills.web';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
@@ -5,6 +6,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, Suspense } from 'react';
 import { Platform } from 'react-native';
+import { initializeWebPolyfills } from '@/utils/platform';
 
 import { AuthProvider, useAuth, UserProfileProvider, SchoolProvider } from '@/api/auth';
 import { TutorialProvider, TutorialOverlay } from '@/components/tutorial';
@@ -31,6 +33,11 @@ export const unstable_settings = {
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  // Initialize web polyfills before anything else
+  useEffect(() => {
+    initializeWebPolyfills();
+  }, []);
+
   const [loaded, error] = useFonts({
     ...FontAwesome.font,
   });
@@ -114,9 +121,9 @@ function RootLayoutNav() {
   // CSS Fix for NativeWind v4 + React Native Web compatibility
   useEffect(() => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      if (__DEV__) {
-        console.log('🔧 Applying CSS compatibility patch for NativeWind v4 + React Native Web...');
-      }
+      const { isDev, devLog, devWarn } = require('@/utils/env');
+      
+      devLog('🔧 Applying CSS compatibility patch for NativeWind v4 + React Native Web...');
 
       // Global error handler for CSS-related errors
       const handleError = (event: ErrorEvent) => {
@@ -126,9 +133,7 @@ function RootLayoutNav() {
           event.error.message.includes('CSSStyleDeclaration') &&
           event.error.message.includes('Indexed property setter')
         ) {
-          if (__DEV__) {
-            console.warn('Prevented CSS StyleDeclaration error:', event.error.message);
-          }
+          devWarn('Prevented CSS StyleDeclaration error:', event.error.message);
           event.preventDefault();
           event.stopPropagation();
           return false;
@@ -145,19 +150,13 @@ function RootLayoutNav() {
           message.includes('CSSStyleDeclaration') &&
           message.includes('Indexed property setter')
         ) {
-          if (__DEV__) {
-            console.warn('Suppressed CSS error:', message);
-          }
+          devWarn('Suppressed CSS error:', message);
           return;
         }
         return originalConsoleError.apply(console, args);
       };
 
-      if (__DEV__) {
-        if (__DEV__) {
-          console.log('✅ CSS compatibility patch applied successfully');
-        }
-      }
+      devLog('✅ CSS compatibility patch applied successfully');
 
       return () => {
         window.removeEventListener('error', handleError);

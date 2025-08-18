@@ -1,0 +1,58 @@
+diff --git a/node_modules/react-native-svg/src/web/WebShape.ts b/node_modules/react-native-svg/src/web/WebShape.ts
+index 9e00d2a..e5a4d41 100644
+--- a/node_modules/react-native-svg/src/web/WebShape.ts
++++ b/node_modules/react-native-svg/src/web/WebShape.ts
+@@ -8,7 +8,12 @@ import {
+ import { BaseProps } from './types';
+ import { prepare } from './utils/prepare';
+ import { convertInt32ColorToRGBA } from './utils/convertInt32Color';
+-import { camelCaseToDashed, hasTouchableProperty, remeasure } from './utils';
++import { camelCaseToDashed, hasTouchableProperty as originalHasTouchableProperty, remeasure } from './utils';
++
++// Fallback implementation in case the import fails
++const hasTouchableProperty = originalHasTouchableProperty || ((props: any) => {
++  return Boolean(props.onPress || props.onPressIn || props.onPressOut || props.onLongPress);
++});
+ import SvgTouchableMixin from '../lib/SvgTouchableMixin';
+ 
+ export class WebShape<
+diff --git a/node_modules/react-native-svg/src/web/utils/index.ts b/node_modules/react-native-svg/src/web/utils/index.ts
+index 21d1920..4085388 100644
+--- a/node_modules/react-native-svg/src/web/utils/index.ts
++++ b/node_modules/react-native-svg/src/web/utils/index.ts
+@@ -5,8 +5,15 @@ import {
+   TransformsStyleArray,
+ } from '../../lib/extract/extractTransform';
+ 
+-export const hasTouchableProperty = (props: BaseProps) =>
+-  props.onPress || props.onPressIn || props.onPressOut || props.onLongPress;
++// Ensure hasTouchableProperty is properly exported for React Native Web compatibility
++export const hasTouchableProperty = (props: BaseProps): boolean => {
++  return Boolean(props.onPress || props.onPressIn || props.onPressOut || props.onLongPress);
++};
++
++// Add a fallback for cases where the function might not be properly imported
++if (typeof window !== 'undefined') {
++  (window as any).hasTouchableProperty = hasTouchableProperty;
++}
+ 
+ export const camelCaseToDashed = (camelCase: string) => {
+   return camelCase.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase());
+diff --git a/node_modules/react-native-svg/src/web/utils/prepare.ts b/node_modules/react-native-svg/src/web/utils/prepare.ts
+index 0679b55..7680015 100644
+--- a/node_modules/react-native-svg/src/web/utils/prepare.ts
++++ b/node_modules/react-native-svg/src/web/utils/prepare.ts
+@@ -4,7 +4,12 @@ import {
+ } from 'react-native';
+ import { BaseProps } from '../types';
+ import { WebShape } from '../WebShape';
+-import { hasTouchableProperty, parseTransformProp } from '.';
++import { hasTouchableProperty as originalHasTouchableProperty, parseTransformProp } from '.';
++
++// Fallback implementation in case the import fails
++const hasTouchableProperty = originalHasTouchableProperty || ((props: any) => {
++  return Boolean(props.onPress || props.onPressIn || props.onPressOut || props.onLongPress);
++});
+ import { resolve } from '../../lib/resolve';
+ import { NumberProp } from '../../lib/extract/types';
+ import { resolveAssetUri } from '../../lib/resolveAssetUri';

@@ -1,4 +1,4 @@
-import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
+import { isWeb } from '@/utils/platform';
 import { Stack } from 'expo-router';
 import React from 'react';
 

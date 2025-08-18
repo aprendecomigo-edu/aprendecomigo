@@ -1,5 +1,5 @@
 import { cn } from '@gluestack-ui/nativewind-utils/cn';
-import { isWeb } from '@gluestack-ui/nativewind-utils/IsWeb';
+import { isWeb } from '@/utils/platform';
 import { router } from 'expo-router';
 import type { Href } from 'expo-router';
 import type { LucideIcon } from 'lucide-react-native';

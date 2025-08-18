@@ -1,11 +1,10 @@
 const getEnvVars = () => {
   // Get the environment from the process.env
   const ENV = process.env.APP_ENV || 'development';
+  const isDev = process.env.NODE_ENV !== 'production';
 
-  if (__DEV__) {
-    if (__DEV__) {
-      console.log(`Building app with ${ENV} environment`);
-    }
+  if (isDev) {
+    console.log(`Building app with ${ENV} environment`);
   }
 
   return {
