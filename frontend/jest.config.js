@@ -58,6 +58,10 @@ module.exports = {
       },
     },
   },
+  // Suppress punycode deprecation warning
+  testEnvironmentOptions: {
+    url: 'http://localhost/',
+  },
   // Use jest-expo's default test environment for React Native
   // testEnvironment is provided by jest-expo preset
   verbose: true,

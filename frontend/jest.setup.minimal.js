@@ -5,6 +5,19 @@ import React from 'react';
 import '@testing-library/jest-native/extend-expect';
 import '@testing-library/jest-dom';
 
+// Suppress punycode deprecation warning
+const originalEmitWarning = process.emitWarning;
+process.emitWarning = (warning, ...args) => {
+  if (
+    typeof warning === 'string' &&
+    warning.includes('punycode') &&
+    warning.includes('deprecated')
+  ) {
+    return; // Ignore punycode deprecation warnings
+  }
+  return originalEmitWarning.call(process, warning, ...args);
+};
+
 // Define __DEV__ for test environment
 global.__DEV__ = process.env.NODE_ENV !== 'production';
 
@@ -61,19 +74,23 @@ jest.mock('react-native', () => {
     return Component;
   };
 
-  const TextInput = (props) => {
+  const TextInput = React.forwardRef((props, ref) => {
     const { value, onChangeText, placeholder, testID, editable = true, ...otherProps } = props;
     return React.createElement('input', {
       ...otherProps,
+      ref,
       type: 'text',
       value: value || '',
-      placeholder,
+      placeholder: placeholder || props.placeholderText || '',
       disabled: !editable,
       'data-testid': testID || 'TextInput',
       onChange: (e) => onChangeText && onChangeText(e.target.value),
       className: 'mock-textinput',
+      // Add accessibility attributes for React Native Testing Library
+      role: 'textbox',
+      'aria-label': otherProps['aria-label'] || placeholder || props.placeholderText || '',
     });
-  };
+  });
 
   const Pressable = (props) => {
     const { children, onPress, disabled, testID, ...otherProps } = props;
@@ -158,9 +175,15 @@ jest.mock('@/components/ui/input', () => {
   
   return {
     Input: createUIComponentFactory(['Input']).Input,
-    InputField: (props) => React.createElement(TextInput, {
-      testID: 'InputField',
-      ...props,
+    InputField: React.forwardRef((props, ref) => {
+      return React.createElement(TextInput, {
+        ref,
+        testID: props.testID || 'InputField',
+        placeholder: props.placeholder || '',
+        value: props.value || '',
+        onChangeText: props.onChangeText,
+        ...props,
+      });
     }),
   };
 });
