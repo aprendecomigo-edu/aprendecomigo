@@ -244,22 +244,22 @@ class HourDeductionService:
 
                 if refunded_hours > Decimal("0.00"):
                     # Update the student account balance
-                    consumption.student_account.hours_consumed -= refunded_hours
-                    consumption.student_account.save(update_fields=["hours_consumed", "updated_at"])
+                    consumption.student_account.hours_consumed -= refunded_hours  # type: ignore[attr-defined]
+                    consumption.student_account.save(update_fields=["hours_consumed", "updated_at"])  # type: ignore[attr-defined]
 
                     # Mark consumption as refunded
                     consumption.is_refunded = True
                     consumption.refund_reason = reason
                     consumption.save(update_fields=["is_refunded", "refund_reason", "updated_at"])
 
-                    refund_summary["refunded_count"] += 1
+                    refund_summary["refunded_count"] += 1  # type: ignore[operator]
                     refund_summary["total_hours_refunded"] += refunded_hours
-                    refund_summary["students_refunded"].append(
-                        {"student_name": consumption.student_account.student.name, "hours_refunded": refunded_hours}
+                    refund_summary["students_refunded"].append(  # type: ignore[attr-defined]
+                        {"student_name": consumption.student_account.student.name, "hours_refunded": refunded_hours}  # type: ignore[attr-defined]
                     )
 
                     logger.info(
-                        f"Refunded {refunded_hours} hours to {consumption.student_account.student.name} "
+                        f"Refunded {refunded_hours} hours to {consumption.student_account.student.name} "  # type: ignore[attr-defined]
                         f"for session {session.id}"
                     )
 
@@ -391,7 +391,7 @@ class HourDeductionService:
             return []
 
         # Get existing consumption records for this session
-        consumptions = HourConsumption.objects.filter(session=session, is_refunded=False).select_related(
+        consumptions = HourConsumption.objects.filter(session=session, is_refunded=False).select_related(  # type: ignore[misc]
             "student_account__student", "package"
         )
 
@@ -406,8 +406,8 @@ class HourDeductionService:
 
             if refund_amount > Decimal("0.00"):
                 # Update student account balance
-                consumption.student_account.hours_consumed -= refund_amount
-                consumption.student_account.save(update_fields=["hours_consumed", "updated_at"])
+                consumption.student_account.hours_consumed -= refund_amount  # type: ignore[attr-defined]
+                consumption.student_account.save(update_fields=["hours_consumed", "updated_at"])  # type: ignore[attr-defined]
 
                 # Update consumption record
                 consumption.hours_consumed -= refund_amount
@@ -423,7 +423,7 @@ class HourDeductionService:
                 excess_hours -= refund_amount
 
                 logger.info(
-                    f"Refunded {refund_amount} excess hours to {consumption.student_account.student.name} "
+                    f"Refunded {refund_amount} excess hours to {consumption.student_account.student.name} "  # type: ignore[attr-defined]
                     f"for session {session.id}: {reason}"
                 )
 

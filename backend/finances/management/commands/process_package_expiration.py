@@ -20,6 +20,7 @@ Usage:
 Following GitHub Issue #33: "Create Package Expiration Management"
 """
 
+from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
@@ -147,7 +148,7 @@ class Command(BaseCommand):
         expired_packages = PackageExpirationService.get_expired_packages_for_student(student)
 
         # Filter by grace period
-        grace_cutoff = timezone.now() - timezone.timedelta(hours=grace_hours)
+        grace_cutoff = timezone.now() - timedelta(hours=grace_hours)
         expired_packages = [pkg for pkg in expired_packages if pkg.expires_at < grace_cutoff]
 
         if verbosity >= 1:

@@ -3,6 +3,7 @@ Services for calculating teacher payments and managing billing logic.
 """
 
 from decimal import Decimal
+from typing import Any, cast
 
 from django.db import models, transaction
 
@@ -36,7 +37,7 @@ class TeacherPaymentCalculator:
         # Handle trial classes based on school settings
         if session.is_trial:
             try:
-                billing_settings = SchoolBillingSettings.objects.get(school=session.school)
+                billing_settings = SchoolBillingSettings.objects.get(school=session.school)  # type: ignore[misc]
                 if billing_settings.trial_cost_absorption == TrialCostAbsorption.SCHOOL:
                     return Decimal("0.00"), None
                 elif billing_settings.trial_cost_absorption == TrialCostAbsorption.TEACHER:
@@ -56,7 +57,7 @@ class TeacherPaymentCalculator:
     def _get_session_rate(session: ClassSession) -> tuple[Decimal, TeacherCompensationRule | None]:
         """Internal method to get the base rate for a session."""
         # Get all active compensation rules for this teacher at this school
-        rules = TeacherCompensationRule.objects.filter(
+        rules = TeacherCompensationRule.objects.filter(  # type: ignore[misc]
             teacher=session.teacher,
             school=session.school,
             is_active=True,
@@ -88,8 +89,8 @@ class TeacherPaymentCalculator:
                 return highest_grade_rule.rate_per_hour, highest_grade_rule
 
         # Priority 4: Teacher's default hourly rate from TeacherProfile
-        if session.teacher.hourly_rate:
-            return session.teacher.hourly_rate, None
+        if session.teacher.hourly_rate:  # type: ignore[attr-defined]
+            return session.teacher.hourly_rate, None  # type: ignore[attr-defined]
 
         # Default: No rate found
         return Decimal("0.00"), None
@@ -135,8 +136,8 @@ class TeacherPaymentCalculator:
         # Create payment entry
         payment_entry = TeacherPaymentEntry.objects.create(
             session=session,
-            teacher=session.teacher,
-            school=session.school,
+            teacher=cast(Any, session.teacher),
+            school=cast(Any, session.school),
             billing_period=billing_period,
             hours_taught=hours,
             rate_applied=rate,

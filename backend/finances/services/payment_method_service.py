@@ -76,7 +76,7 @@ class PaymentMethodService:
                 stripe_payment_method_id, stripe_customer_id
             )
             if not attach_result["success"]:
-                return attach_result
+                return attach_result  # type: ignore[no-any-return]
 
             # Create payment method record with atomic transaction
             with transaction.atomic():
@@ -434,7 +434,7 @@ class PaymentMethodService:
                 )
                 return {"success": True, "customer_id": customer_result["customer_id"], "existing": False}
             else:
-                return customer_result
+                return customer_result  # type: ignore[no-any-return]
         else:
             return {
                 "success": False,

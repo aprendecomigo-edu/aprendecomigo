@@ -234,7 +234,7 @@ def join_school_via_invitation_link(
         raise ValueError("Invitation link has expired or is no longer valid")
 
     # Check if user is already a teacher at this school
-    existing_membership = SchoolMembership.objects.filter(
+    existing_membership = SchoolMembership.objects.filter(  # type: ignore[misc]
         user=user, school=invitation_link.school, role=invitation_link.role, is_active=True
     ).first()
 
@@ -260,7 +260,7 @@ def join_school_via_invitation_link(
             teacher_profile.save()
 
         # Create school membership
-        membership = SchoolMembership.objects.create(
+        membership = SchoolMembership.objects.create(  # type: ignore[misc]
             user=user, school=invitation_link.school, role=invitation_link.role, is_active=True
         )
 

@@ -93,7 +93,7 @@ class SchoolMembership(models.Model):
         school_name = self.school.name if hasattr(self.school, "name") else str(self.school)
         return f"{user_name} as {self.get_role_display()} at {school_name}"
 
-    def get_role_display(self) -> str:
+    def get_role_display(self) -> str:  # type: ignore[no-redef]
         """Get the display value for the role."""
         role_display = dict(SchoolRole.choices).get(self.role, self.role)
         return str(role_display)  # Convert _StrPromise to str
@@ -335,5 +335,5 @@ class SchoolSettings(models.Model):
         if not self.grade_levels or not self.educational_system:
             return []
 
-        choices_dict = dict(self.educational_system.school_year_choices)
+        choices_dict = dict(self.educational_system.school_year_choices)  # type: ignore[attr-defined]
         return [choices_dict.get(level, level) for level in self.grade_levels]

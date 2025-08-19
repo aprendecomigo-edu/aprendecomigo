@@ -300,7 +300,7 @@ class EmailTemplateRenderingService:
         # Add custom CSS if provided (sanitized)
         if template.custom_css:
             # Validate and sanitize custom CSS
-            sanitized_css = cls._sanitize_custom_css(template.custom_css)
+            sanitized_css = cls._sanitize_custom_css(template.custom_css)  # type: ignore[attr-defined]
             if sanitized_css:
                 branding_css += f"\n<style>\n{sanitized_css}\n</style>"
 

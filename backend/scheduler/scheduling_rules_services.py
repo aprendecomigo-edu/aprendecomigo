@@ -46,12 +46,12 @@ class SchedulingConfigurationService:
         """Get minimum notice period in hours with configuration hierarchy."""
         # Teacher-specific override
         if teacher and teacher.minimum_notice_minutes is not None:
-            return teacher.minimum_notice_minutes // 60
+            return teacher.minimum_notice_minutes // 60  # type: ignore[no-any-return]
 
         # School default
         try:
             school_settings = school.settings
-            return school_settings.default_minimum_notice_minutes // 60
+            return school_settings.default_minimum_notice_minutes // 60  # type: ignore[no-any-return]
         except (AttributeError, ValueError, TypeError):
             # Fallback to system default
             return DEFAULT_MINIMUM_NOTICE_HOURS
@@ -62,12 +62,12 @@ class SchedulingConfigurationService:
         """Get minimum notice period in minutes with configuration hierarchy."""
         # Teacher-specific override
         if teacher and teacher.minimum_notice_minutes is not None:
-            return teacher.minimum_notice_minutes
+            return teacher.minimum_notice_minutes  # type: ignore[no-any-return]
 
         # School default
         try:
             school_settings = school.settings
-            return school_settings.default_minimum_notice_minutes
+            return school_settings.default_minimum_notice_minutes  # type: ignore[no-any-return]
         except (AttributeError, ValueError, TypeError):
             # Fallback to system default (2 hours)
             return DEFAULT_MINIMUM_NOTICE_MINUTES
@@ -78,58 +78,66 @@ class SchedulingConfigurationService:
         """Get buffer time in minutes with class-type and teacher hierarchy."""
         # Teacher-specific override
         if teacher and teacher.buffer_time_minutes is not None:
-            return teacher.buffer_time_minutes
+            return teacher.buffer_time_minutes  # type: ignore[no-any-return]
 
         # Class-type specific rules (from school)
         try:
             school_settings = school.settings
             if class_type == ClassType.GROUP and hasattr(school_settings, "buffer_time_group"):
-                return school_settings.buffer_time_group
+                return school_settings.buffer_time_group  # type: ignore[no-any-return]
             elif class_type == ClassType.TRIAL and hasattr(school_settings, "buffer_time_trial"):
-                return school_settings.buffer_time_trial
+                return school_settings.buffer_time_trial  # type: ignore[no-any-return]
 
             # School default
-            return school_settings.default_buffer_time_minutes
+            return school_settings.default_buffer_time_minutes  # type: ignore[no-any-return]
         except (AttributeError, ValueError, TypeError):
             # Fallback to system default
             return DEFAULT_BUFFER_TIME_MINUTES
 
-    def get_daily_booking_limit(self, school: School, teacher: TeacherProfile | None = None, is_student: bool = False) -> int:
+    def get_daily_booking_limit(
+        self, school: School, teacher: TeacherProfile | None = None, is_student: bool = False
+    ) -> int:
         """Get daily booking limit with role and teacher hierarchy."""
         if is_student:
             try:
-                return school.settings.student_max_daily_bookings
+                return school.settings.student_max_daily_bookings  # type: ignore[no-any-return]
             except (AttributeError, ValueError, TypeError):
                 return DEFAULT_STUDENT_MAX_DAILY_BOOKINGS  # Student fallback
 
         # Teacher limits
         if teacher and teacher.max_daily_bookings is not None:
-            return teacher.max_daily_bookings
+            return teacher.max_daily_bookings  # type: ignore[no-any-return]
 
         try:
-            return school.settings.default_max_daily_bookings
+            return school.settings.default_max_daily_bookings  # type: ignore[no-any-return]
         except (AttributeError, ValueError, TypeError):
             return DEFAULT_TEACHER_MAX_DAILY_BOOKINGS  # Teacher fallback
 
-    def get_weekly_booking_limit(self, school: School, teacher: TeacherProfile | None = None, is_student: bool = False) -> int:
+    def get_weekly_booking_limit(
+        self, school: School, teacher: TeacherProfile | None = None, is_student: bool = False
+    ) -> int:
         """Get weekly booking limit with role and teacher hierarchy."""
         if is_student:
             try:
-                return school.settings.student_max_weekly_bookings
+                return school.settings.student_max_weekly_bookings  # type: ignore[no-any-return]
             except (AttributeError, ValueError, TypeError):
                 return 10  # Student fallback
 
         # Teacher limits
         if teacher and teacher.max_weekly_bookings is not None:
-            return teacher.max_weekly_bookings
+            return teacher.max_weekly_bookings  # type: ignore[no-any-return]
 
         try:
-            return school.settings.default_max_weekly_bookings
+            return school.settings.default_max_weekly_bookings  # type: ignore[no-any-return]
         except (AttributeError, ValueError, TypeError):
             return 30  # Teacher fallback
 
     def get_rule_configuration(
-        self, school: School, teacher: TeacherProfile | None = None, class_type: str | None = None, is_student: bool = False
+        self,
+        school: School,
+        teacher: TeacherProfile | None = None,
+        class_type: str | None = None,
+        is_student: bool = False,
     ) -> dict[str, Any]:
         """Get complete rule configuration for display/debugging."""
         return {
@@ -158,7 +166,11 @@ class SchedulingRulesService:
         self.config_service = SchedulingConfigurationService()
 
     def validate_minimum_notice(
-        self, booking_datetime: datetime, school: School, teacher: TeacherProfile | None = None, class_type: str | None = None
+        self,
+        booking_datetime: datetime,
+        school: School,
+        teacher: TeacherProfile | None = None,
+        class_type: str | None = None,
     ) -> bool:
         """Validate that booking meets minimum notice period requirement."""
         minimum_hours = self.config_service.get_minimum_notice_hours(school, teacher, class_type)
@@ -192,7 +204,7 @@ class SchedulingRulesService:
         if not school:
             return 15  # Default fallback
 
-        return self.config_service.get_buffer_time_minutes(school, teacher, class_type)
+        return self.config_service.get_buffer_time_minutes(school, teacher, class_type)  # type: ignore[no-any-return]
 
     def validate_booking_limits(
         self,
@@ -270,10 +282,14 @@ class SchedulingRulesService:
         return True
 
     def get_rule_configuration(
-        self, school: School, teacher: TeacherProfile | None = None, class_type: str | None = None, is_student: bool = False
+        self,
+        school: School,
+        teacher: TeacherProfile | None = None,
+        class_type: str | None = None,
+        is_student: bool = False,
     ) -> dict[str, Any]:
         """Get complete rule configuration - delegate to configuration service."""
-        return self.config_service.get_rule_configuration(school, teacher, class_type, is_student)
+        return self.config_service.get_rule_configuration(school, teacher, class_type, is_student)  # type: ignore[no-any-return]
 
 
 class ConflictDetectionService:
@@ -677,7 +693,7 @@ class AvailabilityCalculationService:
         ).count()
 
         # Reserve some slots for the limit (not all slots should be available)
-        return current_count < daily_limit
+        return current_count < daily_limit  # type: ignore[no-any-return]
 
     def _meets_minimum_notice(self, booking_date: date, booking_time: time, minimum_notice_minutes: int) -> bool:
         """Check if slot meets minimum notice requirement."""

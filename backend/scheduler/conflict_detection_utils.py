@@ -98,13 +98,13 @@ class ClassScheduleConflictDetector:
         self, teacher: TeacherProfile, school: School, date, start_time: time, end_time: time
     ) -> bool:
         """Check if teacher has conflicting classes."""
-        return self.get_conflicting_classes_query(
+        return self.get_conflicting_classes_query(  # type: ignore[no-any-return]
             teacher=teacher, school=school, date=date, start_time=start_time, end_time=end_time
         ).exists()
 
     def has_student_conflict(self, student: CustomUser, school: School, date, start_time: time, end_time: time) -> bool:
         """Check if student has conflicting classes."""
-        return self.get_conflicting_classes_query(
+        return self.get_conflicting_classes_query(  # type: ignore[no-any-return]
             student=student, school=school, date=date, start_time=start_time, end_time=end_time
         ).exists()
 

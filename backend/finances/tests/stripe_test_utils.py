@@ -492,24 +492,24 @@ class StripeTestMixin:
         """Create a mock Customer with custom attributes."""
         return MockCustomer(**kwargs)
 
-    def create_mock_payment_method(self, **kwargs) -> MockPaymentMethod:
+    def create_mock_payment_method(self, **kwargs) -> MockPaymentMethod:  # type: ignore[no-redef]
         """Create a mock PaymentMethod with custom attributes."""
         return MockPaymentMethod(**kwargs)
 
-    def create_mock_payment_intent(self, **kwargs) -> MockPaymentIntent:
+    def create_mock_payment_intent(self, **kwargs) -> MockPaymentIntent:  # type: ignore[no-redef]
         """Create a mock PaymentIntent with custom attributes."""
         return MockPaymentIntent(**kwargs)
 
     def simulate_stripe_error(self, error_type: str = "CardError", message: str = "Your card was declined."):
         """Configure mocks to simulate Stripe errors."""
         if error_type == "CardError":
-            error = stripe.error.CardError(message=message, param="number", code="card_declined")
+            error = stripe.error.CardError(message=message, param="number", code="card_declined")  # type: ignore[attr-defined]
         elif error_type == "APIError":
-            error = stripe.error.APIError(message=message)
+            error = stripe.error.APIError(message=message)  # type: ignore[attr-defined]
         elif error_type == "RateLimitError":
-            error = stripe.error.RateLimitError(message="Too many requests")
+            error = stripe.error.RateLimitError(message="Too many requests")  # type: ignore[attr-defined]
         else:
-            error = stripe.error.StripeError(message=message)
+            error = stripe.error.StripeError(message=message)  # type: ignore[attr-defined]
 
         # Configure all create operations to raise the error
         self.mock_payment_intent_create_obj.side_effect = error
@@ -672,7 +672,7 @@ class MockPaymentMethodServiceInstance:
             result = self.__class__._remove_error_data.copy()
             # Clear test data after use for isolation
             delattr(self.__class__, "_remove_error_data")
-            return result
+            return result  # type: ignore[no-any-return]
 
         return {"success": True, "message": "Payment method removed successfully", "was_default": False}
 

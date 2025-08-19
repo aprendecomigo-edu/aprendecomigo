@@ -95,7 +95,7 @@ def payment_metrics(request: Request) -> Response:
         # Serialize response
         serializer = PaymentMetricsSerializer(metrics)
 
-        logger.info(f"Payment metrics requested by admin {request.user.email}")
+        logger.info(f"Payment metrics requested by admin {request.user.email}")  # type: ignore[union-attr]
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -367,7 +367,7 @@ def student_analytics(request: Request, student_id: int) -> Response:
         analytics_service = PaymentAnalyticsService()
         student_data = analytics_service.get_student_analytics(student_id, days)
 
-        logger.info(f"Student analytics for {student_id} requested by admin {request.user.email}")
+        logger.info(f"Student analytics for {student_id} requested by admin {request.user.email}")  # type: ignore[union-attr]
 
         return Response(student_data, status=status.HTTP_200_OK)
 
@@ -401,13 +401,13 @@ def system_health(request: Request) -> Response:
             transaction_count = PurchaseTransaction.objects.count()
             webhook_count = WebhookEventLog.objects.count()
 
-            health_data["checks"]["database"] = {
+            health_data["checks"]["database"] = {  # type: ignore[index]
                 "status": "ok",
                 "transaction_count": transaction_count,
                 "webhook_count": webhook_count,
             }
         except Exception as e:
-            health_data["checks"]["database"] = {"status": "error", "error": str(e)}
+            health_data["checks"]["database"] = {"status": "error", "error": str(e)}  # type: ignore[index]
             health_data["status"] = "degraded"
 
         # Check recent webhook failures
@@ -418,7 +418,7 @@ def system_health(request: Request) -> Response:
 
             failed_webhooks = WebhookEventLog.objects.filter(created_at__gte=recent_time, status="failed").count()
 
-            health_data["checks"]["webhooks"] = {
+            health_data["checks"]["webhooks"] = {  # type: ignore[index]
                 "status": "ok" if failed_webhooks < 5 else "warning",
                 "recent_failures": failed_webhooks,
             }
@@ -427,22 +427,22 @@ def system_health(request: Request) -> Response:
                 health_data["status"] = "degraded"
 
         except Exception as e:
-            health_data["checks"]["webhooks"] = {"status": "error", "error": str(e)}
+            health_data["checks"]["webhooks"] = {"status": "error", "error": str(e)}  # type: ignore[index]
 
         # Check analytics service
         try:
             analytics_service = PaymentAnalyticsService()
             metrics = analytics_service.get_success_rate_metrics()
 
-            health_data["checks"]["analytics"] = {
+            health_data["checks"]["analytics"] = {  # type: ignore[index]
                 "status": "ok",
                 "last_24h_transactions": metrics.get("total_transactions", 0),
             }
         except Exception as e:
-            health_data["checks"]["analytics"] = {"status": "error", "error": str(e)}
+            health_data["checks"]["analytics"] = {"status": "error", "error": str(e)}  # type: ignore[index]
             health_data["status"] = "degraded"
 
-        logger.info(f"System health check requested by admin {request.user.email}")
+        logger.info(f"System health check requested by admin {request.user.email}")  # type: ignore[union-attr]
 
         return Response(health_data, status=status.HTTP_200_OK)
 

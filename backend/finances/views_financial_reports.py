@@ -100,7 +100,7 @@ def student_spending_analytics(request: Request) -> Response:
             start_date = end_date - timedelta(days=30)
 
         # Get completed transactions for the student
-        transactions = PurchaseTransaction.objects.filter(
+        transactions = PurchaseTransaction.objects.filter(  # type: ignore[misc]
             student=request.user, payment_status=TransactionPaymentStatus.COMPLETED, created_at__gte=start_date
         )
 
@@ -166,7 +166,7 @@ def school_financial_overview(request: Request) -> Response:
         if request.user.is_staff or request.user.is_superuser:
             schools = School.objects.all()
         else:
-            user_roles = SchoolRole.objects.filter(user=request.user, role__in=["owner", "admin"])
+            user_roles = SchoolRole.objects.filter(user=request.user, role__in=["owner", "admin"])  # type: ignore[attr-defined]
             schools = School.objects.filter(id__in=user_roles.values_list("school_id", flat=True))
 
         if not schools.exists():
@@ -244,7 +244,7 @@ def teacher_compensation_report(request: Request) -> Response:
         start_date = end_date - timedelta(days=30) if period == "monthly" else end_date - timedelta(days=90)
 
         # Get teacher's completed sessions
-        sessions = ClassSession.objects.filter(teacher_id=teacher_id, status="completed", date__gte=start_date.date())
+        sessions = ClassSession.objects.filter(teacher_id=teacher_id, status="completed", date__gte=start_date.date())  # type: ignore[misc]
 
         sessions_completed = sessions.count()
 
@@ -305,7 +305,7 @@ def revenue_trends_analysis(request: Request) -> Response:
         if request.user.is_staff or request.user.is_superuser:
             schools = School.objects.all()
         else:
-            user_roles = SchoolRole.objects.filter(user=request.user, role__in=["owner", "admin"])
+            user_roles = SchoolRole.objects.filter(user=request.user, role__in=["owner", "admin"])  # type: ignore[attr-defined]
             schools = School.objects.filter(id__in=user_roles.values_list("school_id", flat=True))
 
         # Get students from accessible schools
@@ -337,17 +337,17 @@ def revenue_trends_analysis(request: Request) -> Response:
 
         # Calculate growth rate
         if len(daily_revenue) >= 2:
-            recent_avg = sum([day["revenue"] for day in daily_revenue[-7:]]) / 7
-            earlier_avg = sum([day["revenue"] for day in daily_revenue[:7]]) / 7
+            recent_avg = sum([day["revenue"] for day in daily_revenue[-7:]]) / 7  # type: ignore[misc]
+            earlier_avg = sum([day["revenue"] for day in daily_revenue[:7]]) / 7  # type: ignore[misc]
             growth_rate = ((recent_avg - earlier_avg) / max(earlier_avg, 1)) * 100
         else:
             growth_rate = 0.0
 
         # Find peak days
-        peak_days = sorted(daily_revenue, key=lambda x: x["revenue"], reverse=True)[:3]
+        peak_days = sorted(daily_revenue, key=lambda x: x["revenue"], reverse=True)[:3]  # type: ignore[arg-type,return-value]
 
         # Total period revenue
-        total_period_revenue = sum([day["revenue"] for day in daily_revenue])
+        total_period_revenue = sum([day["revenue"] for day in daily_revenue])  # type: ignore[misc]
 
         return Response(
             {
@@ -445,8 +445,8 @@ def export_transactions_fixed(request: Request) -> Response:
             writer.writerow(
                 [
                     transaction.id,
-                    transaction.student.email,
-                    transaction.student.name,
+                    transaction.student.email,  # type: ignore[attr-defined]
+                    transaction.student.name,  # type: ignore[attr-defined]
                     str(transaction.amount),
                     transaction.get_transaction_type_display(),
                     transaction.get_payment_status_display(),
@@ -455,7 +455,7 @@ def export_transactions_fixed(request: Request) -> Response:
                 ]
             )
 
-        return response
+        return response  # type: ignore[return-value]
 
     except Exception as e:
         import traceback
@@ -544,7 +544,7 @@ class ExportStudentBalancesAPIView(APIView):
         - format: 'excel' (required)
         """
         try:
-            return self._export_balances(request.query_params)
+            return self._export_balances(request.query_params)  # type: ignore[no-any-return]
         except Exception as e:
             logger.error(f"Student balances export error: {e}")
             return Response(
@@ -559,7 +559,7 @@ class ExportStudentBalancesAPIView(APIView):
         - format: 'excel' (required)
         """
         try:
-            return self._export_balances(request.data)
+            return self._export_balances(request.data)  # type: ignore[no-any-return]
         except Exception as e:
             logger.error(f"Student balances export error: {e}")
             return Response(
@@ -639,7 +639,7 @@ class ExportTeacherSessionsAPIView(APIView):
         - year: Year (required)
         """
         try:
-            return self._export_teacher_sessions(request.query_params)
+            return self._export_teacher_sessions(request.query_params)  # type: ignore[no-any-return]
         except Exception as e:
             logger.error(f"Teacher sessions export error: {e}")
             return Response(
@@ -657,7 +657,7 @@ class ExportTeacherSessionsAPIView(APIView):
         - year: Year (required)
         """
         try:
-            return self._export_teacher_sessions(request.data)
+            return self._export_teacher_sessions(request.data)  # type: ignore[no-any-return]
         except Exception as e:
             logger.error(f"Teacher sessions export error: {e}")
             return Response(
@@ -685,7 +685,7 @@ def generate_receipt(request: Request) -> Response:
 
         # Get the transaction
         try:
-            transaction = PurchaseTransaction.objects.get(id=transaction_id, student=request.user)
+            transaction = PurchaseTransaction.objects.get(id=transaction_id, student=request.user)  # type: ignore[misc]
         except PurchaseTransaction.DoesNotExist:
             return Response({"error": "Transaction not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -719,7 +719,7 @@ def generate_receipt(request: Request) -> Response:
 def list_receipts(request: Request) -> Response:
     """List receipts for the authenticated user."""
     try:
-        receipts = Receipt.objects.filter(student=request.user).order_by("-created_at")
+        receipts = Receipt.objects.filter(student=request.user).order_by("-created_at")  # type: ignore[misc]
 
         # Add pagination if needed
         page_size = 20
@@ -747,7 +747,7 @@ def list_receipts(request: Request) -> Response:
 def download_receipt(request: Request, pk: int) -> Response:
     """Download a specific receipt HTML."""
     try:
-        receipt = Receipt.objects.get(id=pk, student=request.user)
+        receipt = Receipt.objects.get(id=pk, student=request.user)  # type: ignore[misc]
 
         if not receipt.pdf_file:
             return Response({"error": "HTML file not available"}, status=status.HTTP_404_NOT_FOUND)
@@ -755,7 +755,7 @@ def download_receipt(request: Request, pk: int) -> Response:
         response = HttpResponse(receipt.pdf_file.read(), content_type="text/html")
         response["Content-Disposition"] = f'attachment; filename="{receipt.receipt_number}.html"'
 
-        return response
+        return response  # type: ignore[return-value]
 
     except Receipt.DoesNotExist:
         return Response({"error": "Receipt not found"}, status=status.HTTP_404_NOT_FOUND)

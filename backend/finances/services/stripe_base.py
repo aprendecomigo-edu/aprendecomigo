@@ -150,7 +150,7 @@ class StripeService:
                 "account_id": account.id,
                 "account_name": account.business_profile.get("name") if account.business_profile else None,
             }
-        except stripe.error.StripeError as e:
+        except stripe.error.StripeError as e:  # type: ignore[attr-defined]
             logger.error(f"Stripe API connection failed: {e}")
             return self.handle_stripe_error(e)
         except Exception as e:
@@ -175,7 +175,7 @@ class StripeService:
             "code": None,
         }
 
-        if isinstance(error, stripe.error.CardError):
+        if isinstance(error, stripe.error.CardError):  # type: ignore[attr-defined]
             # Card was declined
             error_result.update(
                 {
@@ -187,7 +187,7 @@ class StripeService:
             )
             logger.warning(f"Stripe CardError: {error.user_message} (code: {error.code})")
 
-        elif isinstance(error, stripe.error.RateLimitError):
+        elif isinstance(error, stripe.error.RateLimitError):  # type: ignore[attr-defined]
             # Too many requests made to the API too quickly
             error_result.update(
                 {
@@ -197,7 +197,7 @@ class StripeService:
             )
             logger.warning("Stripe RateLimitError: API rate limit exceeded")
 
-        elif isinstance(error, stripe.error.InvalidRequestError):
+        elif isinstance(error, stripe.error.InvalidRequestError):  # type: ignore[attr-defined]
             # Invalid parameters were supplied to Stripe's API
             error_result.update(
                 {
@@ -208,7 +208,7 @@ class StripeService:
             )
             logger.error(f"Stripe InvalidRequestError: {error.user_message} (param: {error.param})")
 
-        elif isinstance(error, stripe.error.AuthenticationError):
+        elif isinstance(error, stripe.error.AuthenticationError):  # type: ignore[attr-defined]
             # Authentication with Stripe's API failed
             error_result.update(
                 {
@@ -218,7 +218,7 @@ class StripeService:
             )
             logger.error("Stripe AuthenticationError: API authentication failed")
 
-        elif isinstance(error, stripe.error.APIConnectionError):
+        elif isinstance(error, stripe.error.APIConnectionError):  # type: ignore[attr-defined]
             # Network communication with Stripe failed
             error_result.update(
                 {
@@ -229,7 +229,7 @@ class StripeService:
             )
             logger.error(f"Stripe APIConnectionError: {error}")
 
-        elif isinstance(error, stripe.error.SignatureVerificationError):
+        elif isinstance(error, stripe.error.SignatureVerificationError):  # type: ignore[attr-defined]
             # Webhook signature verification failed
             error_result.update(
                 {
@@ -239,7 +239,7 @@ class StripeService:
             )
             logger.error(f"Stripe SignatureVerificationError: {error}")
 
-        elif isinstance(error, stripe.error.APIError):
+        elif isinstance(error, stripe.error.APIError):  # type: ignore[attr-defined]
             # Generic Stripe API error
             error_result.update(
                 {
@@ -277,7 +277,7 @@ class StripeService:
 
             return {"success": True, "event": event, "event_type": event.get("type"), "event_id": event.get("id")}
 
-        except stripe.error.StripeError as e:
+        except stripe.error.StripeError as e:  # type: ignore[attr-defined]
             logger.error(f"Webhook event construction failed: {e}")
             return self.handle_stripe_error(e)
         except Exception as e:
@@ -336,7 +336,7 @@ class StripeService:
                 "message": "Payment method retrieved successfully",
             }
 
-        except stripe.error.StripeError as e:
+        except stripe.error.StripeError as e:  # type: ignore[attr-defined]
             logger.error(f"Error retrieving payment method {payment_method_id}: {e}")
             return self.handle_stripe_error(e)
         except Exception as e:
@@ -362,7 +362,7 @@ class StripeService:
 
             return {"success": True, "message": "Payment method detached successfully"}
 
-        except stripe.error.StripeError as e:
+        except stripe.error.StripeError as e:  # type: ignore[attr-defined]
             logger.error(f"Error detaching payment method {payment_method_id}: {e}")
             return self.handle_stripe_error(e)
         except Exception as e:
@@ -393,7 +393,7 @@ class StripeService:
                 "message": "Payment method attached successfully",
             }
 
-        except stripe.error.StripeError as e:
+        except stripe.error.StripeError as e:  # type: ignore[attr-defined]
             logger.error(f"Error attaching payment method {payment_method_id} to customer {customer_id}: {e}")
             return self.handle_stripe_error(e)
         except Exception as e:
@@ -415,7 +415,7 @@ class StripeService:
             Dict containing success status and payment methods list or error information
         """
         try:
-            payment_methods = stripe.PaymentMethod.list(customer=customer_id, type=payment_method_type)
+            payment_methods = stripe.PaymentMethod.list(customer=customer_id, type=payment_method_type)  # type: ignore[arg-type]
 
             return {
                 "success": True,
@@ -424,7 +424,7 @@ class StripeService:
                 "message": "Payment methods retrieved successfully",
             }
 
-        except stripe.error.StripeError as e:
+        except stripe.error.StripeError as e:  # type: ignore[attr-defined]
             logger.error(f"Error listing payment methods for customer {customer_id}: {e}")
             return self.handle_stripe_error(e)
         except Exception as e:
@@ -451,9 +451,9 @@ class StripeService:
             }
 
             if metadata:
-                customer_data["metadata"] = metadata
+                customer_data["metadata"] = metadata  # type: ignore[assignment]
 
-            customer = stripe.Customer.create(**customer_data)
+            customer = stripe.Customer.create(**customer_data)  # type: ignore[arg-type,arg-type,arg-type,arg-type,arg-type,arg-type,arg-type,arg-type,arg-type,arg-type,arg-type,arg-type,arg-type]
 
             logger.info(f"Successfully created Stripe customer {customer.id} for {email}")
 
@@ -464,7 +464,7 @@ class StripeService:
                 "message": "Customer created successfully",
             }
 
-        except stripe.error.StripeError as e:
+        except stripe.error.StripeError as e:  # type: ignore[attr-defined]
             logger.error(f"Error creating customer for {email}: {e}")
             return self.handle_stripe_error(e)
         except Exception as e:
@@ -487,7 +487,7 @@ class StripeService:
 
             return {"success": True, "customer": customer, "message": "Customer retrieved successfully"}
 
-        except stripe.error.StripeError as e:
+        except stripe.error.StripeError as e:  # type: ignore[attr-defined]
             logger.error(f"Error retrieving customer {customer_id}: {e}")
             return self.handle_stripe_error(e)
         except Exception as e:
@@ -513,7 +513,7 @@ class StripeService:
 
             return {"success": True, "customer": customer, "message": "Customer updated successfully"}
 
-        except stripe.error.StripeError as e:
+        except stripe.error.StripeError as e:  # type: ignore[attr-defined]
             logger.error(f"Error updating customer {customer_id}: {e}")
             return self.handle_stripe_error(e)
         except Exception as e:

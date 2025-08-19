@@ -198,8 +198,8 @@ class TeacherCourse(models.Model):
 
     def __str__(self) -> str:
         teacher_name = (
-            self.teacher.user.name
+            self.teacher.user.name  # type: ignore[attr-defined]
             if hasattr(self.teacher, "user") and hasattr(self.teacher.user, "name")
-            else str(self.teacher.user)
+            else str(self.teacher.user)  # type: ignore[attr-defined]
         )
-        return f"{teacher_name} teaches {self.course.name}"
+        return f"{teacher_name} teaches {self.course.name}"  # type: ignore[attr-defined]

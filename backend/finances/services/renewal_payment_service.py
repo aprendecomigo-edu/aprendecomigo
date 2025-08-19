@@ -5,6 +5,7 @@ This service provides renewal functionality for existing subscriptions and
 quick hour top-up purchases using saved payment methods with Stripe Customer objects.
 """
 
+from datetime import timedelta
 from decimal import Decimal
 import logging
 from typing import Any
@@ -332,9 +333,9 @@ class RenewalPaymentService:
                 "client_secret": payment_intent.client_secret,
             }
 
-        except stripe.error.StripeError as e:
+        except stripe.error.StripeError as e:  # type: ignore[attr-defined]
             logger.error(f"Stripe error creating renewal payment intent: {e}")
-            return self.stripe_service.handle_stripe_error(e)
+            return self.stripe_service.handle_stripe_error(e)  # type: ignore[no-any-return]
         except Exception as e:
             logger.error(f"Error creating renewal payment intent: {e}")
             return {
@@ -380,7 +381,7 @@ class RenewalPaymentService:
             # Create new transaction record
             with transaction.atomic():
                 # Set expiration for quick top-up (1 year from now)
-                expires_at = timezone.now() + timezone.timedelta(days=365)
+                expires_at = timezone.now() + timedelta(days=365)
 
                 new_transaction = PurchaseTransaction.objects.create(
                     student=student_user,
@@ -410,9 +411,9 @@ class RenewalPaymentService:
                 "client_secret": payment_intent.client_secret,
             }
 
-        except stripe.error.StripeError as e:
+        except stripe.error.StripeError as e:  # type: ignore[attr-defined]
             logger.error(f"Stripe error creating top-up payment intent: {e}")
-            return self.stripe_service.handle_stripe_error(e)
+            return self.stripe_service.handle_stripe_error(e)  # type: ignore[no-any-return]
         except Exception as e:
             logger.error(f"Error creating top-up payment intent: {e}")
             return {
@@ -471,9 +472,9 @@ class RenewalPaymentService:
                     "message": f"Payment confirmation failed: {payment_intent.status}",
                 }
 
-        except stripe.error.StripeError as e:
+        except stripe.error.StripeError as e:  # type: ignore[attr-defined]
             logger.error(f"Stripe error confirming payment {payment_intent_id}: {e}")
-            return self.stripe_service.handle_stripe_error(e)
+            return self.stripe_service.handle_stripe_error(e)  # type: ignore[no-any-return]
         except Exception as e:
             logger.error(f"Error confirming payment {payment_intent_id}: {e}")
             return {
@@ -512,7 +513,7 @@ class RenewalPaymentService:
             student_balance.hours_purchased += hours_to_add
             student_balance.save(update_fields=["hours_purchased", "updated_at"])
 
-            logger.info(f"Added {hours_to_add} hours to account for student {purchase_transaction.student.id}")
+            logger.info(f"Added {hours_to_add} hours to account for student {purchase_transaction.student.id}")  # type: ignore[attr-defined]
 
     def _update_account_balance(self, purchase_transaction: PurchaseTransaction) -> None:
         """
@@ -535,7 +536,7 @@ class RenewalPaymentService:
         student_balance.balance_amount += purchase_transaction.amount
         student_balance.save(update_fields=["balance_amount", "updated_at"])
 
-        logger.info(f"Added €{purchase_transaction.amount} to balance for student {purchase_transaction.student.id}")
+        logger.info(f"Added €{purchase_transaction.amount} to balance for student {purchase_transaction.student.id}")  # type: ignore[attr-defined]
 
     def _calculate_savings_percent(self, hours: Decimal, price: Decimal) -> float:
         """

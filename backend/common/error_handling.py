@@ -157,7 +157,7 @@ def create_error_response(
     }
 
     if details:
-        error_data["error"]["details"] = details
+        error_data["error"]["details"] = details  # type: ignore[index]
 
     return Response(error_data, status=status_code)
 
@@ -202,7 +202,7 @@ def create_validation_error_response(
     if field_errors:
         details["field_errors"] = field_errors
     if non_field_errors:
-        details["non_field_errors"] = non_field_errors
+        details["non_field_errors"] = non_field_errors  # type: ignore[assignment]
 
     return create_error_response(
         error_code=APIErrorCode.VALIDATION_FAILED,

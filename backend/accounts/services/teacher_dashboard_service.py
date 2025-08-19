@@ -49,7 +49,7 @@ class TeacherDashboardService:
 
             if cached_data:
                 logger.info(f"Returning cached dashboard data for teacher {self.teacher_profile.id}")
-                return cached_data
+                return cached_data  # type: ignore[no-any-return]
 
             # Gather all data with optimized queries
             dashboard_data = {
@@ -83,7 +83,7 @@ class TeacherDashboardService:
 
         for membership in memberships:
             schools.append(
-                {"id": membership.school.id, "name": membership.school.name, "joined_at": membership.joined_at}
+                {"id": membership.school.id, "name": membership.school.name, "joined_at": membership.joined_at}  # type: ignore[attr-defined,attr-defined]
             )
 
         # Get courses taught
@@ -93,9 +93,9 @@ class TeacherDashboardService:
         for teacher_course in teacher_courses:
             courses_taught.append(
                 {
-                    "id": teacher_course.course.id,
-                    "name": teacher_course.course.name,
-                    "code": teacher_course.course.code,
+                    "id": teacher_course.course.id,  # type: ignore[attr-defined]
+                    "name": teacher_course.course.name,  # type: ignore[attr-defined]
+                    "code": teacher_course.course.code,  # type: ignore[attr-defined]
                     "hourly_rate": teacher_course.hourly_rate or self.teacher_profile.hourly_rate,
                 }
             )
@@ -168,7 +168,7 @@ class TeacherDashboardService:
                             "percentage": assessment.percentage,
                             "assessment_date": assessment.assessment_date,
                         }
-                        for assessment in progress.recent_assessments_list
+                        for assessment in progress.recent_assessments_list  # type: ignore[attr-defined]
                     ],
                     "skills_mastered": progress.skills_mastered,
                 }

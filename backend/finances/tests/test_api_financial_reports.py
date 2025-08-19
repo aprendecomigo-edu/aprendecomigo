@@ -276,13 +276,14 @@ class FinancialAnalyticsAPITests(FinancialReportsAPITestCase):
         """Test teacher compensation calculation and reporting."""
         # Create additional class sessions for compensation calculation
         from datetime import time
+
         for i in range(3):
             session = ClassSession.objects.create(
                 teacher=self.teacher_profile,
                 school=self.school,
                 date=timezone.now().date(),
                 start_time=time(10, 0),  # 10:00 AM
-                end_time=time(11, 0),   # 11:00 AM
+                end_time=time(11, 0),  # 11:00 AM
                 session_type="individual",
                 grade_level="10",
                 status="completed",

@@ -160,8 +160,9 @@ class DefaultEmailTemplates:
             EmailTemplateType.ONGOING_SUPPORT: cls._get_ongoing_support_template,
         }
 
-        if template_type in template_methods:
-            return template_methods[template_type]()
+        enum_template_type = EmailTemplateType(template_type)
+        if enum_template_type in template_methods:
+            return template_methods[enum_template_type]()
         else:
             raise ValueError(f"Unknown template type: {template_type}")
 

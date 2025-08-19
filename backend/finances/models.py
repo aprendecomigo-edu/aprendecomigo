@@ -214,7 +214,7 @@ class TeacherCompensationRule(models.Model):
         rule_desc = f"{self.get_rule_type_display()}"
         if self.grade_level:
             rule_desc += f" (Grade {self.grade_level})"
-        return f"{self.teacher.user.name} - {rule_desc} at {self.school.name}"
+        return f"{self.teacher.user.name} - {rule_desc} at {self.school.name}"  # type: ignore[attr-defined]
 
     def clean(self) -> None:
         """Validate rule configuration."""
@@ -321,7 +321,7 @@ class ClassSession(models.Model):
         ordering = ["-date", "-start_time"]
 
     def __str__(self) -> str:
-        return f"{self.teacher.user.name} - {self.get_session_type_display()} Grade {self.grade_level} on {self.date}"
+        return f"{self.teacher.user.name} - {self.get_session_type_display()} Grade {self.grade_level} on {self.date}"  # type: ignore[attr-defined]
 
     def save(self, *args, **kwargs):
         """Override save to handle status changes and timestamps for existing sessions."""
@@ -460,7 +460,7 @@ class TeacherPaymentEntry(models.Model):
         help_text=_("Total amount earned for this session"),
     )
 
-    compensation_rule: models.ForeignKey = models.ForeignKey(
+    compensation_rule: models.ForeignKey = models.ForeignKey(  # type: ignore[misc]
         TeacherCompensationRule,
         on_delete=models.PROTECT,
         related_name="payment_entries",
@@ -493,7 +493,7 @@ class TeacherPaymentEntry(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self) -> str:
-        return f"{self.teacher.user.name} - €{self.amount_earned} for {self.session.date} session"
+        return f"{self.teacher.user.name} - €{self.amount_earned} for {self.session.date} session"  # type: ignore[attr-defined]
 
 
 class StudentAccountBalance(models.Model):
@@ -553,7 +553,7 @@ class StudentAccountBalance(models.Model):
         Calculate remaining hours (purchased - consumed).
         Can be negative in overdraft scenarios.
         """
-        return self.hours_purchased - self.hours_consumed
+        return self.hours_purchased - self.hours_consumed  # type: ignore[no-any-return]
 
 
 class TransactionType(models.TextChoices):
@@ -646,7 +646,7 @@ class PurchaseTransaction(models.Model):
     )
 
     # Parent approval integration
-    approval_request: models.ForeignKey = models.ForeignKey(
+    approval_request: models.ForeignKey = models.ForeignKey(  # type: ignore[misc]
         "PurchaseApprovalRequest",
         on_delete=models.SET_NULL,
         null=True,
@@ -674,7 +674,7 @@ class PurchaseTransaction(models.Model):
 
     def __str__(self) -> str:
         return (
-            f"Transaction {self.id}: {self.student.name} - "
+            f"Transaction {self.id}: {self.student.name} - "  # type: ignore[attr-defined]
             f"€{self.amount} ({self.transaction_type.upper()} - {self.payment_status.upper()})"
         )
 
@@ -687,7 +687,7 @@ class PurchaseTransaction(models.Model):
         """
         if self.expires_at is None:
             return False
-        return timezone.now() > self.expires_at
+        return timezone.now() > self.expires_at  # type: ignore[no-any-return]
 
     def mark_completed(self) -> None:
         """
@@ -817,7 +817,7 @@ class PricingPlan(models.Model):
             Decimal: Price per hour, or None if hours_included is zero
         """
         if self.hours_included > 0:
-            return self.price_eur / self.hours_included
+            return self.price_eur / self.hours_included  # type: ignore[no-any-return]
         return None
 
     def clean(self) -> None:
@@ -934,8 +934,8 @@ class HourConsumption(models.Model):
 
     def __str__(self) -> str:
         return (
-            f"Hour consumption: {self.student_account.student.name} - "
-            f"{self.hours_consumed}h consumed for session on {self.class_session.date}"
+            f"Hour consumption: {self.student_account.student.name} - "  # type: ignore[attr-defined]
+            f"{self.hours_consumed}h consumed for session on {self.class_session.date}"  # type: ignore[attr-defined]
         )
 
     def save(self, *args, **kwargs):
@@ -961,7 +961,7 @@ class HourConsumption(models.Model):
                     negative value indicates overtime,
                     zero indicates exact match.
         """
-        return self.hours_originally_reserved - self.hours_consumed
+        return self.hours_originally_reserved - self.hours_consumed  # type: ignore[no-any-return]
 
     def process_refund(self, reason: str) -> Decimal:
         """
@@ -984,8 +984,8 @@ class HourConsumption(models.Model):
         # Only process refund if there are hours to refund (positive difference)
         if refund_hours > Decimal("0.00"):
             # Update the student account balance
-            self.student_account.hours_consumed -= refund_hours
-            self.student_account.save(update_fields=["hours_consumed", "updated_at"])
+            self.student_account.hours_consumed -= refund_hours  # type: ignore[attr-defined]
+            self.student_account.save(update_fields=["hours_consumed", "updated_at"])  # type: ignore[attr-defined]
 
             # Mark this consumption as refunded
             self.is_refunded = True
@@ -1010,8 +1010,8 @@ class HourConsumption(models.Model):
 
         # Ensure the student account belongs to one of the session students
         if hasattr(self, "class_session") and hasattr(self, "student_account"):
-            session_students = self.class_session.students.all()
-            if self.student_account.student not in session_students:
+            session_students = self.class_session.students.all()  # type: ignore[attr-defined]
+            if self.student_account.student not in session_students:  # type: ignore[attr-defined]
                 raise ValidationError(_("Student account must belong to a student in the class session"))
 
 
@@ -1098,7 +1098,7 @@ class Receipt(models.Model):
         ]
 
     def __str__(self) -> str:
-        return f"Receipt {self.receipt_number} - €{self.amount} for {self.student.name}"
+        return f"Receipt {self.receipt_number} - €{self.amount} for {self.student.name}"  # type: ignore[attr-defined]
 
     def save(self, *args, **kwargs):
         """Override save to auto-generate receipt number if not provided."""
@@ -1122,11 +1122,11 @@ class Receipt(models.Model):
         super().clean()
 
         # Ensure amount matches transaction amount
-        if self.transaction and self.amount != self.transaction.amount:
+        if self.transaction and self.amount != self.transaction.amount:  # type: ignore[attr-defined]
             raise ValidationError(_("Receipt amount must match transaction amount"))
 
         # Ensure transaction belongs to the same student
-        if self.transaction and self.student != self.transaction.student:
+        if self.transaction and self.student != self.transaction.student:  # type: ignore[attr-defined]
             raise ValidationError(_("Receipt student must match transaction student"))
 
 
@@ -1227,7 +1227,7 @@ class StoredPaymentMethod(models.Model):
 
         default_text = " (Default)" if self.is_default else ""
         card_display = get_secure_card_display(self.card_brand, self.card_last4)
-        return f"{card_display} - {self.student.name}{default_text}"
+        return f"{card_display} - {self.student.name}{default_text}"  # type: ignore[attr-defined]
 
     def save(self, *args, **kwargs):
         """Override save to handle default payment method logic and PCI compliance."""
@@ -1546,7 +1546,7 @@ class PurchaseApprovalRequest(models.Model):
     )
 
     # Metadata about the requested purchase
-    pricing_plan: models.ForeignKey = models.ForeignKey(
+    pricing_plan: models.ForeignKey = models.ForeignKey(  # type: ignore[misc]
         PricingPlan,
         on_delete=models.SET_NULL,
         null=True,
@@ -1556,7 +1556,7 @@ class PurchaseApprovalRequest(models.Model):
         help_text=_("Pricing plan being requested (if applicable)"),
     )
 
-    class_session: models.ForeignKey = models.ForeignKey(
+    class_session: models.ForeignKey = models.ForeignKey(  # type: ignore[misc]
         ClassSession,
         on_delete=models.SET_NULL,
         null=True,
@@ -1606,7 +1606,7 @@ class PurchaseApprovalRequest(models.Model):
         ]
 
     def __str__(self) -> str:
-        return f"Purchase Request: {self.student.name} -> {self.parent.name} (€{self.amount})"
+        return f"Purchase Request: {self.student.name} -> {self.parent.name} (€{self.amount})"  # type: ignore[attr-defined]
 
     def save(self, *args, **kwargs):
         """Override save to set expiration time if not provided."""
@@ -1625,7 +1625,7 @@ class PurchaseApprovalRequest(models.Model):
         """Check if the request has expired."""
         from django.utils import timezone
 
-        return timezone.now() > self.expires_at
+        return timezone.now() > self.expires_at  # type: ignore[no-any-return]
 
     @property
     def time_remaining(self) -> timedelta:
@@ -1634,7 +1634,7 @@ class PurchaseApprovalRequest(models.Model):
 
         if self.is_expired:
             return timedelta(0)
-        return self.expires_at - timezone.now()
+        return self.expires_at - timezone.now()  # type: ignore[no-any-return]
 
     def approve(self, parent_notes: str = "") -> None:
         """
@@ -1873,13 +1873,13 @@ class WebhookEventLog(models.Model):
         if not self.processed_at:
             return None
 
-        return self.processed_at - self.created_at
+        return self.processed_at - self.created_at  # type: ignore[no-any-return]
 
     @property
     def is_recent(self) -> bool:
         """Check if the event was created in the last 24 hours."""
         cutoff_time = timezone.now() - timedelta(hours=24)
-        return self.created_at >= cutoff_time
+        return self.created_at >= cutoff_time  # type: ignore[no-any-return]
 
     @property
     def processing_time_seconds(self) -> float | None:
@@ -2038,7 +2038,7 @@ class PaymentDispute(models.Model):
         """Check if evidence submission is overdue."""
         if not self.evidence_due_by:
             return False
-        return timezone.now() > self.evidence_due_by
+        return timezone.now() > self.evidence_due_by  # type: ignore[no-any-return]
 
     @property
     def days_until_evidence_due(self) -> int:
@@ -2046,7 +2046,7 @@ class PaymentDispute(models.Model):
         if not self.evidence_due_by:
             return 0
         delta = self.evidence_due_by - timezone.now()
-        return max(0, delta.days)
+        return max(0, delta.days)  # type: ignore[no-any-return]
 
     def mark_responded(self) -> None:
         """Mark the dispute as responded to."""
@@ -2085,7 +2085,7 @@ class AdminAction(models.Model):
     )
 
     # Target entities (optional, depends on action type)
-    target_user: models.ForeignKey = models.ForeignKey(
+    target_user: models.ForeignKey = models.ForeignKey(  # type: ignore[misc]
         "accounts.CustomUser",
         on_delete=models.CASCADE,
         null=True,
@@ -2095,7 +2095,7 @@ class AdminAction(models.Model):
         help_text=_("User affected by this action (if applicable)"),
     )
 
-    target_transaction: models.ForeignKey = models.ForeignKey(
+    target_transaction: models.ForeignKey = models.ForeignKey(  # type: ignore[misc]
         PurchaseTransaction,
         on_delete=models.CASCADE,
         null=True,
@@ -2105,7 +2105,7 @@ class AdminAction(models.Model):
         help_text=_("Transaction affected by this action (if applicable)"),
     )
 
-    target_dispute: models.ForeignKey = models.ForeignKey(
+    target_dispute: models.ForeignKey = models.ForeignKey(  # type: ignore[misc]
         PaymentDispute,
         on_delete=models.CASCADE,
         null=True,
@@ -2174,7 +2174,7 @@ class AdminAction(models.Model):
 
     def __str__(self) -> str:
         status = "✓" if self.success else "✗"
-        return f"{status} {self.get_action_type_display()} by {self.admin_user.name} at {self.created_at}"
+        return f"{status} {self.get_action_type_display()} by {self.admin_user.name} at {self.created_at}"  # type: ignore[attr-defined]
 
 
 class FraudAlert(models.Model):
@@ -2215,7 +2215,7 @@ class FraudAlert(models.Model):
     )
 
     # Related entities
-    target_user: models.ForeignKey = models.ForeignKey(
+    target_user: models.ForeignKey = models.ForeignKey(  # type: ignore[misc]
         "accounts.CustomUser",
         on_delete=models.CASCADE,
         null=True,
@@ -2247,7 +2247,7 @@ class FraudAlert(models.Model):
     )
 
     # Investigation tracking
-    assigned_to: models.ForeignKey = models.ForeignKey(
+    assigned_to: models.ForeignKey = models.ForeignKey(  # type: ignore[misc]
         "accounts.CustomUser",
         on_delete=models.SET_NULL,
         null=True,
@@ -2316,7 +2316,7 @@ class FraudAlert(models.Model):
     def days_since_created(self) -> int:
         """Calculate days since the alert was created."""
         delta = timezone.now() - self.created_at
-        return delta.days
+        return delta.days  # type: ignore[no-any-return]
 
     def assign_to_investigator(self, admin_user: "CustomUser") -> None:
         """Assign the alert to an investigator."""

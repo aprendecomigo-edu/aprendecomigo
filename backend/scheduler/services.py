@@ -16,7 +16,7 @@ and provide detailed error messages for validation failures.
 """
 
 from datetime import datetime, time, timedelta
-from typing import Any
+from typing import Any, cast
 
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -193,7 +193,7 @@ class GroupClassCapacityService:
             return False
 
         # Check capacity
-        return class_schedule.can_add_participant()
+        return class_schedule.can_add_participant()  # type: ignore[no-any-return]
 
     def add_student_to_group_class(
         self, class_schedule: ClassSchedule, student: CustomUser, booked_by: CustomUser
@@ -205,7 +205,7 @@ class GroupClassCapacityService:
         class_schedule.add_participant(student)
         # Update booked_at timestamp for this joining
         # Set changed_by for audit trail (participant addition, not status change)
-        class_schedule._changed_by_user = booked_by
+        class_schedule._changed_by_user = booked_by  # type: ignore[attr-defined]
         class_schedule.save()
 
         return class_schedule
@@ -505,7 +505,7 @@ class BookingOrchestratorService:
             teacher, student, school, date, start_time, end_time
         )
 
-        return conflict_results
+        return conflict_results  # type: ignore[no-any-return]
 
 
 # Additional services for available slots calculation (existing functionality)
@@ -752,7 +752,7 @@ class ClassStatusTransitionService:
         class_schedule.metadata.update({"confirmed_by": confirmed_by.id, "confirmed_at": now.isoformat()})
 
         # Set changed_by for audit trail
-        class_schedule._changed_by_user = confirmed_by
+        class_schedule._changed_by_user = confirmed_by  # type: ignore[attr-defined]
         class_schedule.save()
 
         return {"confirmed_at": now, "confirmed_by": confirmed_by, "status": ClassStatus.CONFIRMED}
@@ -782,7 +782,7 @@ class ClassStatusTransitionService:
         class_schedule.metadata.update({"cancelled_by": cancelled_by.id, "cancelled_at": now.isoformat()})
 
         # Set changed_by for audit trail
-        class_schedule._changed_by_user = cancelled_by
+        class_schedule._changed_by_user = cancelled_by  # type: ignore[attr-defined]
         class_schedule.save()
 
         return {
@@ -816,7 +816,7 @@ class ClassStatusTransitionService:
         class_schedule.metadata.update({"rejected_by": rejected_by.id, "rejected_at": now.isoformat()})
 
         # Set changed_by for audit trail
-        class_schedule._changed_by_user = rejected_by
+        class_schedule._changed_by_user = rejected_by  # type: ignore[attr-defined]
         class_schedule.save()
 
         return {"rejected_at": now, "rejected_by": rejected_by, "status": ClassStatus.REJECTED}
@@ -853,7 +853,7 @@ class ClassStatusTransitionService:
         class_schedule.metadata.update({"completed_by": completed_by.id, "completed_at": now.isoformat()})
 
         # Set changed_by for audit trail
-        class_schedule._changed_by_user = completed_by
+        class_schedule._changed_by_user = completed_by  # type: ignore[attr-defined]
         class_schedule.save()
 
         return {"completed_at": now, "completed_by": completed_by, "status": ClassStatus.COMPLETED}
@@ -927,7 +927,7 @@ class ClassMetadataTrackingService:
         class_schedule.confirmed_by = confirmed_by
 
         # Set changed_by for audit trail
-        class_schedule._changed_by_user = confirmed_by
+        class_schedule._changed_by_user = confirmed_by  # type: ignore[attr-defined]
         class_schedule.save()
 
         return {"confirmed_at": now, "confirmed_by": confirmed_by}
@@ -948,7 +948,7 @@ class ClassMetadataTrackingService:
         class_schedule.cancellation_reason = reason
 
         # Set changed_by for audit trail
-        class_schedule._changed_by_user = cancelled_by
+        class_schedule._changed_by_user = cancelled_by  # type: ignore[attr-defined]
         class_schedule.save()
 
         return {"cancelled_at": now, "cancelled_by": cancelled_by, "cancellation_reason": reason}
@@ -966,7 +966,7 @@ class ClassMetadataTrackingService:
         class_schedule.rejected_by = rejected_by
 
         # Set changed_by for audit trail
-        class_schedule._changed_by_user = rejected_by
+        class_schedule._changed_by_user = rejected_by  # type: ignore[attr-defined]
         class_schedule.save()
 
         return {"rejected_at": now, "rejected_by": rejected_by}
@@ -1005,7 +1005,7 @@ class CancellationDeadlineService:
 
         # Check if we're within the cancellation deadline
         deadline = class_datetime_utc - timedelta(hours=hours_before)
-        return now_utc < deadline
+        return now_utc < deadline  # type: ignore[no-any-return]
 
     def get_remaining_cancellation_time(
         self, class_schedule: "ClassSchedule", hours_before: int | None = None
@@ -1024,7 +1024,7 @@ class CancellationDeadlineService:
             return 0.0
 
         remaining_seconds = (deadline - now_utc).total_seconds()
-        return max(0.0, remaining_seconds / SECONDS_TO_HOURS_CONVERSION)  # Convert to hours
+        return max(0.0, remaining_seconds / SECONDS_TO_HOURS_CONVERSION)  # type: ignore[no-any-return]
 
     def _get_class_datetime_utc(self, class_schedule: "ClassSchedule"):
         """Get class datetime in UTC with proper timezone handling."""
@@ -1062,7 +1062,7 @@ class BusinessRulesEnforcementService:
             ClassStatus.REJECTED: [],
         }
 
-        return to_status in valid_transitions.get(from_status, [])
+        return to_status in valid_transitions.get(ClassStatus(from_status), [])
 
     def validate_status_transition(self, class_schedule: "ClassSchedule", to_status: str) -> None:
         """Validate that a status transition is allowed, raise ValidationError if not."""
@@ -1103,7 +1103,7 @@ class ClassCompletionService:
             return False
 
         # Cannot mark future classes as completed
-        return class_schedule.is_past
+        return class_schedule.is_past  # type: ignore[no-any-return]
 
     def mark_as_completed(
         self,
@@ -1160,7 +1160,7 @@ class ClassCompletionService:
         )
 
         # Set changed_by for audit trail
-        class_schedule._changed_by_user = completed_by
+        class_schedule._changed_by_user = completed_by  # type: ignore[attr-defined]
         class_schedule.save()
 
         return {
@@ -1183,7 +1183,7 @@ class ClassNoShowService:
             return False
 
         # Cannot mark future classes as no-show
-        return class_schedule.is_past
+        return class_schedule.is_past  # type: ignore[no-any-return]
 
     def mark_as_no_show(
         self,
@@ -1233,7 +1233,7 @@ class ClassNoShowService:
         )
 
         # Set changed_by for audit trail
-        class_schedule._changed_by_user = marked_by
+        class_schedule._changed_by_user = marked_by  # type: ignore[attr-defined]
         class_schedule.save()
 
         return {
@@ -1363,7 +1363,7 @@ class ClassStatusHistoryService:
             )
 
         # Sort by timestamp
-        history.sort(key=lambda x: x["timestamp"])
+        history.sort(key=lambda x: cast(Any, x["timestamp"]))
 
         return history
 
@@ -1425,7 +1425,7 @@ class ClassCompletionOrchestratorService:
         # Execute completion (service handles all validation and error messages)
         result = self.completion_service.mark_as_completed(class_schedule, user, actual_duration_minutes, notes)
 
-        return result
+        return result  # type: ignore[no-any-return]
 
     def mark_no_show(
         self,
@@ -1446,8 +1446,8 @@ class ClassCompletionOrchestratorService:
         # Execute no-show marking (service handles all validation and error messages)
         result = self.no_show_service.mark_as_no_show(class_schedule, user, reason, no_show_type, notes)
 
-        return result
+        return result  # type: ignore[no-any-return]
 
     def get_class_status_history(self, class_schedule: "ClassSchedule") -> list[dict[str, Any]]:
         """Get status history for a class."""
-        return self.history_service.get_status_history(class_schedule)
+        return self.history_service.get_status_history(class_schedule)  # type: ignore[no-any-return]

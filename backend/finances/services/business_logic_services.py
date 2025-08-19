@@ -13,7 +13,8 @@ class CompensationService:
         """Calculate teacher compensation for a given period using runtime model access."""
         # Get models at runtime to avoid circular imports
         Lesson = apps.get_model("classroom", "Lesson")
-        User = apps.get_model(*settings.AUTH_USER_MODEL.split("."))
+        app_label, model_name = settings.AUTH_USER_MODEL.split(".")
+        User = apps.get_model(app_label, model_name)
         apps.get_model("finances", "TeacherCompensation")
 
         # Calculate completed lessons
@@ -51,7 +52,8 @@ class PaymentService:
         # Runtime model fetching to avoid circular imports
         Lesson = apps.get_model("classroom", "Lesson")
         Payment = apps.get_model("finances", "Payment")
-        User = apps.get_model(*settings.AUTH_USER_MODEL.split("."))
+        app_label, model_name = settings.AUTH_USER_MODEL.split(".")
+        User = apps.get_model(app_label, model_name)
 
         try:
             lesson = Lesson.objects.get(id=lesson_id)

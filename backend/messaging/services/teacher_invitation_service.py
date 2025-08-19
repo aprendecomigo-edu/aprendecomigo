@@ -110,8 +110,8 @@ class TeacherInvitationEmailService:
                 email_result = TeacherInvitationEmailService.send_invitation_email(invitation)
 
                 if email_result["success"]:
-                    results["successful_emails"] += 1
-                    results["successful_emails_list"].append(invitation.email)
+                    results["successful_emails"] += 1  # type: ignore[operator]
+                    results["successful_emails_list"].append(invitation.email)  # type: ignore[attr-defined]
 
                     # Prepare for bulk update - update fields in memory
                     invitation.email_delivery_status = EmailDeliveryStatus.SENT
@@ -121,9 +121,9 @@ class TeacherInvitationEmailService:
                     successful_invitations.append(invitation)
 
                 else:
-                    results["failed_emails"] += 1
-                    results["failed_emails_list"].append(invitation.email)
-                    results["errors"].append(
+                    results["failed_emails"] += 1  # type: ignore[operator]
+                    results["failed_emails_list"].append(invitation.email)  # type: ignore[attr-defined]
+                    results["errors"].append(  # type: ignore[attr-defined]
                         {"email": invitation.email, "error": email_result.get("error", "Unknown error")}
                     )
 
@@ -135,9 +135,9 @@ class TeacherInvitationEmailService:
                     failed_invitations.append(invitation)
 
             except Exception as e:
-                results["failed_emails"] += 1
-                results["failed_emails_list"].append(invitation.email)
-                results["errors"].append({"email": invitation.email, "error": str(e)})
+                results["failed_emails"] += 1  # type: ignore[operator]
+                results["failed_emails_list"].append(invitation.email)  # type: ignore[attr-defined]
+                results["errors"].append({"email": invitation.email, "error": str(e)})  # type: ignore[attr-defined]
                 logger.exception(f"Unexpected error sending invitation to {invitation.email}: {e}")
 
                 # Prepare for bulk update - update fields in memory

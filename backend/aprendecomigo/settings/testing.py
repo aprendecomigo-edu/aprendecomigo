@@ -59,7 +59,7 @@ SWAGGER_USE_COMPAT_RENDERERS = False
 
 
 # Import all settings from base.py
-from .base import *  # noqa: E402
+from .base import *  # type: ignore[assignment]  # noqa: E402
 
 # Disable throttling during tests - MUST come after importing base.py to override properly
 REST_FRAMEWORK = {

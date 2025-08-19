@@ -209,14 +209,14 @@ class PackageExpirationService:
 
             # Update student balance if there are hours to expire
             if hours_to_expire > Decimal("0.00"):
-                balance = StudentAccountBalance.objects.get(student=package.student)
+                balance = StudentAccountBalance.objects.get(student=package.student)  # type: ignore[misc]
                 balance.hours_purchased -= hours_to_expire
                 balance.save(update_fields=["hours_purchased", "updated_at"])
 
             # Create audit log
             audit_log = (
-                f"Package {package.id} expired for student {package.student.id} "
-                f"({package.student.name}). {hours_to_expire} hours expired. "
+                f"Package {package.id} expired for student {package.student.id} "  # type: ignore[attr-defined]
+                f"({package.student.name}). {hours_to_expire} hours expired. "  # type: ignore[attr-defined]
                 f"Processed at {timezone.now()}"
             )
 
@@ -226,7 +226,7 @@ class PackageExpirationService:
             return ExpirationResult(
                 success=True,
                 package_id=package.id,
-                student_id=package.student.id,
+                student_id=package.student.id,  # type: ignore[attr-defined]
                 hours_expired=hours_to_expire,
                 processed_at=timezone.now(),
                 audit_log=audit_log,
@@ -239,7 +239,7 @@ class PackageExpirationService:
             return ExpirationResult(
                 success=False,
                 package_id=package.id,
-                student_id=package.student.id,
+                student_id=package.student.id,  # type: ignore[attr-defined]
                 hours_expired=Decimal("0.00"),
                 processed_at=timezone.now(),
                 audit_log="",
@@ -292,14 +292,14 @@ class PackageExpirationService:
                     return NotificationResult(
                         success=False,
                         notification_type="email",
-                        recipient=student.email,
+                        recipient=student.email,  # type: ignore[attr-defined]
                         message="Notifications disabled for this student",
                     )
 
             # Prepare email content
             subject = f"Package Expiring Soon - {days_until_expiry} Days Remaining"
             message = (
-                f"Dear {student.name},\n\n"
+                f"Dear {student.name},\n\n"  # type: ignore[attr-defined]
                 f"Your tutoring package (€{package.amount}) will expire in {days_until_expiry} days "
                 f"on {package.expires_at.strftime('%B %d, %Y')}.\n\n"
                 f"To continue your tutoring sessions, please consider extending your package "
@@ -313,14 +313,14 @@ class PackageExpirationService:
                 subject=subject,
                 message=message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[student.email],
+                recipient_list=[student.email],  # type: ignore[attr-defined]
                 fail_silently=False,
             )
 
             return NotificationResult(
                 success=True,
                 notification_type="email",
-                recipient=student.email,
+                recipient=student.email,  # type: ignore[attr-defined]
                 message="Expiration warning sent successfully",
                 sent_at=timezone.now(),
             )
@@ -330,7 +330,7 @@ class PackageExpirationService:
             logger.error(error_msg)
 
             return NotificationResult(
-                success=False, notification_type="email", recipient=package.student.email, message=error_msg
+                success=False, notification_type="email", recipient=package.student.email, message=error_msg  # type: ignore[attr-defined]
             )
 
     @staticmethod
@@ -351,7 +351,7 @@ class PackageExpirationService:
             # Prepare email content
             subject = "Package Expired - Hours Removed from Account"
             message = (
-                f"Dear {student.name},\n\n"
+                f"Dear {student.name},\n\n"  # type: ignore[attr-defined]
                 f"Your tutoring package (€{package.amount}) has expired and "
                 f"{hours_expired} unused hours have been removed from your account.\n\n"
                 f"To continue your tutoring sessions, please purchase a new package.\n\n"
@@ -364,14 +364,14 @@ class PackageExpirationService:
                 subject=subject,
                 message=message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[student.email],
+                recipient_list=[student.email],  # type: ignore[attr-defined]
                 fail_silently=False,
             )
 
             return NotificationResult(
                 success=True,
                 notification_type="email",
-                recipient=student.email,
+                recipient=student.email,  # type: ignore[attr-defined]
                 message="Expiration confirmation sent successfully",
                 sent_at=timezone.now(),
             )
@@ -381,7 +381,7 @@ class PackageExpirationService:
             logger.error(error_msg)
 
             return NotificationResult(
-                success=False, notification_type="email", recipient=package.student.email, message=error_msg
+                success=False, notification_type="email", recipient=package.student.email, message=error_msg  # type: ignore[attr-defined]
             )
 
     @staticmethod
@@ -510,7 +510,7 @@ class PackageExpirationService:
         """
         try:
             # Create new package
-            new_package = PurchaseTransaction.objects.create(
+            new_package = PurchaseTransaction.objects.create(  # type: ignore[misc]
                 student=expired_package.student,
                 transaction_type=TransactionType.PACKAGE,
                 amount=new_amount,
@@ -520,7 +520,7 @@ class PackageExpirationService:
             )
 
             # Update student balance
-            balance = StudentAccountBalance.objects.get(student=expired_package.student)
+            balance = StudentAccountBalance.objects.get(student=expired_package.student)  # type: ignore[misc]
             balance.hours_purchased += new_hours
             balance.balance_amount += new_amount
             balance.save(update_fields=["hours_purchased", "balance_amount", "updated_at"])

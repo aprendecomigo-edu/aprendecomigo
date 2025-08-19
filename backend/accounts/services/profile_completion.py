@@ -479,7 +479,7 @@ class ProfileCompletionService:
                 all_missing_critical.extend(missing_critical)
 
             # Count frequency of missing fields
-            missing_field_counts = {}
+            missing_field_counts: dict[str, int] = {}
             for field in all_missing_critical:
                 missing_field_counts[field] = missing_field_counts.get(field, 0) + 1
 

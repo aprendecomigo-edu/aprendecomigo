@@ -22,7 +22,7 @@ ALLOWED_HTML_TAGS_PLAIN_TEXT = {
 }
 
 # Allowed HTML attributes (very restrictive)
-ALLOWED_HTML_ATTRIBUTES = {}
+ALLOWED_HTML_ATTRIBUTES: dict[str, list[str]] = {}
 
 # Dangerous protocols to remove
 DANGEROUS_PROTOCOLS = {"javascript:", "vbscript:", "data:", "file:", "ftp:"}

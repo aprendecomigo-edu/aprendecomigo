@@ -120,10 +120,9 @@ def mock_external_services(test_func):
             mock_stripe_customer.return_value.id = "cus_mock_test"
 
             # Set up httpx mock return values
-            mock_httpx_response = type('MockResponse', (), {
-                'status_code': 200,
-                'json': lambda: {"success": True, "mock": True}
-            })()
+            mock_httpx_response = type(
+                "MockResponse", (), {"status_code": 200, "json": lambda: {"success": True, "mock": True}}
+            )()
             mock_httpx_post.return_value = mock_httpx_response
             mock_httpx_async_post.return_value = mock_httpx_response
 

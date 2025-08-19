@@ -119,8 +119,8 @@ class CustomUser(AbstractUser):
 
     # user_type field is removed - roles are now in SchoolMembership
 
-    USERNAME_FIELD: str = "email"  # type: ignore[assignment]
-    REQUIRED_FIELDS: list[str] = ["name"]
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["name"]
 
     # Use a type annotation that doesn't conflict with the parent class
     # but allows us to provide our custom manager
@@ -230,4 +230,4 @@ class VerificationCode(models.Model):
         """Record a failed verification attempt"""
         self.failed_attempts += 1
         self.save()
-        return self.failed_attempts >= self.max_attempts
+        return self.failed_attempts >= self.max_attempts  # type: ignore[no-any-return]

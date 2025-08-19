@@ -6,6 +6,7 @@ including success rates, revenue trends, failure analysis, and webhook metrics
 for administrative oversight of the Aprende Comigo platform.
 """
 
+import datetime
 from datetime import timedelta
 from decimal import Decimal
 import logging
@@ -117,10 +118,10 @@ class PaymentAnalyticsService:
         total_revenue = transactions.aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
 
         # Group by date for daily trends
-        daily_revenue = {}
+        daily_revenue: dict[datetime.date, Decimal] = {}
         for transaction in transactions:
-            date = transaction.created_at.date()
-            daily_revenue[date] = daily_revenue.get(date, Decimal("0.00")) + transaction.amount
+            transaction_date = transaction.created_at.date()
+            daily_revenue[transaction_date] = daily_revenue.get(transaction_date, Decimal("0.00")) + transaction.amount
 
         # Convert to list format for API response - work backwards from today
         daily_data = []
@@ -240,10 +241,10 @@ class PaymentAnalyticsService:
         overall_failure_rate = (total_failures / total_transactions * 100) if total_transactions > 0 else 0
 
         # Daily failure breakdown
-        daily_failures = {}
+        daily_failures: dict[datetime.date, int] = {}
         for transaction in failed_transactions:
-            date = transaction.created_at.date()
-            daily_failures[date] = daily_failures.get(date, 0) + 1
+            transaction_date = transaction.created_at.date()
+            daily_failures[transaction_date] = daily_failures.get(transaction_date, 0) + 1
 
         # Convert to list format - work backwards from today
         daily_data = []

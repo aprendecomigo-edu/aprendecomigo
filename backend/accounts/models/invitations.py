@@ -48,7 +48,7 @@ class SchoolInvitation(models.Model):
     def is_valid(self) -> bool:
         return not self.is_accepted and timezone.now() < self.expires_at
 
-    def get_role_display(self) -> str:
+    def get_role_display(self) -> str:  # type: ignore[no-redef]
         """Get the display value for the role."""
         role_display = dict(SchoolRole.choices).get(self.role, self.role)
         return str(role_display)  # Convert _StrPromise to str
@@ -101,7 +101,7 @@ class SchoolInvitationLink(models.Model):
         self.usage_count += 1
         self.save(update_fields=["usage_count"])
 
-    def get_role_display(self) -> str:
+    def get_role_display(self) -> str:  # type: ignore[no-redef]
         """Get the display value for the role."""
         role_display = dict(SchoolRole.choices).get(self.role, self.role)
         return str(role_display)  # Convert _StrPromise to str

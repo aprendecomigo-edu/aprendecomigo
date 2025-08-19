@@ -170,7 +170,7 @@ class ClassSessionSerializer(serializers.ModelSerializer):
     def get_payment_amount(self, obj: ClassSession) -> Decimal | None:
         """Get the calculated payment amount if available."""
         if hasattr(obj, "payment_entry"):
-            return obj.payment_entry.amount_earned
+            return obj.payment_entry.amount_earned  # type: ignore[no-any-return]
         return None
 
 

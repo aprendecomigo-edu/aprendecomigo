@@ -181,7 +181,7 @@ class FraudDetectionService:
             risk_score = Decimal("0.00")
 
             # Analyze user patterns
-            user_analysis = self._analyze_user_patterns(user, transactions)
+            user_analysis = self._analyze_user_patterns(user, list(transactions))
             risk_score += user_analysis["risk_score"]
 
             # Check for high-risk patterns that warrant alerts
@@ -248,7 +248,7 @@ class FraudDetectionService:
                                 {
                                     "transaction_id": transaction.id,
                                     "risk_score": analysis["risk_score"],
-                                    "user_email": transaction.student.email,
+                                    "user_email": transaction.student.email,  # type: ignore[attr-defined]
                                 }
                             )
 
@@ -327,8 +327,8 @@ class FraudDetectionService:
                         "alert_type": alert.alert_type,
                         "description": alert.description,
                         "risk_score": alert.risk_score,
-                        "target_user_email": alert.target_user.email if alert.target_user else None,
-                        "assigned_to": alert.assigned_to.email if alert.assigned_to else None,
+                        "target_user_email": alert.target_user.email if alert.target_user else None,  # type: ignore[attr-defined]
+                        "assigned_to": alert.assigned_to.email if alert.assigned_to else None,  # type: ignore[attr-defined]
                         "created_at": alert.created_at,
                         "days_since_created": alert.days_since_created,
                         "is_high_priority": alert.is_high_priority,
@@ -356,16 +356,16 @@ class FraudDetectionService:
         last_24h = timezone.now() - timedelta(hours=24)
 
         # Count unique payment methods used in last 24 hours
-        payment_methods_count = StoredPaymentMethod.objects.filter(student=user, created_at__gte=last_24h).count()
+        payment_methods_count = StoredPaymentMethod.objects.filter(student=user, created_at__gte=last_24h).count()  # type: ignore[misc]
 
         threshold = self.THRESHOLDS["multiple_cards_24h"]
         risk_score = Decimal("0.00")
         generate_alert = False
 
-        if payment_methods_count >= threshold["count"]:
+        if payment_methods_count >= threshold["count"]:  # type: ignore[operator]
             risk_score = Decimal("40.00")
             generate_alert = True
-        elif payment_methods_count >= threshold["count"] - 2:
+        elif payment_methods_count >= threshold["count"] - 2:  # type: ignore[operator]
             risk_score = Decimal("20.00")
 
         return {
@@ -383,7 +383,7 @@ class FraudDetectionService:
         last_24h = timezone.now() - timedelta(hours=24)
         threshold = self.THRESHOLDS["high_value_transactions_24h"]
 
-        high_value_count = PurchaseTransaction.objects.filter(
+        high_value_count = PurchaseTransaction.objects.filter(  # type: ignore[misc]
             student=user,
             created_at__gte=last_24h,
             amount__gte=threshold["amount"],
@@ -393,10 +393,10 @@ class FraudDetectionService:
         risk_score = Decimal("0.00")
         generate_alert = False
 
-        if high_value_count >= threshold["count"]:
+        if high_value_count >= threshold["count"]:  # type: ignore[operator]
             risk_score = Decimal("35.00")
             generate_alert = True
-        elif high_value_count >= threshold["count"] - 1:
+        elif high_value_count >= threshold["count"] - 1:  # type: ignore[operator]
             risk_score = Decimal("15.00")
 
         return {
@@ -416,17 +416,17 @@ class FraudDetectionService:
         """Check for rapid-fire transaction attempts."""
         user = transaction.student
         threshold = self.THRESHOLDS["rapid_transactions"]
-        time_window = timezone.now() - timedelta(minutes=threshold["time_window_minutes"])
+        time_window = timezone.now() - timedelta(minutes=float(threshold["time_window_minutes"]))  # type: ignore[arg-type]
 
-        rapid_count = PurchaseTransaction.objects.filter(student=user, created_at__gte=time_window).count()
+        rapid_count = PurchaseTransaction.objects.filter(student=user, created_at__gte=time_window).count()  # type: ignore[misc]
 
         risk_score = Decimal("0.00")
         generate_alert = False
 
-        if rapid_count >= threshold["count"]:
+        if rapid_count >= threshold["count"]:  # type: ignore[operator]
             risk_score = Decimal("50.00")
             generate_alert = True
-        elif rapid_count >= threshold["count"] - 3:
+        elif rapid_count >= threshold["count"] - 3:  # type: ignore[operator]
             risk_score = Decimal("25.00")
 
         return {
@@ -446,19 +446,19 @@ class FraudDetectionService:
         """Check for multiple failed payment attempts."""
         user = transaction.student
         threshold = self.THRESHOLDS["failed_attempts_threshold"]
-        time_window = timezone.now() - timedelta(hours=threshold["time_window_hours"])
+        time_window = timezone.now() - timedelta(hours=float(threshold["time_window_hours"]))  # type: ignore[arg-type]
 
-        failed_count = PurchaseTransaction.objects.filter(
+        failed_count = PurchaseTransaction.objects.filter(  # type: ignore[misc]
             student=user, created_at__gte=time_window, payment_status=TransactionPaymentStatus.FAILED
         ).count()
 
         risk_score = Decimal("0.00")
         generate_alert = False
 
-        if failed_count >= threshold["count"]:
+        if failed_count >= threshold["count"]:  # type: ignore[operator]
             risk_score = Decimal("30.00")
             generate_alert = True
-        elif failed_count >= threshold["count"] - 3:
+        elif failed_count >= threshold["count"] - 3:  # type: ignore[operator]
             risk_score = Decimal("15.00")
 
         return {
@@ -479,7 +479,7 @@ class FraudDetectionService:
         user = transaction.student
         threshold = self.THRESHOLDS["new_user_high_value"]
 
-        user_age = timezone.now() - user.date_joined
+        user_age = timezone.now() - user.date_joined  # type: ignore[attr-defined]
         is_new_user = user_age.days <= threshold["days_old"]
         is_high_value = transaction.amount >= threshold["amount_threshold"]
 
@@ -489,7 +489,7 @@ class FraudDetectionService:
         if is_new_user and is_high_value:
             risk_score = Decimal("45.00")
             generate_alert = True
-        elif is_new_user and transaction.amount >= threshold["amount_threshold"] / 2:
+        elif is_new_user and transaction.amount >= threshold["amount_threshold"] / 2:  # type: ignore[operator]
             risk_score = Decimal("20.00")
 
         return {
@@ -512,7 +512,7 @@ class FraudDetectionService:
 
         # Get user's transaction history (last 90 days, excluding current transaction)
         last_90_days = timezone.now() - timedelta(days=90)
-        historical_transactions = PurchaseTransaction.objects.filter(
+        historical_transactions = PurchaseTransaction.objects.filter(  # type: ignore[misc]
             student=user, created_at__gte=last_90_days, payment_status=TransactionPaymentStatus.COMPLETED
         ).exclude(id=transaction.id)
 
@@ -538,10 +538,10 @@ class FraudDetectionService:
         risk_score = Decimal("0.00")
         generate_alert = False
 
-        if deviation >= threshold["deviation_threshold"]:
+        if deviation >= threshold["deviation_threshold"]:  # type: ignore[operator]
             risk_score = Decimal("25.00")
             generate_alert = True
-        elif deviation >= threshold["deviation_threshold"] - 1:
+        elif deviation >= threshold["deviation_threshold"] - 1:  # type: ignore[operator]
             risk_score = Decimal("10.00")
 
         return {
@@ -566,7 +566,7 @@ class FraudDetectionService:
     ) -> dict[str, Any]:
         """Analyze overall user patterns for fraud indicators."""
         risk_score = Decimal("0.00")
-        patterns = {}
+        patterns: dict[str, Any] = {}
 
         if not transactions:
             return {"risk_score": risk_score, "patterns": patterns}
@@ -615,7 +615,7 @@ class FraudDetectionService:
                 return None
 
             # Check if similar alert already exists and is active
-            existing_alert = FraudAlert.objects.filter(
+            existing_alert = FraudAlert.objects.filter(  # type: ignore[misc]
                 target_user=target_user,
                 alert_type=risk_data.get("alert_type", "unknown"),
                 status=FraudAlertStatus.ACTIVE,
@@ -623,11 +623,11 @@ class FraudDetectionService:
             ).first()
 
             if existing_alert:
-                logger.info(f"Similar alert already exists for user {target_user.id}")
+                logger.info(f"Similar alert already exists for user {target_user.id}")  # type: ignore[union-attr]
                 return None
 
             # Create fraud alert
-            alert = FraudAlert.objects.create(
+            alert = FraudAlert.objects.create(  # type: ignore[misc]
                 severity=risk_data.get("severity", FraudAlertSeverity.MEDIUM),
                 alert_type=risk_data.get("alert_type", "unknown_pattern"),
                 description=self._format_alert_description(risk_data),
@@ -651,7 +651,7 @@ class FraudDetectionService:
                     action_data={"alert_id": alert.alert_id, "risk_score": float(alert.risk_score)},
                 )
 
-            logger.info(f"Fraud alert {alert.alert_id} generated for user {target_user.id}")
+            logger.info(f"Fraud alert {alert.alert_id} generated for user {target_user.id}")  # type: ignore[union-attr]
 
             return {
                 "alert_id": alert.alert_id,

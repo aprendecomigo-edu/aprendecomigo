@@ -15,17 +15,23 @@ environment = os.getenv("DJANGO_ENV", "development")
 
 if environment == "production":
     # Import all other production settings
-    from .production import *
-    from .production import ALLOWED_HOSTS, DATABASES, DEBUG, SECRET_KEY, SIMPLE_JWT
+    from .production import *  # type: ignore[assignment]
+    from .production import ALLOWED_HOSTS, DATABASES, DEBUG, SECRET_KEY, SIMPLE_JWT  # type: ignore[assignment]
 elif environment == "staging":
     # Import all other staging settings
-    from .staging import *
-    from .staging import ALLOWED_HOSTS, DATABASES, DEBUG, SECRET_KEY, SIMPLE_JWT
+    from .staging import *  # type: ignore[assignment]
+    from .staging import ALLOWED_HOSTS, DATABASES, DEBUG, SECRET_KEY, SIMPLE_JWT  # type: ignore[assignment]
 elif environment == "testing":
     # Import all other testing settings
-    from .testing import *
-    from .testing import DATABASES, DEBUG, SECRET_KEY, SIMPLE_JWT
+    from .testing import *  # type: ignore[assignment]
+    from .testing import DATABASES, DEBUG, SECRET_KEY, SIMPLE_JWT  # type: ignore[assignment]
 else:
     # Import all other development settings
-    from .development import *
-    from .development import ALLOWED_HOSTS, DATABASES, DEBUG, SECRET_KEY, SIMPLE_JWT  # noqa: F401
+    from .development import *  # type: ignore[assignment]
+    from .development import (  # type: ignore[assignment]  # noqa: F401
+        ALLOWED_HOSTS,
+        DATABASES,
+        DEBUG,
+        SECRET_KEY,
+        SIMPLE_JWT,
+    )

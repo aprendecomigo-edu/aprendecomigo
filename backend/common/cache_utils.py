@@ -104,7 +104,7 @@ class SecureCacheKeyGenerator:
             session_key = getattr(request.session, "session_key", None)
             if session_key:
                 # Use first 8 characters of session key for cache scoping
-                return session_key[:8]
+                return session_key[:8]  # type: ignore[no-any-return]
         return None
 
 

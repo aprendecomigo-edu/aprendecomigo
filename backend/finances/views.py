@@ -468,7 +468,7 @@ class ClassSessionViewSet(SchoolPermissionMixin, viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-    @action(detail=True, methods=["post"])
+    @action(detail=True, methods=["post"])  # type: ignore[no-redef]
     def cancel(self, request, pk=None):
         """Cancel a session and process hour refunds."""
         from classroom.services.session_booking_service import SessionBookingError, SessionBookingService
@@ -2296,7 +2296,7 @@ class FamilyBudgetControlViewSet(viewsets.ModelViewSet):
     """
 
     # Don't define queryset attribute - force use of get_queryset() method
-    serializer_class = "FamilyBudgetControlSerializer"  # Set in get_serializer_class
+    serializer_class = "FamilyBudgetControlSerializer"  # type: ignore[assignment]  # Set in get_serializer_class
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -2387,7 +2387,7 @@ class PurchaseApprovalRequestViewSet(viewsets.ModelViewSet):
     Handles the approval workflow between parents and children for purchases.
     """
 
-    serializer_class = "PurchaseApprovalRequestSerializer"  # Set in get_serializer_class
+    serializer_class = "PurchaseApprovalRequestSerializer"  # type: ignore[assignment]  # Set in get_serializer_class
     permission_classes = [IsAuthenticated]
     filter_backends = [OrderingFilter]
     ordering_fields = ["requested_at", "amount"]

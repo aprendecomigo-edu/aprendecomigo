@@ -137,10 +137,10 @@ class SessionBookingService:
                     "students_affected": len(consumption_records),
                     "consumption_records": [
                         {
-                            "student_id": record.student_account.student.id,
-                            "student_name": record.student_account.student.name,
+                            "student_id": record.student_account.student.id,  # type: ignore[attr-defined]
+                            "student_name": record.student_account.student.name,  # type: ignore[attr-defined]
                             "hours_consumed": f"{record.hours_consumed:.2f}",
-                            "package_id": record.purchase_transaction.id,
+                            "package_id": record.purchase_transaction.id,  # type: ignore[attr-defined]
                         }
                         for record in consumption_records
                     ],
@@ -227,7 +227,7 @@ class SessionBookingService:
                     "students_affected": len(consumption_records),
                     "refund_records": [
                         {
-                            "student_name": record.student_account.student.name,
+                            "student_name": record.student_account.student.name,  # type: ignore[attr-defined]
                             "hours_refunded": str(record.hours_consumed),
                         }
                         for record in consumption_records
@@ -318,10 +318,10 @@ class SessionBookingService:
                             "adjustment_type": "additional_deduction",
                             "adjustment_records": [
                                 {
-                                    "student_id": record.student.id,
-                                    "student_name": record.student.name,
+                                    "student_id": record.student.id,  # type: ignore[attr-defined]
+                                    "student_name": record.student.name,  # type: ignore[attr-defined]
                                     "additional_hours": str(record.hours_consumed),
-                                    "package_id": record.package.id,
+                                    "package_id": record.package.id,  # type: ignore[attr-defined]
                                 }
                                 for record in additional_consumption
                             ],
@@ -339,10 +339,10 @@ class SessionBookingService:
                             "adjustment_type": "partial_refund",
                             "adjustment_records": [
                                 {
-                                    "student_id": record.student.id,
-                                    "student_name": record.student.name,
+                                    "student_id": record.student.id,  # type: ignore[attr-defined]
+                                    "student_name": record.student.name,  # type: ignore[attr-defined]
                                     "refunded_hours": str(record.hours_consumed),
-                                    "package_id": record.package.id,
+                                    "package_id": record.package.id,  # type: ignore[attr-defined]
                                 }
                                 for record in refund_records
                             ],
@@ -377,8 +377,8 @@ class SessionBookingService:
 
         return {
             "session_id": session.id,
-            "teacher_name": session.teacher.user.name,
-            "school_name": session.school.name,
+            "teacher_name": session.teacher.user.name,  # type: ignore[attr-defined]
+            "school_name": session.school.name,  # type: ignore[attr-defined]
             "date": str(session.date),
             "start_time": str(session.start_time),
             "end_time": str(session.end_time),

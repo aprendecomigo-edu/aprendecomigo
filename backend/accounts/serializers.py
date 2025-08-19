@@ -1706,7 +1706,7 @@ class BulkInvitationResponseSerializer(serializers.Serializer):
     total_invitations = serializers.IntegerField(read_only=True)
     successful_invitations = serializers.IntegerField(read_only=True)
     failed_invitations = serializers.IntegerField(read_only=True)
-    errors = serializers.ListField(child=serializers.DictField(), read_only=True)
+    errors = serializers.ListField(child=serializers.DictField(), read_only=True)  # type: ignore[assignment]
     invitations = TeacherInvitationSerializer(many=True, read_only=True)
     message = serializers.CharField(read_only=True)
 
@@ -2025,7 +2025,7 @@ class ProfileWizardStepValidationSerializer(serializers.Serializer):
         max_value=10,  # Reasonable limit for wizard steps
         required=True,
     )
-    data = serializers.JSONField(required=True)
+    data = serializers.JSONField(required=True)  # type: ignore[assignment]
 
     def validate_data(self, value):
         """Validate step data using the main ProfileWizardDataSerializer."""
@@ -2136,7 +2136,7 @@ class WizardStepSerializer(serializers.Serializer):
     step_number = serializers.IntegerField()
     title = serializers.CharField()
     description = serializers.CharField()
-    fields = serializers.ListField(child=serializers.CharField())
+    fields = serializers.ListField(child=serializers.CharField())  # type: ignore[assignment]
     is_required = serializers.BooleanField()
     estimated_time_minutes = serializers.IntegerField(required=False)
 
@@ -2187,15 +2187,15 @@ class StepValidationRequestSerializer(serializers.Serializer):
     """Serializer for step validation requests."""
 
     step = serializers.IntegerField(min_value=0, max_value=10)
-    data = serializers.JSONField()
+    data = serializers.JSONField()  # type: ignore[assignment]
 
 
 class StepValidationResponseSerializer(serializers.Serializer):
     """Serializer for step validation responses."""
 
-    is_valid = serializers.BooleanField()
+    is_valid = serializers.BooleanField()  # type: ignore[assignment]
     validated_data = serializers.JSONField(required=False)
-    errors = serializers.DictField(required=False)
+    errors = serializers.DictField(required=False)  # type: ignore[assignment]
 
 
 # Dashboard Serializers for Teacher Dashboard API

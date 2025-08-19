@@ -271,7 +271,7 @@ def detect_time_overlap(
         return has_overlap
 
     # Calculate overlap details
-    result = {"has_overlap": has_overlap}
+    result: dict[str, Any] = {"has_overlap": has_overlap}
 
     if has_overlap:
         overlap_start = max(start1, start2)

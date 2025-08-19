@@ -133,10 +133,10 @@ class PaymentService:
                 "payment_intent_id": payment_intent.id,
             }
 
-        except stripe.error.StripeError as e:
+        except stripe.error.StripeError as e:  # type: ignore[attr-defined]
             logger.error(f"Stripe error creating payment intent: {e}")
             if hasattr(self, "stripe_service") and self.stripe_service is not None:
-                return self.stripe_service.handle_stripe_error(e)
+                return self.stripe_service.handle_stripe_error(e)  # type: ignore[no-any-return]
             else:
                 logger.error("StripeService not available for error handling")
                 return {
@@ -218,10 +218,10 @@ class PaymentService:
 
             return {"success": True, "transaction_id": purchase_transaction.id, "payment_intent_id": payment_intent_id}
 
-        except stripe.error.StripeError as e:
+        except stripe.error.StripeError as e:  # type: ignore[attr-defined]
             logger.error(f"Stripe error confirming payment: {e}")
             if hasattr(self, "stripe_service") and self.stripe_service is not None:
-                return self.stripe_service.handle_stripe_error(e)
+                return self.stripe_service.handle_stripe_error(e)  # type: ignore[no-any-return]
             else:
                 logger.error("StripeService not available for error handling")
                 return {
@@ -320,10 +320,10 @@ class PaymentService:
                 "created": payment_intent.created,
             }
 
-        except stripe.error.StripeError as e:
+        except stripe.error.StripeError as e:  # type: ignore[attr-defined]
             logger.error(f"Stripe error retrieving payment status: {e}")
             if hasattr(self, "stripe_service") and self.stripe_service is not None:
-                return self.stripe_service.handle_stripe_error(e)
+                return self.stripe_service.handle_stripe_error(e)  # type: ignore[no-any-return]
             else:
                 logger.error("StripeService not available for error handling")
                 return {
@@ -488,7 +488,7 @@ class PaymentService:
         # Set expiration for package transactions (e.g., 1 year from now)
         expires_at = None
         if transaction_type == TransactionType.PACKAGE:
-            expires_at = timezone.now() + timezone.timedelta(days=365)
+            expires_at = timezone.now() + timedelta(days=365)
 
         return PurchaseTransaction.objects.create(
             student=user,
@@ -531,7 +531,7 @@ class PaymentService:
             student_balance.hours_purchased += hours_to_add
             student_balance.save(update_fields=["hours_purchased", "updated_at"])
 
-            logger.info(f"Added {hours_to_add} hours to account for student {purchase_transaction.student.id}")
+            logger.info(f"Added {hours_to_add} hours to account for student {purchase_transaction.student.id}")  # type: ignore[attr-defined]
 
     def _update_account_balance(self, purchase_transaction: PurchaseTransaction) -> None:
         """
@@ -554,4 +554,4 @@ class PaymentService:
         student_balance.balance_amount += purchase_transaction.amount
         student_balance.save(update_fields=["balance_amount", "updated_at"])
 
-        logger.info(f"Added €{purchase_transaction.amount} to balance for student {purchase_transaction.student.id}")
+        logger.info(f"Added €{purchase_transaction.amount} to balance for student {purchase_transaction.student.id}")  # type: ignore[attr-defined]

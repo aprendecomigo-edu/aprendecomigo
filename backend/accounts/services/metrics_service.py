@@ -32,7 +32,7 @@ class SchoolMetricsService:
             metrics = self._calculate_metrics()
             cache.set(cache_key, metrics, self.CACHE_TTL)
 
-        return metrics
+        return metrics  # type: ignore[no-any-return]
 
     def _calculate_metrics(self) -> dict[str, Any]:
         """Calculate all metrics for the school"""
