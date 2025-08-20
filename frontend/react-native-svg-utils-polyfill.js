@@ -17,9 +17,11 @@ try {
 }
 
 // Ensure hasTouchableProperty is always available
-const hasTouchableProperty = originalUtils.hasTouchableProperty || ((props) => {
-  return Boolean(props?.onPress || props?.onPressIn || props?.onPressOut || props?.onLongPress);
-});
+const hasTouchableProperty =
+  originalUtils.hasTouchableProperty ||
+  (props => {
+    return Boolean(props?.onPress || props?.onPressIn || props?.onPressOut || props?.onLongPress);
+  });
 
 // Export all original functions plus our polyfill
 module.exports = {

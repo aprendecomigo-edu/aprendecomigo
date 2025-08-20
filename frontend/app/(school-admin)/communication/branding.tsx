@@ -1,5 +1,3 @@
-import { isWeb } from '@/utils/platform';
-import { router } from 'expo-router';
 import {
   PaletteIcon,
   UploadIcon,
@@ -7,12 +5,10 @@ import {
   SaveIcon,
   RefreshCwIcon,
   ImageIcon,
-  ColorWheelIcon,
-  TypeIcon,
   MailIcon,
 } from 'lucide-react-native';
 import React, { useState, useCallback } from 'react';
-import { Alert, Platform } from 'react-native';
+import { Alert } from 'react-native';
 
 import MainLayout from '@/components/layouts/MainLayout';
 import { Box } from '@/components/ui/box';
@@ -31,6 +27,7 @@ import { Text } from '@/components/ui/text';
 import { Textarea, TextareaInput } from '@/components/ui/textarea';
 import { VStack } from '@/components/ui/vstack';
 import { useSchoolBranding, useColorPicker, useBrandingPreview } from '@/hooks/useSchoolBranding';
+import { isWeb } from '@/utils/platform';
 
 const SchoolBrandingPage = () => {
   const [previewMode, setPreviewMode] = useState(false);
@@ -54,7 +51,6 @@ const SchoolBrandingPage = () => {
     isPickerOpen: isPrimaryPickerOpen,
     presetColors,
     openPicker: openPrimaryPicker,
-    closePicker: closePrimaryPicker,
     selectPresetColor: selectPrimaryPreset,
     setSelectedColor: setPrimaryColor,
   } = useColorPicker(branding?.primary_color);
@@ -63,12 +59,11 @@ const SchoolBrandingPage = () => {
     selectedColor: secondaryColor,
     isPickerOpen: isSecondaryPickerOpen,
     openPicker: openSecondaryPicker,
-    closePicker: closeSecondaryPicker,
     selectPresetColor: selectSecondaryPreset,
     setSelectedColor: setSecondaryColor,
   } = useColorPicker(branding?.secondary_color);
 
-  const { previewData, generateBrandingPreview, closePreview } = useBrandingPreview();
+  const { previewData, generateBrandingPreview } = useBrandingPreview();
 
   // Update primary color
   const handlePrimaryColorChange = useCallback(

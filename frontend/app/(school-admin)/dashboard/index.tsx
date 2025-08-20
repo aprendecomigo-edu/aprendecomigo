@@ -1,4 +1,5 @@
 import { isWeb } from '@/utils/platform';
+
 import { router } from 'expo-router';
 import {
   AlertTriangleIcon,
@@ -193,8 +194,8 @@ const SchoolAdminDashboard = () => {
     router.push('/(school-admin)/communication');
   }, []);
 
-  const handleUpdateSchool = useCallback(
-    async (data: any) => {
+  const _handleUpdateSchool = useCallback(
+    async (_data: any) => {
       if (!selectedSchoolId) return;
 
       try {
@@ -341,7 +342,7 @@ const SchoolAdminDashboard = () => {
                     // In a real app, you might want to show a modal or dropdown
                     // For now, cycle through schools
                     const currentIndex = adminSchools.findIndex(s => s.id === selectedSchoolId);
-                    const nextIndex = (currentIndex + 1) % adminSchools.length;
+                    const _nextIndex = (currentIndex + 1) % adminSchools.length;
                     // In a real implementation, you would update currentSchool in the auth context
                     // For now, this is just a placeholder - school switching needs proper implementation
                   }}

@@ -1,4 +1,3 @@
-import { isWeb } from '@/utils/platform';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   ArrowLeftIcon,
@@ -12,10 +11,8 @@ import {
 import React, { useState, useCallback, useEffect } from 'react';
 import { Alert } from 'react-native';
 
-import { SchoolEmailTemplate } from '@/api/communicationApi';
 import MainLayout from '@/components/layouts/MainLayout';
 import { Badge } from '@/components/ui/badge';
-import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Center } from '@/components/ui/center';
@@ -26,9 +23,9 @@ import { Input, InputField } from '@/components/ui/input';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
-import { Textarea, TextareaInput } from '@/components/ui/textarea';
 import { VStack } from '@/components/ui/vstack';
 import { useTemplateEditor, useTemplatePreview } from '@/hooks/useCommunicationTemplates';
+import { isWeb } from '@/utils/platform';
 
 interface TestEmailHistory {
   id: string;

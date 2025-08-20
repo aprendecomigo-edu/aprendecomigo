@@ -1,9 +1,10 @@
 import type { VariantProps } from '@gluestack-ui/nativewind-utils';
-import { isWeb } from '@/utils/platform';
 import { tva } from '@gluestack-ui/nativewind-utils/tva';
 import React, { createContext, useContext, useMemo } from 'react';
 import type { ViewProps } from 'react-native';
 import { View } from 'react-native';
+
+import { isWeb } from '@/utils/platform';
 
 // Card Context for sharing state between components
 interface CardContextValue {

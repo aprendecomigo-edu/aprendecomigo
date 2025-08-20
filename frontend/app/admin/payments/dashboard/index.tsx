@@ -7,10 +7,8 @@
 
 import {
   RefreshCw,
-  TrendingUp,
   AlertCircle,
   CheckCircle,
-  DollarSign,
   Activity,
 } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
@@ -26,7 +24,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';

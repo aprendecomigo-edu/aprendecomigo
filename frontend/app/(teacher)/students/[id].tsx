@@ -1,4 +1,3 @@
-import { isWeb } from '@/utils/platform';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   ArrowLeftIcon,
@@ -14,7 +13,6 @@ import {
   BarChart3Icon,
   UserIcon,
   MailIcon,
-  PhoneIcon,
 } from 'lucide-react-native';
 import React, { useCallback, useMemo } from 'react';
 import { Pressable, RefreshControl } from 'react-native';
@@ -28,11 +26,11 @@ import { Center } from '@/components/ui/center';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
-import { Progress } from '@/components/ui/progress';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useStudentDetail } from '@/hooks/useTeacherDashboard';
+import { isWeb } from '@/utils/platform';
 
 const StudentDetailPage = () => {
   const { id } = useLocalSearchParams<{ id: string }>();

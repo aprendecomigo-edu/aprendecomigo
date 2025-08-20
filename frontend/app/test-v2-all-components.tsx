@@ -14,7 +14,7 @@ import {
   FormControlErrorIcon,
   FormControlErrorText,
 } from '@/components/ui/form-control/form-control-v2-simple';
-import { Input, InputField, InputIcon, InputSlot } from '@/components/ui/input/input-v2-simple';
+import { Input, InputField, InputIcon } from '@/components/ui/input/input-v2-simple';
 import {
   Modal,
   ModalBackdrop,
@@ -51,7 +51,7 @@ export default function TestV2AllComponentsScreen() {
 
     toast.show({
       placement: 'top',
-      render: ({ id }) => (
+      render: () => (
         <Toast action={variant} variant="solid">
           <ToastTitle>{messages[variant].title}</ToastTitle>
           <ToastDescription>{messages[variant].description}</ToastDescription>

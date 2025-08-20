@@ -657,7 +657,7 @@ describe('Integration with User Profile', () => {
   beforeEach(() => {
     WebSocketTestUtils.setup();
     jest.clearAllMocks();
-    
+
     // Re-setup mocks after clearing
     mockUseUserProfile.mockReturnValue({
       userProfile: mockUserProfile,

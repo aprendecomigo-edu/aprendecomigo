@@ -1,18 +1,14 @@
-import { isWeb } from '@/utils/platform';
 import { router } from 'expo-router';
 import {
   SearchIcon,
   FilterIcon,
   UsersIcon,
-  TrendingUpIcon,
   AlertTriangleIcon,
   RefreshCwIcon,
   ChevronRightIcon,
   CalendarIcon,
-  MessageSquareIcon,
-  BarChart3Icon,
 } from 'lucide-react-native';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback } from 'react';
 import { FlatList, Pressable, RefreshControl } from 'react-native';
 
 import type { StudentProgress } from '@/api/teacherApi';
@@ -20,13 +16,11 @@ import MainLayout from '@/components/layouts/MainLayout';
 import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
-import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { Center } from '@/components/ui/center';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Input, InputField } from '@/components/ui/input';
-import { ScrollView } from '@/components/ui/scroll-view';
 import {
   Select,
   SelectTrigger,
@@ -41,8 +35,8 @@ import {
 } from '@/components/ui/select';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { useDebounce } from '@/hooks/useDebounce';
 import { useTeacherStudents } from '@/hooks/useTeacherDashboard';
+import { isWeb } from '@/utils/platform';
 
 interface StudentListItemProps {
   student: StudentProgress;
@@ -177,8 +171,7 @@ const TeacherStudentsPage = () => {
     refresh,
   } = useTeacherStudents();
 
-  // Debounce search to avoid excessive API calls
-  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  // TODO: Implement debounced search to avoid excessive API calls
 
   const handleStudentPress = useCallback((studentId: number) => {
     router.push(`/(teacher)/students/${studentId}`);

@@ -45,7 +45,9 @@ export function initializeWebPolyfills() {
     // Polyfill hasTouchableProperty function for react-native-svg
     if (!(window as any).hasTouchableProperty) {
       (window as any).hasTouchableProperty = (props: any) => {
-        return Boolean(props?.onPress || props?.onPressIn || props?.onPressOut || props?.onLongPress);
+        return Boolean(
+          props?.onPress || props?.onPressIn || props?.onPressOut || props?.onLongPress,
+        );
       };
     }
 

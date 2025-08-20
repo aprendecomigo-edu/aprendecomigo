@@ -75,7 +75,7 @@ export default function SchoolSettingsPage() {
           );
           setSelectedSchoolId(null);
         }
-      } catch (error) {
+      } catch {
         setAuthorizationError(
           'Failed to load school information. Please try again or contact support.',
         );

@@ -6,12 +6,12 @@
     "noUnusedParameters": false
   },
   "exclude": [
-    "node_modules", 
-    "dist", 
+    "node_modules",
+    "dist",
     "build",
     "**/*.test.ts",
     "**/*.test.tsx",
-    "**/*.spec.ts", 
+    "**/*.spec.ts",
     "**/*.spec.tsx",
     "__tests__/**/*",
     "jest.setup.js",

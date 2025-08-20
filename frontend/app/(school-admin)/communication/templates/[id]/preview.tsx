@@ -1,4 +1,3 @@
-import { isWeb } from '@/utils/platform';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   ArrowLeftIcon,
@@ -13,7 +12,6 @@ import {
 import React, { useState, useCallback, useEffect } from 'react';
 import { Alert } from 'react-native';
 
-import { SchoolEmailTemplate } from '@/api/communicationApi';
 import MainLayout from '@/components/layouts/MainLayout';
 import { Badge } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
@@ -29,7 +27,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useTemplateEditor, useTemplatePreview } from '@/hooks/useCommunicationTemplates';
-import { useSchoolBranding } from '@/hooks/useSchoolBranding';
+import { isWeb } from '@/utils/platform';
 
 type PreviewMode = 'desktop' | 'tablet' | 'mobile';
 
@@ -61,10 +59,7 @@ const TemplatePreviewPage = () => {
     loading: previewLoading,
     error: previewError,
     generatePreview,
-    sendTestEmail,
   } = useTemplatePreview();
-
-  const { branding } = useSchoolBranding();
 
   // Load template on mount
   useEffect(() => {

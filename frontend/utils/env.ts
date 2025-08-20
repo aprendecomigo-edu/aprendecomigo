@@ -1,11 +1,13 @@
 /**
  * Environment utilities for React 19 + Expo SDK 53 compatibility
- * 
+ *
  * This utility provides safe environment detection that works across all platforms:
  * - React Native (mobile): Uses __DEV__ when available
  * - Web: Uses NODE_ENV or build-time environment detection
  * - Production builds: Always false for performance
  */
+
+import { isWeb, isIOS, isAndroid } from './platform';
 
 /**
  * Safe development environment detection
@@ -17,12 +19,12 @@ export const isDev = (() => {
     if (typeof __DEV__ !== 'undefined') {
       return __DEV__;
     }
-    
+
     // Fallback to Node.js environment (web builds)
     if (typeof process !== 'undefined' && process.env) {
       return process.env.NODE_ENV === 'development';
     }
-    
+
     // Final fallback - assume production for safety
     return false;
   } catch {
@@ -94,29 +96,24 @@ export const buildEnv = (() => {
 
 /**
  * Platform detection for cross-platform compatibility
+ * Note: Uses platform utilities which already handle platform detection properly
  */
 export const platform = (() => {
   try {
-    // React Native Platform detection
-    if (typeof require !== 'undefined') {
-      try {
-        const { Platform } = require('react-native');
-        return Platform.OS;
-      } catch {
-        // Not React Native environment
-      }
-    }
-    
-    // Web detection
-    if (typeof window !== 'undefined') {
+    // Use the platform utilities which already handle platform detection
+    if (isWeb) {
       return 'web';
+    } else if (isIOS) {
+      return 'ios';
+    } else if (isAndroid) {
+      return 'android';
     }
-    
+
     // Node.js/SSR detection
     if (typeof process !== 'undefined') {
       return 'node';
     }
-    
+
     return 'unknown';
   } catch {
     return 'unknown';

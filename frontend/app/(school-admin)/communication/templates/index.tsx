@@ -1,4 +1,3 @@
-import { isWeb } from '@/utils/platform';
 import { router } from 'expo-router';
 import {
   PlusIcon,
@@ -8,16 +7,14 @@ import {
   MailIcon,
   EyeIcon,
   SendIcon,
-  FilterIcon,
   SearchIcon,
 } from 'lucide-react-native';
 import React, { useCallback, useState, useMemo } from 'react';
 import { Alert } from 'react-native';
 
-import { SchoolEmailTemplate, EmailTemplateType } from '@/api/communicationApi';
+import { SchoolEmailTemplate } from '@/api/communicationApi';
 import MainLayout from '@/components/layouts/MainLayout';
 import { Badge } from '@/components/ui/badge';
-import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Center } from '@/components/ui/center';
@@ -25,12 +22,12 @@ import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Input, InputField } from '@/components/ui/input';
-import { Pressable } from '@/components/ui/pressable';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useCommunicationTemplates, useTemplateActions } from '@/hooks/useCommunicationTemplates';
+import { isWeb } from '@/utils/platform';
 
 const TemplateManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');

@@ -7,7 +7,6 @@ import { useAuth, useUserProfile } from '@/api/auth';
 import InvitationApi, { InvitationStatusResponse } from '@/api/invitationApi';
 import MainLayout from '@/components/layouts/MainLayout';
 import ProfileWizard from '@/components/profile-wizard/ProfileWizard';
-import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Center } from '@/components/ui/center';
 import { Heading } from '@/components/ui/heading';
@@ -124,6 +123,22 @@ const AcceptInvitationProfileWizardPage = () => {
     router.back();
   };
 
+  // Check if this invitation actually needs profile wizard
+  const needsProfileWizard =
+    invitationData?.needs_profile_wizard ||
+    invitationData?.wizard_metadata?.requires_profile_completion;
+
+  // Auto-redirect to regular invitation acceptance if profile wizard is not needed
+  useEffect(() => {
+    if (invitationData && !needsProfileWizard) {
+      const timer = setTimeout(() => {
+        router.replace(`/accept-invitation/${token}`);
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [invitationData, needsProfileWizard, router, token]);
+
   if (loading) {
     return (
       <MainLayout _title="Configuração do Perfil">
@@ -168,21 +183,7 @@ const AcceptInvitationProfileWizardPage = () => {
     );
   }
 
-  // Check if this invitation actually needs profile wizard
-  const needsProfileWizard =
-    invitationData.needs_profile_wizard ||
-    invitationData.wizard_metadata?.requires_profile_completion;
-
   if (!needsProfileWizard) {
-    // Auto-redirect to regular invitation acceptance
-    useEffect(() => {
-      const timer = setTimeout(() => {
-        router.replace(`/accept-invitation/${token}`);
-      }, 2000);
-
-      return () => clearTimeout(timer);
-    }, []);
-
     return (
       <MainLayout _title="Redirecionando">
         <Center className="flex-1 p-6">

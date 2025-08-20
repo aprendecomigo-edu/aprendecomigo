@@ -1,7 +1,6 @@
-import { isWeb } from '@/utils/platform';
 import React, { useState, useEffect } from 'react';
 
-import { useAuth, useUserProfile } from '@/api/auth';
+import { useUserProfile } from '@/api/auth';
 import { tasksApi, Task } from '@/api/tasksApi';
 import { getDashboardInfo, DashboardInfo } from '@/api/userApi';
 import MainLayout from '@/components/layouts/MainLayout';
@@ -11,7 +10,6 @@ import { dashboardTutorial } from '@/components/tutorial/configs/dashboardTutori
 import { Avatar, AvatarFallbackText } from '@/components/ui/avatar';
 import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
-import { Button, ButtonText } from '@/components/ui/button';
 import { Center } from '@/components/ui/center';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
@@ -21,6 +19,7 @@ import { Pressable } from '@/components/ui/pressable';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
+import { isWeb } from '@/utils/platform';
 
 // Interfaces for the dashboard
 
@@ -70,7 +69,7 @@ const AdminDashboard = () => {
     { label: 'Lista', value: 'list', active: true },
   ]);
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [isLoadingTasks, setIsLoadingTasks] = useState(false);
+  const [_isLoadingTasks, setIsLoadingTasks] = useState(false);
 
   // Function to load tasks
   const loadTasks = async () => {

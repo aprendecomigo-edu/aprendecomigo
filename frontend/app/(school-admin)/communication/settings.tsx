@@ -1,19 +1,8 @@
-import { isWeb } from '@/utils/platform';
-import {
-  SettingsIcon,
-  ClockIcon,
-  MailIcon,
-  BellIcon,
-  SaveIcon,
-  RefreshCwIcon,
-  InfoIcon,
-  CheckCircleIcon,
-} from 'lucide-react-native';
+import { SettingsIcon, SaveIcon, RefreshCwIcon, InfoIcon } from 'lucide-react-native';
 import React, { useState, useCallback, useEffect } from 'react';
 import { Alert } from 'react-native';
 
 import MainLayout from '@/components/layouts/MainLayout';
-import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Center } from '@/components/ui/center';
@@ -22,13 +11,11 @@ import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Input, InputField } from '@/components/ui/input';
 import { ScrollView } from '@/components/ui/scroll-view';
-import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
-import { Textarea, TextareaInput } from '@/components/ui/textarea';
 import { VStack } from '@/components/ui/vstack';
-import { useSchoolSettings } from '@/hooks/useSchoolSettings';
+import { isWeb } from '@/utils/platform';
 
 // Mock settings interface (would come from backend)
 interface CommunicationSettings {
@@ -339,7 +326,6 @@ const CommunicationSettingsPage = () => {
               <Text className="font-medium text-gray-900">Default Send Time</Text>
               <Input className="max-w-xs">
                 <InputField
-                  type="time"
                   value={settings.default_send_time}
                   onChangeText={value => updateSetting('default_send_time', value)}
                 />
@@ -354,7 +340,6 @@ const CommunicationSettingsPage = () => {
               <Text className="font-medium text-gray-900">Daily Email Limit</Text>
               <Input className="max-w-xs">
                 <InputField
-                  type="number"
                   placeholder="100"
                   value={settings.max_emails_per_day.toString()}
                   onChangeText={value => updateSetting('max_emails_per_day', parseInt(value) || 0)}
@@ -386,7 +371,6 @@ const CommunicationSettingsPage = () => {
                     <Text className="text-sm text-gray-700">Retry Attempts</Text>
                     <Input>
                       <InputField
-                        type="number"
                         placeholder="3"
                         value={settings.retry_attempts.toString()}
                         onChangeText={value =>
@@ -399,7 +383,6 @@ const CommunicationSettingsPage = () => {
                     <Text className="text-sm text-gray-700">Delay (hours)</Text>
                     <Input>
                       <InputField
-                        type="number"
                         placeholder="24"
                         value={settings.retry_delay_hours.toString()}
                         onChangeText={value =>
@@ -445,7 +428,6 @@ const CommunicationSettingsPage = () => {
                   <Text className="font-medium text-gray-900">Admin Email</Text>
                   <Input>
                     <InputField
-                      type="email"
                       placeholder="admin@school.com"
                       value={settings.admin_notification_email}
                       onChangeText={value => updateSetting('admin_notification_email', value)}
@@ -490,7 +472,6 @@ const CommunicationSettingsPage = () => {
                       <Text className="text-sm text-gray-700">Engagement Threshold</Text>
                       <Input className="max-w-xs">
                         <InputField
-                          type="number"
                           placeholder="0.1"
                           value={settings.engagement_threshold.toString()}
                           onChangeText={value =>
@@ -546,7 +527,6 @@ const CommunicationSettingsPage = () => {
                       <HStack key={index} space="sm" className="items-center">
                         <Input className="flex-1">
                           <InputField
-                            type="number"
                             placeholder="1"
                             value={days.toString()}
                             onChangeText={value => updateFollowUpDays('invitation', index, value)}
@@ -600,7 +580,6 @@ const CommunicationSettingsPage = () => {
                       <HStack key={index} space="sm" className="items-center">
                         <Input className="flex-1">
                           <InputField
-                            type="number"
                             placeholder="1"
                             value={days.toString()}
                             onChangeText={value => updateFollowUpDays('reminder', index, value)}
@@ -665,7 +644,6 @@ const CommunicationSettingsPage = () => {
                   <Text className="font-medium text-gray-900">Max Emails per Hour</Text>
                   <Input className="max-w-xs">
                     <InputField
-                      type="number"
                       placeholder="50"
                       value={settings.max_emails_per_hour.toString()}
                       onChangeText={value =>
@@ -682,7 +660,6 @@ const CommunicationSettingsPage = () => {
                   <Text className="font-medium text-gray-900">Burst Limit</Text>
                   <Input className="max-w-xs">
                     <InputField
-                      type="number"
                       placeholder="10"
                       value={settings.burst_limit.toString()}
                       onChangeText={value => updateSetting('burst_limit', parseInt(value) || 0)}
@@ -754,7 +731,6 @@ const CommunicationSettingsPage = () => {
                   <Text className="text-sm text-gray-700">Suppress after bounces</Text>
                   <Input className="max-w-xs">
                     <InputField
-                      type="number"
                       placeholder="3"
                       value={settings.suppress_after_bounces.toString()}
                       onChangeText={value =>

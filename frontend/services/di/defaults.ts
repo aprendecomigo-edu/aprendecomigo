@@ -121,30 +121,25 @@ class DefaultRouterService implements RouterService {
   private router: any;
 
   constructor() {
-    try {
-      // Import and use the router implementation
-      const { useRouter } = require('expo-router');
-      this.router = useRouter();
-    } catch (error) {
-      // Fallback for testing
-      this.router = {
-        push: () => {
-          if (__DEV__) {
-            console.log('Router push');
-          }
-        },
-        back: () => {
-          if (__DEV__) {
-            console.log('Router back');
-          }
-        },
-        replace: () => {
-          if (__DEV__) {
-            console.log('Router replace');
-          }
-        },
-      };
-    }
+    // Provide fallback implementation since hooks cannot be called in class constructors
+    // This should be replaced with proper dependency injection in a React context
+    this.router = {
+      push: (path: string) => {
+        if (__DEV__) {
+          console.warn('DefaultRouterService: Router not available, push to:', path);
+        }
+      },
+      back: () => {
+        if (__DEV__) {
+          console.warn('DefaultRouterService: Router not available, back');
+        }
+      },
+      replace: (path: string) => {
+        if (__DEV__) {
+          console.warn('DefaultRouterService: Router not available, replace to:', path);
+        }
+      },
+    };
   }
 
   push(route: string): void {
@@ -166,28 +161,15 @@ class DefaultToastService implements ToastService {
   private toast: any;
 
   constructor() {
-    try {
-      const { useToast } = require('@/components/ui/toast');
-      const toastHook = useToast();
-      if (!toastHook || !toastHook.showToast) {
-        throw new Error('Toast service unavailable');
-      }
-      this.toast = toastHook;
-    } catch (error) {
-      if (error instanceof Error && error.message === 'Toast service unavailable') {
-        throw error;
-      }
-      // Fallback for testing
-      this.toast = {
-        showToast: (type: string, message: string) => {
-          if (__DEV__) {
-            if (__DEV__) {
-              console.log('Toast:', type, message);
-            }
-          }
-        },
-      };
-    }
+    // Provide fallback implementation since hooks cannot be called in class constructors
+    // This should be replaced with proper dependency injection in a React context
+    this.toast = {
+      showToast: (type: string, message: string) => {
+        if (__DEV__) {
+          console.warn(`DefaultToastService: Toast not available - ${type}: ${message}`);
+        }
+      },
+    };
   }
 
   showToast(type: 'success' | 'error' | 'info' | 'warning', message: string): void {
@@ -201,16 +183,17 @@ class DefaultAuthContextService implements AuthContextService {
   private auth: any;
 
   constructor() {
-    try {
-      const { useAuth } = require('@/api/auth');
-      this.auth = useAuth();
-    } catch (error) {
-      // Fallback for testing
-      this.auth = {
-        checkAuthStatus: async () => ({ authenticated: false }),
-        userProfile: null,
-      };
-    }
+    // Provide fallback implementation since hooks cannot be called in class constructors
+    // This should be replaced with proper dependency injection in a React context
+    this.auth = {
+      checkAuthStatus: async () => {
+        if (__DEV__) {
+          console.warn('DefaultAuthContextService: Auth not available');
+        }
+        return { authenticated: false };
+      },
+      userProfile: null,
+    };
   }
 
   get userProfile(): any {

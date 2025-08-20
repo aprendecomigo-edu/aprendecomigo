@@ -1,6 +1,5 @@
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Platform } from 'react-native';
 
 import { AuthGuard } from '@/components/auth/AuthGuard';
 import { TeacherProfileWizard } from '@/components/onboarding/TeacherProfileWizard';

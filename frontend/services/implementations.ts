@@ -78,7 +78,7 @@ export class DefaultAnalyticsService implements AnalyticsService {
 }
 
 // Router wrapper to create service instance
-export const createRouterService = (): RouterService => {
+export const useCreateRouterService = (): RouterService => {
   const router = useRouter();
   return {
     push: router.push,
@@ -88,7 +88,7 @@ export const createRouterService = (): RouterService => {
 };
 
 // Toast wrapper to create service instance
-export const createToastService = (): ToastService => {
+export const useCreateToastService = (): ToastService => {
   const toast = useToast();
   return {
     showToast: toast.showToast,
@@ -96,7 +96,7 @@ export const createToastService = (): ToastService => {
 };
 
 // Auth context wrapper to create service instance
-export const createAuthContextService = (): AuthContextService => {
+export const useCreateAuthContextService = (): AuthContextService => {
   const auth = useAuth();
   return {
     checkAuthStatus: auth.checkAuthStatus,

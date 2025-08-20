@@ -6,16 +6,11 @@
  */
 
 import {
-  Search,
-  Filter,
   Download,
   RefreshCw,
   AlertCircle,
-  Settings,
-  Plus,
 } from 'lucide-react-native';
 import React, { useEffect, useState, useCallback } from 'react';
-import { ScrollView } from 'react-native';
 
 import { PaymentMonitoringApiClient } from '@/api/paymentMonitoringApi';
 import BulkActionModal from '@/components/payment-monitoring/BulkActionModal';
@@ -30,7 +25,6 @@ import { Button } from '@/components/ui/button';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
-import { Modal, ModalBackdrop, ModalContent } from '@/components/ui/modal';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
@@ -91,7 +85,7 @@ export default function TransactionManagement() {
   // WebSocket connection for real-time transaction updates
   const {
     isConnected: wsConnected,
-    error: wsError,
+    error: _wsError,
     transactionUpdates,
     clearUpdates,
   } = useTransactionWebSocket(true);

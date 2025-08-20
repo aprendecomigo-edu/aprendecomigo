@@ -1,5 +1,5 @@
-import { Platform } from 'react-native';
 import { tva } from '@gluestack-ui/nativewind-utils/tva';
+import { Platform } from 'react-native';
 
 const isWeb = Platform.OS === 'web';
 const baseStyle = isWeb ? 'flex flex-col relative z-0' : '';

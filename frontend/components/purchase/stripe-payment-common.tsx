@@ -16,7 +16,6 @@ import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
-import { View } from '@/components/ui/view';
 import { VStack } from '@/components/ui/vstack';
 import type { PricingPlan, StripeConfig } from '@/types/purchase';
 
@@ -191,8 +190,8 @@ export function SubmitButton({
 export function TermsNotice() {
   return (
     <Text className="text-xs text-typography-500 text-center">
-      By clicking "Pay", you agree to our Terms of Service and acknowledge our Privacy
-      Policy. Your payment will be processed securely by Stripe.
+      By clicking "Pay", you agree to our Terms of Service and acknowledge our Privacy Policy. Your
+      payment will be processed securely by Stripe.
     </Text>
   );
 }

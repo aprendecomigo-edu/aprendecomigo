@@ -1,4 +1,3 @@
-import { isWeb } from '@/utils/platform';
 import { router } from 'expo-router';
 import {
   BarChart3Icon,
@@ -12,14 +11,12 @@ import {
   RefreshCwIcon,
   DownloadIcon,
   FilterIcon,
-  CalendarIcon,
 } from 'lucide-react-native';
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 
-import { EmailTemplateType, AnalyticsFilters } from '@/api/communicationApi';
+import { AnalyticsFilters } from '@/api/communicationApi';
 import MainLayout from '@/components/layouts/MainLayout';
 import { Badge } from '@/components/ui/badge';
-import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Center } from '@/components/ui/center';
@@ -27,13 +24,12 @@ import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
 import { Input, InputField } from '@/components/ui/input';
-import { Pressable } from '@/components/ui/pressable';
 import { ScrollView } from '@/components/ui/scroll-view';
-import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useEmailAnalytics } from '@/hooks/useEmailAnalytics';
+import { isWeb } from '@/utils/platform';
 
 const CommunicationAnalyticsPage = () => {
   // Filters state
@@ -45,7 +41,7 @@ const CommunicationAnalyticsPage = () => {
   const [showFilters, setShowFilters] = useState(false);
 
   // Analytics hook
-  const { analytics, loading, error, refreshAnalytics } = useEmailAnalytics(filters);
+  const { analytics, loading, error, refreshAnalytics } = useEmailAnalytics();
 
   // Template type options
   const templateTypeOptions = [
@@ -111,9 +107,7 @@ const CommunicationAnalyticsPage = () => {
     };
 
     if (__DEV__) {
-      if (__DEV__) {
-        console.log('Export data:', data);
-      }
+      console.log('Export data:', data);
     }
     // TODO: Implement actual file download
   }, [analytics]);
@@ -294,7 +288,6 @@ const CommunicationAnalyticsPage = () => {
                     <Text className="text-sm text-gray-600">Start Date</Text>
                     <Input>
                       <InputField
-                        type="date"
                         value={filters.start_date || ''}
                         onChangeText={value => updateFilter('start_date', value)}
                       />
@@ -304,7 +297,6 @@ const CommunicationAnalyticsPage = () => {
                     <Text className="text-sm text-gray-600">End Date</Text>
                     <Input>
                       <InputField
-                        type="date"
                         value={filters.end_date || ''}
                         onChangeText={value => updateFilter('end_date', value)}
                       />
@@ -316,45 +308,43 @@ const CommunicationAnalyticsPage = () => {
               {/* Template Type Filter */}
               <VStack space="sm">
                 <Text className="font-medium text-gray-900">Template Type</Text>
-                <Select
-                  value={filters.template_type || 'all'}
-                  onValueChange={value => updateFilter('template_type', value)}
+                <Button
+                  variant="outline"
+                  onPress={() => {
+                    // Simple toggle between options for now
+                    const currentIndex = templateTypeOptions.findIndex(
+                      opt => opt.value === (filters.template_type || 'all'),
+                    );
+                    const nextIndex = (currentIndex + 1) % templateTypeOptions.length;
+                    updateFilter('template_type', templateTypeOptions[nextIndex].value);
+                  }}
                 >
-                  <SelectTrigger>
-                    <Text>
-                      {
-                        templateTypeOptions.find(
-                          opt => opt.value === (filters.template_type || 'all'),
-                        )?.label
-                      }
-                    </Text>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {templateTypeOptions.map(option => (
-                      <SelectItem key={option.value} value={option.value} label={option.label} />
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <ButtonText>
+                    {templateTypeOptions.find(opt => opt.value === (filters.template_type || 'all'))
+                      ?.label || 'All Types'}
+                  </ButtonText>
+                </Button>
               </VStack>
 
               {/* Status Filter */}
               <VStack space="sm">
                 <Text className="font-medium text-gray-900">Email Status</Text>
-                <Select
-                  value={filters.status || 'all'}
-                  onValueChange={value => updateFilter('status', value)}
+                <Button
+                  variant="outline"
+                  onPress={() => {
+                    // Simple toggle between options for now
+                    const currentIndex = statusOptions.findIndex(
+                      opt => opt.value === (filters.status || 'all'),
+                    );
+                    const nextIndex = (currentIndex + 1) % statusOptions.length;
+                    updateFilter('status', statusOptions[nextIndex].value);
+                  }}
                 >
-                  <SelectTrigger>
-                    <Text>
-                      {statusOptions.find(opt => opt.value === (filters.status || 'all'))?.label}
-                    </Text>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statusOptions.map(option => (
-                      <SelectItem key={option.value} value={option.value} label={option.label} />
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <ButtonText>
+                    {statusOptions.find(opt => opt.value === (filters.status || 'all'))?.label ||
+                      'All Status'}
+                  </ButtonText>
+                </Button>
               </VStack>
 
               {/* Actions */}

@@ -11,11 +11,10 @@ import { Link } from 'expo-router';
 import { AlertTriangle, GraduationCap, School } from 'lucide-react-native';
 import React from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { Keyboard, ScrollView } from 'react-native';
+import { ScrollView } from 'react-native';
 import { z } from 'zod';
 
 import { Box } from '@/components/ui/box';
-import { Button, ButtonText } from '@/components/ui/button';
 import {
   FormControl,
   FormControlError,

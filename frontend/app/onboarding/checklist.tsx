@@ -1,6 +1,4 @@
-import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Platform } from 'react-native';
 
 import {
   AddFirstTeacherFlow,
@@ -13,7 +11,6 @@ import { Box } from '@/components/ui/box';
 import { VStack } from '@/components/ui/vstack';
 
 export default function OnboardingChecklistPage() {
-  const router = useRouter();
   const [activeFlow, setActiveFlow] = useState<string | null>(null);
 
   const handleStepAction = (stepId: string, action: 'start' | 'skip') => {

@@ -24,9 +24,7 @@ module.exports = function (api) {
     ],
     env: {
       production: {
-        plugins: [
-          ['transform-remove-console', { exclude: ['error', 'warn'] }],
-        ],
+        plugins: [['transform-remove-console', { exclude: ['error', 'warn'] }]],
       },
       test: {
         plugins: ['@babel/plugin-transform-modules-commonjs'],

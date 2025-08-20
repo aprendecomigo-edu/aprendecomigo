@@ -1,4 +1,3 @@
-import { isWeb } from '@/utils/platform';
 import { router } from 'expo-router';
 import {
   UserIcon,
@@ -6,14 +5,9 @@ import {
   SettingsIcon,
   AwardIcon,
   SchoolIcon,
-  DollarSignIcon,
   RefreshCwIcon,
   AlertTriangleIcon,
   StarIcon,
-  MapPinIcon,
-  MailIcon,
-  PhoneIcon,
-  CalendarIcon,
 } from 'lucide-react-native';
 import React, { useCallback } from 'react';
 import { Pressable, RefreshControl } from 'react-native';
@@ -32,6 +26,7 @@ import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useTeacherDashboard } from '@/hooks/useTeacherDashboard';
+import { isWeb } from '@/utils/platform';
 
 const TeacherProfilePage = () => {
   const { userProfile } = useUserProfile();

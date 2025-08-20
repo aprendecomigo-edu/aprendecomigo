@@ -1,8 +1,8 @@
-import { isWeb } from '@/utils/platform';
 import { Stack } from 'expo-router';
 import React from 'react';
 
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { isWeb } from '@/utils/platform';
 
 export default function StudentLayout() {
   return (

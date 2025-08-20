@@ -18,11 +18,7 @@ config.resolver.unstable_enablePackageExports = false; // Disable for compatibil
 config.resolver.platforms = ['ios', 'android', 'native', 'web'];
 
 // Basic source extensions
-config.resolver.sourceExts = [
-  ...config.resolver.sourceExts,
-  'ts',
-  'tsx',
-];
+config.resolver.sourceExts = [...config.resolver.sourceExts, 'ts', 'tsx'];
 
 // Exclude test files from production bundle
 config.resolver.blockList = [

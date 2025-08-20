@@ -1,15 +1,13 @@
-import { isWeb } from '@/utils/platform';
 import {
   TrendingUpIcon,
   UsersIcon,
   DollarSignIcon,
   CalendarIcon,
   BarChart3Icon,
-  PieChartIcon,
   RefreshCwIcon,
   AlertTriangleIcon,
 } from 'lucide-react-native';
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import { Pressable, RefreshControl } from 'react-native';
 
 import MainLayout from '@/components/layouts/MainLayout';
@@ -37,6 +35,7 @@ import {
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useTeacherDashboard } from '@/hooks/useTeacherDashboard';
+import { isWeb } from '@/utils/platform';
 
 const TeacherAnalyticsPage = () => {
   const { data, isLoading, error, refresh } = useTeacherDashboard();

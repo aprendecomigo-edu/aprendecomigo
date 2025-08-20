@@ -19,7 +19,7 @@ export interface UsageStatistics {
 }
 
 export interface LearningInsight {
-  id: string;
+  id: number;
   type: 'achievement' | 'suggestion' | 'milestone' | 'warning';
   title: string;
   description: string;
@@ -30,20 +30,52 @@ export interface LearningInsight {
 
 export interface UsagePattern {
   hour: number;
-  day_of_week: number;
+  day_of_week: string;
   session_count: number;
   average_duration: number;
-  subjects: {
-    [subject: string]: {
-      session_count: number;
-      total_hours: number;
-    };
-  };
+  subjects: string[];
 }
 
 export interface AnalyticsTimeRange {
   start_date: string;
   end_date: string;
+}
+
+export interface UsageStatisticsParams {
+  email?: string;
+  start_date?: string;
+  end_date?: string;
+}
+
+export interface LearningInsightsParams {
+  student_email?: string;
+  limit?: number;
+  insight_type?: 'achievement' | 'suggestion' | 'milestone' | 'warning';
+}
+
+export interface UsagePatternsParams {
+  email?: string;
+  start_date?: string;
+  end_date?: string;
+  pattern_type?: string;
+}
+
+export interface LearningInsightResponse {
+  id: number;
+  type: 'achievement' | 'suggestion' | 'milestone' | 'warning';
+  title: string;
+  description: string;
+  icon: string;
+  created_at: string;
+  is_read: boolean;
+}
+
+export interface UsagePatternResponse {
+  day_of_week: string;
+  hour: number;
+  session_count: number;
+  average_duration: number;
+  subjects: string[];
 }
 
 export interface NotificationPreferences {
@@ -74,7 +106,7 @@ export class AnalyticsApiClient {
     email?: string,
   ): Promise<UsageStatistics> {
     try {
-      const params: any = {};
+      const params: UsageStatisticsParams = {};
       if (email) params.email = email;
       if (timeRange) {
         params.start_date = timeRange.start_date;
@@ -120,9 +152,9 @@ export class AnalyticsApiClient {
    */
   static async getLearningInsights(limit?: number, email?: string): Promise<LearningInsight[]> {
     try {
-      const params: any = {};
-      if (email) params.email = email;
-      if (limit) params.limit = limit.toString();
+      const params: LearningInsightsParams = {};
+      if (email) params.student_email = email;
+      if (limit) params.limit = limit;
 
       const response = await apiClient.get('/api/student-balance/analytics/insights/', { params });
 
@@ -130,7 +162,7 @@ export class AnalyticsApiClient {
         throw new Error('Invalid response format: expected array of insights');
       }
 
-      return response.data.map((insight: any) => ({
+      return response.data.map((insight: LearningInsightResponse) => ({
         id: insight.id,
         type: insight.type,
         title: insight.title,
@@ -169,7 +201,7 @@ export class AnalyticsApiClient {
     email?: string,
   ): Promise<UsagePattern[]> {
     try {
-      const params: any = {};
+      const params: UsagePatternsParams = {};
       if (email) params.email = email;
       if (timeRange) {
         params.start_date = timeRange.start_date;
@@ -182,7 +214,7 @@ export class AnalyticsApiClient {
         throw new Error('Invalid response format: expected array of usage patterns');
       }
 
-      return response.data.map((pattern: any) => ({
+      return response.data.map((pattern: UsagePatternResponse) => ({
         hour: pattern.hour,
         day_of_week: pattern.day_of_week,
         session_count: pattern.session_count,

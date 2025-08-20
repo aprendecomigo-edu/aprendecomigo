@@ -427,7 +427,9 @@ describe('usePurchaseFlow Hook', () => {
       });
 
       // Mock API response to set payment step
-      (PurchaseApiClient.initiatePurchase as jest.Mock).mockResolvedValue(createMockPurchaseInitiationResponse());
+      (PurchaseApiClient.initiatePurchase as jest.Mock).mockResolvedValue(
+        createMockPurchaseInitiationResponse(),
+      );
 
       await act(async () => {
         await result.current.actions.initiatePurchase();
@@ -468,7 +470,9 @@ describe('usePurchaseFlow Hook', () => {
       });
 
       // Mock API response to set payment step
-      (PurchaseApiClient.initiatePurchase as jest.Mock).mockResolvedValue(createMockPurchaseInitiationResponse());
+      (PurchaseApiClient.initiatePurchase as jest.Mock).mockResolvedValue(
+        createMockPurchaseInitiationResponse(),
+      );
 
       await act(async () => {
         await result.current.actions.initiatePurchase();
@@ -502,7 +506,9 @@ describe('usePurchaseFlow Hook', () => {
         );
       });
 
-      (PurchaseApiClient.initiatePurchase as jest.Mock).mockResolvedValue(createMockPurchaseInitiationResponse());
+      (PurchaseApiClient.initiatePurchase as jest.Mock).mockResolvedValue(
+        createMockPurchaseInitiationResponse(),
+      );
 
       await act(async () => {
         await result.current.actions.initiatePurchase();
@@ -554,7 +560,9 @@ describe('usePurchaseFlow Hook', () => {
         );
       });
 
-      (PurchaseApiClient.initiatePurchase as jest.Mock).mockResolvedValue(createMockPurchaseInitiationResponse());
+      (PurchaseApiClient.initiatePurchase as jest.Mock).mockResolvedValue(
+        createMockPurchaseInitiationResponse(),
+      );
 
       await act(async () => {
         await result.current.actions.initiatePurchase();
@@ -698,7 +706,9 @@ describe('usePurchaseFlow Hook', () => {
       expect(result.current.canProceed).toBe(true);
 
       // Test canProceed in payment step by going through the actual flow
-      (PurchaseApiClient.initiatePurchase as jest.Mock).mockResolvedValue(createMockPurchaseInitiationResponse());
+      (PurchaseApiClient.initiatePurchase as jest.Mock).mockResolvedValue(
+        createMockPurchaseInitiationResponse(),
+      );
 
       await act(async () => {
         await result.current.actions.initiatePurchase();
@@ -791,7 +801,7 @@ describe('usePurchaseFlow Hook', () => {
       expect(result.current.state.formData.errors.name).toBe('Name is required');
       expect(result.current.state.formData.errors.email).toBeTruthy();
 
-      // Try to fix email error  
+      // Try to fix email error
       act(() => {
         result.current.actions.updateStudentInfo(
           VALID_TEST_DATA.studentName,

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 
-import { Input, InputField, InputIcon, InputSlot } from '@/components/ui/input/input-v2-simple';
+import { Input, InputField, InputIcon } from '@/components/ui/input/input-v2-simple';
 
 export default function TestV2InputScreen() {
   const [value1, setValue1] = useState('');

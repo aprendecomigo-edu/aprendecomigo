@@ -11,8 +11,6 @@ import React from 'react';
 import { AuthLayout } from './AuthLayout';
 import { VerifyCodeForm } from './forms/VerifyCodeForm';
 
-import { useAuth } from '@/api/auth';
-import { useToast } from '@/components/ui/toast';
 import { useVerifyCodeLogic } from '@/hooks/auth/useVerifyCodeLogic';
 import {
   defaultAuthApiService,
@@ -24,7 +22,6 @@ import {
 
 const VerifyCodeForm_Container = () => {
   const router = useRouter();
-  const toast = useToast();
   const { contact, contactType, email, nextRoute } = useLocalSearchParams<{
     contact: string;
     contactType: 'email' | 'phone';

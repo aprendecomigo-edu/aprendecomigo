@@ -7,7 +7,6 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { Alert } from 'react-native';
 
 import { PurchaseApiClient } from '@/api/purchaseApi';
 import type {

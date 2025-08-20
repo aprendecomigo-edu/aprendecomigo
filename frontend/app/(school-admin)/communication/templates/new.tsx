@@ -1,14 +1,12 @@
-import { isWeb } from '@/utils/platform';
 import { router } from 'expo-router';
-import { ArrowLeftIcon, SaveIcon, EyeIcon, SendIcon } from 'lucide-react-native';
+import { ArrowLeftIcon, SaveIcon, EyeIcon } from 'lucide-react-native';
 import React, { useState, useCallback, useEffect } from 'react';
 import { Alert } from 'react-native';
 
-import { EmailTemplateType, CreateTemplateRequest } from '@/api/communicationApi';
+import { CreateTemplateRequest } from '@/api/communicationApi';
 import RichTextTemplateEditor from '@/components/communication/RichTextTemplateEditor';
 import MainLayout from '@/components/layouts/MainLayout';
 import { Badge } from '@/components/ui/badge';
-import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Heading } from '@/components/ui/heading';
@@ -21,6 +19,7 @@ import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useTemplateEditor, useTemplatePreview } from '@/hooks/useCommunicationTemplates';
+import { isWeb } from '@/utils/platform';
 
 const CreateTemplatePage = () => {
   // Form state
@@ -46,7 +45,7 @@ const CreateTemplatePage = () => {
   // Hooks
   const { createTemplate, saving, error, availableVariables, clearError } = useTemplateEditor();
 
-  const { validateTemplate, sendTestEmail, loading: validationLoading } = useTemplatePreview();
+  const { validateTemplate, loading: validationLoading } = useTemplatePreview();
 
   // Template type options
   const templateTypeOptions = [

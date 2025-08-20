@@ -1,4 +1,3 @@
-import { isWeb } from '@/utils/platform';
 import {
   BoldIcon,
   ItalicIcon,
@@ -34,6 +33,7 @@ import { Textarea, TextareaInput } from '@/components/ui/textarea';
 import { VStack } from '@/components/ui/vstack';
 import { useTemplatePreview } from '@/hooks/useCommunicationTemplates';
 import { useSchoolBranding } from '@/hooks/useSchoolBranding';
+import { isWeb } from '@/utils/platform';
 
 interface RichTextTemplateEditorProps {
   template?: Partial<SchoolEmailTemplate>;

@@ -1,6 +1,6 @@
 /**
  * SignUpForm Component Tests - Business Critical Functionality
- * 
+ *
  * Focused on essential authentication functionality for Aprende Comigo EdTech platform
  * Tests verify component integration with business logic and core user flows
  */
@@ -21,7 +21,9 @@ describe('SignUpForm - Business Critical Tests', () => {
     userType: 'tutor' as const,
     submitRegistration: jest.fn(),
     generateSchoolName: jest.fn((userName: string) => `${userName}'s Tutoring Practice`),
-    validateUserType: jest.fn((type: string) => type === 'school' ? 'school' : 'tutor'),
+    validateUserType: jest.fn((type: string | null | undefined) =>
+      type === 'school' ? 'school' : 'tutor',
+    ),
   };
 
   const mockSchoolLogic = {
@@ -30,7 +32,9 @@ describe('SignUpForm - Business Critical Tests', () => {
     userType: 'school' as const,
     submitRegistration: jest.fn(),
     generateSchoolName: jest.fn(() => ''),
-    validateUserType: jest.fn((type: string) => type === 'school' ? 'school' : 'tutor'),
+    validateUserType: jest.fn((type: string | null | undefined) =>
+      type === 'school' ? 'school' : 'tutor',
+    ),
   };
 
   const mockTutorProps = {
@@ -64,16 +68,16 @@ describe('SignUpForm - Business Critical Tests', () => {
   describe('Business Logic Integration', () => {
     it('should integrate properly with signup logic hook', () => {
       const component = render(<SignUpForm {...mockTutorProps} />);
-      
+
       expect(component).toBeTruthy();
-      
+
       // Verify the logic functions are properly integrated
       expect(mockTutorLogic.submitRegistration).toBeDefined();
       expect(mockTutorLogic.generateSchoolName).toBeDefined();
       expect(mockTutorLogic.validateUserType).toBeDefined();
       expect(typeof mockTutorLogic.submitRegistration).toBe('function');
       expect(typeof mockTutorLogic.generateSchoolName).toBe('function');
-      
+
       // Verify user type is set correctly
       expect(mockTutorLogic.userType).toBe('tutor');
     });
@@ -93,7 +97,7 @@ describe('SignUpForm - Business Critical Tests', () => {
     it('should render correctly in submitting state', () => {
       const submittingLogic = { ...mockTutorLogic, isSubmitting: true };
       const submittingProps = { ...mockTutorProps, logic: submittingLogic };
-      
+
       const component = render(<SignUpForm {...submittingProps} />);
       expect(component.toJSON()).toBeTruthy();
     });
@@ -117,7 +121,7 @@ describe('SignUpForm - Business Critical Tests', () => {
     it('should render correctly when there are errors', () => {
       const errorLogic = { ...mockTutorLogic, error: new Error('Registration failed') };
       const errorProps = { ...mockTutorProps, logic: errorLogic };
-      
+
       const component = render(<SignUpForm {...errorProps} />);
       expect(component.toJSON()).toBeTruthy();
     });
@@ -141,10 +145,10 @@ describe('SignUpForm - Business Critical Tests', () => {
     it('should integrate with school name generation logic', () => {
       const component = render(<SignUpForm {...mockTutorProps} />);
       expect(component.toJSON()).toBeTruthy();
-      
+
       // Verify school name generation function is available for tutors
       expect(mockTutorLogic.generateSchoolName).toBeDefined();
-      
+
       // Test the function works as expected
       const result = mockTutorLogic.generateSchoolName('John Doe');
       expect(result).toBe("John Doe's Tutoring Practice");
@@ -154,7 +158,7 @@ describe('SignUpForm - Business Critical Tests', () => {
       // Tutor should generate school names
       const tutorResult = mockTutorLogic.generateSchoolName('Jane Smith');
       expect(tutorResult).toBe("Jane Smith's Tutoring Practice");
-      
+
       // School should not generate automatic names
       const schoolResult = mockSchoolLogic.generateSchoolName('Some Name');
       expect(schoolResult).toBe('');
@@ -165,7 +169,7 @@ describe('SignUpForm - Business Critical Tests', () => {
     it('should validate user types correctly', () => {
       const component = render(<SignUpForm {...mockTutorProps} />);
       expect(component.toJSON()).toBeTruthy();
-      
+
       // Test user type validation
       expect(mockTutorLogic.validateUserType('tutor')).toBe('tutor');
       expect(mockTutorLogic.validateUserType('school')).toBe('school');
@@ -191,7 +195,7 @@ describe('SignUpForm - Business Critical Tests', () => {
 
       // Change to school type
       rerender(<SignUpForm {...mockSchoolProps} />);
-      
+
       // Should not crash on prop changes
       expect(true).toBe(true);
     });
@@ -203,7 +207,7 @@ describe('SignUpForm - Business Critical Tests', () => {
       const loadingLogic = { ...mockTutorLogic, isSubmitting: true };
       const loadingProps = { ...mockTutorProps, logic: loadingLogic };
       rerender(<SignUpForm {...loadingProps} />);
-      
+
       // Should not crash on state changes
       expect(true).toBe(true);
     });
@@ -232,7 +236,7 @@ describe('SignUpForm - Business Critical Tests', () => {
     it('should render consistently across different user types', () => {
       const tutorComponent = render(<SignUpForm {...mockTutorProps} />);
       const schoolComponent = render(<SignUpForm {...mockSchoolProps} />);
-      
+
       // Both should render successfully
       expect(tutorComponent.toJSON()).toBeTruthy();
       expect(schoolComponent.toJSON()).toBeTruthy();
@@ -240,20 +244,20 @@ describe('SignUpForm - Business Critical Tests', () => {
 
     it('should handle complex state combinations', () => {
       // Test tutor with loading and error
-      const complexTutorLogic = { 
-        ...mockTutorLogic, 
-        isSubmitting: true, 
-        error: new Error('Test error') 
+      const complexTutorLogic = {
+        ...mockTutorLogic,
+        isSubmitting: true,
+        error: new Error('Test error'),
       };
       const complexTutorProps = { ...mockTutorProps, logic: complexTutorLogic };
       const tutorComponent = render(<SignUpForm {...complexTutorProps} />);
       expect(tutorComponent.toJSON()).toBeTruthy();
 
       // Test school with loading and error
-      const complexSchoolLogic = { 
-        ...mockSchoolLogic, 
-        isSubmitting: true, 
-        error: new Error('Test error') 
+      const complexSchoolLogic = {
+        ...mockSchoolLogic,
+        isSubmitting: true,
+        error: new Error('Test error'),
       };
       const complexSchoolProps = { ...mockSchoolProps, logic: complexSchoolLogic };
       const schoolComponent = render(<SignUpForm {...complexSchoolProps} />);

@@ -401,7 +401,9 @@ describe('useStudentBalance Hook', () => {
 
   describe('Performance', () => {
     it('executes hook quickly', async () => {
-      (PurchaseApiClient.getStudentBalance as jest.Mock).mockResolvedValue(createMockStudentBalance());
+      (PurchaseApiClient.getStudentBalance as jest.Mock).mockResolvedValue(
+        createMockStudentBalance(),
+      );
 
       const start = performance.now();
       const { result } = renderHook(() => useStudentBalance());
@@ -441,7 +443,9 @@ describe('useStudentBalance Hook', () => {
 
   describe('Memory Management', () => {
     it('cleans up properly when unmounted', async () => {
-      (PurchaseApiClient.getStudentBalance as jest.Mock).mockResolvedValue(createMockStudentBalance());
+      (PurchaseApiClient.getStudentBalance as jest.Mock).mockResolvedValue(
+        createMockStudentBalance(),
+      );
 
       const { result, unmount } = renderHook(() => useStudentBalance());
 

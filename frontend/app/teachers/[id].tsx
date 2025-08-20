@@ -11,7 +11,6 @@ import {
   Clock,
   BookOpen,
   AlertTriangle,
-  CheckCircle,
   TrendingUp,
 } from 'lucide-react-native';
 import React, { useState } from 'react';
@@ -21,14 +20,11 @@ import { AdminEditTeacherModal } from '@/components/modals/AdminEditTeacherModal
 import { AdminTeacherProfileHeader } from '@/components/teachers/AdminTeacherProfileHeader';
 import {
   ProfileCompletionIndicator,
-  CircularProgress,
 } from '@/components/teachers/ProfileCompletionIndicator';
-import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Divider } from '@/components/ui/divider';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
@@ -122,9 +118,7 @@ export default function TeacherProfilePage() {
     getRecommendations,
     getCompletionPercentage,
     getActiveCourses,
-    isActive,
     hasCalendarIntegration,
-    hasContactInfo,
     refresh,
   } = useTeacherProfile({
     teacherId,
@@ -195,7 +189,7 @@ export default function TeacherProfilePage() {
     );
   }
 
-  const completionStatus = getCompletionStatus();
+  getCompletionStatus();
   const missingCritical = getMissingCriticalFields();
   const recommendations = getRecommendations();
   const completionPercentage = getCompletionPercentage();

@@ -1,4 +1,3 @@
-import { isWeb } from '@/utils/platform';
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   ArrowLeftIcon,
@@ -15,7 +14,6 @@ import { SchoolEmailTemplate, UpdateTemplateRequest } from '@/api/communicationA
 import RichTextTemplateEditor from '@/components/communication/RichTextTemplateEditor';
 import MainLayout from '@/components/layouts/MainLayout';
 import { Badge } from '@/components/ui/badge';
-import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Center } from '@/components/ui/center';
@@ -29,6 +27,7 @@ import { Switch } from '@/components/ui/switch';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useTemplateEditor, useTemplatePreview } from '@/hooks/useCommunicationTemplates';
+import { isWeb } from '@/utils/platform';
 
 const EditTemplatePage = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -58,7 +57,7 @@ const EditTemplatePage = () => {
     clearError,
   } = useTemplateEditor();
 
-  const { validateTemplate, sendTestEmail, loading: validationLoading } = useTemplatePreview();
+  const { validateTemplate, loading: validationLoading } = useTemplatePreview();
 
   // Load template on mount
   useEffect(() => {

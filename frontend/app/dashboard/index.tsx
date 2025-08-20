@@ -1,4 +1,4 @@
-import { router, useRouter } from 'expo-router';
+import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 
 import { useAuth } from '@/api/auth';

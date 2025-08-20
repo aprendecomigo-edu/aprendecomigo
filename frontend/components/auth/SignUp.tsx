@@ -11,8 +11,6 @@ import React from 'react';
 import { AuthLayout } from './AuthLayout';
 import { SignUpForm } from './forms/SignUpForm';
 
-import { useAuth, useUserProfile } from '@/api/auth';
-import { useToast } from '@/components/ui/toast';
 import { useSignUpLogic } from '@/hooks/auth/useSignUpLogic';
 import {
   defaultAuthApiService,
@@ -41,7 +39,6 @@ const validateUserType = (type: string | undefined): UserType => {
 
 const SignUpForm_Container = () => {
   const router = useRouter();
-  const toast = useToast();
   const { type } = useLocalSearchParams<{ type: string }>();
   const userType = validateUserType(type);
 

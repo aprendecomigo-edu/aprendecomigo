@@ -39,21 +39,27 @@ export default function ParentLayout() {
           name="dashboard/index"
           options={{
             title: 'Dashboard',
-            tabBarIcon: ({ color, size }) => <Icon as={Home} size={size} color={color} />,
+            tabBarIcon: ({ color, size }) => (
+              <Icon as={Home} size={size > 20 ? 'xl' : 'md'} color={color} />
+            ),
           }}
         />
         <Tabs.Screen
           name="overview/index"
           options={{
             title: 'Family Overview',
-            tabBarIcon: ({ color, size }) => <Icon as={Users} size={size} color={color} />,
+            tabBarIcon: ({ color, size }) => (
+              <Icon as={Users} size={size > 20 ? 'xl' : 'md'} color={color} />
+            ),
           }}
         />
         <Tabs.Screen
           name="child/[childId]"
           options={{
             title: 'Child Account',
-            tabBarIcon: ({ color, size }) => <Icon as={User} size={size} color={color} />,
+            tabBarIcon: ({ color, size }) => (
+              <Icon as={User} size={size > 20 ? 'xl' : 'md'} color={color} />
+            ),
             href: null, // Hide from tab bar since it's a dynamic route
           }}
         />
@@ -61,7 +67,9 @@ export default function ParentLayout() {
           name="settings/index"
           options={{
             title: 'Settings',
-            tabBarIcon: ({ color, size }) => <Icon as={Settings} size={size} color={color} />,
+            tabBarIcon: ({ color, size }) => (
+              <Icon as={Settings} size={size > 20 ? 'xl' : 'md'} color={color} />
+            ),
           }}
         />
       </Tabs>

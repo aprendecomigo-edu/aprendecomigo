@@ -6,7 +6,6 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, Suspense } from 'react';
 import { Platform } from 'react-native';
-import { initializeWebPolyfills } from '@/utils/platform';
 
 import { AuthProvider, useAuth, UserProfileProvider, SchoolProvider } from '@/api/auth';
 import { TutorialProvider, TutorialOverlay } from '@/components/tutorial';
@@ -18,6 +17,7 @@ import { ToastProvider } from '@/components/ui/toast';
 import { View } from '@/components/ui/view';
 import { useColorScheme } from '@/components/useColorScheme';
 import { DependencyProvider, createDefaultDependencies } from '@/services/di';
+import { initializeWebPolyfills } from '@/utils/platform';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -121,8 +121,8 @@ function RootLayoutNav() {
   // CSS Fix for NativeWind v4 + React Native Web compatibility
   useEffect(() => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      const { isDev, devLog, devWarn } = require('@/utils/env');
-      
+      const { isDev: _isDev, devLog, devWarn } = require('@/utils/env');
+
       devLog('🔧 Applying CSS compatibility patch for NativeWind v4 + React Native Web...');
 
       // Global error handler for CSS-related errors

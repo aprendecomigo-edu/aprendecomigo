@@ -1,4 +1,3 @@
-import { isWeb } from '@/utils/platform';
 import { router } from 'expo-router';
 import {
   CalendarIcon,
@@ -18,7 +17,7 @@ import MainLayout from '@/components/layouts/MainLayout';
 import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
-import { Card, CardBody, CardHeader } from '@/components/ui/card';
+import { Card, CardBody } from '@/components/ui/card';
 import { Center } from '@/components/ui/center';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
@@ -40,6 +39,7 @@ import {
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useTeacherDashboard } from '@/hooks/useTeacherDashboard';
+import { isWeb } from '@/utils/platform';
 
 const TeacherSessionsPage = () => {
   const { data, isLoading, error, refresh } = useTeacherDashboard();

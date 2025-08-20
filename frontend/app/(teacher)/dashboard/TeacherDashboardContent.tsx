@@ -1,4 +1,3 @@
-import { isWeb } from '@/utils/platform';
 import { router } from 'expo-router';
 import {
   AlertTriangleIcon,
@@ -9,17 +8,12 @@ import {
   TrendingUpIcon,
   BookOpenIcon,
   ClockIcon,
-  AwardIcon,
-  MessageSquareIcon,
-  SearchIcon,
-  BarChart3Icon,
 } from 'lucide-react-native';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Pressable, RefreshControl } from 'react-native';
 
 import { useUserProfile } from '@/api/auth';
 import MainLayout from '@/components/layouts/MainLayout';
-import { Badge, BadgeText } from '@/components/ui/badge';
 import { Box } from '@/components/ui/box';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
@@ -27,20 +21,15 @@ import { Center } from '@/components/ui/center';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { Icon } from '@/components/ui/icon';
-import { Input, InputField } from '@/components/ui/input';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useTeacherDashboard } from '@/hooks/useTeacherDashboard';
+import { isWeb } from '@/utils/platform';
 
 export default function TeacherDashboardContent() {
   const { userProfile } = useUserProfile();
-  const { data, isLoading, error, refresh, lastUpdated } = useTeacherDashboard();
-
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedView, setSelectedView] = useState<'overview' | 'students' | 'sessions'>(
-    'overview',
-  );
+  const { data, isLoading, error, refresh } = useTeacherDashboard();
 
   // Quick action handlers
   const handleScheduleSession = useCallback(() => {
@@ -76,19 +65,6 @@ export default function TeacherDashboardContent() {
       return `Boa noite, ${name}!`;
     }
   }, [userProfile]);
-
-  // Filter students based on search
-  const filteredStudents = useMemo(() => {
-    if (!data?.students || !searchQuery.trim()) {
-      return data?.students || [];
-    }
-
-    const query = searchQuery.toLowerCase().trim();
-    return data.students.filter(
-      student =>
-        student.name.toLowerCase().includes(query) || student.email.toLowerCase().includes(query),
-    );
-  }, [data?.students, searchQuery]);
 
   // Loading state
   if (isLoading && !data) {

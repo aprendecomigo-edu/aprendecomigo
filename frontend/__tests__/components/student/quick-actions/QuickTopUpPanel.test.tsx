@@ -120,10 +120,10 @@ describe('QuickTopUpPanel Component', () => {
 
     it('should render loading state initially', () => {
       const { toJSON } = render(<QuickTopUpPanel />);
-      
+
       // Component should render some structure
       expect(toJSON()).not.toBeNull();
-      
+
       // Check that it contains loading state elements
       const rendered = toJSON();
       expect(rendered).toBeTruthy();
@@ -131,22 +131,22 @@ describe('QuickTopUpPanel Component', () => {
 
     it('should have consistent structure', () => {
       const { toJSON } = render(<QuickTopUpPanel />);
-      
+
       // Snapshot testing to ensure structure doesn't break
       expect(toJSON()).toMatchSnapshot();
     });
 
     it('should render with different props', () => {
       const { toJSON } = render(
-        <QuickTopUpPanel 
-          email="test@example.com" 
+        <QuickTopUpPanel
+          email="test@example.com"
           isModal={true}
           onTopUpSuccess={jest.fn()}
           onTopUpError={jest.fn()}
           onClose={jest.fn()}
-        />
+        />,
       );
-      
+
       expect(toJSON()).toBeTruthy();
     });
   });
@@ -176,7 +176,7 @@ describe('QuickTopUpPanel Component', () => {
   describe('API Integration', () => {
     it('should call getTopUpPackages on mount', async () => {
       render(<QuickTopUpPanel />);
-      
+
       await waitFor(() => {
         expect(mockPurchaseApiClient.getTopUpPackages).toHaveBeenCalled();
       });
@@ -184,7 +184,7 @@ describe('QuickTopUpPanel Component', () => {
 
     it('should pass email to API call', async () => {
       render(<QuickTopUpPanel email="test@example.com" />);
-      
+
       await waitFor(() => {
         expect(mockPurchaseApiClient.getTopUpPackages).toHaveBeenCalledWith('test@example.com');
       });
@@ -192,7 +192,7 @@ describe('QuickTopUpPanel Component', () => {
 
     it('should handle API calls without email', async () => {
       render(<QuickTopUpPanel />);
-      
+
       await waitFor(() => {
         expect(mockPurchaseApiClient.getTopUpPackages).toHaveBeenCalledWith(undefined);
       });
@@ -204,7 +204,7 @@ describe('QuickTopUpPanel Component', () => {
       mockPurchaseApiClient.getTopUpPackages.mockRejectedValue(new Error('Network error'));
 
       const { toJSON } = render(<QuickTopUpPanel />);
-      
+
       // Should still render without crashing
       await waitFor(() => {
         expect(toJSON()).toBeTruthy();
@@ -215,7 +215,7 @@ describe('QuickTopUpPanel Component', () => {
       mockPurchaseApiClient.getTopUpPackages.mockResolvedValue([]);
 
       const { toJSON } = render(<QuickTopUpPanel />);
-      
+
       await waitFor(() => {
         expect(toJSON()).toBeTruthy();
       });
@@ -352,7 +352,7 @@ describe('QuickTopUpPanel Component', () => {
           onTopUpError={onTopUpError}
           isModal={true}
           onClose={onClose}
-        />
+        />,
       );
 
       expect(toJSON()).toBeTruthy();
@@ -367,14 +367,14 @@ describe('QuickTopUpPanel Component', () => {
   describe('Component State Management', () => {
     it('should handle component lifecycle correctly', async () => {
       const { unmount } = render(<QuickTopUpPanel />);
-      
+
       // Should not throw when unmounting
       expect(() => unmount()).not.toThrow();
     });
 
     it('should handle prop changes', () => {
       const { rerender } = render(<QuickTopUpPanel />);
-      
+
       // Should not throw when props change
       expect(() => {
         rerender(<QuickTopUpPanel email="test@example.com" />);

@@ -5,10 +5,16 @@ module.exports = {
   ],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.minimal.js'],
   testMatch: [
-    '<rootDir>/__tests__/**/*.(test|spec).(js|jsx|ts|tsx)',
-    '<rootDir>/**/*.(test|spec).(js|jsx|ts|tsx)',
+    '<rootDir>/__tests__/**/*.test.(js|jsx|ts|tsx)',
+    '<rootDir>/**/?(*.)(test).(js|jsx|ts|tsx)',
   ],
-  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/dist/', '<rootDir>/.expo/'],
+  testPathIgnorePatterns: [
+    '<rootDir>/node_modules/',
+    '<rootDir>/dist/',
+    '<rootDir>/.expo/',
+    '<rootDir>/qa-tests/', // Exclude Playwright E2E tests
+    '<rootDir>/app/', // Exclude app directory from Jest tests - these are components, not tests
+  ],
   collectCoverageFrom: [
     'components/**/*.{js,jsx,ts,tsx}',
     'hooks/**/*.{js,jsx,ts,tsx}',
@@ -50,6 +56,9 @@ module.exports = {
     '^@/constants/(.*)$': '<rootDir>/constants/$1',
     '^@/types/(.*)$': '<rootDir>/types/$1',
     '^@/utils/(.*)$': '<rootDir>/utils/$1',
+    // Mock missing native modules
+    'expo-haptics': '<rootDir>/__mocks__/expo-haptics.js',
+    'react-native-permissions': '<rootDir>/__mocks__/react-native-permissions.js',
   },
   globals: {
     'ts-jest': {

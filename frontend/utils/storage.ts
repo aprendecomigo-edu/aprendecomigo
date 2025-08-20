@@ -22,15 +22,15 @@ export interface StorageInterface {
 
 // Fallback implementation (should not be used in practice)
 class DefaultStorage implements StorageInterface {
-  async getItem(key: string): Promise<string | null> {
+  async getItem(_key: string): Promise<string | null> {
     throw new Error('Platform-specific storage implementation not found');
   }
 
-  async setItem(key: string, value: string): Promise<void> {
+  async setItem(_key: string, _value: string): Promise<void> {
     throw new Error('Platform-specific storage implementation not found');
   }
 
-  async removeItem(key: string): Promise<void> {
+  async removeItem(_key: string): Promise<void> {
     throw new Error('Platform-specific storage implementation not found');
   }
 

@@ -109,7 +109,10 @@ const ProfileMarketingStep: React.FC<ProfileMarketingStepProps> = ({
     updateProfileData({ achievements: currentAchievements });
   };
 
-  const useExampleText = (field: 'teaching_philosophy' | 'teaching_approach', example: string) => {
+  const handleExampleText = (
+    field: 'teaching_philosophy' | 'teaching_approach',
+    example: string,
+  ) => {
     updateProfileData({ [field]: example });
   };
 
@@ -160,7 +163,7 @@ const ProfileMarketingStep: React.FC<ProfileMarketingStepProps> = ({
                     key={index}
                     variant="outline"
                     size="sm"
-                    onPress={() => useExampleText('teaching_philosophy', example)}
+                    onPress={() => handleExampleText('teaching_philosophy', example)}
                     className="items-start"
                   >
                     <ButtonText className="text-xs text-left flex-1">{example}</ButtonText>
@@ -203,7 +206,7 @@ const ProfileMarketingStep: React.FC<ProfileMarketingStepProps> = ({
                     key={index}
                     variant="outline"
                     size="sm"
-                    onPress={() => useExampleText('teaching_approach', example)}
+                    onPress={() => handleExampleText('teaching_approach', example)}
                     className="items-start"
                   >
                     <ButtonText className="text-xs text-left flex-1">{example}</ButtonText>

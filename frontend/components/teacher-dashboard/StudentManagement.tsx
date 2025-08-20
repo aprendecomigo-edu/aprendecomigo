@@ -297,6 +297,19 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
     });
   }, [students, searchQuery, filterBy]);
 
+  // Memoize the renderItem function for performance
+  const renderStudentItem = useCallback(
+    ({ item }: { item: any }) => (
+      <StudentCard
+        student={item}
+        onPress={() => onStudentPress(item.id)}
+        onScheduleSession={() => onScheduleSession(item.id)}
+        onMessage={() => onMessageStudent(item.id)}
+      />
+    ),
+    [onStudentPress, onScheduleSession, onMessageStudent],
+  );
+
   // Calculate summary stats
   const stats = useMemo(() => {
     const total = students.length;
@@ -440,17 +453,7 @@ const StudentManagement: React.FC<StudentManagementProps> = ({
         <FlatList
           data={filteredStudents}
           keyExtractor={item => item.id.toString()}
-          renderItem={useCallback(
-            ({ item }) => (
-              <StudentCard
-                student={item}
-                onPress={() => onStudentPress(item.id)}
-                onScheduleSession={() => onScheduleSession(item.id)}
-                onMessage={() => onMessageStudent(item.id)}
-              />
-            ),
-            [onStudentPress, onScheduleSession, onMessageStudent],
-          )}
+          renderItem={renderStudentItem}
           showsVerticalScrollIndicator={false}
           // Performance optimizations
           initialNumToRender={10}

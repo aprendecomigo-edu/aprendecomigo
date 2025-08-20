@@ -5,14 +5,14 @@ import { InvitationErrorBoundary } from '@/components/invitations';
 import MainLayout from '@/components/layouts/MainLayout';
 import { MultiSchoolDashboard } from '@/components/multi-school';
 import { useInvitationActions } from '@/hooks/useInvitations';
-import { useMultiSchool, SchoolMembership, PendingInvitation } from '@/hooks/useMultiSchool';
+import { useMultiSchool, SchoolMembership } from '@/hooks/useMultiSchool';
 
 const TeacherSchoolsPage = () => {
   const router = useRouter();
-  const { refresh } = useMultiSchool();
-  const { acceptInvitation } = useInvitationActions();
+  useMultiSchool();
+  useInvitationActions();
 
-  const handleSchoolSelect = (school: SchoolMembership) => {
+  const handleSchoolSelect = (_school: SchoolMembership) => {
     // Navigate to the teacher dashboard for the selected school
     router.push('/(teacher)/dashboard');
   };
@@ -20,18 +20,6 @@ const TeacherSchoolsPage = () => {
   const handleManageInvitations = () => {
     // Navigate to invitations page or show modal
     router.push('/accept-invitation/pending');
-  };
-
-  const handleInvitationAccept = async (invitation: PendingInvitation) => {
-    try {
-      await acceptInvitation(invitation.token);
-      // Refresh the schools list after accepting
-      await refresh();
-    } catch (error) {
-      if (__DEV__) {
-        console.error('Failed to accept invitation:', error); // TODO: Review for sensitive data
-      }
-    }
   };
 
   return (

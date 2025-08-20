@@ -6,7 +6,6 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { Alert, AlertIcon, AlertText } from '@/components/ui/alert/alert-v2-simple';
 import {
   Avatar,
-  AvatarImage,
   AvatarFallbackText,
   AvatarBadge,
   AvatarGroup,
@@ -17,7 +16,6 @@ import {
   CheckboxIndicator,
   CheckboxIcon,
   CheckboxLabel,
-  CheckboxGroup,
 } from '@/components/ui/checkbox/checkbox-v2-simple';
 import { Menu, MenuItem, MenuItemLabel } from '@/components/ui/menu/menu-v2-simple';
 import {

@@ -28,7 +28,13 @@ import type {
   RequestEmailCodeParams,
   RequestPhoneCodeParams,
   VerifyEmailCodeParams,
+  OnboardingData,
 } from './services/AuthApiService';
+import type { TransactionFilters } from './services/BalanceApiService';
+import type { NotificationFilters } from './services/NotificationApiService';
+import type { CreatePaymentMethodData, PaymentData } from './services/PaymentApiService';
+import type { CreateTaskData, UpdateTaskData, TaskFilters } from './services/TasksApiService';
+import type { UserProfileUpdate } from './services/UserApiService';
 
 import { StorageInterface } from '@/utils/storage';
 
@@ -88,13 +94,13 @@ export const requestEmailCode = (params: RequestEmailCodeParams | RequestPhoneCo
   getLegacyApiGateway().auth.requestEmailCode(params);
 export const verifyEmailCode = (params: VerifyEmailCodeParams) =>
   getLegacyApiGateway().auth.verifyEmailCode(params);
-export const createUser = (data: unknown) => getLegacyApiGateway().auth.createUser(data);
+export const createUser = (data: OnboardingData) => getLegacyApiGateway().auth.createUser(data);
 export const logout = () => getLegacyApiGateway().auth.logout();
 export const isAuthenticated = async (): Promise<boolean> => {
   try {
     await getLegacyApiGateway().auth.validateToken();
     return true;
-  } catch (error) {
+  } catch {
     return false;
   }
 };
@@ -102,30 +108,31 @@ export const markFirstLoginCompleted = () => getLegacyApiGateway().auth.markFirs
 
 // User API compatibility
 export const getUserProfile = () => getLegacyApiGateway().user.getUserProfile();
-export const updateUserProfile = (data: unknown) =>
+export const updateUserProfile = (data: UserProfileUpdate) =>
   getLegacyApiGateway().user.updateUserProfile(data);
 export const getDashboardInfo = () => getLegacyApiGateway().user.getDashboardInfo();
 
 // Payment API compatibility
 export const getPaymentMethods = () => getLegacyApiGateway().payment.getPaymentMethods();
-export const createPaymentMethod = (data: unknown) =>
+export const createPaymentMethod = (data: CreatePaymentMethodData) =>
   getLegacyApiGateway().payment.createPaymentMethod(data);
-export const processPayment = (data: unknown) => getLegacyApiGateway().payment.processPayment(data);
+export const processPayment = (data: PaymentData) =>
+  getLegacyApiGateway().payment.processPayment(data);
 
 // Tasks API compatibility
-export const getTasks = (filters?: unknown) => getLegacyApiGateway().tasks.getTasks(filters);
-export const createTask = (data: unknown) => getLegacyApiGateway().tasks.createTask(data);
-export const updateTask = (id: number, data: unknown) =>
+export const getTasks = (filters?: TaskFilters) => getLegacyApiGateway().tasks.getTasks(filters);
+export const createTask = (data: CreateTaskData) => getLegacyApiGateway().tasks.createTask(data);
+export const updateTask = (id: number, data: UpdateTaskData) =>
   getLegacyApiGateway().tasks.updateTask(id, data);
 export const deleteTask = (id: number) => getLegacyApiGateway().tasks.deleteTask(id);
 
 // Balance API compatibility
 export const getBalance = () => getLegacyApiGateway().balance.getBalance();
-export const getTransactions = (filters?: unknown) =>
+export const getTransactions = (filters?: TransactionFilters) =>
   getLegacyApiGateway().balance.getTransactions(filters);
 
 // Notification API compatibility
-export const getNotifications = (filters?: unknown) =>
+export const getNotifications = (filters?: NotificationFilters) =>
   getLegacyApiGateway().notification.getNotifications(filters);
 export const markAsRead = (id: number) => getLegacyApiGateway().notification.markAsRead(id);
 

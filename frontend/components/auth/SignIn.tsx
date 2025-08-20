@@ -4,7 +4,6 @@ import React from 'react';
 import { AuthLayout } from './AuthLayout';
 import { SignInForm } from './forms/SignInForm';
 
-import { useToast } from '@/components/ui/toast';
 import { useSignInLogic } from '@/hooks/auth/useSignInLogic';
 import {
   defaultAuthApiService,
@@ -14,7 +13,6 @@ import {
 
 const LoginForm = () => {
   const router = useRouter();
-  const toast = useToast();
 
   // Create service dependencies for the business logic hook
   const routerService = createRouterService();

@@ -1,4 +1,3 @@
-import { isWeb } from '@/utils/platform';
 import { router } from 'expo-router';
 import {
   HelpCircleIcon,
@@ -33,6 +32,7 @@ import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
+import { isWeb } from '@/utils/platform';
 
 // Types for help articles and resources
 interface HelpArticle {
@@ -182,7 +182,7 @@ const quickActions: QuickAction[] = [
     description: 'Entre em contato conosco diretamente',
     icon: MessageSquareIcon,
     action: () => {
-      if (isWeb()) {
+      if (isWeb) {
         window.open('mailto:suporte@aprendecomigo.com', '_blank');
       } else {
         Linking.openURL('mailto:suporte@aprendecomigo.com');
@@ -196,7 +196,7 @@ const quickActions: QuickAction[] = [
     description: 'Agende uma demonstração personalizada',
     icon: VideoIcon,
     action: () => {
-      if (isWeb()) {
+      if (isWeb) {
         window.open('https://calendly.com/aprendecomigo/demo', '_blank');
       } else {
         Linking.openURL('https://calendly.com/aprendecomigo/demo');
@@ -220,7 +220,7 @@ const quickActions: QuickAction[] = [
     description: 'Acesse nossa documentação técnica',
     icon: FileTextIcon,
     action: () => {
-      if (isWeb()) {
+      if (isWeb) {
         window.open('https://docs.aprendecomigo.com', '_blank');
       } else {
         Linking.openURL('https://docs.aprendecomigo.com');
@@ -246,7 +246,7 @@ export default function HelpPageContent() {
 
   const handleArticlePress = useCallback((article: HelpArticle) => {
     if (article.isExternal && article.link) {
-      if (isWeb()) {
+      if (isWeb) {
         window.open(article.link, '_blank');
       } else {
         Linking.openURL(article.link);
@@ -544,7 +544,7 @@ export default function HelpPageContent() {
                   <Button
                     size="md"
                     onPress={() => {
-                      if (isWeb()) {
+                      if (isWeb) {
                         window.open('mailto:suporte@aprendecomigo.com', '_blank');
                       } else {
                         Linking.openURL('mailto:suporte@aprendecomigo.com');
@@ -557,7 +557,7 @@ export default function HelpPageContent() {
                     size="md"
                     variant="outline"
                     onPress={() => {
-                      if (isWeb()) {
+                      if (isWeb) {
                         window.open('https://wa.me/5511999999999', '_blank');
                       } else {
                         Linking.openURL('https://wa.me/5511999999999');

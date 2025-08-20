@@ -92,6 +92,28 @@ const MetricItemSkeleton: React.FC = () => (
 
 const MetricsCard = React.memo<MetricsCardProps>(
   ({ metrics, isLoading }) => {
+    // Calculate trends (using latest data point if available) - memoized for performance
+    const trends = useMemo(() => {
+      if (!metrics) return { studentTrend: null, teacherTrend: null, classTrend: null };
+
+      const getLatestTrend = (
+        trendData: Array<{ date: string; count: number; change: number }>,
+      ) => {
+        if (!trendData || trendData.length === 0) return null;
+        const latest = trendData[trendData.length - 1];
+        return {
+          value: Math.abs(latest.change),
+          isPositive: latest.change >= 0,
+        };
+      };
+
+      return {
+        studentTrend: getLatestTrend(metrics.student_count.trend.daily),
+        teacherTrend: getLatestTrend(metrics.teacher_count.trend.daily),
+        classTrend: getLatestTrend(metrics.class_metrics.trend.daily),
+      };
+    }, [metrics]);
+
     if (isLoading) {
       return (
         <Card variant="elevated" className="bg-white shadow-sm">
@@ -129,28 +151,6 @@ const MetricsCard = React.memo<MetricsCardProps>(
         </Card>
       );
     }
-
-    // Calculate trends (using latest data point if available) - memoized for performance
-    const trends = useMemo(() => {
-      if (!metrics) return { studentTrend: null, teacherTrend: null, classTrend: null };
-
-      const getLatestTrend = (
-        trendData: Array<{ date: string; count: number; change: number }>,
-      ) => {
-        if (!trendData || trendData.length === 0) return null;
-        const latest = trendData[trendData.length - 1];
-        return {
-          value: Math.abs(latest.change),
-          isPositive: latest.change >= 0,
-        };
-      };
-
-      return {
-        studentTrend: getLatestTrend(metrics.student_count.trend.daily),
-        teacherTrend: getLatestTrend(metrics.teacher_count.trend.daily),
-        classTrend: getLatestTrend(metrics.class_metrics.trend.daily),
-      };
-    }, [metrics]);
 
     return (
       <Card variant="elevated" className="bg-white shadow-sm">

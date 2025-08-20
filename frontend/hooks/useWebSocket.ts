@@ -1,8 +1,7 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useRef, useState, useCallback } from 'react';
 
 import { AsyncStorageAuthProvider } from '@/services/websocket/auth/AsyncStorageAuthProvider';
-import { WebSocketConfig, ConnectionState } from '@/services/websocket/types';
+import { WebSocketConfig } from '@/services/websocket/types';
 import { WebSocketClient } from '@/services/websocket/WebSocketClient';
 
 interface WebSocketMessage {
@@ -196,7 +195,7 @@ export function useWebSocketEnhanced(
         onClose?.();
       });
 
-      client.onError(err => {
+      client.onError(_err => {
         onError?.(new Event('error'));
       });
 

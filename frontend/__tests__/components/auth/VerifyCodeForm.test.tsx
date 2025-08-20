@@ -1,6 +1,6 @@
 /**
  * VerifyCodeForm Component Tests - Business Critical Functionality
- * 
+ *
  * Focused on essential authentication functionality for Aprende Comigo EdTech platform
  * Tests verify component integration with business logic and core user flows
  */
@@ -74,15 +74,15 @@ describe('VerifyCodeForm - Business Critical Tests', () => {
   describe('Business Logic Integration', () => {
     it('should integrate properly with verification logic hook', () => {
       const component = render(<VerifyCodeForm {...mockEmailProps} />);
-      
+
       expect(component).toBeTruthy();
-      
+
       // Verify the logic functions are properly integrated
       expect(mockEmailLogic.submitVerification).toBeDefined();
       expect(mockEmailLogic.resendCode).toBeDefined();
       expect(typeof mockEmailLogic.submitVerification).toBe('function');
       expect(typeof mockEmailLogic.resendCode).toBe('function');
-      
+
       // Verify contact information is used
       expect(mockEmailLogic.contact).toBe('test@example.com');
       expect(mockEmailLogic.contactType).toBe('email');
@@ -103,7 +103,7 @@ describe('VerifyCodeForm - Business Critical Tests', () => {
     it('should render correctly in verifying state', () => {
       const verifyingLogic = { ...mockEmailLogic, isVerifying: true };
       const verifyingProps = { ...mockEmailProps, logic: verifyingLogic };
-      
+
       const component = render(<VerifyCodeForm {...verifyingProps} />);
       expect(component.toJSON()).toBeTruthy();
     });
@@ -111,7 +111,7 @@ describe('VerifyCodeForm - Business Critical Tests', () => {
     it('should render correctly in resending state', () => {
       const resendingLogic = { ...mockEmailLogic, isResending: true };
       const resendingProps = { ...mockEmailProps, logic: resendingLogic };
-      
+
       const component = render(<VerifyCodeForm {...resendingProps} />);
       expect(component.toJSON()).toBeTruthy();
     });
@@ -119,7 +119,7 @@ describe('VerifyCodeForm - Business Critical Tests', () => {
     it('should handle both loading states simultaneously', () => {
       const loadingLogic = { ...mockEmailLogic, isVerifying: true, isResending: true };
       const loadingProps = { ...mockEmailProps, logic: loadingLogic };
-      
+
       const component = render(<VerifyCodeForm {...loadingProps} />);
       expect(component.toJSON()).toBeTruthy();
     });
@@ -129,7 +129,7 @@ describe('VerifyCodeForm - Business Critical Tests', () => {
     it('should render correctly when there are errors', () => {
       const errorLogic = { ...mockEmailLogic, error: new Error('Verification failed') };
       const errorProps = { ...mockEmailProps, logic: errorLogic };
-      
+
       const component = render(<VerifyCodeForm {...errorProps} />);
       expect(component.toJSON()).toBeTruthy();
     });
@@ -154,9 +154,9 @@ describe('VerifyCodeForm - Business Critical Tests', () => {
       // Change to loading state
       const verifyingLogic = { ...mockEmailLogic, isVerifying: true };
       const verifyingProps = { ...mockEmailProps, logic: verifyingLogic };
-      
+
       rerender(<VerifyCodeForm {...verifyingProps} />);
-      
+
       // Should not crash on prop changes
       expect(true).toBe(true);
     });
@@ -175,7 +175,7 @@ describe('VerifyCodeForm - Business Critical Tests', () => {
     it('should render consistently across different contact types', () => {
       const emailComponent = render(<VerifyCodeForm {...mockEmailProps} />);
       const phoneComponent = render(<VerifyCodeForm {...mockPhoneProps} />);
-      
+
       // Both should render successfully
       expect(emailComponent.toJSON()).toBeTruthy();
       expect(phoneComponent.toJSON()).toBeTruthy();

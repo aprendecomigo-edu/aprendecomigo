@@ -1,11 +1,5 @@
-import { cn } from '@gluestack-ui/nativewind-utils/cn';
-import { isWeb } from '@/utils/platform';
 import { router } from 'expo-router';
-import type { Href } from 'expo-router';
-import type { LucideIcon } from 'lucide-react-native';
 import {
-  LogOutIcon,
-  PlusIcon,
   CheckIcon,
   MinusIcon,
   AlertTriangleIcon,
@@ -41,6 +35,7 @@ import { SafeAreaView } from '@/components/ui/safe-area-view';
 import { ScrollView } from '@/components/ui/scroll-view';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
+import { isWeb } from '@/utils/platform';
 
 // Define new interfaces for student dashboard
 interface ClassInfo {

@@ -7,7 +7,6 @@ import {
   startTutorOnboarding,
   saveTutorOnboardingProgress,
   validateTutorOnboardingStep,
-  getTutorOnboardingProgress,
   completeTutorOnboarding,
   createTutorSchool,
   getCourseCatalog,

@@ -11,7 +11,6 @@ import {
   BarChart3,
   CreditCard,
   FileText,
-  Settings,
   Shield,
   Users,
   Zap,

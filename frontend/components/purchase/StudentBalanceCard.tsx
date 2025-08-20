@@ -61,6 +61,22 @@ export const StudentBalanceCard = React.memo<StudentBalanceCardProps>(
       router.push('/purchase');
     }, [router]);
 
+    // Memoize expensive calculations
+    const remainingHours = useMemo(
+      () => (balance ? parseFloat(balance.balance_summary.remaining_hours) : 0),
+      [balance?.balance_summary.remaining_hours],
+    );
+
+    const totalHours = useMemo(
+      () => (balance ? parseFloat(balance.balance_summary.hours_purchased) : 0),
+      [balance?.balance_summary.hours_purchased],
+    );
+
+    const daysUntilExpiry = useMemo(
+      () => balance?.upcoming_expirations[0]?.days_until_expiry || null,
+      [balance?.upcoming_expirations],
+    );
+
     if (loading) {
       return (
         <Card className={`p-6 ${className}`}>
@@ -105,22 +121,6 @@ export const StudentBalanceCard = React.memo<StudentBalanceCardProps>(
         </Card>
       );
     }
-
-    // Memoize expensive calculations
-    const remainingHours = useMemo(
-      () => parseFloat(balance.balance_summary.remaining_hours),
-      [balance.balance_summary.remaining_hours],
-    );
-
-    const totalHours = useMemo(
-      () => parseFloat(balance.balance_summary.hours_purchased),
-      [balance.balance_summary.hours_purchased],
-    );
-
-    const daysUntilExpiry = useMemo(
-      () => balance.upcoming_expirations[0]?.days_until_expiry || null,
-      [balance.upcoming_expirations],
-    );
 
     return (
       <Card className={`p-6 ${className}`}>

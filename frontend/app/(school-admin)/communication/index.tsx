@@ -1,8 +1,7 @@
-import { isWeb } from '@/utils/platform';
 import { router } from 'expo-router';
 import {
   MailIcon,
-  TemplateIcon,
+  BookTemplateIcon as TemplateIcon,
   PaletteIcon,
   BarChart3Icon,
   SettingsIcon,
@@ -11,7 +10,7 @@ import {
   UsersIcon,
   SendIcon,
 } from 'lucide-react-native';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { useUserProfile } from '@/api/auth';
 import MainLayout from '@/components/layouts/MainLayout';
@@ -29,6 +28,7 @@ import { VStack } from '@/components/ui/vstack';
 import { useCommunicationTemplates } from '@/hooks/useCommunicationTemplates';
 import { useEmailAnalytics } from '@/hooks/useEmailAnalytics';
 import { useSchoolBranding } from '@/hooks/useSchoolBranding';
+import { isWeb } from '@/utils/platform';
 
 const CommunicationDashboard = () => {
   const { userProfile } = useUserProfile();
@@ -37,7 +37,7 @@ const CommunicationDashboard = () => {
   // Hooks for data fetching
   const { analytics, loading: analyticsLoading, refreshAnalytics } = useEmailAnalytics();
   const { templates, loading: templatesLoading, refreshTemplates } = useCommunicationTemplates();
-  const { branding, loading: brandingLoading, fetchBranding } = useSchoolBranding();
+  const { loading: brandingLoading, fetchBranding } = useSchoolBranding();
 
   // Quick action handlers
   const handleCreateTemplate = useCallback(() => {

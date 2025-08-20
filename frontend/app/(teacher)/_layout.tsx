@@ -1,8 +1,8 @@
-import { isWeb } from '@/utils/platform';
 import { Stack } from 'expo-router';
 import React from 'react';
 
 import { useSchool } from '@/api/auth';
+import { isWeb } from '@/utils/platform';
 
 export default function TeacherLayout() {
   const { isTeacher } = useSchool();
