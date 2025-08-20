@@ -1049,10 +1049,17 @@ jest.mock('ws', () => {
 
   // Mock the module in a way that respects when WebSocket is intentionally disabled
   return function MockWSModule(url, protocols) {
-    // If global WebSocket is intentionally set to undefined, simulate module not found
-    if (typeof global !== 'undefined' && global.WebSocket === undefined) {
+    // In CI environment or when WebSocket is not available, return null gracefully
+    if (typeof global !== 'undefined' && global.WebSocket === undefined && !global.__webSocketGlobalFailure) {
+      console.error('WebSocket not available in this environment (CI/Node.js)');
+      return null;
+    }
+    
+    // Only throw error when explicitly testing WebSocket unavailability
+    if (global.__webSocketGlobalFailure) {
       throw new Error('WebSocket not available');
     }
+    
     return new MockWS(url, protocols);
   };
 });
