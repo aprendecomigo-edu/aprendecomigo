@@ -1010,6 +1010,17 @@ afterAll(() => {
   console.error = originalError;
 });
 
+// Ensure WebSocket constants are available globally for tests
+if (typeof global.WebSocket === 'undefined') {
+  // Define WebSocket constants that tests expect
+  global.WebSocket = {
+    CONNECTING: 0,
+    OPEN: 1,
+    CLOSING: 2,
+    CLOSED: 3,
+  };
+}
+
 // Mock the 'ws' module to prevent real WebSocket connections
 jest.mock('ws', () => {
   const EventEmitter = require('events');
