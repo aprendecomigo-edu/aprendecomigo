@@ -617,8 +617,18 @@ describe('Cross-platform WebSocket Support', () => {
     if (hasWebSocket) {
       expect(typeof WebSocket).toBe('function');
     } else {
-      // In CI/Node.js environment, we expect WebSocket to be undefined
-      expect(typeof WebSocket).toBe('undefined');
+      // In CI/Node.js environment, WebSocket might be undefined or an object with constants
+      // Our jest setup adds WebSocket constants for test compatibility
+      const webSocketType = typeof WebSocket;
+      expect(['undefined', 'object']).toContain(webSocketType);
+      
+      // If it's an object, it should have the WebSocket constants we added in jest setup
+      if (webSocketType === 'object') {
+        expect(WebSocket).toHaveProperty('CONNECTING', 0);
+        expect(WebSocket).toHaveProperty('OPEN', 1);
+        expect(WebSocket).toHaveProperty('CLOSING', 2);
+        expect(WebSocket).toHaveProperty('CLOSED', 3);
+      }
     }
   });
 
