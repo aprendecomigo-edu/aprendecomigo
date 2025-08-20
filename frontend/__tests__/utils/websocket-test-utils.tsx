@@ -308,13 +308,13 @@ const WebSocketTestUtils = {
   // Backoff timing verification for exponential backoff tests
   verifyBackoffTiming: (attempts: number[], baseDelay: number, tolerance = 200): boolean => {
     if (attempts.length === 0) return true;
-    
+
     for (let i = 1; i < attempts.length; i++) {
       const expectedDelay = Math.min(baseDelay * Math.pow(2, i - 1), 30000); // Max 30s
       const actualDelay = attempts[i] - attempts[i - 1];
       const minAllowed = expectedDelay - tolerance;
       const maxAllowed = expectedDelay + tolerance;
-      
+
       if (actualDelay < minAllowed || actualDelay > maxAllowed) {
         return false;
       }
@@ -358,21 +358,25 @@ export const mockPushNotifications = () => {
   (global.Notification as any).requestPermission = jest.fn().mockResolvedValue('granted');
 
   // Mock expo-notifications for native environments
-  jest.mock('expo-notifications', () => ({
-    scheduleNotificationAsync: jest.fn().mockResolvedValue('notification-id'),
-    cancelScheduledNotificationAsync: jest.fn(),
-    getAllScheduledNotificationsAsync: jest.fn().mockResolvedValue([]),
-    getPermissionsAsync: jest.fn().mockResolvedValue({
-      status: 'granted',
-      canAskAgain: true,
-      granted: true,
+  jest.mock(
+    'expo-notifications',
+    () => ({
+      scheduleNotificationAsync: jest.fn().mockResolvedValue('notification-id'),
+      cancelScheduledNotificationAsync: jest.fn(),
+      getAllScheduledNotificationsAsync: jest.fn().mockResolvedValue([]),
+      getPermissionsAsync: jest.fn().mockResolvedValue({
+        status: 'granted',
+        canAskAgain: true,
+        granted: true,
+      }),
+      requestPermissionsAsync: jest.fn().mockResolvedValue({
+        status: 'granted',
+        canAskAgain: true,
+        granted: true,
+      }),
     }),
-    requestPermissionsAsync: jest.fn().mockResolvedValue({
-      status: 'granted',
-      canAskAgain: true,
-      granted: true,
-    }),
-  }), { virtual: true });
+    { virtual: true },
+  );
 };
 
 // Export types that tests might need
@@ -382,14 +386,19 @@ export interface WebSocketTestData {
   timestamp?: string;
 }
 
-export interface MockWebSocket extends MockWebSocketInstance {}
+export interface MockWebSocket extends MockWebSocketInstance {
+  // This interface intentionally mirrors MockWebSocketInstance
+}
 
 // Default export that tests expect
 export default WebSocketTestUtils;
 
 // Global type declarations
 declare global {
+  // eslint-disable-next-line no-var
   var __mockWebSocketClients: MockWebSocketInstance[];
+  // eslint-disable-next-line no-var
   var __lastMockWebSocketClient: MockWebSocketInstance | null;
+  // eslint-disable-next-line no-var
   var __webSocketGlobalFailure: boolean;
 }

@@ -112,7 +112,7 @@ describe('StudentBalanceCard Component', () => {
       });
 
       const result = render(<StudentBalanceCard {...defaultProps} />);
-      
+
       // Test basic functionality - component renders in error state
       expect(result).toBeDefined();
       expect(mockRefetch).toBeDefined();
@@ -241,7 +241,7 @@ describe('StudentBalanceCard Component', () => {
 
       const result = render(<StudentBalanceCard {...defaultProps} />);
 
-      // Test that component renders - navigation functionality available  
+      // Test that component renders - navigation functionality available
       expect(result).toBeDefined();
       expect(mockPush).toBeDefined();
     });
