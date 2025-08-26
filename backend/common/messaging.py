@@ -20,6 +20,30 @@ def send_email_verification_code(email, code):
     )
 
 
+def send_magic_link_email(email, magic_link, user_name=None):
+    """Send magic link authentication email"""
+    greeting = f"Hello {user_name}" if user_name else "Hello"
+    
+    return send_mail(
+        subject="Aprende Comigo - Login Link",
+        message=f"""{greeting},
+
+Click the link below to sign in to your Aprende Comigo account:
+
+{magic_link}
+
+This link will expire in 10 minutes and can only be used once.
+
+If you didn't request this login link, you can safely ignore this email.
+
+Best regards,
+Aprende Comigo Team""",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[email],
+        fail_silently=False,
+    )
+
+
 def send_sms(phone_number, message):
     """
     Send SMS using GatewayAPI (synchronous version).
@@ -352,3 +376,78 @@ class TeacherInvitationEmailService:
             invitation.mark_email_failed(result.get("error", "Retry failed"))
 
         return result
+
+
+def send_sms_otp(phone_number: str, otp_code: str, user_name: str | None = None) -> dict[str, Any]:
+    """
+    Send SMS with OTP code for authentication.
+    
+    Args:
+        phone_number: Recipient's phone number
+        otp_code: 6-digit OTP code to send
+        user_name: Optional user name for personalization
+    
+    Returns:
+        dict: Result with success status
+    """
+    greeting = f"Hi {user_name}, " if user_name else "Hi, "
+    message = f"{greeting}Your Aprende Comigo verification code is: {otp_code}. Valid for 5 minutes. Do not share this code."
+    
+    try:
+        result = send_sms(phone_number, message)
+        if result.get("success"):
+            logger.info(f"SMS OTP sent successfully to: {phone_number}")
+        else:
+            logger.error(f"Failed to send SMS OTP to {phone_number}: {result.get('error')}")
+        return result
+    except Exception as e:
+        logger.exception(f"Error sending SMS OTP to {phone_number}: {e}")
+        return {"success": False, "error": str(e)}
+
+
+def send_magic_link_email(email: str, magic_link: str, user_name: str | None = None) -> dict[str, Any]:
+    """
+    Send email with magic link for authentication.
+    
+    Args:
+        email: Recipient's email address
+        magic_link: Complete magic link URL for one-click login
+        user_name: Optional user name for personalization
+    
+    Returns:
+        dict: Result with success status
+    """
+    greeting = f"Hi {user_name}," if user_name else "Hi,"
+    
+    subject = "Aprende Comigo - Login Link"
+    message = f"""{greeting}
+
+Click the link below to sign in to Aprende Comigo:
+
+{magic_link}
+
+This link will expire in 10 minutes for your security.
+
+Best regards,
+The Aprende Comigo Team"""
+    
+    try:
+        success = send_mail(
+            subject=subject,
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+        
+        result = {"success": bool(success), "email": email}
+        if success:
+            logger.info(f"Magic link email sent successfully to: {email}")
+        else:
+            logger.error(f"Failed to send magic link email to: {email}")
+            
+        return result
+        
+    except Exception as e:
+        logger.exception(f"Error sending magic link email to {email}: {e}")
+        return {"success": False, "error": str(e), "email": email}

@@ -1,0 +1,232 @@
+<!-- PWA Integration - Include in all pages -->
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="/manifest.json">
+
+<!-- PWA Meta Tags -->
+<meta name="theme-color" content="#3B82F6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Aprende Comigo">
+<meta name="msapplication-TileColor" content="#3B82F6">
+<meta name="msapplication-config" content="/static/browserconfig.xml">
+
+<!-- iOS Icons -->
+<link rel="apple-touch-icon" href="/static/images/icon-180x180.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/static/images/icon-152x152.png">
+<link rel="apple-touch-icon" sizes="144x144" href="/static/images/icon-144x144.png">
+<link rel="apple-touch-icon" sizes="120x120" href="/static/images/icon-120x120.png">
+<link rel="apple-touch-icon" sizes="114x114" href="/static/images/icon-114x114.png">
+<link rel="apple-touch-icon" sizes="76x76" href="/static/images/icon-76x76.png">
+<link rel="apple-touch-icon" sizes="72x72" href="/static/images/icon-72x72.png">
+<link rel="apple-touch-icon" sizes="60x60" href="/static/images/icon-60x60.png">
+<link rel="apple-touch-icon" sizes="57x57" href="/static/images/icon-57x57.png">
+
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="32x32" href="/static/images/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/static/images/favicon-16x16.png">
+<link rel="shortcut icon" href="/static/images/favicon.ico">
+
+<!-- PWA Core JavaScript -->
+<script src="/static/js/pwa-core.js" defer></script>
+<script src="/static/js/push-notifications.js" defer></script>
+
+<!-- PWA UI Components -->
+<div id="pwa-components">
+    <!-- Offline Indicator -->
+    <div id="offline-indicator" class="fixed top-0 left-0 right-0 bg-yellow-500 text-white text-center py-2 px-4 z-50" style="display: none;">
+        <div class="flex items-center justify-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+            <span>You're offline. Some features may not work.</span>
+        </div>
+    </div>
+
+    <!-- Update Available Banner -->
+    <div id="update-banner" class="fixed top-0 left-0 right-0 bg-blue-600 text-white text-center py-3 px-4 z-50" style="display: none;">
+        <div class="flex items-center justify-center space-x-4">
+            <span>A new version is available!</span>
+            <button onclick="window.pwaCore.refreshApp()" 
+                    class="bg-blue-800 hover:bg-blue-900 px-3 py-1 rounded text-sm font-medium transition-colors">
+                Update Now
+            </button>
+            <button onclick="document.getElementById('update-banner').style.display='none'" 
+                    class="text-blue-200 hover:text-white">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- PWA Install Button -->
+    <div id="pwa-install-button" class="fixed bottom-4 right-4 z-40" style="display: none;">
+        <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            <span>Install App</span>
+        </button>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+</div>
+
+<!-- PWA Styles -->
+<style>
+    /* PWA-specific styles */
+    .pwa-standalone {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+    }
+
+    .offline {
+        filter: grayscale(0.3);
+    }
+
+    .offline .online-only {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    .notification {
+        @apply bg-white rounded-lg shadow-lg border p-4 max-w-sm;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    .notification-success {
+        @apply border-green-200 bg-green-50;
+    }
+
+    .notification-error {
+        @apply border-red-200 bg-red-50;
+    }
+
+    .notification-warning {
+        @apply border-yellow-200 bg-yellow-50;
+    }
+
+    .notification-info {
+        @apply border-blue-200 bg-blue-50;
+    }
+
+    .notification-content {
+        @apply flex items-center justify-between;
+    }
+
+    .notification-message {
+        @apply text-sm font-medium text-gray-900;
+    }
+
+    .notification-close {
+        @apply ml-3 text-gray-400 hover:text-gray-600 focus:outline-none;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+
+    /* Responsive PWA enhancements */
+    @media (display-mode: standalone) {
+        .hide-in-pwa {
+            display: none !important;
+        }
+        
+        .show-in-pwa {
+            display: block !important;
+        }
+    }
+
+    @media (max-width: 768px) {
+        #pwa-install-button {
+            bottom: 20px;
+            right: 20px;
+        }
+    }
+
+    /* Dark mode support */
+    @media (prefers-color-scheme: dark) {
+        .notification {
+            @apply bg-gray-800 text-white;
+        }
+        
+        .notification-success {
+            @apply bg-green-900 border-green-700;
+        }
+        
+        .notification-error {
+            @apply bg-red-900 border-red-700;
+        }
+        
+        .notification-warning {
+            @apply bg-yellow-900 border-yellow-700;
+        }
+        
+        .notification-info {
+            @apply bg-blue-900 border-blue-700;
+        }
+    }
+</style>
+
+<!-- Enhanced HTMX Configuration for PWA -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Configure HTMX for PWA
+        htmx.config.globalViewTransitions = true;
+        htmx.config.useTemplateFragments = true;
+        
+        // Enhanced HTMX error handling for offline scenarios
+        htmx.on('htmx:sendError', function(event) {
+            if (!navigator.onLine) {
+                // Cache form submission for later sync
+                const form = event.detail.elt;
+                if (form && form.tagName === 'FORM') {
+                    const formData = new FormData(form);
+                    const url = form.action || window.location.href;
+                    const method = form.method || 'POST';
+                    
+                    // Attempt to cache for background sync
+                    if (window.pwaCore) {
+                        const headers = { 'X-Requested-With': 'XMLHttpRequest' };
+                        if (document.querySelector('[name=csrfmiddlewaretoken]')) {
+                            headers['X-CSRFToken'] = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                        }
+                        
+                        window.pwaCore.cacheFormSubmission(
+                            url, 
+                            method.toUpperCase(), 
+                            headers, 
+                            new URLSearchParams(formData).toString()
+                        );
+                    }
+                }
+            }
+        });
+        
+        // Enhanced loading indicators
+        htmx.on('htmx:beforeRequest', function(event) {
+            if (event.detail.elt.hasAttribute('data-loading-disable')) {
+                event.detail.elt.disabled = true;
+                event.detail.elt.style.opacity = '0.6';
+            }
+        });
+        
+        htmx.on('htmx:afterRequest', function(event) {
+            if (event.detail.elt.hasAttribute('data-loading-disable')) {
+                event.detail.elt.disabled = false;
+                event.detail.elt.style.opacity = '1';
+            }
+        });
+    });
+</script>

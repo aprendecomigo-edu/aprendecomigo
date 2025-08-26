@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Dashboard Router - determines user role and redirects appropriately -->
+<div class="min-h-screen bg-gray-50">
+    <!-- Navigation Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <!-- Brand logo -->
+                    <h1 class="text-xl font-semibold text-gradient-primary font-brand">
+                        aprendecomigo
+                    </h1>
+                </div>
+                
+                <!-- User menu -->
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-600">Welcome, {{ user.first_name|default:"User" }}</span>
+                    <div class="relative">
+                        <button class="flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" id="user-menu-button">
+                            <div class="h-8 w-8 bg-gradient-primary rounded-full flex items-center justify-center">
+                                <span class="text-white font-medium text-sm">{{ user.first_name.0|upper|default:"U" }}</span>
+                            </div>
+                        </button>
+                        <!-- Dropdown menu -->
+                        <div class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5" id="user-menu">
+                            <div class="py-1">
+                                <a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
+                                <a href="/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
+                                <a href="/api/accounts/auth/logout/" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign out</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main content -->
+    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <!-- Loading state while determining user role -->
+        <div id="dashboard-content" class="px-4 py-6 sm:px-0">
+            <div class="border-4 border-dashed border-gray-200 rounded-lg p-8">
+                <div class="text-center">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                    <p class="mt-4 text-gray-600">Loading your dashboard...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Auto-redirect based on user role -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get user profile and redirect to appropriate dashboard
+    fetch('/api/accounts/users/me/', {
+        method: 'GET',
+        headers: {
+            'Authorization': 'Token {{ user.auth_token }}',  // We'll need to add this
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Determine dashboard based on user roles
+        if (data.teacherprofile) {
+            window.location.href = '/teacher/dashboard/';
+        } else if (data.studentprofile) {
+            window.location.href = '/student/dashboard/';
+        } else if (data.parentprofile) {
+            window.location.href = '/parent/dashboard/';
+        } else if (data.is_staff) {
+            window.location.href = '/admin/dashboard/';
+        } else {
+            // Default fallback dashboard
+            document.getElementById('dashboard-content').innerHTML = `
+                <div class="text-center">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Welcome to Aprende Comigo</h2>
+                    <p class="text-gray-600 mb-8">Your account is being set up. Please complete your profile to get started.</p>
+                    <a href="/profile" class="bg-gradient-primary text-white px-6 py-3 rounded-lg hover:opacity-90">Complete Profile</a>
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error fetching user profile:', error);
+        // Fallback dashboard
+        document.getElementById('dashboard-content').innerHTML = `
+            <div class="text-center">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Dashboard</h2>
+                <p class="text-gray-600 mb-8">Welcome to your Aprende Comigo dashboard.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-lg font-semibold mb-2">Profile</h3>
+                        <p class="text-gray-600">Manage your account settings</p>
+                        <a href="/profile" class="mt-4 inline-block text-blue-600 hover:text-blue-800">View Profile →</a>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-lg font-semibold mb-2">Settings</h3>
+                        <p class="text-gray-600">Configure your preferences</p>
+                        <a href="/settings" class="mt-4 inline-block text-blue-600 hover:text-blue-800">View Settings →</a>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-lg font-semibold mb-2">Help</h3>
+                        <p class="text-gray-600">Get support and documentation</p>
+                        <a href="/help" class="mt-4 inline-block text-blue-600 hover:text-blue-800">Get Help →</a>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    // Simple dropdown menu toggle
+    const userMenuButton = document.getElementById('user-menu-button');
+    const userMenu = document.getElementById('user-menu');
+    
+    userMenuButton?.addEventListener('click', function() {
+        userMenu?.classList.toggle('hidden');
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        if (!userMenuButton?.contains(event.target) && !userMenu?.contains(event.target)) {
+            userMenu?.classList.add('hidden');
+        }
+    });
+});
+</script>
+{% endblock %}

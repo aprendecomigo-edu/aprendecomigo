@@ -1,0 +1,25 @@
+<!-- Resend error message -->
+<div class="w-full space-y-4 text-center">
+    <div class="flex justify-center">
+        <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+            <svg class="w-6 h-6 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+        </div>
+    </div>
+    
+    <div class="space-y-2">
+        <h4 class="text-lg font-bold text-red-900 font-primary">Error</h4>
+        <p class="text-red-600 font-body text-sm">
+            {{ error }}
+        </p>
+    </div>
+    
+    <!-- Go back button -->
+    <div class="mt-4">
+        <button onclick="window.location.reload()" 
+                class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-medium">
+            Try Again
+        </button>
+    </div>
+</div>

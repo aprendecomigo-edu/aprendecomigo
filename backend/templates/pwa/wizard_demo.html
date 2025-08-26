@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Multi-Step Wizard Demo - Aprende Comigo{% endblock %}
+{% block page_title %}Multi-Step Wizard Prototype{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    
+    <!-- Prototype Info -->
+    <div class="mb-6 bg-purple-50 border border-purple-200 rounded-lg p-4">
+        <h2 class="text-lg font-semibold text-purple-800 mb-2">Milestone 0: Multi-Step Wizard Testing</h2>
+        <p class="text-purple-700">
+            This prototype tests complex form interactions using HTMX for multi-step wizards.
+            This validates the approach for registration flows, scheduling wizards, and other complex forms.
+        </p>
+    </div>
+    
+    <!-- Wizard Container -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <h3 class="text-xl font-semibold text-gray-900 mb-6">Multi-Step Registration Wizard</h3>
+        
+        <!-- Wizard Content Area -->
+        <div id="wizard-content" class="min-h-[400px]">
+            <div class="text-center py-12">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">Ready to start</h3>
+                <p class="mt-1 text-sm text-gray-500">Click the button below to begin the multi-step wizard</p>
+                <div class="mt-6">
+                    <button hx-get="/pwa/wizard/1/" 
+                            hx-target="#wizard-content"
+                            hx-swap="innerHTML"
+                            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Start Wizard
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Testing Features -->
+    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Wizard Controls -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Navigation</h3>
+            <div class="space-y-2">
+                <button hx-get="/pwa/wizard/1/"
+                        hx-target="#wizard-content"
+                        class="w-full text-left px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded border">
+                    Step 1: Personal Info
+                </button>
+                <button hx-get="/pwa/wizard/2/"
+                        hx-target="#wizard-content"
+                        class="w-full text-left px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded border">
+                    Step 2: Preferences
+                </button>
+                <button hx-get="/pwa/wizard/3/"
+                        hx-target="#wizard-content"
+                        class="w-full text-left px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded border">
+                    Step 3: Confirmation
+                </button>
+                <button hx-get="/pwa/wizard/4/"
+                        hx-target="#wizard-content"
+                        class="w-full text-left px-3 py-2 bg-gray-50 hover:bg-gray-100 rounded border">
+                    Step 4: Complete
+                </button>
+            </div>
+        </div>
+        
+        <!-- Performance Monitor -->
+        <div class="bg-white rounded-lg shadow p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Performance Monitor</h3>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">HTMX Requests:</span>
+                    <span class="text-sm font-medium text-blue-600" id="wizard-requests">0</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Current Step:</span>
+                    <span class="text-sm font-medium text-purple-600" id="current-step">Not started</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Avg Response Time:</span>
+                    <span class="text-sm font-medium text-green-600" id="avg-response">0ms</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm text-gray-600">Form Validation:</span>
+                    <span class="text-sm font-medium text-orange-600" id="validation-status">Ready</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Testing Notes -->
+    <div class="mt-6 bg-gray-50 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Testing Objectives</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h4 class="font-medium text-gray-900 mb-2">HTMX Features Tested:</h4>
+                <ul class="text-sm text-gray-600 space-y-1">
+                    <li>• Multi-step form navigation</li>
+                    <li>• Dynamic content swapping</li>
+                    <li>• Progress indicator updates</li>
+                    <li>• Form state management</li>
+                    <li>• Error handling and validation</li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-medium text-gray-900 mb-2">PWA Readiness Validation:</h4>
+                <ul class="text-sm text-gray-600 space-y-1">
+                    <li>• Server-side form processing</li>
+                    <li>• No client-side JavaScript complexity</li>
+                    <li>• Progressive enhancement</li>
+                    <li>• Offline form queue potential</li>
+                    <li>• Performance with server rendering</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Performance monitoring for wizard
+    let wizardRequestCount = 0;
+    let responseTimes = [];
+    let requestStartTime;
+    
+    document.body.addEventListener('htmx:beforeRequest', function(evt) {
+        if (evt.target.closest('#wizard-content') || evt.target.getAttribute('hx-target') === '#wizard-content') {
+            requestStartTime = Date.now();
+            document.getElementById('validation-status').textContent = 'Processing...';
+        }
+    });
+    
+    document.body.addEventListener('htmx:afterRequest', function(evt) {
+        if (evt.target.closest('#wizard-content') || evt.target.getAttribute('hx-target') === '#wizard-content') {
+            wizardRequestCount++;
+            document.getElementById('wizard-requests').textContent = wizardRequestCount;
+            
+            // Calculate response time
+            if (requestStartTime) {
+                const responseTime = Date.now() - requestStartTime;
+                responseTimes.push(responseTime);
+                const avgTime = responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length;
+                document.getElementById('avg-response').textContent = Math.round(avgTime) + 'ms';
+            }
+            
+            document.getElementById('validation-status').textContent = 'Complete';
+            
+            // Try to detect current step from response
+            const content = evt.detail.xhr.responseText;
+            const stepMatch = content.match(/Step (\d+):/);
+            if (stepMatch) {
+                document.getElementById('current-step').textContent = 'Step ' + stepMatch[1];
+            }
+        }
+    });
+    
+    document.body.addEventListener('htmx:responseError', function(evt) {
+        if (evt.target.closest('#wizard-content') || evt.target.getAttribute('hx-target') === '#wizard-content') {
+            document.getElementById('validation-status').textContent = 'Error';
+        }
+    });
+</script>
+{% endblock %}

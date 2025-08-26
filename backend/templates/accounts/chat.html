@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Chat Page with Alpine.js Collapsible Sidebar -->
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50" x-data="{ sidebarOpen: true }">
+    <div class="flex h-screen">
+        <!-- Left Sidebar Navigation (Alpine.js Collapsible) -->
+        <nav class="glass-container backdrop-blur-xl bg-white/80 border-r border-white/20 flex-shrink-0 transition-all duration-300 flex flex-col"
+             :class="sidebarOpen ? 'w-64' : 'w-16'">
+            
+            <!-- Brand Header -->
+            <div class="flex items-center border-b border-white/20 p-4"
+                 :class="sidebarOpen ? 'justify-between' : 'justify-center'">
+                <div class="flex items-center"
+                     :class="sidebarOpen ? 'space-x-3' : 'flex-col'">
+                    <div class="bg-gradient-primary rounded-lg flex items-center justify-center"
+                         :class="sidebarOpen ? 'h-8 w-8' : 'h-6 w-6'">
+                        <span class="text-white font-medium"
+                              :class="sidebarOpen ? 'text-sm' : 'text-xs'">{{ user.first_name.0|upper|default:"A" }}</span>
+                    </div>
+                    <div x-show="sidebarOpen" x-transition.opacity class="text-left">
+                        <p class="text-sm font-semibold text-gradient-primary font-brand">aprendecomigo</p>
+                        <p class="text-xs text-gray-500">Admin Panel</p>
+                    </div>
+                </div>
+                <button @click="sidebarOpen = !sidebarOpen" 
+                        x-show="sidebarOpen"
+                        class="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-white/50 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+                    </svg>
+                </button>
+                <button @click="sidebarOpen = !sidebarOpen" 
+                        x-show="!sidebarOpen"
+                        class="p-1 rounded text-gray-500 hover:text-gray-700 hover:bg-white/50 transition-colors mt-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Navigation Menu -->
+            <ul class="space-y-2 px-4 py-6">
+                <li>
+                    <a href="/accounts/admin-dashboard/" 
+                       class="flex items-center px-4 py-3 rounded-xl text-gray-700 hover:bg-white/50 transition-colors group">
+                        <svg class="w-5 h-5 text-gray-500 group-hover:text-gray-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                        </svg>
+                        <span x-show="sidebarOpen" x-transition.opacity class="font-medium group-hover:text-gray-900 ml-3">Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#teachers" 
+                       class="flex items-center px-4 py-3 rounded-xl text-gray-700 hover:bg-white/50 transition-colors group">
+                        <svg class="w-5 h-5 text-gray-500 group-hover:text-gray-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path>
+                        </svg>
+                        <span x-show="sidebarOpen" x-transition.opacity class="font-medium group-hover:text-gray-900 ml-3 flex-1">Teachers</span>
+                        <span x-show="sidebarOpen" x-transition.opacity class="bg-blue-100 text-blue-600 text-xs font-medium px-2 py-1 rounded-full">3</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#students" 
+                       class="flex items-center px-4 py-3 rounded-xl text-gray-700 hover:bg-white/50 transition-colors group">
+                        <svg class="w-5 h-5 text-gray-500 group-hover:text-gray-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                        </svg>
+                        <span x-show="sidebarOpen" x-transition.opacity class="font-medium group-hover:text-gray-900 ml-3 flex-1">Students</span>
+                        <span x-show="sidebarOpen" x-transition.opacity class="bg-green-100 text-green-600 text-xs font-medium px-2 py-1 rounded-full">12</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#analytics" 
+                       class="flex items-center px-4 py-3 rounded-xl text-gray-700 hover:bg-white/50 transition-colors group">
+                        <svg class="w-5 h-5 text-gray-500 group-hover:text-gray-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        <span x-show="sidebarOpen" x-transition.opacity class="font-medium group-hover:text-gray-900 ml-3">Analytics</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/accounts/chat/" 
+                       class="flex items-center px-4 py-3 rounded-xl bg-blue-500 text-white transition-colors group">
+                        <svg class="w-5 h-5 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                        </svg>
+                        <span x-show="sidebarOpen" x-transition.opacity class="font-medium ml-3">Chat</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="/accounts/logout/" 
+                       class="flex items-center px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-colors group">
+                        <svg class="w-5 h-5 text-red-500 group-hover:text-red-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                        <span x-show="sidebarOpen" x-transition.opacity class="font-medium group-hover:text-red-700 ml-3">Logout</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Chat Area -->
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <!-- Chat Header -->
+            <div class="bg-white/90 backdrop-blur-sm border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <button x-show="!sidebarOpen" @click="sidebarOpen = true" 
+                            class="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                    <h1 class="text-2xl font-semibold text-gray-900">Chat</h1>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-3 h-3 bg-green-400 rounded-full"></div>
+                        <span class="text-sm text-gray-500">Online</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <span class="text-sm text-gray-500">Welcome, {{ user.first_name }}</span>
+                    <div class="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center">
+                        <span class="text-white font-medium text-sm">{{ user.first_name.0|upper|default:"A" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Content Area -->
+            <div class="flex-1 flex flex-col overflow-hidden">
+                <!-- Chat Messages -->
+                <div class="flex-1 overflow-y-auto p-6 space-y-4" id="chat-messages">
+                    <!-- Example message -->
+                    <div class="flex items-start space-x-3">
+                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                            <span class="text-white font-medium text-sm">T</span>
+                        </div>
+                        <div class="flex-1 bg-white rounded-lg p-4 shadow-sm">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-medium text-gray-900">Teacher Silva</h4>
+                                <span class="text-xs text-gray-500">2:30 PM</span>
+                            </div>
+                            <p class="text-gray-700">Hello! How can I help you today?</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start space-x-3 flex-row-reverse">
+                        <div class="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center">
+                            <span class="text-white font-medium text-sm">{{ user.first_name.0|upper|default:"A" }}</span>
+                        </div>
+                        <div class="flex-1 bg-blue-500 text-white rounded-lg p-4 shadow-sm">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-medium">You</h4>
+                                <span class="text-xs text-blue-100">2:32 PM</span>
+                            </div>
+                            <p>Hi! I wanted to ask about the upcoming lesson.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message Input -->
+                <div class="border-t border-gray-200 p-4">
+                    <div class="flex items-center space-x-4">
+                        <div class="flex-1">
+                            <div class="relative">
+                                <input 
+                                    type="text" 
+                                    placeholder="Type your message..." 
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    id="message-input"
+                                >
+                            </div>
+                        </div>
+                        <button class="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium">
+                            Send
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+    console.log('Alpine.js Chat loaded');
+</script>
+{% endblock %}

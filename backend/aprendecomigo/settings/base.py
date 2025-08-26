@@ -20,7 +20,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 # Quick-start development settings - unsuitable for production
@@ -32,7 +32,7 @@ SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-r0i5j27-gmjj&c6v@0mf5=mz$o
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else []
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else ["localhost", "127.0.0.1", "testserver"]
 
 
 # Application definition
@@ -57,27 +57,42 @@ INSTALLED_APPS = [
     "django_cryptography",
     # Channels for WebSocket support
     "channels",
+    # PWA Migration packages
+    "django_htmx",  # HTMX integration
+    "sesame",       # Magic link authentication
+    "django_otp",   # OTP authentication
+    "django_otp.plugins.otp_totp",  # TOTP plugin
+    "django_otp.plugins.otp_static", # Static tokens plugin
+    "pwa",          # PWA support
+    "webpush",      # Web push notifications
     # Custom apps
     "common",
     "accounts",
+    "dashboard",  # Dashboard views with clean URLs
     "classroom",
     "finances",
     "scheduler",
     "tasks",
     "messaging",
+    "pwa_views",  # PWA prototype views
+    "education",  # Core educational features (Milestone 3)
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "common.middleware.performance.PerformanceMonitoringMiddleware",  # Performance monitoring
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django_htmx.middleware.HtmxMiddleware",  # HTMX request detection
+    "sesame.middleware.AuthenticationMiddleware",  # Magic link authentication
     # "common.logging_utils.setup_logging_context_middleware",  # Add logging context - disabled for now
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "common.middleware.performance.DatabaseQueryLoggingMiddleware",  # Query performance monitoring
 ]
 
 ROOT_URLCONF = "aprendecomigo.urls"
@@ -156,9 +171,88 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
+# Additional static files directories (for PWA files)
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR.parent, "static"),
+]
+
 # Media files for uploads (like student/teacher photos)
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+# Cache configuration with fallback for development
+try:
+    import redis
+    redis_client = redis.Redis.from_url(os.getenv('REDIS_URL', 'redis://127.0.0.1:6379'))
+    redis_client.ping()
+    
+    # Redis is available - use Redis cache
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+                'CONNECTION_POOL_KWARGS': {
+                    'max_connections': 50,
+                    'retry_on_timeout': True,
+                },
+            },
+            'KEY_PREFIX': 'aprendecomigo',
+            'VERSION': 1,
+            'TIMEOUT': 60 * 15,  # 15 minutes default timeout
+        },
+        'sessions': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/2'),
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'CONNECTION_POOL_KWARGS': {
+                    'max_connections': 50,
+                    'retry_on_timeout': True,
+                },
+            },
+            'KEY_PREFIX': 'sessions',
+            'TIMEOUT': 60 * 60 * 24,  # 24 hours for sessions
+        },
+        'template_fragments': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/3'),
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'CONNECTION_POOL_KWARGS': {
+                    'max_connections': 50,
+                    'retry_on_timeout': True,
+                },
+            },
+            'KEY_PREFIX': 'templates',
+            'TIMEOUT': 60 * 30,  # 30 minutes for template fragments
+        }
+    }
+except (ImportError, redis.ConnectionError, redis.RedisError):
+    # Redis not available - use local memory cache for development
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'default-cache',
+            'TIMEOUT': 60 * 15,
+        },
+        'sessions': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'sessions-cache',
+            'TIMEOUT': 60 * 60 * 24,
+        },
+        'template_fragments': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'templates-cache',
+            'TIMEOUT': 60 * 30,
+        }
+    }
+
+# Use Redis for sessions
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'sessions'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -172,14 +266,20 @@ AUTH_USER_MODEL = "accounts.CustomUser"
 AUTHENTICATION_BACKENDS = [
     # Django default
     "django.contrib.auth.backends.ModelBackend",
+    # Magic link authentication
+    "sesame.backends.ModelBackend",
 ]
 
 SITE_ID = 1
 
-# Login URLs - Using API endpoints instead of template views
-LOGIN_URL = "/api/auth/request-code/"
-LOGIN_REDIRECT_URL = "/api/"
-LOGOUT_REDIRECT_URL = "/api/"
+# Login URLs - Django web interface
+LOGIN_URL = "/accounts/signin/"
+LOGIN_REDIRECT_URL = "/dashboard/"
+LOGOUT_REDIRECT_URL = "/accounts/signin/"
+
+# Django-sesame settings for magic links
+SESAME_MAX_AGE = 600  # 10 minutes
+SESAME_ONE_TIME = True  # Magic links are single use
 
 # Email backend
 # During development, use the console backend to see emails in the console
@@ -216,6 +316,7 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "knox.auth.TokenAuthentication",
         "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
@@ -628,4 +729,38 @@ LOGGING = {
             "propagate": False,
         },
     },
+}
+
+# PWA Configuration
+PWA_APP_NAME = 'Aprende Comigo'
+PWA_APP_DESCRIPTION = "Educational Platform - Connecting Teachers and Students"
+PWA_APP_THEME_COLOR = '#3B82F6'
+PWA_APP_BACKGROUND_COLOR = '#ffffff'
+PWA_APP_DISPLAY = 'standalone'
+PWA_APP_SCOPE = '/'
+PWA_APP_ORIENTATION = 'any'
+PWA_APP_START_URL = '/'
+PWA_APP_STATUS_BAR_COLOR = 'default'
+PWA_APP_ICONS = [
+    {
+        'src': '/static/images/icon-192.png',
+        'sizes': '192x192'
+    },
+    {
+        'src': '/static/images/icon-512.png',
+        'sizes': '512x512'
+    }
+]
+PWA_SERVICE_WORKER_PATH = os.path.join(BASE_DIR, 'static', 'js', 'service-worker.js')
+
+# Sesame Configuration (Magic Links)
+SESAME_MAX_AGE = 300  # 5 minutes for secure links
+SESAME_ONE_TIME = True  # Tokens are single-use
+SESAME_INVALIDATE_ON_PASSWORD_CHANGE = True  # Invalidate on password change
+
+# Web Push Configuration (VAPID keys will be generated during setup)
+WEBPUSH_SETTINGS = {
+    "VAPID_PUBLIC_KEY": os.getenv("VAPID_PUBLIC_KEY", "BMOm-0mduZ953oV7A71Qvnrp7ovLiRewJhhHEhLPnWpcRKKBs7c9JhARV_K7DOQTTbXTqlqGcxnGYXgvBxkw9Hk"),
+    "VAPID_PRIVATE_KEY": os.getenv("VAPID_PRIVATE_KEY", "E9NAys9Mhnb13Bm7jbb-EDMGfBtSO43DBirbSQeEyxk"),
+    "VAPID_ADMIN_EMAIL": os.getenv("VAPID_ADMIN_EMAIL", "admin@aprendecomigo.com")
 }

@@ -1,0 +1,26 @@
+<!-- Resend success message -->
+<div class="w-full space-y-4 text-center">
+    <div class="flex justify-center">
+        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+            <svg class="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+            </svg>
+        </div>
+    </div>
+    
+    <div class="space-y-2">
+        <h4 class="text-lg font-bold text-gray-900 font-primary">Code sent!</h4>
+        <p class="text-gray-600 font-body text-sm">
+            A new verification code has been sent to<br>
+            <span class="font-medium text-gray-900">{{ email }}</span>
+        </p>
+    </div>
+    
+    <!-- Automatically redirect back to form after 3 seconds -->
+    <script>
+        setTimeout(function() {
+            window.location.reload();
+        }, 3000);
+    </script>
+</div>
