@@ -47,11 +47,12 @@ INSTALLED_APPS = [
     "django.contrib.sites",  # Required for site configuration
     # SSL Server for development
     "sslserver",
-    # REST Framework
-    "rest_framework",
+    # CORS for any remaining API endpoints
     "corsheaders",
+    # REST Framework (for remaining API endpoints)
+    "rest_framework",
     "drf_yasg",  # for API documentation
-    # Knox for token-based authentication
+    # Knox for remaining API endpoints (to be migrated)
     "knox",
     # Field-level encryption
     "django_cryptography",
@@ -74,7 +75,6 @@ INSTALLED_APPS = [
     "scheduler",
     "tasks",
     "messaging",
-    "pwa_views",  # PWA prototype views
     "education",  # Core educational features (Milestone 3)
 ]
 
@@ -87,8 +87,8 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "sesame.middleware.AuthenticationMiddleware",  # Magic link authentication - must come after AuthenticationMiddleware
     "django_htmx.middleware.HtmxMiddleware",  # HTMX request detection
-    "sesame.middleware.AuthenticationMiddleware",  # Magic link authentication
     # "common.logging_utils.setup_logging_context_middleware",  # Add logging context - disabled for now
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -277,9 +277,7 @@ LOGIN_URL = "/accounts/signin/"
 LOGIN_REDIRECT_URL = "/dashboard/"
 LOGOUT_REDIRECT_URL = "/accounts/signin/"
 
-# Django-sesame settings for magic links
-SESAME_MAX_AGE = 600  # 10 minutes
-SESAME_ONE_TIME = True  # Magic links are single use
+# Django-sesame settings moved to the PWA section below
 
 # Email backend
 # During development, use the console backend to see emails in the console
@@ -311,70 +309,22 @@ if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
 
-# DRF Settings
+
+# DRF Settings (minimal for remaining API endpoints)
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "knox.auth.TokenAuthentication",
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
-    "DEFAULT_PAGINATION_CLASS": "common.pagination.StandardResultsSetPagination",
-    "PAGE_SIZE": 20,
-    "EXCEPTION_HANDLER": "common.exceptions.custom_exception_handler",
-    "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
-    "DEFAULT_VERSION": "v1",
-    "ALLOWED_VERSIONS": ["v1"],
-    # Schema generation for API documentation
-    "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.coreapi.AutoSchema",
-    # Throttling settings for rate limiting
-    "DEFAULT_THROTTLE_CLASSES": [
-        "rest_framework.throttling.AnonRateThrottle",
-        "rest_framework.throttling.UserRateThrottle",
-    ],
-    "DEFAULT_THROTTLE_RATES": {
-        "anon": "20/minute",
-        "user": "100/minute",
-        "auth_code_request": "5/hour",  # Limit code requests to 5 per hour per IP
-        "auth_code_verify": "10/hour",  # Limit verification attempts to 10 per hour per IP
-        "purchase_initiation": "10/hour",  # Limit purchase attempts to 10 per hour per IP
-        "purchase_initiation_email": "5/hour",  # Limit purchase attempts to 5 per hour per email
-        "profile_wizard": "10/min",  # Profile wizard rate limiting
-        "file_upload": "5/min",  # File upload rate limiting
-        "security_event": "3/min",  # Security event throttling
-    },
 }
 
-# Swagger Settings
-SWAGGER_SETTINGS = {
-    "SECURITY_DEFINITIONS": {"Bearer": {"type": "apiKey", "name": "Authorization", "in": "header"}},
-    "USE_SESSION_AUTH": False,
-    "APIS_SORTER": "alpha",  # Sort endpoints alphabetically
-    "OPERATIONS_SORTER": "method",  # Sort operations by HTTP method
-    "VALIDATOR_URL": None,  # Disable validation
-    "DEFAULT_MODEL_RENDERING": "model",  # More detailed model schema rendering
-    "DEFAULT_MODEL_DEPTH": 3,  # Depth of related fields
-    "DOC_EXPANSION": "list",  # Show operations expanded
-}
-
-# JWT Settings
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-    "ROTATE_REFRESH_TOKENS": False,
-    "BLACKLIST_AFTER_ROTATION": True,
-    "UPDATE_LAST_LOGIN": False,
-    "ALGORITHM": "HS256",
-    "SIGNING_KEY": SECRET_KEY,
-    "VERIFYING_KEY": None,
-    "AUDIENCE": None,
-    "ISSUER": None,
-    "AUTH_HEADER_TYPES": ("Bearer",),
-    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
-    "USER_ID_FIELD": "id",
-    "USER_ID_CLAIM": "user_id",
+# Knox Settings (temporary for remaining API endpoints)
+KNOX = {
+    "TOKEN_TTL": timedelta(hours=10),
+    "AUTO_REFRESH": True,
 }
 
 # CORS Settings
@@ -388,12 +338,6 @@ CORS_ALLOWED_ORIGINS = [
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 
-# Knox Settings
-KNOX = {
-    "TOKEN_TTL": timedelta(hours=10),
-    "AUTO_REFRESH": True,
-    "USER_SERIALIZER": "accounts.serializers.UserSerializer",
-}
 # SMS settings
 SMS_API_URL = os.getenv("SMS_API_URL", default="https://gatewayapi.com/rest/mtsms")
 SMS_API_KEY = os.getenv("SMS_API_KEY", default="")
@@ -755,7 +699,7 @@ PWA_SERVICE_WORKER_PATH = os.path.join(BASE_DIR, 'static', 'js', 'service-worker
 
 # Sesame Configuration (Magic Links)
 SESAME_MAX_AGE = 300  # 5 minutes for secure links
-SESAME_ONE_TIME = True  # Tokens are single-use
+SESAME_ONE_TIME = False  # Allow multiple uses for testing
 SESAME_INVALIDATE_ON_PASSWORD_CHANGE = True  # Invalidate on password change
 
 # Web Push Configuration (VAPID keys will be generated during setup)

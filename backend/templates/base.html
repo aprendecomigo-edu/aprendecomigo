@@ -1,3 +1,4 @@
+{% load pwa %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title|default:"Aprende Comigo" }}</title>
     <meta name="description" content="{{ meta_description|default:'Learn with Aprende Comigo - Quality education for everyone' }}">
+    
+    <!-- PWA Meta Tags -->
+    {% progressive_web_app_meta %}
     
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@2.0.3" defer></script>

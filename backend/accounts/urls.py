@@ -2,11 +2,10 @@ from django.urls import path
 from sesame.views import LoginView
 
 # Import the Django web authentication views
-from .views.auth_views import (
+from .views import (
     SignInView,
     SignUpView,
     VerifyOTPView,
-    DashboardView,
     resend_code,
 )
 
@@ -18,9 +17,7 @@ urlpatterns = [
     path("signin/", SignInView.as_view(), name="signin"),
     path("signup/", SignUpView.as_view(), name="signup"),
     path("verify-otp/", VerifyOTPView.as_view(), name="verify_otp"),
-    path("dashboard/", DashboardView.as_view(), name="dashboard"),
     path("resend-code/", resend_code, name="resend_code"),
-    
-    # Magic link authentication
+    # Magic link authentication using django-sesame's built-in LoginView
     path("magic-login/", LoginView.as_view(), name="magic_login"),
 ]

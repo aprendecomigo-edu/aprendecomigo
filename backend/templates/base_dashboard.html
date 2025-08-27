@@ -1,249 +1,178 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<!-- Mobile-First Dashboard Layout with Bottom Navigation -->
-<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50" x-data="{ sidebarOpen: false, mobileMenuOpen: false, activeSection: '{{ active_section|default:'dashboard' }}' }">
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50" x-data="{ sidebarOpen: false, activeSection: '{{ active_section|default:'dashboard' }}' }">
     
-    <!-- Mobile Layout -->
-    <div class="block lg:hidden">
-        <!-- Mobile Top Header -->
-        <header class="bg-white/90 backdrop-blur-sm border-b border-gray-200 px-4 py-3 fixed top-0 left-0 right-0 z-40">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="bg-gradient-primary rounded-lg h-8 w-8 flex items-center justify-center">
-                        <span class="text-white font-bold text-sm">A</span>
-                    </div>
-                    <div>
-                        <h1 class="font-bold text-gradient-primary font-brand text-lg">aprendecomigo</h1>
-                        <p class="text-xs text-gray-600">{% block page_title %}Dashboard{% endblock %}</p>
-                    </div>
+    <!-- Mobile Header -->
+    <header class="lg:hidden bg-white/90 backdrop-blur-sm border-b border-gray-200 px-4 py-3 fixed top-0 left-0 right-0 z-40">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-gradient-primary rounded-lg h-8 w-8 flex items-center justify-center">
+                    <span class="text-white font-bold text-sm">A</span>
                 </div>
-                <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center">
-                        <span class="text-white font-medium text-sm">{{ user.first_name.0|upper|default:"A" }}</span>
-                    </div>
+                <div>
+                    <h1 class="font-bold text-gradient-primary font-brand text-lg">aprendecomigo</h1>
+                    <p class="text-xs text-gray-600">{{ title|default:"Dashboard" }}</p>
                 </div>
             </div>
-        </header>
-        
-        <!-- Mobile Content Area -->
-        <main class="pt-16 pb-20">
-            {% block dashboard_content %}{% endblock %}
-        </main>
-        
-        <!-- Mobile Bottom Navigation -->
-        <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 z-50">
-            <div class="flex items-center justify-around py-2">
-                <a href="/dashboard/" 
-                   class="flex flex-col items-center py-2 px-3 rounded-lg transition-colors"
-                   :class="activeSection === 'dashboard' ? 'text-blue-600' : 'text-gray-500'">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-                    </svg>
-                    <span class="text-xs font-medium mt-1">Home</span>
-                </a>
-                <a href="/people/" 
-                   class="flex flex-col items-center py-2 px-3 rounded-lg transition-colors relative"
-                   :class="activeSection === 'people' ? 'text-blue-600' : 'text-gray-500'">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                    </svg>
-                    <span class="text-xs font-medium mt-1">People</span>
-                    <span class="absolute -top-1 -right-1 bg-purple-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">15</span>
-                </a>
-                <a href="/calendar/" 
-                   class="flex flex-col items-center py-2 px-3 rounded-lg transition-colors"
-                   :class="activeSection === 'calendar' ? 'text-blue-600' : 'text-gray-500'">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                    <span class="text-xs font-medium mt-1">Schedule</span>
-                </a>
-                <a href="/chat/" 
-                   class="flex flex-col items-center py-2 px-3 rounded-lg transition-colors"
-                   :class="activeSection === 'chat' ? 'text-blue-600' : 'text-gray-500'">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                    </svg>
-                    <span class="text-xs font-medium mt-1">Chat</span>
-                </a>
-                <a href="/analytics/" 
-                   class="flex flex-col items-center py-2 px-3 rounded-lg transition-colors"
-                   :class="activeSection === 'analytics' ? 'text-blue-600' : 'text-gray-500'">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                    </svg>
-                    <span class="text-xs font-medium mt-1">Analytics</span>
-                </a>
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center">
+                    <span class="text-white font-medium text-sm">{{ user.first_name.0|upper|default:"A" }}</span>
+                </div>
             </div>
-        </nav>
-    </div>
-    
-    <!-- Desktop Layout -->
-    <div class="hidden lg:flex h-screen">
-        <!-- Left Sidebar Navigation (Desktop Only) -->
-        <nav class="glass-container backdrop-blur-xl bg-white/80 border-r border-white/20 flex-shrink-0 transition-all duration-300 flex flex-col"
-             :class="sidebarOpen ? 'w-64' : 'w-16'">
-            
+        </div>
+    </header>
+
+    <!-- Desktop Sidebar -->
+    <nav class="hidden lg:flex lg:fixed lg:inset-y-0 lg:z-50 lg:w-64 lg:flex-col">
+        <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-white/80 backdrop-blur-xl border-r border-white/20 px-6 py-4">
             <!-- Brand Header -->
-            <div class="flex items-center border-b border-white/20 p-4"
-                 :class="sidebarOpen ? 'justify-between' : 'justify-center'">
-                <div class="flex items-center"
-                     :class="sidebarOpen ? 'space-x-3' : 'flex-col'">
-                    <div class="bg-gradient-primary rounded-lg flex items-center justify-center"
-                         :class="sidebarOpen ? 'h-10 w-10' : 'h-8 w-8'">
-                        <span class="text-white font-bold"
-                              :class="sidebarOpen ? 'text-lg' : 'text-sm'">A</span>
-                    </div>
-                    <div x-show="sidebarOpen" x-transition.opacity class="text-left">
-                        <h1 class="text-lg font-bold text-gradient-primary font-brand">aprendecomigo</h1>
-                        <p class="text-xs text-gray-600">Admin Portal</p>
-                    </div>
+            <div class="flex items-center space-x-3">
+                <div class="bg-gradient-primary rounded-lg h-10 w-10 flex items-center justify-center">
+                    <span class="text-white font-bold text-lg">A</span>
                 </div>
-                <button @click="sidebarOpen = !sidebarOpen" 
-                        x-show="sidebarOpen"
-                        class="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-white/50 transition-colors">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
-                    </svg>
-                </button>
-                <button @click="sidebarOpen = !sidebarOpen" 
-                        x-show="!sidebarOpen"
-                        class="p-1 rounded text-gray-500 hover:text-gray-700 hover:bg-white/50 transition-colors mt-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path>
-                    </svg>
-                </button>
+                <div>
+                    <h1 class="text-lg font-bold text-gradient-primary font-brand">aprendecomigo</h1>
+                    <p class="text-xs text-gray-600">Admin Portal</p>
+                </div>
             </div>
 
             <!-- Navigation Menu -->
-            <div class="flex-1 py-6">
-                <ul class="space-y-2 px-4">
+            <nav class="flex flex-1 flex-col">
+                <ul role="list" class="flex flex-1 flex-col gap-y-2">
                     <li>
                         <a href="/dashboard/" 
-                           class="flex items-center rounded-xl text-gray-700 hover:bg-white/50 transition-colors group nav-item"
-                           :class="[
-                               activeSection === 'dashboard' ? 'bg-blue-500 text-white' : '',
-                               sidebarOpen ? 'px-4 py-3' : 'p-3 mx-2 justify-center'
-                           ]">
-                            <svg class="w-5 h-5 flex-shrink-0" 
-                                 :class="activeSection === 'dashboard' ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'" 
-                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                           class="group flex gap-x-3 rounded-xl p-3 text-sm leading-6 font-semibold hover:bg-white/50 transition-colors"
+                           :class="activeSection === 'dashboard' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:text-gray-900'">
+                            <svg class="h-5 w-5 shrink-0" :class="activeSection === 'dashboard' ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
                             </svg>
-                            <span x-show="sidebarOpen" x-transition.opacity class="font-medium group-hover:text-gray-900 ml-3">Dashboard</span>
+                            Dashboard
                         </a>
                     </li>
                     <li>
                         <a href="/people/" 
-                           class="flex items-center rounded-xl text-gray-700 hover:bg-white/50 transition-colors group nav-item"
-                           :class="[
-                               activeSection === 'people' ? 'bg-blue-500 text-white' : '',
-                               sidebarOpen ? 'px-4 py-3' : 'p-3 mx-2 justify-center'
-                           ]">
-                            <svg class="w-5 h-5 flex-shrink-0" 
-                                 :class="activeSection === 'people' ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'" 
-                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                            </svg>
-                            <span x-show="sidebarOpen" x-transition.opacity class="font-medium group-hover:text-gray-900 ml-3 flex-1">People</span>
-                            <span x-show="sidebarOpen" x-transition.opacity class="bg-purple-100 text-purple-600 text-xs font-medium px-2 py-1 rounded-full">15</span>
+                           class="group flex gap-x-3 rounded-xl p-3 text-sm leading-6 font-semibold hover:bg-white/50 transition-colors justify-between items-center"
+                           :class="activeSection === 'people' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:text-gray-900'">
+                            <div class="flex gap-x-3 items-center">
+                                <svg class="h-5 w-5 shrink-0" :class="activeSection === 'people' ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+                                </svg>
+                                People
+                            </div>
+                            <span class="bg-purple-100 text-purple-600 text-xs font-medium px-2 py-1 rounded-full">15</span>
                         </a>
                     </li>
                     <li>
                         <a href="/calendar/" 
-                           class="flex items-center rounded-xl text-gray-700 hover:bg-white/50 transition-colors group nav-item"
-                           :class="[
-                               activeSection === 'calendar' ? 'bg-blue-500 text-white' : '',
-                               sidebarOpen ? 'px-4 py-3' : 'p-3 mx-2 justify-center'
-                           ]">
-                            <svg class="w-5 h-5 flex-shrink-0" 
-                                 :class="activeSection === 'calendar' ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'" 
-                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                           class="group flex gap-x-3 rounded-xl p-3 text-sm leading-6 font-semibold hover:bg-white/50 transition-colors"
+                           :class="activeSection === 'calendar' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:text-gray-900'">
+                            <svg class="h-5 w-5 shrink-0" :class="activeSection === 'calendar' ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 9.75h18m-18 0v8.25a2.25 2.25 0 0 0 2.25 2.25h13.5a2.25 2.25 0 0 0 2.25-2.25V9.75m-18 0V6a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 6v3.75" />
                             </svg>
-                            <span x-show="sidebarOpen" x-transition.opacity 
-                                  :class="activeSection === 'calendar' ? 'text-white' : 'text-gray-700 group-hover:text-gray-900'" 
-                                  class="font-medium ml-3">Calendar</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/analytics/" 
-                           class="flex items-center rounded-xl text-gray-700 hover:bg-white/50 transition-colors group nav-item"
-                           :class="[
-                               activeSection === 'analytics' ? 'bg-blue-500 text-white' : '',
-                               sidebarOpen ? 'px-4 py-3' : 'p-3 mx-2 justify-center'
-                           ]">
-                            <svg class="w-5 h-5 flex-shrink-0" 
-                                 :class="activeSection === 'analytics' ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'" 
-                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                            </svg>
-                            <span x-show="sidebarOpen" x-transition.opacity 
-                                  :class="activeSection === 'analytics' ? 'text-white' : 'text-gray-700 group-hover:text-gray-900'" 
-                                  class="font-medium ml-3">Analytics</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/invitations/" 
-                           class="flex items-center rounded-xl text-gray-700 hover:bg-white/50 transition-colors group nav-item"
-                           :class="[
-                               activeSection === 'invitations' ? 'bg-blue-500 text-white' : '',
-                               sidebarOpen ? 'px-4 py-3' : 'p-3 mx-2 justify-center'
-                           ]">
-                            <svg class="w-5 h-5 flex-shrink-0" 
-                                 :class="activeSection === 'invitations' ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'" 
-                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                            </svg>
-                            <span x-show="sidebarOpen" x-transition.opacity 
-                                  :class="activeSection === 'invitations' ? 'text-white' : 'text-gray-700 group-hover:text-gray-900'" 
-                                  class="font-medium ml-3 flex-1">Invitations</span>
-                            <span x-show="sidebarOpen" x-transition.opacity class="bg-yellow-100 text-yellow-600 text-xs font-medium px-2 py-1 rounded-full">2</span>
+                            Calendar
                         </a>
                     </li>
                     <li>
                         <a href="/chat/" 
-                           class="flex items-center rounded-xl text-gray-700 hover:bg-white/50 transition-colors group nav-item"
-                           :class="[
-                               activeSection === 'chat' ? 'bg-blue-500 text-white' : '',
-                               sidebarOpen ? 'px-4 py-3' : 'p-3 mx-2 justify-center'
-                           ]">
-                            <svg class="w-5 h-5 flex-shrink-0" 
-                                 :class="activeSection === 'chat' ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'" 
-                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                           class="group flex gap-x-3 rounded-xl p-3 text-sm leading-6 font-semibold hover:bg-white/50 transition-colors"
+                           :class="activeSection === 'chat' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:text-gray-900'">
+                            <svg class="h-5 w-5 shrink-0" :class="activeSection === 'chat' ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.691 1.309 3.061 2.927 3.061 1.618 0 2.927-1.37 2.927-3.061 0-1.691-1.309-3.061-2.927-3.061S0 6.819 0 8.51Z" />
                             </svg>
-                            <span x-show="sidebarOpen" x-transition.opacity class="font-medium group-hover:text-gray-900 ml-3">Chat</span>
+                            Chat
                         </a>
                     </li>
                     <li>
-                        <a href="/accounts/logout/" 
-                           class="flex items-center rounded-xl text-red-600 hover:bg-red-50 transition-colors group nav-item"
-                           :class="sidebarOpen ? 'px-4 py-3' : 'p-3 mx-2 justify-center'">
-                            <svg class="w-5 h-5 text-red-500 group-hover:text-red-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        <a href="/analytics/" 
+                           class="group flex gap-x-3 rounded-xl p-3 text-sm leading-6 font-semibold hover:bg-white/50 transition-colors"
+                           :class="activeSection === 'analytics' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:text-gray-900'">
+                            <svg class="h-5 w-5 shrink-0" :class="activeSection === 'analytics' ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
                             </svg>
-                            <span x-show="sidebarOpen" x-transition.opacity class="font-medium group-hover:text-red-700 ml-3">Logout</span>
+                            Analytics
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/invitations/" 
+                           class="group flex gap-x-3 rounded-xl p-3 text-sm leading-6 font-semibold hover:bg-white/50 transition-colors justify-between items-center"
+                           :class="activeSection === 'invitations' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:text-gray-900'">
+                            <div class="flex gap-x-3 items-center">
+                                <svg class="h-5 w-5 shrink-0" :class="activeSection === 'invitations' ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                                </svg>
+                                Invitations
+                            </div>
+                            <span class="bg-yellow-100 text-yellow-600 text-xs font-medium px-2 py-1 rounded-full">2</span>
+                        </a>
+                    </li>
+                    <li class="mt-auto">
+                        <a href="/accounts/logout/" 
+                           class="group flex gap-x-3 rounded-xl p-3 text-sm leading-6 font-semibold text-red-600 hover:bg-red-50 transition-colors">
+                            <svg class="h-5 w-5 shrink-0 text-red-500 group-hover:text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
+                            </svg>
+                            Logout
                         </a>
                     </li>
                 </ul>
-            </div>
-        </nav>
+            </nav>
+        </div>
+    </nav>
 
-        <!-- Desktop Main Content Area -->
-        <main class="flex-1 flex flex-col overflow-hidden">
-            <!-- Desktop Top Action Bar -->
-            <div class="bg-white/90 backdrop-blur-sm border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-                <div class="flex items-center space-x-4">
-                    <button x-show="!sidebarOpen" @click="sidebarOpen = true" 
-                            class="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                        </svg>
-                    </button>
-                    <h1 class="text-2xl font-semibold text-gray-900">{% block page_title %}Dashboard{% endblock %}</h1>
-                </div>
+    <!-- Mobile Bottom Navigation -->
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 z-50">
+        <div class="flex items-center justify-around py-2">
+            <a href="/dashboard/" 
+               class="flex flex-col items-center py-2 px-3 rounded-lg transition-colors"
+               :class="activeSection === 'dashboard' ? 'text-blue-600' : 'text-gray-500'">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                </svg>
+                <span class="text-xs font-medium mt-1">Home</span>
+            </a>
+            <a href="/people/" 
+               class="flex flex-col items-center py-2 px-3 rounded-lg transition-colors relative"
+               :class="activeSection === 'people' ? 'text-blue-600' : 'text-gray-500'">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
+                </svg>
+                <span class="text-xs font-medium mt-1">People</span>
+                <span class="absolute -top-1 -right-1 bg-purple-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">15</span>
+            </a>
+            <a href="/calendar/" 
+               class="flex flex-col items-center py-2 px-3 rounded-lg transition-colors"
+               :class="activeSection === 'calendar' ? 'text-blue-600' : 'text-gray-500'">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 9.75h18m-18 0v8.25a2.25 2.25 0 0 0 2.25 2.25h13.5a2.25 2.25 0 0 0 2.25-2.25V9.75m-18 0V6a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 6v3.75" />
+                </svg>
+                <span class="text-xs font-medium mt-1">Schedule</span>
+            </a>
+            <a href="/chat/" 
+               class="flex flex-col items-center py-2 px-3 rounded-lg transition-colors"
+               :class="activeSection === 'chat' ? 'text-blue-600' : 'text-gray-500'">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.691 1.309 3.061 2.927 3.061 1.618 0 2.927-1.37 2.927-3.061 0-1.691-1.309-3.061-2.927-3.061S0 6.819 0 8.51Z" />
+                </svg>
+                <span class="text-xs font-medium mt-1">Chat</span>
+            </a>
+            <a href="/analytics/" 
+               class="flex flex-col items-center py-2 px-3 rounded-lg transition-colors"
+               :class="activeSection === 'analytics' ? 'text-blue-600' : 'text-gray-500'">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+                </svg>
+                <span class="text-xs font-medium mt-1">Analytics</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content Area - Single responsive layout -->
+    <main class="pt-16 pb-24 lg:pl-64 lg:pt-0 lg:pb-0">
+        <!-- Desktop Header Bar -->
+        <div class="hidden lg:block bg-white/90 backdrop-blur-sm border-b border-gray-200 px-6 py-4">
+            <div class="flex items-center justify-between">
+                <h1 class="text-2xl font-semibold text-gray-900">{% block page_title %}Dashboard{% endblock %}</h1>
                 <div class="flex items-center space-x-3">
                     <span class="text-sm text-gray-500">Welcome, {{ user.first_name }}</span>
                     <div class="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center">
@@ -251,15 +180,13 @@
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Desktop Content Area -->
-            <div class="flex-1 overflow-auto p-6">
-                {% block dashboard_content %}
-                <!-- Page-specific content goes here -->
-                {% endblock %}
-            </div>
-        </main>
-    </div>
+        <!-- Content Area -->
+        <div class="p-4 lg:p-6">
+            {% block dashboard_content %}{% endblock %}
+        </div>
+    </main>
 </div>
 
 {% block dashboard_scripts %}

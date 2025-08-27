@@ -3,22 +3,23 @@ Authentication views for Django web interface (PWA Migration)
 Consolidated authentication using email magic links + SMS OTP
 """
 
-from django.shortcuts import render, redirect
-from django.contrib.auth import login, get_user_model
-from django.views.decorators.csrf import csrf_protect
-from django.utils.decorators import method_decorator
-from django.views import View
-from django.urls import reverse
-from sesame.utils import get_query_string
-
+from datetime import timedelta
 import logging
 import re
 import secrets
-from datetime import timedelta
 
+from django.contrib.auth import get_user_model, login
+from django.shortcuts import redirect, render
+from django.urls import reverse
 from django.utils import timezone
-from ..db_queries import get_user_by_email, user_exists
+from django.utils.decorators import method_decorator
+from django.views import View
+from django.views.decorators.csrf import csrf_protect
+from sesame.utils import get_query_string
+
 from common.messaging import send_magic_link_email, send_sms_otp
+
+from .db_queries import get_user_by_email, user_exists
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -30,7 +31,7 @@ class SignInView(View):
     def get(self, request):
         """Render sign in page"""
         if request.user.is_authenticated:
-            return redirect("accounts:dashboard")
+            return redirect("/dashboard/")
 
         return render(
             request,
@@ -125,7 +126,7 @@ class SignUpView(View):
     def get(self, request):
         """Render sign up page"""
         if request.user.is_authenticated:
-            return redirect("accounts:dashboard")
+            return redirect("/dashboard/")
 
         return render(
             request,
@@ -295,7 +296,7 @@ class VerifyOTPView(View):
 
         return render(
             request,
-            "accounts/verify_otp.html",
+            "accounts/verify_code.html",
             {
                 "title": "Verify Phone - Aprende Comigo",
                 "meta_description": "Enter your SMS verification code",
@@ -308,7 +309,7 @@ class VerifyOTPView(View):
     @method_decorator(csrf_protect)
     def post(self, request):
         """Handle OTP verification"""
-        otp_code = request.POST.get("otp_code", "").strip()
+        otp_code = request.POST.get("verification_code", "").strip()
 
         # Get session data
         user_id = request.session.get("verification_user_id")
@@ -321,7 +322,7 @@ class VerifyOTPView(View):
         if not all([user_id, expected_otp, phone, otp_code]):
             return render(
                 request,
-                "accounts/partials/otp_form.html",
+                "accounts/partials/verify_form.html",
                 {
                     "error": "Please enter the verification code.",
                     "phone_number": phone,
@@ -334,7 +335,7 @@ class VerifyOTPView(View):
         if otp_expires and timezone.now().timestamp() > otp_expires:
             return render(
                 request,
-                "accounts/partials/otp_form.html",
+                "accounts/partials/verify_form.html",
                 {
                     "error": "Verification code has expired. Please request a new one.",
                     "phone_number": phone,
@@ -355,7 +356,7 @@ class VerifyOTPView(View):
                     user.phone_verified = True
                     user.save()
 
-                    login(request, user)
+                    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                     logger.info(f"Signup verification completed for new user: {user.email}")
 
                     # Clear session data
@@ -363,16 +364,16 @@ class VerifyOTPView(View):
 
                     return render(
                         request,
-                        "accounts/partials/otp_success.html",
+                        "accounts/partials/verify_success.html",
                         {
                             "message": "Account verified! Welcome to Aprende Comigo.",
-                            "redirect_url": "/accounts/dashboard/",
+                            "redirect_url": "/dashboard/",
                         },
                     )
 
                 elif is_signin:
                     # For signin, SMS OTP is sufficient
-                    login(request, user)
+                    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
                     logger.info(f"SMS authentication successful for user: {user.email}")
 
                     # Clear session data
@@ -380,14 +381,14 @@ class VerifyOTPView(View):
 
                     return render(
                         request,
-                        "accounts/partials/otp_success.html",
-                        {"message": "Welcome back!", "redirect_url": "/accounts/dashboard/"},
+                        "accounts/partials/verify_success.html",
+                        {"message": "Welcome back!", "redirect_url": "/dashboard/"},
                     )
 
             else:
                 return render(
                     request,
-                    "accounts/partials/otp_form.html",
+                    "accounts/partials/verify_form.html",
                     {
                         "error": "Invalid verification code. Please try again.",
                         "phone_number": phone,
@@ -400,7 +401,7 @@ class VerifyOTPView(View):
             logger.error(f"OTP verification error: {e}")
             return render(
                 request,
-                "accounts/partials/otp_form.html",
+                "accounts/partials/verify_form.html",
                 {
                     "error": "There was an issue verifying your code. Please try again.",
                     "phone_number": phone,
@@ -424,28 +425,6 @@ class VerifyOTPView(View):
             request.session.pop(key, None)
 
 
-class DashboardView(View):
-    """Simple dashboard redirect based on user role"""
-
-    def get(self, request):
-        """Redirect to appropriate dashboard based on user role"""
-        if not request.user.is_authenticated:
-            return redirect("accounts:signin")
-
-        # Redirect based on user role
-        if hasattr(request.user, "teacherprofile"):
-            return redirect("dashboard:teacher_dashboard")
-        elif hasattr(request.user, "studentprofile"):
-            return redirect("dashboard:student_dashboard")
-        elif hasattr(request.user, "parentprofile"):
-            return redirect("dashboard:parent_dashboard")
-        elif request.user.is_staff:
-            return redirect("dashboard:admin_dashboard")
-        else:
-            # Default to a general dashboard
-            return render(
-                request, "accounts/dashboard.html", {"title": "Dashboard - Aprende Comigo", "user": request.user}
-            )
 
 
 # Function for resending verification code via HTMX
@@ -489,9 +468,11 @@ def resend_code(request):
             )
 
     except Exception as e:
-        logger.error(f"Resend magic link error for {email}: {e}")
+        logger.error(f"Resend code error for {email}: {e}")
         return render(
             request,
             "accounts/partials/resend_error.html",
             {"error": "There was an issue resending the login link. Please try again."},
         )
+
+# Using django-sesame's built-in LoginView directly - no custom implementation needed

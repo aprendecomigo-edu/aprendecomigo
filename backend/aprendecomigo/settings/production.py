@@ -64,6 +64,65 @@ if not CORS_ALLOWED_ORIGINS:
         "https://www.aprendecomigo.com",
     ]
 
+# Redis Cache Configuration for Production
+REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379")
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': f"{REDIS_URL}/1",
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+            'CONNECTION_POOL_KWARGS': {
+                'max_connections': 100,
+                'retry_on_timeout': True,
+                'socket_keepalive': True,
+                'socket_keepalive_options': {},
+            },
+        },
+        'KEY_PREFIX': 'aprendecomigo_prod',
+        'VERSION': 1,
+        'TIMEOUT': 60 * 15,  # 15 minutes default timeout
+    },
+    'sessions': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': f"{REDIS_URL}/2",
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'CONNECTION_POOL_KWARGS': {
+                'max_connections': 50,
+                'retry_on_timeout': True,
+            },
+        },
+        'KEY_PREFIX': 'sessions_prod',
+        'TIMEOUT': 60 * 60 * 24,  # 24 hours for sessions
+    },
+    'template_fragments': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': f"{REDIS_URL}/3",
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'CONNECTION_POOL_KWARGS': {
+                'max_connections': 50,
+                'retry_on_timeout': True,
+            },
+        },
+        'KEY_PREFIX': 'templates_prod',
+        'TIMEOUT': 60 * 30,  # 30 minutes for template fragments
+    }
+}
+
+# Use Redis for sessions
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'sessions'
+
+# Database Connection Pooling
+DATABASES['default']['OPTIONS'].update({
+    'MAX_CONNS': 20,
+    'CONN_MAX_AGE': 600,  # 10 minutes connection pooling
+})
+
 # Security settings for cookies
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True

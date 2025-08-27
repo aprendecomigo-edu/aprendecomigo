@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs",
+      "WebFetch(domain:hackernoon.com)",
+      "mcp__playwright__browser_drag",
+      "WebFetch(domain:tailwindcss.com)",
+      "WebFetch(domain:tailwindui.com)",
+      "WebFetch(domain:flowbite.com)",
+      "WebFetch(domain:www.colby.so)",
+      "WebFetch(domain:www.penguinui.com)",
+      "mcp__playwright__browser_handle_dialog"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

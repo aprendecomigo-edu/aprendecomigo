@@ -32,8 +32,9 @@ application = ProtocolTypeRouter(
             AuthMiddlewareStack(
                 URLRouter(
                     [
-                        # Only chat functionality uses websockets
+                        # Production chat functionality
                         path("ws/chat/<str:channel_name>/", ChatConsumer.as_asgi()),
+                        
                     ]
                 )
             )

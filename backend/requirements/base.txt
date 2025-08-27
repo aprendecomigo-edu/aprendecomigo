@@ -20,6 +20,9 @@ channels_redis==4.3.0
 uvicorn[standard]==0.30.6
 redis==6.4.0
 
+# PWA Support
+django-pwa==2.0.1
+
 # API Documentation - removed for PWA migration
 
 # Payment Processing

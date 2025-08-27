@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lesson Schedule - {{ course.title }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: 80px repeat(7, 1fr);
+            gap: 1px;
+            background-color: #e5e7eb;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .time-slot, .day-header, .time-header {
+            background-color: white;
+            padding: 8px;
+            text-align: center;
+            font-size: 0.875rem;
+        }
+        
+        .time-header, .day-header {
+            font-weight: 600;
+            background-color: #f9fafb;
+        }
+        
+        .lesson-block {
+            background-color: #3b82f6;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin: 2px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            position: relative;
+        }
+        
+        .lesson-block:hover {
+            background-color: #2563eb;
+        }
+        
+        .lesson-scheduled { background-color: #3b82f6; }
+        .lesson-completed { background-color: #10b981; }
+        .lesson-cancelled { background-color: #ef4444; }
+        .lesson-in-progress { background-color: #f59e0b; }
+        
+        .time-slot {
+            min-height: 60px;
+            position: relative;
+            border: 1px dashed transparent;
+        }
+        
+        .time-slot:hover {
+            background-color: #f3f4f6;
+            border-color: #d1d5db;
+        }
+        
+        .lesson-form {
+            background-color: white;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white shadow-sm border-b">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-6">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Lesson Schedule</h1>
+                        <p class="text-sm text-gray-600">{{ course.title }} - {{ course.subject.name }}</p>
+                    </div>
+                    <div class="flex space-x-4">
+                        <a href="{% url 'education:course_detail' course.id %}" 
+                           class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg">
+                            Back to Course
+                        </a>
+                        <button onclick="toggleLessonForm()" 
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                            Schedule New Lesson
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                    <span class="text-white font-semibold text-sm">{{ lessons.count }}</span>
+                                </div>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dt class="text-sm font-medium text-gray-500 truncate">Total Lessons</dt>
+                                <dd class="text-lg font-medium text-gray-900">{{ lessons.count }}</dd>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                    <span class="text-white font-semibold text-sm">{{ lessons|length }}</span>
+                                </div>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dt class="text-sm font-medium text-gray-500 truncate">Completed</dt>
+                                <dd class="text-lg font-medium text-gray-900">
+                                    {% for lesson in lessons %}{% if lesson.status == 'completed' %}{{ forloop.counter0|add:1 }}{% endif %}{% empty %}0{% endfor %}
+                                </dd>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
+                                    <span class="text-white font-semibold text-sm">{{ enrolled_students.count }}</span>
+                                </div>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dt class="text-sm font-medium text-gray-500 truncate">Enrolled Students</dt>
+                                <dd class="text-lg font-medium text-gray-900">{{ enrolled_students.count }}</dd>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white overflow-hidden shadow rounded-lg">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+                                    <span class="text-white font-semibold text-sm">{{ course.total_hours }}</span>
+                                </div>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dt class="text-sm font-medium text-gray-500 truncate">Total Hours</dt>
+                                <dd class="text-lg font-medium text-gray-900">{{ course.total_hours }}</dd>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lesson Creation Form -->
+            <div id="lesson-form" class="lesson-form hidden">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Schedule New Lesson</h3>
+                <form method="POST" hx-post="{% url 'education:lesson_schedule' course.id %}"
+                      hx-target="#lessons-container" hx-swap="innerHTML">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="create_lesson">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="title" class="block text-sm font-medium text-gray-700">Lesson Title</label>
+                            <input type="text" name="title" id="title" required
+                                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        
+                        <div>
+                            <label for="scheduled_date" class="block text-sm font-medium text-gray-700">Date & Time</label>
+                            <input type="datetime-local" name="scheduled_date" id="scheduled_date" required
+                                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+                        
+                        <div>
+                            <label for="duration" class="block text-sm font-medium text-gray-700">Duration (minutes)</label>
+                            <select name="duration" id="duration"
+                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                <option value="30">30 minutes</option>
+                                <option value="45">45 minutes</option>
+                                <option value="60" selected>60 minutes</option>
+                                <option value="90">90 minutes</option>
+                                <option value="120">120 minutes</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                            <textarea name="description" id="description" rows="2"
+                                      class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                      placeholder="Optional lesson description..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 flex justify-end space-x-3">
+                        <button type="button" onclick="toggleLessonForm()" 
+                                class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded">
+                            Cancel
+                        </button>
+                        <button type="submit" 
+                                class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded">
+                            Schedule Lesson
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Calendar View -->
+            <div class="bg-white shadow rounded-lg p-6 mb-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Weekly Calendar</h3>
+                
+                <div class="calendar-grid">
+                    <!-- Headers -->
+                    <div class="time-header">Time</div>
+                    <div class="day-header">Mon</div>
+                    <div class="day-header">Tue</div>
+                    <div class="day-header">Wed</div>
+                    <div class="day-header">Thu</div>
+                    <div class="day-header">Fri</div>
+                    <div class="day-header">Sat</div>
+                    <div class="day-header">Sun</div>
+                    
+                    <!-- Time slots from 8 AM to 8 PM -->
+                    {% for hour in "08091011121314151617181920"|make_list %}
+                        <div class="time-slot">{{ hour }}:00</div>
+                        <div class="time-slot" data-day="1" data-hour="{{ hour }}">
+                            {% for lesson in lessons %}
+                                {% if lesson.scheduled_date.hour == hour|add:0 and lesson.scheduled_date.weekday == 0 %}
+                                    <div class="lesson-block lesson-{{ lesson.status }}" 
+                                         title="{{ lesson.title }} - {{ lesson.status }}">
+                                        <div class="font-semibold">{{ lesson.title }}</div>
+                                        <div class="text-xs">{{ lesson.duration_minutes }}min</div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="time-slot" data-day="2" data-hour="{{ hour }}">
+                            {% for lesson in lessons %}
+                                {% if lesson.scheduled_date.hour == hour|add:0 and lesson.scheduled_date.weekday == 1 %}
+                                    <div class="lesson-block lesson-{{ lesson.status }}" 
+                                         title="{{ lesson.title }} - {{ lesson.status }}">
+                                        <div class="font-semibold">{{ lesson.title }}</div>
+                                        <div class="text-xs">{{ lesson.duration_minutes }}min</div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="time-slot" data-day="3" data-hour="{{ hour }}">
+                            {% for lesson in lessons %}
+                                {% if lesson.scheduled_date.hour == hour|add:0 and lesson.scheduled_date.weekday == 2 %}
+                                    <div class="lesson-block lesson-{{ lesson.status }}" 
+                                         title="{{ lesson.title }} - {{ lesson.status }}">
+                                        <div class="font-semibold">{{ lesson.title }}</div>
+                                        <div class="text-xs">{{ lesson.duration_minutes }}min</div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="time-slot" data-day="4" data-hour="{{ hour }}">
+                            {% for lesson in lessons %}
+                                {% if lesson.scheduled_date.hour == hour|add:0 and lesson.scheduled_date.weekday == 3 %}
+                                    <div class="lesson-block lesson-{{ lesson.status }}" 
+                                         title="{{ lesson.title }} - {{ lesson.status }}">
+                                        <div class="font-semibold">{{ lesson.title }}</div>
+                                        <div class="text-xs">{{ lesson.duration_minutes }}min</div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="time-slot" data-day="5" data-hour="{{ hour }}">
+                            {% for lesson in lessons %}
+                                {% if lesson.scheduled_date.hour == hour|add:0 and lesson.scheduled_date.weekday == 4 %}
+                                    <div class="lesson-block lesson-{{ lesson.status }}" 
+                                         title="{{ lesson.title }} - {{ lesson.status }}">
+                                        <div class="font-semibold">{{ lesson.title }}</div>
+                                        <div class="text-xs">{{ lesson.duration_minutes }}min</div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="time-slot" data-day="6" data-hour="{{ hour }}">
+                            {% for lesson in lessons %}
+                                {% if lesson.scheduled_date.hour == hour|add:0 and lesson.scheduled_date.weekday == 5 %}
+                                    <div class="lesson-block lesson-{{ lesson.status }}" 
+                                         title="{{ lesson.title }} - {{ lesson.status }}">
+                                        <div class="font-semibold">{{ lesson.title }}</div>
+                                        <div class="text-xs">{{ lesson.duration_minutes }}min</div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="time-slot" data-day="0" data-hour="{{ hour }}">
+                            {% for lesson in lessons %}
+                                {% if lesson.scheduled_date.hour == hour|add:0 and lesson.scheduled_date.weekday == 6 %}
+                                    <div class="lesson-block lesson-{{ lesson.status }}" 
+                                         title="{{ lesson.title }} - {{ lesson.status }}">
+                                        <div class="font-semibold">{{ lesson.title }}</div>
+                                        <div class="text-xs">{{ lesson.duration_minutes }}min</div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Legend -->
+                <div class="mt-4 flex flex-wrap gap-4 text-sm">
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 bg-blue-500 rounded mr-2"></div>
+                        <span>Scheduled</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 bg-yellow-500 rounded mr-2"></div>
+                        <span>In Progress</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 bg-green-500 rounded mr-2"></div>
+                        <span>Completed</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 bg-red-500 rounded mr-2"></div>
+                        <span>Cancelled</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lessons List -->
+            <div id="lessons-container" class="bg-white shadow rounded-lg">
+                <div class="px-4 py-5 sm:p-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                        All Lessons
+                    </h3>
+                    
+                    {% if lessons %}
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Lesson
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Date & Time
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Duration
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Status
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Attendance
+                                        </th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    {% for lesson in lessons %}
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">{{ lesson.title }}</div>
+                                            {% if lesson.description %}
+                                                <div class="text-sm text-gray-500">{{ lesson.description|truncatewords:10 }}</div>
+                                            {% endif %}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">{{ lesson.scheduled_date|date:"M d, Y" }}</div>
+                                            <div class="text-sm text-gray-500">{{ lesson.scheduled_date|date:"H:i" }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">{{ lesson.duration_minutes }} min</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                                {% if lesson.status == 'scheduled' %}bg-blue-100 text-blue-800
+                                                {% elif lesson.status == 'completed' %}bg-green-100 text-green-800
+                                                {% elif lesson.status == 'cancelled' %}bg-red-100 text-red-800
+                                                {% elif lesson.status == 'in_progress' %}bg-yellow-100 text-yellow-800
+                                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                                {{ lesson.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900">
+                                                {{ lesson.students_present.count }}/{{ enrolled_students.count }}
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <button class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
+                                            <button class="text-red-600 hover:text-red-900">Cancel</button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-12">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <h3 class="mt-2 text-sm font-medium text-gray-900">No lessons scheduled</h3>
+                            <p class="mt-1 text-sm text-gray-500">Get started by scheduling your first lesson.</p>
+                            <div class="mt-6">
+                                <button onclick="toggleLessonForm()" 
+                                        class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                                    Schedule First Lesson
+                                </button>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function toggleLessonForm() {
+            const form = document.getElementById('lesson-form');
+            form.classList.toggle('hidden');
+            
+            if (!form.classList.contains('hidden')) {
+                // Set default date to next day at 10 AM
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                tomorrow.setHours(10, 0);
+                document.getElementById('scheduled_date').value = tomorrow.toISOString().slice(0, 16);
+            }
+        }
+        
+        // Auto-hide form after successful submission
+        document.addEventListener('htmx:afterRequest', function(event) {
+            if (event.detail.xhr.status === 200) {
+                const form = document.getElementById('lesson-form');
+                if (!form.classList.contains('hidden')) {
+                    form.classList.add('hidden');
+                    // Clear form
+                    document.getElementById('title').value = '';
+                    document.getElementById('description').value = '';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

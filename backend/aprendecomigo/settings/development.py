@@ -5,7 +5,7 @@ Django development settings for aprendecomigo project.
 import os
 
 # Import specific settings from base
-from .base import BASE_DIR, SIMPLE_JWT as BASE_SIMPLE_JWT
+from .base import BASE_DIR
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-r0i5j27-gmjj&c6v@0mf5=mz$oi%e75o%iw8-i1ma6ej0m7=^q")
@@ -13,7 +13,7 @@ SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-r0i5j27-gmjj&c6v@0mf5=mz$o
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+# Will be overridden after base import
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
@@ -42,12 +42,18 @@ CORS_ALLOWED_ORIGINS = [
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
 
+# Allow CSRF tokens from iPhone/external IPs
+CSRF_TRUSTED_ORIGINS = [
+    "http://192.168.1.98:8000",
+    "http://10.1.14.101:8000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+
 # Google API settings
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 
-# Set JWT signing key
-SIMPLE_JWT = {**BASE_SIMPLE_JWT, "SIGNING_KEY": SECRET_KEY}
 
 # Development Logging Configuration
 # Optimized for development with enhanced visibility and debugging
@@ -224,10 +230,21 @@ LOGGING = {
 from .base import *  # noqa: E402
 
 # Development-specific overrides
-# Disable throttling for development/testing to avoid rate limiting during QA tests
-REST_FRAMEWORK.update(
-    {
-        "DEFAULT_THROTTLE_CLASSES": [],  # Disable all throttling in development
-        "DEFAULT_THROTTLE_RATES": {},  # Clear all throttle rates
-    }
-)
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "192.168.1.98", "192.168.1.98:8000", "10.1.14.101", "10.1.14.101:8000", "*"]
+
+# Override security settings for development (ensure these override base)
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+
+# Session cookies settings for iPhone Safari cross-origin access
+SESSION_COOKIE_SAMESITE = None  # Allow cross-origin cookies for development
+SESSION_COOKIE_HTTPONLY = False  # Allow JavaScript access for debugging
+SESSION_SAVE_EVERY_REQUEST = True  # Force session save on every request
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://192.168.1.98:8000",
+    "http://10.1.14.101:8000", 
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+]
+
