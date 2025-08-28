@@ -7,19 +7,29 @@ from datetime import timedelta
 import logging
 import re
 import secrets
+import uuid
 
+from django.contrib import messages
 from django.contrib.auth import get_user_model, login
-from django.shortcuts import redirect, render
-from django.urls import reverse
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.http import Http404, HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_protect
+from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from sesame.utils import get_query_string
 
 from common.messaging import send_magic_link_email, send_sms_otp
 
 from .db_queries import get_user_by_email, user_exists
+from .models import School, SchoolMembership, TeacherInvitation
+from .permissions import IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -499,5 +509,344 @@ class LogoutView(View):
 
         # Redirect to home or signin page
         return redirect("/accounts/signin/")
+
+# =============================================================================
+# INVITATION MANAGEMENT VIEWS
+# =============================================================================
+
+class TeacherInvitationListView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin, ListView):
+    """List all teacher invitations for schools the user manages"""
+    
+    model = TeacherInvitation
+    template_name = "accounts/invitations/invitation_list.html"
+    context_object_name = "invitations"
+    paginate_by = 20
+
+    def get_queryset(self):
+        # Get schools the user can manage
+        user_schools = self.get_user_schools_by_role('school_owner') | \
+                      self.get_user_schools_by_role('school_admin')
+        
+        # Filter invitations for these schools
+        return TeacherInvitation.objects.filter(
+            school__in=user_schools
+        ).select_related('school', 'invited_by').order_by('-created_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['schools'] = self.get_user_schools_by_role('school_owner') | \
+                           self.get_user_schools_by_role('school_admin')
+        return context
+
+
+class TeacherInvitationCreateView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin, CreateView):
+    """Create new teacher invitation"""
+    
+    model = TeacherInvitation
+    template_name = "accounts/invitations/invitation_create.html"
+    fields = ['school', 'email', 'custom_message']
+    success_url = reverse_lazy('accounts:invitation_list')
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        # Limit school choices to schools the user can manage
+        user_schools = self.get_user_schools_by_role('school_owner') | \
+                      self.get_user_schools_by_role('school_admin')
+        form.fields['school'].queryset = user_schools
+        return form
+
+    def form_valid(self, form):
+        # Generate batch ID for tracking
+        batch_id = uuid.uuid4()
+        
+        # Set the invitation details
+        form.instance.invited_by = self.request.user
+        form.instance.batch_id = batch_id
+        form.instance.role = 'teacher'  # Default to teacher role
+        
+        # Check if user has permission to invite to this school
+        school = form.instance.school
+        if not self.has_school_permission(school, ['school_owner', 'school_admin']):
+            messages.error(self.request, "You don't have permission to invite teachers to this school.")
+            return self.form_invalid(form)
+        
+        try:
+            with transaction.atomic():
+                response = super().form_valid(form)
+                
+                # Send invitation email (implement this based on your email system)
+                # send_teacher_invitation_email(form.instance)
+                
+                messages.success(self.request, f"Teacher invitation sent to {form.instance.email}")
+                return response
+                
+        except ValidationError as e:
+            messages.error(self.request, str(e))
+            return self.form_invalid(form)
+
+
+class TeacherInvitationDetailView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin, DetailView):
+    """View teacher invitation details"""
+    
+    model = TeacherInvitation
+    template_name = "accounts/invitations/invitation_detail.html"
+    context_object_name = "invitation"
+
+    def get_queryset(self):
+        # Limit to invitations for schools the user can manage
+        user_schools = self.get_user_schools_by_role('school_owner') | \
+                      self.get_user_schools_by_role('school_admin')
+        return TeacherInvitation.objects.filter(school__in=user_schools)
+
+
+class AcceptTeacherInvitationView(View):
+    """Accept a teacher invitation (public view accessible by token)"""
+    
+    def get(self, request, token):
+        """Display invitation acceptance form"""
+        invitation = get_object_or_404(TeacherInvitation, token=token)
+        
+        # Check if invitation is valid
+        if not invitation.is_valid():
+            return render(request, 'accounts/invitations/invitation_expired.html', {
+                'invitation': invitation
+            })
+        
+        # Mark as viewed
+        invitation.mark_viewed()
+        
+        return render(request, 'accounts/invitations/accept_invitation.html', {
+            'invitation': invitation
+        })
+    
+    @method_decorator(csrf_protect)
+    def post(self, request, token):
+        """Process invitation acceptance"""
+        invitation = get_object_or_404(TeacherInvitation, token=token)
+        
+        # Check if invitation is valid
+        if not invitation.is_valid():
+            return render(request, 'accounts/invitations/invitation_expired.html', {
+                'invitation': invitation
+            })
+        
+        action = request.POST.get('action')
+        
+        if action == 'accept':
+            # Check if user exists
+            try:
+                user = User.objects.get(email=invitation.email)
+                
+                # Create school membership
+                membership, created = SchoolMembership.objects.get_or_create(
+                    user=user,
+                    school=invitation.school,
+                    role=invitation.role,
+                    defaults={'is_active': True}
+                )
+                
+                if not created and not membership.is_active:
+                    membership.is_active = True
+                    membership.save()
+                
+                # Mark invitation as accepted
+                invitation.accept()
+                
+                # If user is logged in and it's the correct user, redirect to dashboard
+                if request.user.is_authenticated and request.user.email == invitation.email:
+                    messages.success(request, f"Welcome to {invitation.school.name}! You are now a {invitation.get_role_display()}.")
+                    return redirect('/dashboard/')
+                
+                # Otherwise, show success page with login instructions
+                return render(request, 'accounts/invitations/invitation_accepted.html', {
+                    'invitation': invitation,
+                    'user_exists': True
+                })
+                
+            except User.DoesNotExist:
+                # User doesn't exist, show signup flow
+                return render(request, 'accounts/invitations/invitation_accepted.html', {
+                    'invitation': invitation,
+                    'user_exists': False,
+                    'signup_url': reverse('accounts:signup') + f'?email={invitation.email}&invitation_token={token}'
+                })
+        
+        elif action == 'decline':
+            invitation.decline()
+            return render(request, 'accounts/invitations/invitation_declined.html', {
+                'invitation': invitation
+            })
+        
+        return redirect('accounts:accept_invitation', token=token)
+
+
+@login_required
+@csrf_protect
+def cancel_teacher_invitation(request, invitation_id):
+    """Cancel a teacher invitation (HTMX endpoint)"""
+    invitation = get_object_or_404(TeacherInvitation, id=invitation_id)
+    
+    # Check permission
+    user_schools = SchoolMembership.objects.filter(
+        user=request.user,
+        role__in=['school_owner', 'school_admin'],
+        is_active=True
+    ).values_list('school_id', flat=True)
+    
+    if invitation.school_id not in user_schools and not request.user.is_superuser:
+        return HttpResponse("Permission denied", status=403)
+    
+    if request.method == 'POST':
+        try:
+            invitation.cancel()
+            return render(request, 'accounts/invitations/partials/invitation_cancelled.html', {
+                'invitation': invitation
+            })
+        except ValidationError as e:
+            return render(request, 'accounts/invitations/partials/invitation_error.html', {
+                'error': str(e)
+            })
+    
+    return HttpResponse("Method not allowed", status=405)
+
+
+@login_required
+@csrf_protect
+def resend_teacher_invitation(request, invitation_id):
+    """Resend a teacher invitation (HTMX endpoint)"""
+    invitation = get_object_or_404(TeacherInvitation, id=invitation_id)
+    
+    # Check permission
+    user_schools = SchoolMembership.objects.filter(
+        user=request.user,
+        role__in=['school_owner', 'school_admin'],
+        is_active=True
+    ).values_list('school_id', flat=True)
+    
+    if invitation.school_id not in user_schools and not request.user.is_superuser:
+        return HttpResponse("Permission denied", status=403)
+    
+    if request.method == 'POST':
+        try:
+            # Check if can retry
+            if not invitation.can_retry():
+                return render(request, 'accounts/invitations/partials/invitation_error.html', {
+                    'error': "Maximum retry attempts reached for this invitation."
+                })
+            
+            # Resend email (implement based on your email system)
+            # send_teacher_invitation_email(invitation)
+            
+            # Update invitation status
+            invitation.mark_email_sent()
+            
+            return render(request, 'accounts/invitations/partials/invitation_resent.html', {
+                'invitation': invitation
+            })
+            
+        except Exception as e:
+            invitation.mark_email_failed(str(e))
+            return render(request, 'accounts/invitations/partials/invitation_error.html', {
+                'error': "Failed to resend invitation. Please try again."
+            })
+    
+    return HttpResponse("Method not allowed", status=405)
+
+
+# =============================================================================
+# PROFILE MANAGEMENT VIEWS
+# =============================================================================
+
+class ProfileEditView(LoginRequiredMixin, UpdateView):
+    """Edit user profile"""
+    
+    model = User
+    template_name = "accounts/profile/profile_edit.html"
+    fields = ['first_name', 'last_name', 'phone_number', 'bio', 'timezone', 'preferred_language']
+    success_url = reverse_lazy('accounts:profile')
+
+    def get_object(self):
+        return self.request.user
+
+    def form_valid(self, form):
+        messages.success(self.request, "Your profile has been updated successfully.")
+        return super().form_valid(form)
+
+
+class ProfileView(LoginRequiredMixin, DetailView):
+    """View user profile"""
+    
+    model = User
+    template_name = "accounts/profile/profile_detail.html"
+    context_object_name = "profile_user"
+
+    def get_object(self):
+        return self.request.user
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Get user's school memberships
+        memberships = SchoolMembership.objects.filter(
+            user=self.request.user,
+            is_active=True
+        ).select_related('school').order_by('joined_at')
+        
+        context['memberships'] = memberships
+        return context
+
+
+# =============================================================================
+# SCHOOL MANAGEMENT VIEWS
+# =============================================================================
+
+class SchoolSettingsView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin, UpdateView):
+    """Edit school settings"""
+    
+    model = School
+    template_name = "accounts/schools/school_settings.html"
+    fields = [
+        'name', 'description', 'address', 'contact_email', 
+        'phone_number', 'website', 'logo', 'primary_color', 'secondary_color'
+    ]
+
+    def get_queryset(self):
+        # Limit to schools the user can manage
+        return self.get_user_schools_by_role('school_owner') | \
+               self.get_user_schools_by_role('school_admin')
+
+    def form_valid(self, form):
+        messages.success(self.request, f"Settings for {form.instance.name} have been updated.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('accounts:school_settings', kwargs={'pk': self.object.pk})
+
+
+class SchoolMemberListView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin, ListView):
+    """List school members"""
+    
+    model = SchoolMembership
+    template_name = "accounts/schools/school_members.html"
+    context_object_name = "memberships"
+    paginate_by = 50
+
+    def get_queryset(self):
+        self.school = get_object_or_404(School, pk=self.kwargs['school_pk'])
+        
+        # Check permission for this specific school
+        if not self.has_school_permission(self.school, ['school_owner', 'school_admin']):
+            raise Http404("You don't have permission to view this school's members.")
+        
+        return SchoolMembership.objects.filter(
+            school=self.school,
+            is_active=True
+        ).select_related('user').order_by('role', 'joined_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['school'] = self.school
+        return context
+
 
 # Using django-sesame's built-in LoginView directly - no custom implementation needed

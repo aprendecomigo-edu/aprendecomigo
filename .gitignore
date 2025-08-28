@@ -172,3 +172,5 @@ temp/
 
 # Development server logs
 logs/
+
+node_modules

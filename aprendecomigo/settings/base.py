@@ -67,7 +67,6 @@ INSTALLED_APPS = [
     "scheduler",
     "tasks",
     "messaging",
-    "education",  # Core educational features (Milestone 3)
 ]
 
 MIDDLEWARE = [

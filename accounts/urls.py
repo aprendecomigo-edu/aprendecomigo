@@ -3,11 +3,25 @@ from sesame.views import LoginView
 
 # Import the Django web authentication views
 from .views import (
+    # Authentication views
     LogoutView,
     SignInView,
     SignUpView,
     VerifyOTPView,
     resend_code,
+    # Invitation management views
+    AcceptTeacherInvitationView,
+    cancel_teacher_invitation,
+    resend_teacher_invitation,
+    TeacherInvitationCreateView,
+    TeacherInvitationDetailView,
+    TeacherInvitationListView,
+    # Profile management views
+    ProfileEditView,
+    ProfileView,
+    # School management views
+    SchoolMemberListView,
+    SchoolSettingsView,
 )
 
 app_name = "accounts"
@@ -22,4 +36,21 @@ urlpatterns = [
     path("resend-code/", resend_code, name="resend_code"),
     # Magic link authentication using django-sesame's built-in LoginView
     path("magic-login/", LoginView.as_view(), name="magic_login"),
+    
+    # Teacher Invitation Management
+    path("invitations/", TeacherInvitationListView.as_view(), name="invitation_list"),
+    path("invitations/create/", TeacherInvitationCreateView.as_view(), name="invitation_create"),
+    path("invitations/<int:pk>/", TeacherInvitationDetailView.as_view(), name="invitation_detail"),
+    path("invitations/<int:invitation_id>/cancel/", cancel_teacher_invitation, name="cancel_invitation"),
+    path("invitations/<int:invitation_id>/resend/", resend_teacher_invitation, name="resend_invitation"),
+    # Public invitation acceptance (no login required)
+    path("invitations/accept/<str:token>/", AcceptTeacherInvitationView.as_view(), name="accept_invitation"),
+    
+    # Profile Management
+    path("profile/", ProfileView.as_view(), name="profile"),
+    path("profile/edit/", ProfileEditView.as_view(), name="profile_edit"),
+    
+    # School Management
+    path("schools/<int:pk>/settings/", SchoolSettingsView.as_view(), name="school_settings"),
+    path("schools/<int:school_pk>/members/", SchoolMemberListView.as_view(), name="school_members"),
 ]
