@@ -1,2 +1,0 @@
-run_id,timestamp,overall_result,steps_passed,steps_failed,browser,environment,notes
-run-20250801-100135,2025-08-01T10:01:35Z,FAIL,4,1,Playwright Chrome,macOS development,Critical backend API error - missing serializer_class in TeacherInvitationViewSet

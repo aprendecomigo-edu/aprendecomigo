@@ -1,7 +1,0 @@
-test_id,test_name,description,last_run,overall_status,total_runs,pass_count,fail_count
-pay-001,Payment Dashboard Metrics and Real-time Updates,Verify payment analytics dashboard displays correctly with real-time metrics and charts,20250802-005546,FAIL,1,0,1
-pay-002,Transaction Search and Filtering,Test transaction history search functionality and filtering capabilities,,,0,0,0
-pay-003,Administrative Actions - Refunds Disputes Fraud,Verify admin payment actions including refunds disputes and fraud detection,,,0,0,0
-pay-004,Admin Authentication and Security,Test admin-only access and security features for payment monitoring,,,0,0,0
-pay-005,WebSocket Integration and Real-time Updates,Verify WebSocket connectivity and real-time payment data updates,,,0,0,0
-pay-006,Cross-platform Compatibility,Test payment dashboard across web and mobile platforms,,,0,0,0

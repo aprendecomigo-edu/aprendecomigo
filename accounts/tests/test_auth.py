@@ -1,14 +1,12 @@
 from datetime import timedelta
 from unittest.mock import patch
 
-import pyotp
-from common.throttles import EmailCodeRequestThrottle, IPSignupThrottle
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.utils import timezone
 from knox.models import AuthToken
+import pyotp
 from rest_framework import status
-from rest_framework.response import Response
 from rest_framework.test import APIClient, APITestCase
 
 from accounts.models import (
@@ -17,8 +15,6 @@ from accounts.models import (
     SchoolMembership,
     VerificationCode,
 )
-from accounts.serializers import UserSerializer
-from accounts.views import RequestCodeView
 
 User = get_user_model()
 
@@ -35,14 +31,12 @@ class EmailAuthTests(APITestCase):
         self.email = "test@example.com"  # Add the missing email attribute
 
         # Create a test user
-        self.test_user = CustomUser.objects.create_user(
-            email=self.email, password="testpass123", name="Test User"
-        )
+        self.test_user = CustomUser.objects.create_user(email=self.email, password="testpass123", name="Test User")
         SchoolMembership.objects.create(user=self.test_user, school=self.school, role="student")
 
         self.request_code_url = reverse("accounts:request_code")
         self.verify_code_url = reverse("accounts:verify_code")
-        
+
         # Bypass throttling for cleaner tests
         self.throttle_patcher = patch(
             "rest_framework.throttling.AnonRateThrottle.allow_request",
@@ -76,7 +70,7 @@ class EmailAuthTests(APITestCase):
     def test_verify_email_code(self):
         """Test verifying an email code."""
         # User already exists from setUp() as self.test_user
-        
+
         # Create a verification code
         verification = VerificationCode.generate_code(self.email)
 
@@ -186,7 +180,7 @@ class EmailAuthTests(APITestCase):
 
 class ContactVerificationTests(APITestCase):
     """Test contact verification and primary contact management.
-    
+
     These tests cover phone/email verification and primary contact selection
     for authenticated users managing their contact preferences.
     """
@@ -340,8 +334,7 @@ class ContactVerificationTests(APITestCase):
             primary_data = {"primary_contact": "phone"}
             response = self.client.post(self.set_primary_contact_url, primary_data, format="json")
             self.assertEqual(response.status_code, status.HTTP_200_OK)
-            
+
             # Confirm primary contact updated
             self.user.refresh_from_db()
             self.assertEqual(self.user.primary_contact, "phone")
-
