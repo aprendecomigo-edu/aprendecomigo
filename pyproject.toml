@@ -110,7 +110,7 @@ ignore = [
 "finances/views.py" = ["F402", "F811"]  # Allow shadowing and redefinition in complex views
 
 [tool.ruff.lint.isort]
-known-third-party = ["django", "rest_framework", "channels", "stripe"]
+known-third-party = ["django", "channels", "stripe"]
 known-first-party = ["accounts", "classroom", "common", "finances", "messaging", "scheduler", "tasks"]
 combine-as-imports = true
 force-sort-within-sections = true
@@ -125,7 +125,7 @@ ignore_missing_imports = true
 follow_imports = "silent"
 no_implicit_reexport = false
 strict_optional = true
-plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+plugins = ["mypy_django_plugin.main"]
 
 [tool.django-stubs]
 django_settings_module = "aprendecomigo.settings.development"
