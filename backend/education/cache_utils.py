@@ -2,10 +2,10 @@
 Caching utilities for education app to improve performance.
 """
 
-from django.core.cache import cache
-from django.core.cache.utils import make_template_fragment_key
 from functools import wraps
 import hashlib
+
+from django.core.cache import cache
 
 
 def cache_key_for_teacher_dashboard(teacher_id):
@@ -41,12 +41,12 @@ def cache_expensive_query(timeout=60*15):
         def wrapper(*args, **kwargs):
             # Create cache key from function name and arguments
             cache_key = f"{func.__name__}_{hash(str(args) + str(sorted(kwargs.items())))}"
-            
+
             # Try to get from cache first
             result = cache.get(cache_key)
             if result is not None:
                 return result
-            
+
             # Execute function and cache result
             result = func(*args, **kwargs)
             cache.set(cache_key, result, timeout)
@@ -57,79 +57,80 @@ def cache_expensive_query(timeout=60*15):
 
 class CacheManager:
     """Centralized cache management for education app."""
-    
+
     @staticmethod
     def get_teacher_dashboard_data(teacher_id):
         """Get cached teacher dashboard data."""
         return cache.get(cache_key_for_teacher_dashboard(teacher_id))
-    
+
     @staticmethod
     def set_teacher_dashboard_data(teacher_id, data, timeout=60*15):
         """Cache teacher dashboard data."""
         cache.set(cache_key_for_teacher_dashboard(teacher_id), data, timeout)
-    
+
     @staticmethod
     def invalidate_teacher_dashboard(teacher_id):
         """Invalidate teacher dashboard cache."""
         cache.delete(cache_key_for_teacher_dashboard(teacher_id))
-    
+
     @staticmethod
     def get_student_portal_data(student_id):
         """Get cached student portal data."""
         return cache.get(cache_key_for_student_portal(student_id))
-    
+
     @staticmethod
     def set_student_portal_data(student_id, data, timeout=60*15):
         """Cache student portal data."""
         cache.set(cache_key_for_student_portal(student_id), data, timeout)
-    
+
     @staticmethod
     def invalidate_student_portal(student_id):
         """Invalidate student portal cache."""
         cache.delete(cache_key_for_student_portal(student_id))
-    
+
     @staticmethod
     def get_course_stats(course_id):
         """Get cached course statistics."""
         return cache.get(cache_key_for_course_stats(course_id))
-    
+
     @staticmethod
     def set_course_stats(course_id, data, timeout=60*30):
         """Cache course statistics."""
         cache.set(cache_key_for_course_stats(course_id), data, timeout)
-    
+
     @staticmethod
     def invalidate_course_stats(course_id):
         """Invalidate course statistics cache."""
         cache.delete(cache_key_for_course_stats(course_id))
-    
+
     @staticmethod
     def get_teacher_earnings(teacher_id, start_date, end_date):
         """Get cached teacher earnings."""
         key = cache_key_for_teacher_earnings(teacher_id, start_date, end_date)
         return cache.get(key)
-    
+
     @staticmethod
     def set_teacher_earnings(teacher_id, start_date, end_date, data, timeout=60*60):
         """Cache teacher earnings."""
         key = cache_key_for_teacher_earnings(teacher_id, start_date, end_date)
         cache.set(key, data, timeout)
-    
+
     @staticmethod
     def invalidate_teacher_cache(teacher_id):
         """Invalidate all cache related to a teacher."""
         # Get all keys and delete teacher-related ones
         # This is a simple approach - in production, consider using cache tags
         cache.delete(cache_key_for_teacher_dashboard(teacher_id))
-        
+
         # For more complex invalidation, consider using cache versioning
         # or implementing cache tags with django-cache-machine
 
 
 # Signal handlers to automatically invalidate cache when data changes
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
-from .models import Course, Enrollment, Payment, Lesson, Assignment
+
+from .models import Assignment, Course, Enrollment, Lesson, Payment
 
 
 @receiver([post_save, post_delete], sender=Course)

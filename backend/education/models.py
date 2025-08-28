@@ -21,14 +21,15 @@ User = get_user_model()
 # Import existing profile models from accounts app
 from accounts.models import StudentProfile, TeacherProfile
 
+
 # Optimized QuerySets and Managers for performance
 class CourseQuerySet(models.QuerySet):
     def with_related(self):
         return self.select_related('teacher__user', 'subject')
-    
+
     def for_teacher(self, teacher):
         return self.filter(teacher=teacher)
-    
+
     def published(self):
         return self.filter(status='published')
 
@@ -36,7 +37,7 @@ class CourseQuerySet(models.QuerySet):
 class EnrollmentQuerySet(models.QuerySet):
     def with_related(self):
         return self.select_related('student__user', 'course__teacher__user', 'course__subject')
-    
+
     def active(self):
         return self.filter(is_active=True)
 
@@ -44,7 +45,7 @@ class EnrollmentQuerySet(models.QuerySet):
 class LessonQuerySet(models.QuerySet):
     def with_related(self):
         return self.select_related('course__teacher__user', 'course__subject')
-    
+
     def upcoming(self):
         return self.filter(status__in=['scheduled', 'in_progress']).order_by('scheduled_date')
 
@@ -52,7 +53,7 @@ class LessonQuerySet(models.QuerySet):
 class AssignmentQuerySet(models.QuerySet):
     def with_related(self):
         return self.select_related('course__teacher__user')
-    
+
     def active(self):
         return self.filter(is_active=True)
 
@@ -60,7 +61,7 @@ class AssignmentQuerySet(models.QuerySet):
 class PaymentQuerySet(models.QuerySet):
     def with_related(self):
         return self.select_related('student__user', 'teacher__user', 'enrollment__course')
-    
+
     def completed(self):
         return self.filter(status='completed')
 
@@ -68,7 +69,7 @@ class PaymentQuerySet(models.QuerySet):
 class AssignmentSubmissionQuerySet(models.QuerySet):
     def with_related(self):
         return self.select_related('student__user', 'assignment__course__teacher__user')
-    
+
     def pending_grading(self):
         return self.filter(is_draft=False, graded_at__isnull=True)
 
@@ -77,13 +78,13 @@ class AssignmentSubmissionQuerySet(models.QuerySet):
 class CourseManager(models.Manager):
     def get_queryset(self):
         return CourseQuerySet(self.model, using=self._db)
-    
+
     def with_related(self):
         return self.get_queryset().with_related()
-    
+
     def for_teacher(self, teacher):
         return self.get_queryset().for_teacher(teacher).with_related()
-    
+
     def published(self):
         return self.get_queryset().published().with_related()
 
@@ -91,10 +92,10 @@ class CourseManager(models.Manager):
 class EnrollmentManager(models.Manager):
     def get_queryset(self):
         return EnrollmentQuerySet(self.model, using=self._db)
-    
+
     def with_related(self):
         return self.get_queryset().with_related()
-    
+
     def active(self):
         return self.get_queryset().active().with_related()
 
@@ -102,10 +103,10 @@ class EnrollmentManager(models.Manager):
 class LessonManager(models.Manager):
     def get_queryset(self):
         return LessonQuerySet(self.model, using=self._db)
-    
+
     def with_related(self):
         return self.get_queryset().with_related()
-    
+
     def upcoming(self):
         return self.get_queryset().upcoming().with_related()
 
@@ -113,10 +114,10 @@ class LessonManager(models.Manager):
 class AssignmentManager(models.Manager):
     def get_queryset(self):
         return AssignmentQuerySet(self.model, using=self._db)
-    
+
     def with_related(self):
         return self.get_queryset().with_related()
-    
+
     def active(self):
         return self.get_queryset().active().with_related()
 
@@ -124,10 +125,10 @@ class AssignmentManager(models.Manager):
 class PaymentManager(models.Manager):
     def get_queryset(self):
         return PaymentQuerySet(self.model, using=self._db)
-    
+
     def with_related(self):
         return self.get_queryset().with_related()
-    
+
     def completed(self):
         return self.get_queryset().completed().with_related()
 
@@ -135,10 +136,10 @@ class PaymentManager(models.Manager):
 class AssignmentSubmissionManager(models.Manager):
     def get_queryset(self):
         return AssignmentSubmissionQuerySet(self.model, using=self._db)
-    
+
     def with_related(self):
         return self.get_queryset().with_related()
-    
+
     def pending_grading(self):
         return self.get_queryset().pending_grading().with_related()
 

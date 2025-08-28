@@ -243,7 +243,7 @@ SESSION_SAVE_EVERY_REQUEST = True  # Force session save on every request
 
 CSRF_TRUSTED_ORIGINS = [
     "http://192.168.1.98:8000",
-    "http://10.1.14.101:8000", 
+    "http://10.1.14.101:8000",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
 ]

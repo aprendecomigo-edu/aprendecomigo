@@ -23,7 +23,7 @@ def send_email_verification_code(email, code):
 def send_magic_link_email(email, magic_link, user_name=None):
     """Send magic link authentication email"""
     greeting = f"Hello {user_name}" if user_name else "Hello"
-    
+
     return send_mail(
         subject="Aprende Comigo - Login Link",
         message=f"""{greeting},
@@ -392,7 +392,7 @@ def send_sms_otp(phone_number: str, otp_code: str, user_name: str | None = None)
     """
     greeting = f"Hi {user_name}, " if user_name else "Hi, "
     message = f"{greeting}Your Aprende Comigo verification code is: {otp_code}. Valid for 5 minutes. Do not share this code."
-    
+
     try:
         result = send_sms(phone_number, message)
         if result.get("success"):
@@ -418,7 +418,7 @@ def send_magic_link_email(email: str, magic_link: str, user_name: str | None = N
         dict: Result with success status
     """
     greeting = f"Hi {user_name}," if user_name else "Hi,"
-    
+
     subject = "Aprende Comigo - Login Link"
     message = f"""{greeting}
 
@@ -430,7 +430,7 @@ This link will expire in 10 minutes for your security.
 
 Best regards,
 The Aprende Comigo Team"""
-    
+
     try:
         success = send_mail(
             subject=subject,
@@ -439,15 +439,15 @@ The Aprende Comigo Team"""
             recipient_list=[email],
             fail_silently=False,
         )
-        
+
         result = {"success": bool(success), "email": email}
         if success:
             logger.info(f"Magic link email sent successfully to: {email}")
         else:
             logger.error(f"Failed to send magic link email to: {email}")
-            
+
         return result
-        
+
     except Exception as e:
         logger.exception(f"Error sending magic link email to {email}: {e}")
         return {"success": False, "error": str(e), "email": email}

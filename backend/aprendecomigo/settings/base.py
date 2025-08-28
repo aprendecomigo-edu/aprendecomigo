@@ -185,7 +185,7 @@ try:
     import redis
     redis_client = redis.Redis.from_url(os.getenv('REDIS_URL', 'redis://127.0.0.1:6379'))
     redis_client.ping()
-    
+
     # Redis is available - use Redis cache
     CACHES = {
         'default': {

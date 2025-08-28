@@ -11,7 +11,8 @@
       "WebFetch(domain:flowbite.com)",
       "WebFetch(domain:www.colby.so)",
       "WebFetch(domain:www.penguinui.com)",
-      "mcp__playwright__browser_handle_dialog"
+      "mcp__playwright__browser_handle_dialog",
+      "mcp__ide__executeCode"
     ],
     "deny": [],
     "ask": []
