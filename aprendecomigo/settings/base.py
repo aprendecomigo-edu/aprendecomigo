@@ -10,7 +10,6 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
-from datetime import timedelta
 import os
 from pathlib import Path
 
@@ -45,7 +44,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",  # Required for site configuration
-    "drf_yasg",  # for API documentation
     # Field-level encryption
     "django_cryptography",
     # Channels for WebSocket support
@@ -59,8 +57,8 @@ INSTALLED_APPS = [
     "pwa",          # PWA support
     "webpush",      # Web push notifications
     "tailwind",
-
     # Custom apps
+    "theme",
     "common",
     "accounts",
     "dashboard",  # Dashboard views with clean URLs
@@ -668,3 +666,5 @@ WEBPUSH_SETTINGS = {
     "VAPID_PRIVATE_KEY": os.getenv("VAPID_PRIVATE_KEY", "E9NAys9Mhnb13Bm7jbb-EDMGfBtSO43DBirbSQeEyxk"),
     "VAPID_ADMIN_EMAIL": os.getenv("VAPID_ADMIN_EMAIL", "admin@aprendecomigo.com")
 }
+
+TAILWIND_APP_NAME="theme"

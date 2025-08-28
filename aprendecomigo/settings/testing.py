@@ -2,12 +2,6 @@
 Django test settings for aprendecomigo project.
 """
 
-# Import specific settings from base
-from .base import (
-    REST_FRAMEWORK as BASE_REST_FRAMEWORK,
-    SIMPLE_JWT as BASE_SIMPLE_JWT,
-)
-
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "django-insecure-test-key-not-used-in-production"
 
@@ -24,9 +18,6 @@ DATABASES = {
         "NAME": ":memory:",
     }
 }
-
-# Set JWT signing key
-SIMPLE_JWT = {**BASE_SIMPLE_JWT, "SIGNING_KEY": SECRET_KEY}
 
 # Disable password hashing for faster tests
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
@@ -60,13 +51,6 @@ SWAGGER_USE_COMPAT_RENDERERS = False
 
 # Import all settings from base.py
 from .base import *  # type: ignore[assignment]  # noqa: E402
-
-# Disable throttling during tests - MUST come after importing base.py to override properly
-REST_FRAMEWORK = {
-    **BASE_REST_FRAMEWORK,
-    "DEFAULT_THROTTLE_CLASSES": [],
-    "DEFAULT_THROTTLE_RATES": {},
-}
 
 # Allow testserver for Django test client
 ALLOWED_HOSTS = ["testserver", "localhost", "127.0.0.1"]
