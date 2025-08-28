@@ -1,0 +1,184 @@
+{% extends "base_dashboard.html" %}
+{% load static %}
+
+{% block title %}Email Analytics{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Email Analytics</h1>
+            <p class="text-sm text-gray-600 mt-1">
+                Performance metrics for the last 30 days
+                ({{ period_start }} to {{ period_end }})
+            </p>
+        </div>
+        
+        <a href="{% url 'messaging:communication-list' %}" 
+           class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            📧 View All Communications
+        </a>
+    </div>
+
+    <!-- Metrics Cards -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+        <!-- Total Sent -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                            <span class="text-white text-sm font-semibold">📤</span>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Total Sent</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ total_sent|default:0 }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delivery Rate -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
+                            <span class="text-white text-sm font-semibold">✅</span>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Delivery Rate</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ delivery_rate|default:0 }}%</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Open Rate -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
+                            <span class="text-white text-sm font-semibold">👁️</span>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Open Rate</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ open_rate|default:0 }}%</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Click Rate -->
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-indigo-500 rounded-md flex items-center justify-center">
+                            <span class="text-white text-sm font-semibold">👆</span>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Click Rate</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ click_rate|default:0 }}%</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Communications -->
+    {% if recent_communications %}
+        <div class="bg-white shadow overflow-hidden sm:rounded-md">
+            <div class="px-4 py-5 sm:px-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Recent Communications</h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">Last 10 email communications sent</p>
+            </div>
+            <ul class="divide-y divide-gray-200">
+                {% for communication in recent_communications %}
+                    <li class="px-4 py-4 flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10">
+                                <!-- Status Icon -->
+                                {% if communication.delivery_status == 'delivered' %}
+                                    <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                                        <span class="text-green-600 text-xs">✅</span>
+                                    </div>
+                                {% elif communication.delivery_status == 'opened' %}
+                                    <div class="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+                                        <span class="text-purple-600 text-xs">👁️</span>
+                                    </div>
+                                {% elif communication.delivery_status == 'failed' %}
+                                    <div class="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
+                                        <span class="text-red-600 text-xs">❌</span>
+                                    </div>
+                                {% else %}
+                                    <div class="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
+                                        <span class="text-gray-600 text-xs">📤</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">
+                                    {{ communication.subject|truncatechars:60 }}
+                                </div>
+                                <div class="text-sm text-gray-500">
+                                    To: {{ communication.recipient_email }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <div class="text-sm text-gray-500">
+                                {{ communication.sent_at|date:"M j, g:i A" }}
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                {% if communication.delivery_status == 'delivered' %}bg-green-100 text-green-800
+                                {% elif communication.delivery_status == 'opened' %}bg-purple-100 text-purple-800
+                                {% elif communication.delivery_status == 'failed' %}bg-red-100 text-red-800
+                                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ communication.get_delivery_status_display }}
+                            </span>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <!-- Performance Tips -->
+    <div class="mt-8 bg-blue-50 rounded-lg p-6">
+        <h3 class="text-lg font-medium text-blue-900 mb-4">💡 Performance Tips</h3>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+                <h4 class="text-sm font-medium text-blue-800 mb-2">Improve Delivery Rate</h4>
+                <ul class="text-sm text-blue-700 space-y-1">
+                    <li>• Use verified sender domains</li>
+                    <li>• Avoid spam trigger words</li>
+                    <li>• Maintain clean email lists</li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-sm font-medium text-blue-800 mb-2">Boost Open Rate</h4>
+                <ul class="text-sm text-blue-700 space-y-1">
+                    <li>• Write compelling subject lines</li>
+                    <li>• Send at optimal times</li>
+                    <li>• Personalize sender name</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

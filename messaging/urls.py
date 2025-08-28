@@ -1,38 +1,58 @@
 """
-URL patterns for the messaging app - Issue #107: Student Balance Monitoring & Notification System
+URL patterns for the messaging app - Converted to Django views with HTMX for PWA migration.
 """
 
-from django.urls import include, path
-from rest_framework.routers import DefaultRouter
+from django.urls import path
 
 from . import views
-from .views import InvitationAPIView
 
 app_name = "messaging"
 
-# Router for ViewSets
-router = DefaultRouter()
-router.register(r"email-templates", views.SchoolEmailTemplateViewSet, basename="email-template")
-router.register(r"email-sequences", views.EmailSequenceViewSet, basename="email-sequence")
-router.register(r"email-communications", views.EmailCommunicationViewSet, basename="email-communication")
-router.register(
-    r"enhanced-email-templates", views.EnhancedSchoolEmailTemplateViewSet, basename="enhanced-email-template"
-)
-
 urlpatterns = [
-    # Email communication endpoints (moved from accounts)
-    path("", include(router.urls)),
-    # Email communication analytics and settings
-    path("communication-analytics/", views.CommunicationAnalyticsAPIView.as_view(), name="communication-analytics"),
-    path("template-analytics/", views.TemplateAnalyticsAPIView.as_view(), name="template-analytics"),
-    path("communication-settings/", views.CommunicationSettingsAPIView.as_view(), name="communication-settings"),
-    # Notification endpoints
+    # =======================
+    # NOTIFICATION URLS
+    # =======================
+    
+    # Notification list and filtering
     path("notifications/", views.NotificationListView.as_view(), name="notification-list"),
+    
+    # Notification detail
     path("notifications/<int:pk>/", views.NotificationDetailView.as_view(), name="notification-detail"),
-    path("notifications/<int:pk>/read/", views.NotificationMarkReadView.as_view(), name="notification-mark-read"),
+    
+    # Mark notification as read (HTMX endpoint)
+    path("notifications/<int:pk>/mark-read/", views.NotificationMarkReadView.as_view(), name="notification-mark-read"),
+    
+    # Unread count badge (HTMX polling endpoint)
     path("notifications/unread-count/", views.NotificationUnreadCountView.as_view(), name="notification-unread-count"),
-    # Legacy endpoint (kept for backward compatibility)
-    path("notifications/counts/", views.notification_counts, name="counts"),
-    # Invitations API
-    path("invitations/", InvitationAPIView.as_view(), name="invitation-api"),
+    
+    # Legacy endpoint for backward compatibility
+    path("notifications/counts/", views.notification_counts, name="notification-counts"),
+
+    # =======================
+    # EMAIL TEMPLATE URLS
+    # =======================
+    
+    # Email template management
+    path("email-templates/", views.SchoolEmailTemplateListView.as_view(), name="template-list"),
+    path("email-templates/create/", views.SchoolEmailTemplateCreateView.as_view(), name="template-create"),
+    path("email-templates/<int:pk>/", views.SchoolEmailTemplateDetailView.as_view(), name="template-detail"),
+    path("email-templates/<int:pk>/edit/", views.SchoolEmailTemplateEditView.as_view(), name="template-edit"),
+    
+    # Template preview (HTMX endpoint)
+    path("email-templates/<int:pk>/preview/", views.SchoolEmailTemplatePreviewView.as_view(), name="template-preview"),
+
+    # =======================
+    # EMAIL COMMUNICATION URLS
+    # =======================
+    
+    # Email communications list and analytics
+    path("communications/", views.EmailCommunicationListView.as_view(), name="communication-list"),
+    path("communications/analytics/", views.EmailAnalyticsView.as_view(), name="email-analytics"),
+
+    # =======================
+    # LEGACY API COMPATIBILITY
+    # =======================
+    
+    # Legacy invitations API (for backward compatibility)
+    path("invitations/", views.InvitationAPIView.as_view(), name="invitation-api"),
 ]

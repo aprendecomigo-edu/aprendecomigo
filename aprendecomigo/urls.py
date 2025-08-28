@@ -15,8 +15,6 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 
@@ -44,12 +42,12 @@ urlpatterns = [
     path("people/", PeopleView.as_view(), name="people"),
     path("tasks/", include("tasks.urls")),  # Task management (PWA)
 
-    # API routes for DRF endpoints
-    path("api/accounts/", include("accounts.api_urls")),  # Account management APIs
+    # API routes for DRF endpoints (TODO: Migrate to Django views for PWA)
+    # path("api/accounts/", include("accounts.api_urls")),  # Account management APIs - REMOVED
     path("api/classroom/", include("classroom.urls")),  # Chat functionality (Django views)
-    path("api/finances/", include("finances.urls")),  # Financial operations
+    # path("api/finances/", include("finances.urls")),  # Financial operations - TODO: Migrate to Django views (REST framework dependency)
     path("api/scheduler/", include("scheduler.urls")),  # Scheduling + Session booking
-    # path("api/messaging/", include("messaging.urls", namespace="messaging")),  # Messaging - TODO: Refactor to Django views
+    path("messaging/", include("messaging.urls", namespace="messaging")),  # Messaging - Converted to Django views with HTMX
     # Education routes (Milestone 3 - Core Educational Features)???
     path("education/", include("education.urls", namespace="education")),
     # Push notification endpoints

@@ -1,0 +1,60 @@
+<!-- Notifications List Content - HTMX Partial -->
+<div class="space-y-4">
+    {% if notifications %}
+        {% for notification in notifications %}
+            {% include 'messaging/notifications/partials/notification_item.html' %}
+        {% endfor %}
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+            <nav class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6" aria-label="Pagination">
+                <div class="hidden sm:block">
+                    <p class="text-sm text-gray-700">
+                        Showing
+                        <span class="font-medium">{{ page_obj.start_index }}</span>
+                        to
+                        <span class="font-medium">{{ page_obj.end_index }}</span>
+                        of
+                        <span class="font-medium">{{ paginator.count }}</span>
+                        results
+                    </p>
+                </div>
+                
+                <div class="flex-1 flex justify-between sm:justify-end">
+                    {% if page_obj.has_previous %}
+                        <button hx-get="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}"
+                                hx-target="#notifications-container"
+                                class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            Previous
+                        </button>
+                    {% endif %}
+
+                    {% if page_obj.has_next %}
+                        <button hx-get="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode }}"
+                                hx-target="#notifications-container"
+                                class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            Next
+                        </button>
+                    {% endif %}
+                </div>
+            </nav>
+        {% endif %}
+    {% else %}
+        <!-- Empty state -->
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5-5-5h5v-5a7.5 7.5 0 1 1 15 0v5z" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No notifications</h3>
+            <p class="mt-1 text-sm text-gray-500">
+                {% if request.GET.is_read == 'false' %}
+                    You have no unread notifications.
+                {% elif request.GET.notification_type %}
+                    No notifications found for the selected filter.
+                {% else %}
+                    You haven't received any notifications yet.
+                {% endif %}
+            </p>
+        </div>
+    {% endif %}
+</div>

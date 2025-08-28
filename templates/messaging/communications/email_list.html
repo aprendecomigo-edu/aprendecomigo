@@ -1,0 +1,73 @@
+{% extends "base_dashboard.html" %}
+{% load static %}
+
+{% block title %}Email Communications{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Email Communications</h1>
+        
+        <!-- Analytics Link -->
+        <a href="{% url 'messaging:email-analytics' %}" 
+           class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            📊 View Analytics
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow-sm border p-4 mb-6">
+        <form hx-get="{% url 'messaging:communication-list' %}" 
+              hx-target="#communications-container"
+              hx-trigger="change, submit"
+              class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            
+            <!-- Date Range -->
+            <div>
+                <label for="sent_after" class="block text-sm font-medium text-gray-700 mb-1">
+                    From Date
+                </label>
+                <input type="date" name="sent_after" id="sent_after" 
+                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+
+            <div>
+                <label for="sent_before" class="block text-sm font-medium text-gray-700 mb-1">
+                    To Date
+                </label>
+                <input type="date" name="sent_before" id="sent_before" 
+                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+
+            <!-- Communication Type -->
+            <div>
+                <label for="communication_type" class="block text-sm font-medium text-gray-700 mb-1">
+                    Type
+                </label>
+                <select name="communication_type" id="communication_type" 
+                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <option value="">All types</option>
+                    {% for value, label in communication_types %}
+                        <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Recipient Email -->
+            <div>
+                <label for="recipient_email" class="block text-sm font-medium text-gray-700 mb-1">
+                    Recipient
+                </label>
+                <input type="email" name="recipient_email" id="recipient_email" 
+                       placeholder="email@example.com"
+                       class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+            </div>
+        </form>
+    </div>
+
+    <!-- Communications Container -->
+    <div id="communications-container">
+        {% include 'messaging/communications/partials/email_list_content.html' %}
+    </div>
+</div>
+{% endblock %}
