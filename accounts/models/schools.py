@@ -10,6 +10,8 @@ import uuid
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from accounts.models.educational import EducationalSystemType
+
 from .enums import (
     ActivityType,
     CalendarIntegrationChoices,
@@ -33,64 +35,6 @@ class SchoolRole(models.TextChoices):
     TEACHER = "teacher", _("Teacher")  # Can manage classes and students
     STUDENT = "student", _("Student")  # Access to assigned classes
     PARENT = "parent", _("Parent")  # Can manage child accounts and approve purchases
-
-
-# Educational System Enumerations
-class PortugueseSchoolYear(models.TextChoices):
-    """School years for Portuguese education system"""
-
-    FIRST = "1", _("1º ano")
-    SECOND = "2", _("2º ano")
-    THIRD = "3", _("3º ano")
-    FOURTH = "4", _("4º ano")
-    FIFTH = "5", _("5º ano")
-    SIXTH = "6", _("6º ano")
-    SEVENTH = "7", _("7º ano")
-    EIGHTH = "8", _("8º ano")
-    NINTH = "9", _("9º ano")
-    TENTH = "10", _("10º ano")
-    ELEVENTH = "11", _("11º ano")
-    TWELFTH = "12", _("12º ano")
-
-
-class PortugueseEducationLevel(models.TextChoices):
-    """Education levels for Portuguese system"""
-
-    BASIC_1ST_CYCLE = "ensino_basico_1_ciclo", _("Ensino Básico 1º Ciclo")
-    BASIC_2ND_CYCLE = "ensino_basico_2_ciclo", _("Ensino Básico 2º Ciclo")
-    BASIC_3RD_CYCLE = "ensino_basico_3_ciclo", _("Ensino Básico 3º Ciclo")
-    SECONDARY = "ensino_secundario", _("Ensino Secundário")
-
-
-class CustomSchoolYear(models.TextChoices):
-    """School years for custom/generic education system"""
-
-    GRADE_1 = "1", _("Grade 1")
-    GRADE_2 = "2", _("Grade 2")
-    GRADE_3 = "3", _("Grade 3")
-    GRADE_4 = "4", _("Grade 4")
-    GRADE_5 = "5", _("Grade 5")
-    GRADE_6 = "6", _("Grade 6")
-    GRADE_7 = "7", _("Grade 7")
-    GRADE_8 = "8", _("Grade 8")
-    GRADE_9 = "9", _("Grade 9")
-    GRADE_10 = "10", _("Grade 10")
-    GRADE_11 = "11", _("Grade 11")
-    GRADE_12 = "12", _("Grade 12")
-
-
-class CustomEducationLevel(models.TextChoices):
-    """Education levels for custom/generic system"""
-
-    ELEMENTARY = "elementary", _("Elementary")
-    MIDDLE_SCHOOL = "middle_school", _("Middle School")
-    HIGH_SCHOOL = "high_school", _("High School")
-
-class EducationalSystemType(models.TextChoices):
-    """Types of educational systems"""
-
-    PORTUGAL = "pt", _("Portugal")
-    CUSTOM = "custom", _("Custom")
 
 
 
@@ -140,9 +84,7 @@ class SchoolMembership(models.Model):
     """
     Represents a user's membership in a school with specific role.
     Users can have multiple memberships across different schools with different roles.
-
-    This replaces the previous user_type field and clearly separates application
-    roles from Django's built-in permissions system.
+    At the same school a user can be in different roles, such as owner and teacher.
     """
 
     user: models.ForeignKey = models.ForeignKey(
@@ -215,7 +157,7 @@ class SchoolSettings(models.Model):
         related_name="schools_using_system",
         help_text=_("Educational system used by this school"),
         verbose_name=_("educational system"),
-        default=1,  # Portugal system as default
+        default=EducationalSystemType.PORTUGAL,  # Portugal system as default
     )
     grade_levels: models.JSONField = models.JSONField(
         _("grade levels"), default=list, blank=True, help_text=_("List of grade levels offered by this school")

@@ -207,27 +207,6 @@ class InvitationStatus(models.TextChoices):
     CANCELLED = "cancelled", _("Cancelled")
 
 
-class StudentProgressLevel(models.TextChoices):
-    """Progress levels for student learning."""
-
-    BEGINNER = "beginner", _("Beginner")
-    ELEMENTARY = "elementary", _("Elementary")
-    INTERMEDIATE = "intermediate", _("Intermediate")
-    ADVANCED = "advanced", _("Advanced")
-    EXPERT = "expert", _("Expert")
-
-
-class AssessmentType(models.TextChoices):
-    """Types of assessments that can be recorded."""
-
-    QUIZ = "quiz", _("Quiz")
-    TEST = "test", _("Test")
-    HOMEWORK = "homework", _("Homework")
-    PROJECT = "project", _("Project")
-    ORAL_EXAM = "oral_exam", _("Oral Exam")
-    PRACTICAL = "practical", _("Practical Exercise")
-    PRESENTATION = "presentation", _("Presentation")
-    OTHER = "other", _("Other")
 
 
 class RelationshipType(models.TextChoices):

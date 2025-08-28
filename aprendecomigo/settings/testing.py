@@ -277,10 +277,5 @@ LOGGING = {
             "level": "ERROR",
             "propagate": False,
         },
-        "knox": {
-            "handlers": ["console"],
-            "level": "ERROR",
-            "propagate": False,
-        },
     },
 }

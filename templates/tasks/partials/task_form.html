@@ -1,0 +1,143 @@
+{% load i18n %}
+
+<form 
+    hx-post="{% if edit_mode and task %}{% url 'tasks:task_detail' task.id %}{% else %}{% url 'tasks:task_list' %}{% endif %}"
+    hx-vals='{"action": "{% if edit_mode %}update_task{% else %}create_task{% endif %}"}'
+    hx-target="{% if edit_mode %}#task-form-response{% else %}#task-list-content{% endif %}"
+    hx-swap="{% if edit_mode %}innerHTML{% else %}afterbegin{% endif %}"
+    class="space-y-4">
+    
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        
+        <!-- Title -->
+        <div class="sm:col-span-2">
+            <label for="title" class="block text-sm font-medium text-gray-700">
+                {% trans "Title" %} <span class="text-red-500">*</span>
+            </label>
+            <input 
+                type="text" 
+                name="title" 
+                id="title" 
+                required
+                value="{{ task.title|default:'' }}"
+                class="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                placeholder="{% trans 'Enter task title...' %}">
+        </div>
+
+        <!-- Description -->
+        <div class="sm:col-span-2">
+            <label for="description" class="block text-sm font-medium text-gray-700">
+                {% trans "Description" %}
+            </label>
+            <textarea 
+                name="description" 
+                id="description" 
+                rows="3"
+                class="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                placeholder="{% trans 'Enter task description...' %}">{{ task.description|default:'' }}</textarea>
+        </div>
+
+        <!-- Priority -->
+        <div>
+            <label for="priority" class="block text-sm font-medium text-gray-700">
+                {% trans "Priority" %}
+            </label>
+            <select 
+                name="priority" 
+                id="priority"
+                class="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <option value="low" {% if task.priority == 'low' %}selected{% endif %}>{% trans "Low" %}</option>
+                <option value="medium" {% if task.priority == 'medium' or not task.priority %}selected{% endif %}>{% trans "Medium" %}</option>
+                <option value="high" {% if task.priority == 'high' %}selected{% endif %}>{% trans "High" %}</option>
+            </select>
+        </div>
+
+        <!-- Task Type -->
+        <div>
+            <label for="task_type" class="block text-sm font-medium text-gray-700">
+                {% trans "Type" %}
+            </label>
+            <select 
+                name="task_type" 
+                id="task_type"
+                class="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <option value="personal" {% if task.task_type == 'personal' or not task.task_type %}selected{% endif %}>{% trans "Personal" %}</option>
+                <option value="onboarding" {% if task.task_type == 'onboarding' %}selected{% endif %}>{% trans "Onboarding" %}</option>
+                <option value="assignment" {% if task.task_type == 'assignment' %}selected{% endif %}>{% trans "Assignment" %}</option>
+                <option value="system" {% if task.task_type == 'system' %}selected{% endif %}>{% trans "System" %}</option>
+            </select>
+        </div>
+
+        <!-- Due Date -->
+        <div>
+            <label for="due_date" class="block text-sm font-medium text-gray-700">
+                {% trans "Due Date" %}
+            </label>
+            <input 
+                type="datetime-local" 
+                name="due_date" 
+                id="due_date"
+                value="{% if task.due_date %}{{ task.due_date|date:'Y-m-d\TH:i' }}{% endif %}"
+                class="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+        </div>
+
+        {% if edit_mode and task %}
+        <!-- Status (only in edit mode) -->
+        <div>
+            <label for="status" class="block text-sm font-medium text-gray-700">
+                {% trans "Status" %}
+            </label>
+            <select 
+                name="status" 
+                id="status"
+                class="mt-1 block w-full border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <option value="pending" {% if task.status == 'pending' %}selected{% endif %}>{% trans "Pending" %}</option>
+                <option value="in_progress" {% if task.status == 'in_progress' %}selected{% endif %}>{% trans "In Progress" %}</option>
+                <option value="completed" {% if task.status == 'completed' %}selected{% endif %}>{% trans "Completed" %}</option>
+            </select>
+        </div>
+        {% endif %}
+
+        <!-- Urgent Checkbox -->
+        <div class="flex items-center {% if not edit_mode %}sm:col-span-2{% endif %}">
+            <input 
+                type="checkbox" 
+                name="is_urgent" 
+                id="is_urgent"
+                {% if task.is_urgent %}checked{% endif %}
+                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+            <label for="is_urgent" class="ml-2 block text-sm text-gray-700">
+                {% trans "Mark as urgent" %}
+            </label>
+        </div>
+
+    </div>
+
+    <!-- Form Actions -->
+    <div class="flex items-center justify-end space-x-3 pt-4 border-t border-gray-200">
+        {% if not edit_mode %}
+        <button 
+            type="button"
+            @click="showForm = false"
+            class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            {% trans "Cancel" %}
+        </button>
+        {% endif %}
+        
+        <button 
+            type="submit"
+            class="px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            {% if edit_mode %}
+                {% trans "Update Task" %}
+            {% else %}
+                {% trans "Create Task" %}
+            {% endif %}
+        </button>
+    </div>
+
+    {% if edit_mode %}
+    <!-- Response area for edit form -->
+    <div id="task-form-response"></div>
+    {% endif %}
+
+</form>

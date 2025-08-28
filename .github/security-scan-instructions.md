@@ -96,7 +96,7 @@ Ignore these common false positives:
 ## Compliance Requirements
 
 Ensure compliance with:
-- LGPD (Brazilian Data Protection Law)
+- GDPR
 - COPPA (for US users under 13)
 - Educational data protection regulations
 - Payment processing standards (PCI DSS)

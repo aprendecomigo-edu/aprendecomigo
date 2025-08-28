@@ -14,7 +14,6 @@ import logging
 from typing import Any
 
 from accounts.models import School, SchoolSettings, TeacherProfile
-from accounts.services.profile_completion import ProfileCompletionService
 
 logger = logging.getLogger(__name__)
 
@@ -119,34 +118,36 @@ class WizardOrchestrationService:
             }
 
         except Exception as e:
-            logger.error(f"Failed to generate wizard metadata for teacher {teacher_profile.id}: {e}")
+            logger.error(f"Failed to generate wizard metadata for teacher {teacher_profile.pk}: {e}")
             # Return minimal fallback metadata
             return cls._get_fallback_metadata()
 
     @classmethod
     def _get_completion_status(cls, teacher_profile: TeacherProfile) -> dict[str, Any]:
-        """Get detailed completion status for the teacher profile."""
+        """Get basic completion status for the teacher profile."""
         try:
-            completion_data = ProfileCompletionService.calculate_completion(teacher_profile)
+            missing_critical = teacher_profile.get_missing_critical_fields()
+            is_complete = teacher_profile.has_critical_fields()
 
             return {
-                "completion_percentage": float(completion_data["completion_percentage"]),
-                "missing_critical": completion_data.get("missing_critical", []),
-                "missing_optional": completion_data.get("missing_optional", []),
-                "is_complete": completion_data.get("is_complete", False),
-                "scores_breakdown": completion_data.get("scores_breakdown", {}),
-                "recommendations": completion_data.get("recommendations", []),
+                "completion_percentage": 100.0 if is_complete else 50.0,  # Simple binary completion
+                "missing_critical": missing_critical,
+                "missing_optional": [],  # Not tracking optional fields anymore
+                "is_complete": is_complete,
+                "scores_breakdown": {},  # No detailed scoring anymore
+                "recommendations": [f"Please complete: {', '.join(missing_critical)}" if missing_critical else "Profile complete!"],
             }
 
         except Exception as e:
-            logger.error(f"Failed to get completion status for teacher {teacher_profile.id}: {e}")
+            logger.error(f"Failed to get completion status for teacher {teacher_profile.pk}: {e}")
+            # Return minimal fallback data
             return {
                 "completion_percentage": 0.0,
-                "missing_critical": [],
+                "missing_critical": ["bio", "hourly_rate", "teaching_subjects"],
                 "missing_optional": [],
                 "is_complete": False,
-                "scores_breakdown": {"basic_info": 0.0, "teaching_details": 0.0, "professional_info": 0.0},
-                "recommendations": [],
+                "scores_breakdown": {},
+                "recommendations": ["Please complete your profile"],
             }
 
     @classmethod

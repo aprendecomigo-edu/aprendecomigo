@@ -1,7 +1,7 @@
 """
 Teacher Dashboard Service
 
-Handles complex data aggregation and calculations for teacher dashboard API.
+Handles data aggregation and calculations for teacher dashboard API.
 Optimized for performance with proper query optimization and caching.
 """
 
@@ -11,15 +11,13 @@ import logging
 from typing import Any
 
 from django.core.cache import cache
-from django.db.models import Avg, Prefetch, Q, Sum
+from django.db.models import Q, Sum
 from django.utils import timezone
 
 from accounts.models import (
-    ProgressAssessment,
     SchoolActivity,
     SchoolMembership,
     SchoolRole,
-    StudentProgress,
     TeacherProfile,
 )
 from finances.models import ClassSession, SessionStatus, TeacherPaymentEntry
@@ -54,9 +52,7 @@ class TeacherDashboardService:
             # Gather all data with optimized queries
             dashboard_data = {
                 "teacher_info": self._get_teacher_info(),
-                "students": self._get_students_data(),
                 "sessions": self._get_sessions_data(),
-                "progress_metrics": self._get_progress_metrics(),
                 "recent_activities": self._get_recent_activities(),
                 "earnings": self._get_earnings_data(),
                 "quick_stats": self._get_quick_stats(),
@@ -106,75 +102,9 @@ class TeacherDashboardService:
             "email": self.teacher_user.email,
             "specialty": self.teacher_profile.specialty or "",
             "hourly_rate": self.teacher_profile.hourly_rate or Decimal("0.00"),
-            "profile_completion_score": self.teacher_profile.profile_completion_score,
             "schools": schools,
             "courses_taught": courses_taught,
         }
-
-    def _get_students_data(self) -> list[dict[str, Any]]:
-        """Get students with their progress data."""
-        students_data = []
-
-        # Get all student progress records for this teacher with optimized queries
-        progress_records = (
-            StudentProgress.objects.filter(teacher=self.teacher_profile)
-            .select_related("student", "course")
-            .prefetch_related(
-                Prefetch(
-                    "assessments",
-                    queryset=ProgressAssessment.objects.filter(
-                        assessment_date__gte=timezone.now().date() - timedelta(days=30)
-                    ).order_by("-assessment_date")[:5],
-                    to_attr="recent_assessments_list",
-                )
-            )
-        )
-
-        # Optimize: Get all last session dates in a single query to avoid N+1 problem
-        student_ids = [progress.student.id for progress in progress_records]
-        last_sessions = {}
-        if student_ids:
-            # Get the most recent completed session for each student
-            from django.db.models import Max
-
-            session_dates = (
-                ClassSession.objects.filter(
-                    teacher=self.teacher_profile, students__id__in=student_ids, status=SessionStatus.COMPLETED
-                )
-                .values("students__id")
-                .annotate(last_date=Max("date"))
-            )
-
-            for session_data in session_dates:
-                last_sessions[session_data["students__id"]] = session_data["last_date"]
-
-        for progress in progress_records:
-            # Get last session date from optimized query result
-            last_session_date = last_sessions.get(progress.student.id)
-
-            students_data.append(
-                {
-                    "id": progress.student.id,
-                    "name": progress.student.name,
-                    "email": progress.student.email,
-                    "current_level": progress.current_level,
-                    "completion_percentage": progress.completion_percentage,
-                    "last_session_date": last_session_date,
-                    "recent_assessments": [
-                        {
-                            "id": assessment.id,
-                            "title": assessment.title,
-                            "assessment_type": assessment.assessment_type,
-                            "percentage": assessment.percentage,
-                            "assessment_date": assessment.assessment_date,
-                        }
-                        for assessment in progress.recent_assessments_list  # type: ignore[attr-defined]
-                    ],
-                    "skills_mastered": progress.skills_mastered,
-                }
-            )
-
-        return students_data
 
     def _get_sessions_data(self) -> dict[str, list[dict[str, Any]]]:
         """Get sessions data organized by time periods."""
@@ -217,48 +147,6 @@ class TeacherDashboardService:
             "today": [serialize_session(session) for session in today_sessions],
             "upcoming": [serialize_session(session) for session in upcoming_sessions],
             "recent_completed": [serialize_session(session) for session in recent_completed],
-        }
-
-    def _get_progress_metrics(self) -> dict[str, Any]:
-        """Calculate progress metrics."""
-        # Get all progress records for this teacher
-        progress_records = StudentProgress.objects.filter(teacher=self.teacher_profile)
-
-        if not progress_records.exists():
-            return {
-                "average_student_progress": Decimal("0.00"),
-                "total_assessments_given": 0,
-                "students_improved_this_month": 0,
-                "completion_rate_trend": Decimal("0.00"),
-            }
-
-        # Calculate average progress
-        avg_progress = progress_records.aggregate(avg_completion=Avg("completion_percentage"))[
-            "avg_completion"
-        ] or Decimal("0.00")
-
-        # Count total assessments given
-        total_assessments = ProgressAssessment.objects.filter(student_progress__teacher=self.teacher_profile).count()
-
-        # Students improved this month (simplified - count students with recent assessments)
-        this_month_start = timezone.now().replace(day=1).date()
-        students_with_recent_assessments = (
-            ProgressAssessment.objects.filter(
-                student_progress__teacher=self.teacher_profile, assessment_date__gte=this_month_start
-            )
-            .values("student_progress__student")
-            .distinct()
-            .count()
-        )
-
-        # Completion rate trend (simplified calculation)
-        completion_rate_trend = avg_progress
-
-        return {
-            "average_student_progress": avg_progress,
-            "total_assessments_given": total_assessments,
-            "students_improved_this_month": students_with_recent_assessments,
-            "completion_rate_trend": completion_rate_trend,
         }
 
     def _get_recent_activities(self) -> list[dict[str, Any]]:
@@ -358,10 +246,10 @@ class TeacherDashboardService:
         week_start = today - timedelta(days=today.weekday())
         week_end = week_start + timedelta(days=6)
 
-        # Total students
-        total_students = (
-            StudentProgress.objects.filter(teacher=self.teacher_profile).values("student").distinct().count()
-        )
+        # Total students (count unique students from sessions)
+        unique_students = ClassSession.objects.filter(
+            teacher=self.teacher_profile, status=SessionStatus.COMPLETED
+        ).values("students").distinct().count()
 
         # Sessions today
         sessions_today = ClassSession.objects.filter(teacher=self.teacher_profile, date=today).count()
@@ -371,20 +259,10 @@ class TeacherDashboardService:
             teacher=self.teacher_profile, date__gte=week_start, date__lte=week_end
         ).count()
 
-        # Completion rate (average of all student progress)
-        completion_rate = StudentProgress.objects.filter(teacher=self.teacher_profile).aggregate(
-            avg_completion=Avg("completion_percentage")
-        )["avg_completion"] or Decimal("0.00")
-
-        # Average rating (placeholder - would need a rating system)
-        average_rating = None  # Could be calculated from student feedback
-
         return {
-            "total_students": total_students,
+            "total_students": unique_students,
             "sessions_today": sessions_today,
             "sessions_this_week": sessions_this_week,
-            "completion_rate": completion_rate,
-            "average_rating": average_rating,
         }
 
     def _get_empty_dashboard_structure(self) -> dict[str, Any]:
@@ -396,18 +274,10 @@ class TeacherDashboardService:
                 "email": self.teacher_user.email,
                 "specialty": "",
                 "hourly_rate": Decimal("0.00"),
-                "profile_completion_score": Decimal("0.00"),
                 "schools": [],
                 "courses_taught": [],
             },
-            "students": [],
             "sessions": {"today": [], "upcoming": [], "recent_completed": []},
-            "progress_metrics": {
-                "average_student_progress": Decimal("0.00"),
-                "total_assessments_given": 0,
-                "students_improved_this_month": 0,
-                "completion_rate_trend": Decimal("0.00"),
-            },
             "recent_activities": [],
             "earnings": {
                 "current_month_total": Decimal("0.00"),
@@ -420,8 +290,6 @@ class TeacherDashboardService:
                 "total_students": 0,
                 "sessions_today": 0,
                 "sessions_this_week": 0,
-                "completion_rate": Decimal("0.00"),
-                "average_rating": None,
             },
         }
 

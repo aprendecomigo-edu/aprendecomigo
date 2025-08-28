@@ -12,7 +12,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from .enums import RelationshipType, SchoolRole
+from .enums import RelationshipType
 
 logger = logging.getLogger(__name__)
 
@@ -97,17 +97,7 @@ class TeacherProfile(models.Model):
         help_text=_("Detailed availability schedule with time slots and preferences"),
     )
 
-    # Profile completion tracking fields
-    profile_completion_score: models.DecimalField = models.DecimalField(
-        _("profile completion score"),
-        max_digits=5,
-        decimal_places=2,
-        default=0.0,
-        help_text=_("Calculated profile completion percentage (0-100)"),
-    )
-    is_profile_complete: models.BooleanField = models.BooleanField(
-        _("is profile complete"), default=False, help_text=_("Whether the profile meets completion requirements")
-    )
+    # Profile status tracking
     last_profile_update: models.DateTimeField = models.DateTimeField(
         _("last profile update"), auto_now=True, help_text=_("When the profile was last updated")
     )
@@ -145,59 +135,20 @@ class TeacherProfile(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=["profile_completion_score"]),
-            models.Index(fields=["is_profile_complete"]),
             models.Index(fields=["last_profile_update"]),
             models.Index(fields=["last_activity"]),
             # Indexes for tutor discovery optimization
             models.Index(fields=["specialty"]),
             models.Index(fields=["hourly_rate"]),
-            models.Index(fields=["is_profile_complete", "-profile_completion_score"]),
-            models.Index(fields=["is_profile_complete", "hourly_rate"]),
         ]
 
     def __str__(self) -> str:
         user_name = self.user.name if hasattr(self.user, "name") else str(self.user)
         return f"Teacher Profile: {user_name}"
 
-    def save(self, *args, **kwargs):
-        """Override save to update completion score."""
-        # Avoid infinite recursion - skip completion update if we're already updating these fields
-        update_fields = kwargs.get("update_fields", [])
-        if update_fields and "profile_completion_score" in update_fields:
-            return super().save(*args, **kwargs)
-
-        # Save first, then update completion
-        super().save(*args, **kwargs)
-
-        # Update completion score after saving
-        try:
-            self.update_completion_score()
-        except Exception as e:
-            logger.error(f"Failed to update completion score for teacher {self.id}: {e}")
-            # Don't fail the save if completion update fails
-
-    def update_completion_score(self) -> None:
-        """Update the profile completion score using ProfileCompletionService."""
-        from ..services.profile_completion import ProfileCompletionService
-
-        try:
-            completion_data = ProfileCompletionService.calculate_completion(self)
-            self.profile_completion_score = completion_data["completion_percentage"]
-            self.is_profile_complete = completion_data["is_complete"]
-            self.save(update_fields=["profile_completion_score", "is_profile_complete", "last_profile_update"])
-        except Exception as e:
-            logger.error(f"Failed to update completion score for teacher {self.id}: {e}")
-
     def get_school_memberships(self):
         """Get all school memberships for this teacher."""
         return self.user.school_memberships.filter(role=SchoolRole.TEACHER, is_active=True).select_related("school")
-
-    def get_completion_data(self) -> dict:
-        """Get detailed completion data for this profile."""
-        from ..services.profile_completion import ProfileCompletionService
-
-        return ProfileCompletionService.calculate_completion(self)
 
     def mark_activity(self) -> None:
         """Mark that the teacher was active."""
@@ -362,11 +313,6 @@ class ParentChildRelationship(models.Model):
         help_text=_("School where this relationship is established"),
     )
 
-    # Permissions that the parent has for this child
-    permissions: models.JSONField = models.JSONField(
-        _("permissions"), default=dict, blank=True, help_text=_("Specific permissions the parent has for this child")
-    )
-
     is_active: models.BooleanField = models.BooleanField(
         _("is active"), default=True, help_text=_("Whether this relationship is currently active")
     )
@@ -401,7 +347,7 @@ class ParentChildRelationship(models.Model):
     def __str__(self) -> str:
         parent_name = self.parent.name if hasattr(self.parent, "name") else str(self.parent)
         child_name = self.child.name if hasattr(self.child, "name") else str(self.child)
-        return f"{parent_name} -> {child_name} ({self.get_relationship_type_display()})"
+        return f"{parent_name} -> {child_name} ({self.school.name})"
 
     def clean(self):
         """Validate the relationship data."""

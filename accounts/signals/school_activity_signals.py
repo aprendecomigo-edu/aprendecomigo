@@ -145,31 +145,3 @@ def create_class_session_activity(sender, instance, created, **kwargs):
                         "date": instance.date.isoformat() if instance.date else None,
                     },
                 )
-
-
-@receiver(post_save, sender=SchoolActivity)
-def invalidate_metrics_cache_on_activity(sender, instance, created, **kwargs):
-    """Invalidate school metrics cache when new activity is created"""
-    if created:
-        from accounts.services.metrics_service import SchoolMetricsService
-
-        SchoolMetricsService.invalidate_cache(instance.school.id)
-
-        # Note: WebSocket broadcasting for dashboard updates has been removed
-        # as per the decision to limit WebSocket usage to chat functionality only
-
-
-@receiver(post_save, sender=SchoolMembership)
-def invalidate_metrics_cache_on_membership(sender, instance, created, **kwargs):
-    """Invalidate school metrics cache when membership changes"""
-    from accounts.services.metrics_service import SchoolMetricsService
-
-    SchoolMetricsService.invalidate_cache(instance.school.id)
-
-
-@receiver(post_save, sender=ClassSession)
-def invalidate_metrics_cache_on_session(sender, instance, created, **kwargs):
-    """Invalidate school metrics cache when class session changes"""
-    from accounts.services.metrics_service import SchoolMetricsService
-
-    SchoolMetricsService.invalidate_cache(instance.school.id)

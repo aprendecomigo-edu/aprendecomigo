@@ -425,11 +425,6 @@ LOGGING = {
             "level": "ERROR",
             "propagate": False,
         },
-        "knox": {
-            "handlers": ["security_file", "error_file"],
-            "level": "WARNING",
-            "propagate": False,
-        },
     },
 }
 

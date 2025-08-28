@@ -255,66 +255,32 @@ def _prepare_profile_reminder_context(user, teacher_profile, completion_data: di
 
 def _calculate_profile_completion(user, teacher_profile) -> dict:
     """
-    Calculate profile completion status and determine if reminders are needed.
+    Calculate basic profile completion status using critical fields.
 
     Returns:
-        Dictionary with completion information
+        Dictionary with simple completion information
     """
-    # Define required fields for profile completion
-    required_fields = [
-        ("name", "Full Name"),
-        ("bio", "Biography"),
-        ("phone_number", "Phone Number"),
-        # Add more fields as needed based on your teacher profile model
-    ]
-
-    completed_fields = []
-    missing_fields = []
-
-    # Check user fields
-    for field_name, field_display in required_fields:
-        field_value = getattr(user, field_name, None)
-        if field_value and str(field_value).strip():
-            completed_fields.append(field_display)
-        else:
-            missing_fields.append(field_display)
-
-    # Check teacher profile specific fields if they exist
-    if hasattr(teacher_profile, "subjects") and teacher_profile.subjects.exists():
-        completed_fields.append("Teaching Subjects")
-    else:
-        missing_fields.append("Teaching Subjects")
-
-    if hasattr(teacher_profile, "hourly_rate") and teacher_profile.hourly_rate:
-        completed_fields.append("Hourly Rate")
-    else:
-        missing_fields.append("Hourly Rate")
-
-    # Calculate completion percentage
-    total_fields = len(completed_fields) + len(missing_fields)
-    completion_percentage = int((len(completed_fields) / total_fields) * 100) if total_fields > 0 else 0
-
-    # Determine if profile is complete (e.g., 80% threshold)
-    is_complete = completion_percentage >= 80
-
-    # Check if this is a new completion (simplified check)
-    was_complete_before = hasattr(teacher_profile, "is_profile_complete") and teacher_profile.is_profile_complete
+    # Use the teacher profile's critical fields check
+    is_complete = teacher_profile.has_critical_fields()
+    missing_fields = teacher_profile.get_missing_critical_fields()
+    
+    # Simple completion percentage: 100% if complete, 50% otherwise
+    completion_percentage = 100 if is_complete else 50
 
     # Determine if reminder is needed (profile incomplete and no recent reminder)
     needs_reminder = (
         not is_complete
-        and completion_percentage > 20  # Only remind if they've started
         and not _has_recent_profile_reminder(user, teacher_profile.school)
     )
 
     return {
         "is_complete": is_complete,
-        "was_complete_before": was_complete_before,
+        "was_complete_before": is_complete,  # Simplified - no tracking of previous state
         "completion_percentage": completion_percentage,
-        "completed_fields": completed_fields,
+        "completed_fields": [],  # Not tracking individual fields anymore
         "missing_fields": missing_fields,
         "needs_reminder": needs_reminder,
-        "total_fields": total_fields,
+        "total_fields": 3,  # Just our 3 critical fields
     }
 
 

@@ -14,24 +14,16 @@ from .educational import (
 )
 from .enums import (
     ActivityType,
-    AssessmentType,
-    BrazilianEducationLevel,
-    BrazilianSchoolYear,
     CalendarIntegrationChoices,
     CurrencyChoices,
-    CustomEducationLevel,
-    CustomSchoolYear,
     DataRetentionChoices,
     EducationalSystemType,
     EmailDeliveryStatus,
     EmailIntegrationChoices,
     InvitationStatus,
     LanguageChoices,
-    PortugueseEducationLevel,
-    PortugueseSchoolYear,
     RelationshipType,
     SchoolRole,
-    StudentProgressLevel,
     TrialCostAbsorption,
 )
 
@@ -51,11 +43,7 @@ from .profiles import (
     TeacherProfile,
 )
 
-# Import progress tracking models
-from .progress import (
-    ProgressAssessment,
-    StudentProgress,
-)
+# Progress tracking models removed
 
 # Import school models
 from .schools import (
@@ -73,18 +61,14 @@ from .users import (
 )
 
 # Define __all__ for explicit exports
+# Define __all__ for explicit exports
 __all__ = [
     # Enums
     "ActivityType",
-    "AssessmentType",
-    "BrazilianEducationLevel",
-    "BrazilianSchoolYear",
     "CalendarIntegrationChoices",
     # Educational system
     "Course",
     "CurrencyChoices",
-    "CustomEducationLevel",
-    "CustomSchoolYear",
     # User and authentication
     "CustomUser",
     "CustomUserManager",
@@ -98,10 +82,6 @@ __all__ = [
     # Profiles
     "ParentChildRelationship",
     "ParentProfile",
-    "PortugueseEducationLevel",
-    "PortugueseSchoolYear",
-    # Progress tracking
-    "ProgressAssessment",
     "RelationshipType",
     # Schools
     "School",
@@ -113,8 +93,6 @@ __all__ = [
     "SchoolRole",
     "SchoolSettings",
     "StudentProfile",
-    "StudentProgress",
-    "StudentProgressLevel",
     "TeacherCourse",
     "TeacherInvitation",
     "TeacherInvitationManager",

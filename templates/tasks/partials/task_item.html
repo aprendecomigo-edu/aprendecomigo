@@ -1,0 +1,154 @@
+{% load i18n %}
+
+<div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow" id="task-{{ task.id }}">
+    <div class="flex items-start justify-between">
+        
+        <!-- Task Content -->
+        <div class="flex-1 min-w-0">
+            
+            <!-- Title and Status -->
+            <div class="flex items-center space-x-3 mb-2">
+                <div class="flex-shrink-0">
+                    <!-- Status Checkbox -->
+                    {% if task.status == 'completed' %}
+                        <button 
+                            hx-post="{% url 'tasks:task_list' %}"
+                            hx-vals='{"action": "reopen_task", "task_id": "{{ task.id }}"}'
+                            hx-target="#task-{{ task.id }}"
+                            hx-swap="outerHTML"
+                            class="w-6 h-6 bg-green-500 border-2 border-green-500 rounded-full flex items-center justify-center hover:bg-green-600 transition-colors">
+                            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </button>
+                    {% else %}
+                        <button 
+                            hx-post="{% url 'tasks:task_list' %}"
+                            hx-vals='{"action": "complete_task", "task_id": "{{ task.id }}"}'
+                            hx-target="#task-{{ task.id }}"
+                            hx-swap="outerHTML"
+                            class="w-6 h-6 border-2 border-gray-300 rounded-full hover:border-green-500 hover:bg-green-50 transition-colors">
+                        </button>
+                    {% endif %}
+                </div>
+                
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-sm font-medium text-gray-900 {% if task.status == 'completed' %}line-through text-gray-500{% endif %}">
+                        {{ task.title }}
+                    </h3>
+                    {% if task.description %}
+                        <p class="text-sm text-gray-600 mt-1 {% if task.status == 'completed' %}line-through{% endif %}">
+                            {{ task.description|truncatechars:100 }}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Task Metadata -->
+            <div class="flex flex-wrap items-center gap-2 text-xs">
+                
+                <!-- Priority Badge -->
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                    {% if task.priority == 'high' %}bg-red-100 text-red-800
+                    {% elif task.priority == 'medium' %}bg-yellow-100 text-yellow-800
+                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                    {{ task.get_priority_display }}
+                </span>
+
+                <!-- Status Badge -->
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                    {% if task.status == 'completed' %}bg-green-100 text-green-800
+                    {% elif task.status == 'in_progress' %}bg-blue-100 text-blue-800
+                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                    {{ task.get_status_display }}
+                </span>
+
+                <!-- Task Type Badge -->
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    {{ task.get_task_type_display }}
+                </span>
+
+                <!-- Urgent Badge -->
+                {% if task.is_urgent %}
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                        {% trans "Urgent" %}
+                    </span>
+                {% endif %}
+
+                <!-- Due Date -->
+                {% if task.due_date %}
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                        {% if task.is_overdue %}bg-red-100 text-red-800
+                        {% elif task.days_until_due == 0 %}bg-orange-100 text-orange-800
+                        {% elif task.days_until_due <= 3 %}bg-yellow-100 text-yellow-800
+                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        {% if task.is_overdue %}
+                            {% trans "Overdue" %}
+                        {% elif task.days_until_due == 0 %}
+                            {% trans "Due Today" %}
+                        {% elif task.days_until_due == 1 %}
+                            {% trans "Due Tomorrow" %}
+                        {% else %}
+                            {{ task.days_until_due }} {% trans "days left" %}
+                        {% endif %}
+                    </span>
+                {% endif %}
+
+            </div>
+
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center space-x-2 ml-4">
+            
+            <!-- Edit Button -->
+            <button 
+                hx-get="{% url 'tasks:task_detail' task.id %}"
+                hx-target="#task-form-modal"
+                hx-trigger="click"
+                class="text-gray-400 hover:text-blue-600 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+            </button>
+
+            <!-- Delete Button -->
+            <button 
+                hx-post="{% url 'tasks:task_list' %}"
+                hx-vals='{"action": "delete_task", "task_id": "{{ task.id }}"}'
+                hx-target="#task-{{ task.id }}"
+                hx-swap="delete"
+                hx-confirm="Are you sure you want to delete this task?"
+                class="text-gray-400 hover:text-red-600 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+            </button>
+
+        </div>
+
+    </div>
+
+    <!-- Task Footer (timestamps) -->
+    <div class="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+        <div>
+            {% trans "Created" %}: {{ task.created_at|date:"M d, Y H:i" }}
+        </div>
+        {% if task.completed_at %}
+            <div>
+                {% trans "Completed" %}: {{ task.completed_at|date:"M d, Y H:i" }}
+            </div>
+        {% elif task.updated_at != task.created_at %}
+            <div>
+                {% trans "Updated" %}: {{ task.updated_at|date:"M d, Y H:i" }}
+            </div>
+        {% endif %}
+    </div>
+
+</div>

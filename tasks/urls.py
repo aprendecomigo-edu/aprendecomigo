@@ -1,14 +1,16 @@
-from django.urls import include, path
-from rest_framework.routers import DefaultRouter
+from django.urls import path
 
-from .views import TaskViewSet
-
-# Create a router and register our viewsets
-router = DefaultRouter()
-router.register(r"tasks", TaskViewSet, basename="task")
+from .views import TaskDetailView, TaskListView, TaskSummaryView
 
 app_name = "tasks"
 
 urlpatterns = [
-    path("", include(router.urls)),
+    # Main tasks page
+    path("", TaskListView.as_view(), name="task_list"),
+    
+    # Task detail/edit
+    path("<int:task_id>/", TaskDetailView.as_view(), name="task_detail"),
+    
+    # Task summary widget (for dashboard integration)
+    path("summary/", TaskSummaryView.as_view(), name="task_summary"),
 ]

@@ -45,15 +45,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",  # Required for site configuration
-    # SSL Server for development
-    "sslserver",
-    # CORS for any remaining API endpoints
-    "corsheaders",
-    # REST Framework (for remaining API endpoints)
-    "rest_framework",
     "drf_yasg",  # for API documentation
-    # Knox for remaining API endpoints (to be migrated)
-    "knox",
     # Field-level encryption
     "django_cryptography",
     # Channels for WebSocket support
@@ -66,6 +58,8 @@ INSTALLED_APPS = [
     "django_otp.plugins.otp_static", # Static tokens plugin
     "pwa",          # PWA support
     "webpush",      # Web push notifications
+    "tailwind",
+
     # Custom apps
     "common",
     "accounts",
@@ -308,35 +302,6 @@ if not DEBUG:
     SECURE_REFERRER_POLICY = "same-origin"
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
-
-
-# DRF Settings (minimal for remaining API endpoints)
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "knox.auth.TokenAuthentication",
-        "rest_framework.authentication.SessionAuthentication",
-    ),
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
-    ],
-}
-
-# Knox Settings (temporary for remaining API endpoints)
-KNOX = {
-    "TOKEN_TTL": timedelta(hours=10),
-    "AUTO_REFRESH": True,
-}
-
-# CORS Settings
-CORS_ALLOW_ALL_ORIGINS = True  # For development; set to False in production
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:19006",  # Expo web port
-]
-
-# Google API settings
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
-GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 
 # SMS settings
 SMS_API_URL = os.getenv("SMS_API_URL", default="https://gatewayapi.com/rest/mtsms")
@@ -664,11 +629,6 @@ LOGGING = {
         # Third-party integrations
         "stripe": {
             "handlers": ["business_file", "error_file"],
-            "level": "WARNING",
-            "propagate": False,
-        },
-        "knox": {
-            "handlers": ["security_file", "console"],
             "level": "WARNING",
             "propagate": False,
         },

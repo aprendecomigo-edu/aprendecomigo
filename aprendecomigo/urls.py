@@ -42,14 +42,14 @@ urlpatterns = [
     path("students/", StudentsView.as_view(), name="students"),
     path("invitations/", InvitationsView.as_view(), name="invitations"),
     path("people/", PeopleView.as_view(), name="people"),
+    path("tasks/", include("tasks.urls")),  # Task management (PWA)
 
     # API routes for DRF endpoints
     path("api/accounts/", include("accounts.api_urls")),  # Account management APIs
     path("api/classroom/", include("classroom.urls")),  # Chat functionality (Django views)
     path("api/finances/", include("finances.urls")),  # Financial operations
     path("api/scheduler/", include("scheduler.urls")),  # Scheduling + Session booking
-    path("api/", include("tasks.urls")),  # Task management
-    path("api/messaging/", include("messaging.urls", namespace="messaging")),  # Messaging
+    # path("api/messaging/", include("messaging.urls", namespace="messaging")),  # Messaging - TODO: Refactor to Django views
     # Education routes (Milestone 3 - Core Educational Features)???
     path("education/", include("education.urls", namespace="education")),
     # Push notification endpoints
