@@ -25,8 +25,6 @@ urlpatterns = [
     # Unread count badge (HTMX polling endpoint)
     path("notifications/unread-count/", views.NotificationUnreadCountView.as_view(), name="notification-unread-count"),
     
-    # Legacy endpoint for backward compatibility
-    path("notifications/counts/", views.notification_counts, name="notification-counts"),
 
     # =======================
     # EMAIL TEMPLATE URLS
@@ -49,10 +47,4 @@ urlpatterns = [
     path("communications/", views.EmailCommunicationListView.as_view(), name="communication-list"),
     path("communications/analytics/", views.EmailAnalyticsView.as_view(), name="email-analytics"),
 
-    # =======================
-    # LEGACY API COMPATIBILITY
-    # =======================
-    
-    # Legacy invitations API (for backward compatibility)
-    path("invitations/", views.InvitationAPIView.as_view(), name="invitation-api"),
 ]

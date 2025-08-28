@@ -1,0 +1,114 @@
+{% load i18n %}
+
+<div class="divide-y divide-gray-200">
+    {% if unavailabilities %}
+        {% for unavailability in unavailabilities %}
+        <div class="px-6 py-4 flex items-center justify-between">
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center space-x-3">
+                    <!-- Date badge -->
+                    <div class="flex-shrink-0">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            {{ unavailability.date|date:"M d" }}
+                        </span>
+                    </div>
+                    
+                    <!-- Unavailability Info -->
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center space-x-2 text-sm text-gray-900">
+                            <span class="font-medium">{{ unavailability.date|date:"l, F d, Y" }}</span>
+                            {% if not unavailability.is_all_day %}
+                                <span class="text-gray-400">•</span>
+                                <span>{{ unavailability.start_time|time:"H:i" }} - {{ unavailability.end_time|time:"H:i" }}</span>
+                            {% else %}
+                                <span class="text-gray-400">•</span>
+                                <span class="font-medium text-red-600">{% trans "All Day" %}</span>
+                            {% endif %}
+                        </div>
+                        <div class="mt-1 flex items-center space-x-2 text-sm text-gray-500">
+                            {% if user_is_admin %}
+                            <span>{% trans "Teacher:" %} {{ unavailability.teacher.user.name }}</span>
+                            <span class="text-gray-400">•</span>
+                            {% endif %}
+                            <span>{{ unavailability.school.name }}</span>
+                            {% if unavailability.reason %}
+                            <span class="text-gray-400">•</span>
+                            <span>{{ unavailability.reason|truncatewords:10 }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="flex items-center space-x-2 ml-4">
+                <!-- Edit -->
+                <button 
+                    hx-get="{% url 'scheduler:unavailability-detail' unavailability.id %}?action=edit_form"
+                    hx-target="#unavailability-modal-content"
+                    hx-swap="innerHTML"
+                    data-modal-target="unavailability-modal"
+                    class="inline-flex items-center px-2 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    {% trans "Edit" %}
+                </button>
+                
+                <!-- Delete -->
+                {% if user.teacher_profile and unavailability.teacher == user.teacher_profile or user_is_admin %}
+                <button 
+                    hx-delete="{% url 'scheduler:unavailability-detail' unavailability.id %}"
+                    hx-target="closest .px-6"
+                    hx-swap="outerHTML"
+                    hx-confirm="{% trans 'Are you sure you want to delete this unavailability?' %}"
+                    class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                    {% trans "Delete" %}
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        
+        <!-- Show older entries link -->
+        {% if has_older_entries %}
+        <div class="px-6 py-4 text-center">
+            <button 
+                hx-get="{% url 'scheduler:unavailability-list' %}?show_all=true"
+                hx-target="#unavailability-list"
+                hx-swap="innerHTML"
+                class="text-sm text-blue-600 hover:text-blue-800">
+                {% trans "Show older entries" %}
+            </button>
+        </div>
+        {% endif %}
+        
+    {% else %}
+        <!-- Empty State -->
+        <div class="px-6 py-12 text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">{% trans "No unavailability periods" %}</h3>
+            <p class="mt-1 text-sm text-gray-500">
+                {% if user.teacher_profile %}
+                    {% trans "Mark dates when you're unavailable to prevent class booking." %}
+                {% else %}
+                    {% trans "No teacher unavailability has been recorded." %}
+                {% endif %}
+            </p>
+            {% if user.teacher_profile or user_is_admin %}
+            <div class="mt-6">
+                <button 
+                    hx-get="{% url 'scheduler:unavailability-list' %}?action=add_form"
+                    hx-target="#unavailability-modal-content"
+                    hx-swap="innerHTML"
+                    data-modal-target="unavailability-modal"
+                    class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    {% trans "Mark Unavailable" %}
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>

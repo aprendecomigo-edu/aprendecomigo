@@ -59,7 +59,6 @@ INSTALLED_APPS = [
     "tailwind",
     # Custom apps
     "theme",
-    "common",
     "accounts",
     "dashboard",  # Dashboard views with clean URLs
     "classroom",
@@ -518,32 +517,6 @@ LOGGING = {
         "messaging": {
             "handlers": ["business_file", "file", "console"],
             "level": "INFO",
-            "propagate": False,
-        },
-        "messaging.email": {
-            "handlers": ["business_file", "file"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "messaging.templates": {
-            "handlers": ["file", "console"],
-            "level": "WARNING",
-            "propagate": False,
-        },
-        "messaging.invitations": {
-            "handlers": ["business_file", "file"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        # Multi-tenant operations
-        "common": {
-            "handlers": ["file", "console"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "common.permissions": {
-            "handlers": ["security_file", "console"],
-            "level": "WARNING",
             "propagate": False,
         },
         # Classroom and sessions

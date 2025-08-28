@@ -187,11 +187,6 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
-        "common": {
-            "handlers": ["console"],
-            "level": "ERROR",
-            "propagate": False,
-        },
         "common.permissions": {
             "handlers": ["memory"],  # Capture permission events for test verification
             "level": "WARNING",

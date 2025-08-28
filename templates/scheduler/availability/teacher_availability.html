@@ -1,0 +1,220 @@
+{% extends 'base_dashboard.html' %}
+{% load i18n %}
+
+{% block dashboard_content %}
+<div class="space-y-6" x-data="{ showForm: false, selectedDay: null }">
+    
+    <!-- Page Header -->
+    <div class="border-b border-gray-200 pb-4">
+        <div class="sm:flex sm:items-center sm:justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">
+                    {% if user.teacher_profile %}
+                        {% trans "My Availability" %}
+                    {% else %}
+                        {% trans "Teacher Availability" %}
+                    {% endif %}
+                </h1>
+                <p class="mt-1 text-sm text-gray-600">
+                    {% trans "Manage when teachers are available for classes" %}
+                </p>
+            </div>
+            <div class="mt-4 sm:mt-0">
+                {% if user.teacher_profile or user_is_admin %}
+                <button 
+                    @click="showForm = !showForm"
+                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    {% trans "Add Availability" %}
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Availability Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">{% trans "Active Slots" %}</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ availability_summary.active_slots }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">{% trans "Hours per Week" %}</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ availability_summary.total_hours }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm8 0a1 1 0 011-1h4a1 1 0 011 1v6a1 1 0 01-1 1h-4a1 1 0 01-1-1V8z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">{% trans "Days Available" %}</dt>
+                            <dd class="text-lg font-medium text-gray-900">{{ availability_summary.days_count }}</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Availability Form -->
+    <div x-show="showForm" x-transition class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        {% include 'scheduler/availability/partials/availability_form.html' with edit_mode=False %}
+    </div>
+
+    <!-- Filter by Teacher (Admin only) -->
+    {% if user_is_admin %}
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div class="flex items-center space-x-4">
+            <label for="teacher-filter" class="block text-sm font-medium text-gray-700">
+                {% trans "Filter by Teacher:" %}
+            </label>
+            <select 
+                name="teacher_id" 
+                id="teacher-filter"
+                hx-get="{% url 'scheduler:availability-list' %}"
+                hx-target="#availability-content"
+                hx-trigger="change"
+                class="block w-64 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <option value="">{% trans "All Teachers" %}</option>
+                {% for teacher in available_teachers %}
+                <option value="{{ teacher.id }}" {% if selected_teacher_id == teacher.id %}selected{% endif %}>
+                    {{ teacher.user.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Weekly Availability Grid -->
+    <div id="availability-content" class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">{% trans "Weekly Schedule" %}</h2>
+            {% include 'scheduler/availability/partials/availability_grid.html' %}
+        </div>
+    </div>
+
+    <!-- Availability List -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">{% trans "Availability Slots" %}</h2>
+        </div>
+        <div id="availability-list">
+            {% include 'scheduler/availability/partials/availability_list_content.html' %}
+        </div>
+    </div>
+
+    <!-- Unavailability Section -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-medium text-gray-900">{% trans "Unavailability" %}</h2>
+                {% if user.teacher_profile or user_is_admin %}
+                <button 
+                    hx-get="{% url 'scheduler:unavailability-list' %}?action=add_form"
+                    hx-target="#unavailability-modal-content"
+                    hx-swap="innerHTML"
+                    data-modal-target="unavailability-modal"
+                    class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                    {% trans "Mark Unavailable" %}
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        <div id="unavailability-list">
+            {% include 'scheduler/availability/partials/unavailability_list_content.html' %}
+        </div>
+    </div>
+
+</div>
+
+<!-- Unavailability Modal -->
+<div id="unavailability-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+        <div id="unavailability-modal-content">
+            <!-- Dynamic content loaded here -->
+        </div>
+    </div>
+</div>
+
+<script>
+    // Handle HTMX events
+    document.body.addEventListener('availabilityAdded', function() {
+        // Close form and refresh content
+        Alpine.store('showForm', false);
+        htmx.trigger('#availability-content', 'refresh');
+        htmx.trigger('#availability-list', 'refresh');
+    });
+
+    document.body.addEventListener('availabilityUpdated', function() {
+        htmx.trigger('#availability-content', 'refresh');
+        htmx.trigger('#availability-list', 'refresh');
+    });
+
+    document.body.addEventListener('availabilityDeleted', function() {
+        htmx.trigger('#availability-content', 'refresh');
+        htmx.trigger('#availability-list', 'refresh');
+    });
+
+    document.body.addEventListener('unavailabilityAdded', function() {
+        htmx.trigger('#unavailability-list', 'refresh');
+        document.getElementById('unavailability-modal').classList.add('hidden');
+    });
+
+    // Modal handling
+    document.addEventListener('click', function(e) {
+        if (e.target.hasAttribute('data-modal-target')) {
+            const modalId = e.target.getAttribute('data-modal-target');
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+    });
+
+    // Close modal when clicking outside
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('fixed')) {
+            e.target.classList.add('hidden');
+        }
+    });
+</script>
+{% endblock %}

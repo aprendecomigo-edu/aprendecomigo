@@ -105,16 +105,16 @@ class DashboardView(View):
         # Get revenue this month from actual financial data
         from django.db import models
 
-        from education.models import Payment
+        from finances.models import PurchaseTransaction
         current_month = today.month
         current_year = today.year
 
         try:
-            revenue_this_month = Payment.objects.filter(
+            revenue_this_month = PurchaseTransaction.objects.filter(
                 created_at__year=current_year,
                 created_at__month=current_month,
                 status='completed'
-            ).aggregate(total=models.Sum('amount'))['total'] or 0
+            ).aggregate(total=models.Sum('amount_charged'))['total'] or 0
             revenue_this_month = int(revenue_this_month / 100)  # Convert cents to euros
         except Exception:
             revenue_this_month = 0  # Default to 0 if no payment data
@@ -122,14 +122,14 @@ class DashboardView(View):
         # Get tasks from task management system
         from tasks.models import Task
         try:
-            user_tasks = Task.objects.filter(assigned_to=user).order_by('-created_at')[:10]
+            user_tasks = Task.objects.filter(user=user).order_by('-created_at')[:10]
             tasks = []
             for task in user_tasks:
                 tasks.append({
                     'id': task.pk,
                     'title': task.title,
                     'priority': task.priority.lower() if task.priority else 'medium',
-                    'status': 'completed' if task.completed else 'pending',
+                    'status': 'completed' if task.status == 'completed' else 'pending',
                     'due_date': task.due_date.strftime('%Y-%m-%d') if task.due_date else None
                 })
         except Exception:

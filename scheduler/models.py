@@ -612,7 +612,6 @@ class RecurringClassSchedule(models.Model):
     start_date = models.DateField(_("start date"))
     end_date = models.DateField(_("end date"), null=True, blank=True)
 
-    # Legacy compatibility - keep for backward compatibility
     is_active = models.BooleanField(_("is active"), default=True)
 
     # Creation and modification tracking
@@ -933,10 +932,6 @@ class RecurringClassSchedule(models.Model):
         """Get all future instances of this recurring class"""
         return self.generated_instances.filter(scheduled_date__gte=timezone.now().date())
 
-    # Legacy method for backward compatibility
-    def generate_class_schedules(self, weeks_ahead=4):
-        """Legacy method - calls generate_instances"""
-        return self.generate_instances(weeks_ahead)
 
 
 class ReminderPreference(models.Model):

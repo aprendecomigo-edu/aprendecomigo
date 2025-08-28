@@ -360,11 +360,6 @@ LOGGING = {
             "propagate": False,
         },
         # Multi-tenant operations
-        "common.permissions": {
-            "handlers": ["security_file", "console"],
-            "level": "WARNING",
-            "propagate": False,
-        },
         # Classroom operations
         "classroom": {
             "handlers": ["business_file", "application_file"],

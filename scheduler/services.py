@@ -142,20 +142,6 @@ class TeacherAvailabilityService:
         ).first()
 
 
-# UnavailabilityConflictService is now consolidated into conflict_detection_utils
-# Keeping this as an alias for backward compatibility
-class UnavailabilityConflictService(UnavailabilityConflictDetector):
-    """Service for detecting teacher unavailability conflicts."""
-
-    pass
-
-
-# ExistingClassConflictService is now consolidated into conflict_detection_utils
-# Keeping this as an alias for backward compatibility
-class ExistingClassConflictService(ClassScheduleConflictDetector):
-    """Service for detecting conflicts with existing classes."""
-
-    pass
 
 
 class GroupClassCapacityService:
@@ -692,8 +678,6 @@ class AvailableSlotsService:
         return school_tz.localize(naive_datetime)
 
 
-# Aliases for test compatibility and backward compatibility
-TeacherUnavailabilityConflictService = UnavailabilityConflictService
 
 
 # Teacher Confirmation & Cancellation Workflow Services - Issue #150
@@ -1418,7 +1402,7 @@ class ClassCompletionOrchestratorService:
 
         # Check permissions - throw ValidationError only for business rule violations
         if not self.permission_service.can_complete_class(class_schedule, user):
-            from rest_framework.exceptions import PermissionDenied
+            from django.core.exceptions import PermissionDenied
 
             raise PermissionDenied("You don't have permission to complete this class")
 
@@ -1439,7 +1423,7 @@ class ClassCompletionOrchestratorService:
 
         # Check permissions
         if not self.permission_service.can_mark_no_show(class_schedule, user):
-            from rest_framework.exceptions import PermissionDenied
+            from django.core.exceptions import PermissionDenied
 
             raise PermissionDenied("You don't have permission to mark this class as no-show")
 

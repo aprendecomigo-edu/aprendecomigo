@@ -4,7 +4,7 @@ from django.apps import apps
 from django.conf import settings
 from django.db import transaction
 
-from common.financial_utils import FinancialCalculation
+from finances.utils import FinancialCalculation
 
 
 class CompensationService:

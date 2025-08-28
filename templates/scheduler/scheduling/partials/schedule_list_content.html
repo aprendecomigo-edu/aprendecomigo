@@ -1,0 +1,254 @@
+{% load i18n %}
+
+<div id="schedule-list-content" class="space-y-4">
+    {% if schedules %}
+        {% for schedule in schedules %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div class="flex items-center justify-between">
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center space-x-3">
+                        <!-- Status Indicator -->
+                        <div class="flex-shrink-0">
+                            {% if schedule.status == 'scheduled' %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    {% trans "Scheduled" %}
+                                </span>
+                            {% elif schedule.status == 'confirmed' %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    {% trans "Confirmed" %}
+                                </span>
+                            {% elif schedule.status == 'completed' %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                    {% trans "Completed" %}
+                                </span>
+                            {% elif schedule.status == 'cancelled' %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                    {% trans "Cancelled" %}
+                                </span>
+                            {% elif schedule.status == 'no_show' %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    {% trans "No Show" %}
+                                </span>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Class Info -->
+                        <div class="min-w-0 flex-1">
+                            <h3 class="text-sm font-medium text-gray-900 truncate">
+                                {{ schedule.title }}
+                            </h3>
+                            <div class="mt-1 flex items-center text-sm text-gray-500">
+                                <span class="truncate">
+                                    {% if schedule.teacher %}
+                                        {% trans "Teacher:" %} {{ schedule.teacher.user.name }}
+                                    {% endif %}
+                                    {% if schedule.student %}
+                                        • {% trans "Student:" %} {{ schedule.student.name }}
+                                    {% endif %}
+                                    {% if schedule.additional_students.exists %}
+                                        • +{{ schedule.additional_students.count }} {% trans "more" %}
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Date and Time -->
+                    <div class="mt-2 flex items-center text-sm text-gray-500">
+                        <svg class="flex-shrink-0 mr-1.5 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+                        </svg>
+                        {{ schedule.scheduled_date|date:"M d, Y" }}
+                        
+                        <svg class="flex-shrink-0 ml-3 mr-1.5 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                        </svg>
+                        {{ schedule.start_time|time:"H:i" }} - {{ schedule.end_time|time:"H:i" }}
+                        
+                        {% if schedule.school %}
+                        <svg class="flex-shrink-0 ml-3 mr-1.5 h-4 w-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                        </svg>
+                        {{ schedule.school.name }}
+                        {% endif %}
+                    </div>
+                    
+                    {% if schedule.description %}
+                    <div class="mt-2 text-sm text-gray-600">
+                        {{ schedule.description|truncatewords:20 }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Actions -->
+                <div class="flex items-center space-x-2 ml-4">
+                    {% if schedule.status == 'scheduled' %}
+                        <!-- Confirm Class -->
+                        {% if perms.scheduler.change_classschedule and user.teacher_profile and schedule.teacher == user.teacher_profile or user_is_admin %}
+                        <button 
+                            hx-post="{% url 'scheduler:schedule-confirm' schedule.id %}"
+                            hx-target="closest .bg-white"
+                            hx-swap="outerHTML"
+                            hx-confirm="{% trans 'Confirm this class?' %}"
+                            class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            {% trans "Confirm" %}
+                        </button>
+                        {% endif %}
+                        
+                        <!-- Cancel Class -->
+                        {% if perms.scheduler.change_classschedule %}
+                        <button 
+                            hx-post="{% url 'scheduler:schedule-cancel' schedule.id %}"
+                            hx-vals='{"reason": "Cancelled by user"}'
+                            hx-target="closest .bg-white"
+                            hx-swap="outerHTML"
+                            hx-confirm="{% trans 'Cancel this class?' %}"
+                            class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
+                            {% trans "Cancel" %}
+                        </button>
+                        {% endif %}
+                        
+                    {% elif schedule.status == 'confirmed' %}
+                        <!-- Complete Class -->
+                        {% if perms.scheduler.change_classschedule and user.teacher_profile and schedule.teacher == user.teacher_profile %}
+                        <button 
+                            hx-get="{% url 'scheduler:schedules-detail' schedule.id %}?action=complete_form"
+                            hx-target="#completion-modal-content"
+                            hx-swap="innerHTML"
+                            data-modal-target="completion-modal"
+                            class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            {% trans "Complete" %}
+                        </button>
+                        {% endif %}
+                        
+                        <!-- Mark No Show -->
+                        {% if perms.scheduler.change_classschedule and user.teacher_profile and schedule.teacher == user.teacher_profile %}
+                        <button 
+                            hx-post="{% url 'scheduler:schedule-no-show' schedule.id %}"
+                            hx-vals='{"reason": "No show", "no_show_type": "student"}'
+                            hx-target="closest .bg-white"
+                            hx-swap="outerHTML"
+                            hx-confirm="{% trans 'Mark as no show?' %}"
+                            class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                            {% trans "No Show" %}
+                        </button>
+                        {% endif %}
+                    {% endif %}
+                    
+                    <!-- View/Edit -->
+                    <button 
+                        hx-get="{% url 'scheduler:schedules-detail' schedule.id %}"
+                        hx-target="#schedule-detail-content"
+                        hx-swap="innerHTML"
+                        class="inline-flex items-center px-2 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        {% trans "View" %}
+                    </button>
+                    
+                    <!-- Delete (Admin only) -->
+                    {% if perms.scheduler.delete_classschedule and user_is_admin %}
+                    <button 
+                        hx-delete="{% url 'scheduler:schedules-detail' schedule.id %}"
+                        hx-target="closest .bg-white"
+                        hx-swap="outerHTML"
+                        hx-confirm="{% trans 'Are you sure you want to delete this class? This action cannot be undone.' %}"
+                        class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                        {% trans "Delete" %}
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        
+        <!-- Pagination if needed -->
+        {% if is_paginated %}
+        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+            <div class="flex-1 flex justify-between sm:hidden">
+                {% if page_obj.has_previous %}
+                <button 
+                    hx-get="{% url 'scheduler:schedules-list' %}?page={{ page_obj.previous_page_number }}"
+                    hx-target="#schedule-list-content"
+                    class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    {% trans "Previous" %}
+                </button>
+                {% endif %}
+                {% if page_obj.has_next %}
+                <button 
+                    hx-get="{% url 'scheduler:schedules-list' %}?page={{ page_obj.next_page_number }}"
+                    hx-target="#schedule-list-content"
+                    class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    {% trans "Next" %}
+                </button>
+                {% endif %}
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        {% trans "Showing" %} <span class="font-medium">{{ page_obj.start_index }}</span> {% trans "to" %} <span class="font-medium">{{ page_obj.end_index }}</span> {% trans "of" %} <span class="font-medium">{{ page_obj.paginator.count }}</span> {% trans "results" %}
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                        {% if page_obj.has_previous %}
+                        <button 
+                            hx-get="{% url 'scheduler:schedules-list' %}?page={{ page_obj.previous_page_number }}"
+                            hx-target="#schedule-list-content"
+                            class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            {% trans "Previous" %}
+                        </button>
+                        {% endif %}
+                        {% if page_obj.has_next %}
+                        <button 
+                            hx-get="{% url 'scheduler:schedules-list' %}?page={{ page_obj.next_page_number }}"
+                            hx-target="#schedule-list-content"
+                            class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            {% trans "Next" %}
+                        </button>
+                        {% endif %}
+                    </nav>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+    {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 4V7a2 2 0 012-2h4a2 2 0 012 2v10a2 2 0 01-2 2H10a2 2 0 01-2-2V11z"></path>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">{% trans "No classes scheduled" %}</h3>
+            <p class="mt-1 text-sm text-gray-500">{% trans "Get started by booking your first class." %}</p>
+            {% if perms.scheduler.add_classschedule and not user.teacher_profile %}
+            <div class="mt-6">
+                <button 
+                    @click="showForm = true"
+                    class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    {% trans "Book Class" %}
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<!-- Class Completion Modal -->
+<div id="completion-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div id="completion-modal-content">
+            <!-- Dynamic content loaded here -->
+        </div>
+    </div>
+</div>
+
+<!-- Schedule Detail Modal -->
+<div id="schedule-detail-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+        <div id="schedule-detail-content">
+            <!-- Dynamic content loaded here -->
+        </div>
+    </div>
+</div>

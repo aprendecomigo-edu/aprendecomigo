@@ -172,11 +172,6 @@ LOGGING = {
             "level": "DEBUG",
             "propagate": False,
         },
-        "common": {
-            "handlers": ["console"],
-            "level": "DEBUG",
-            "propagate": False,
-        },
         "common.permissions": {
             "handlers": ["console"],
             "level": "INFO",
