@@ -1,0 +1,245 @@
+{% extends "base_dashboard.html" %}
+{% load static %}
+
+{% block title %}Purchase Hours{% endblock %}
+
+{% block extra_head %}
+<script src="https://js.stripe.com/v3/"></script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto p-6">
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">Purchase Tutoring Hours</h2>
+        
+        {% if stripe_error %}
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                {{ stripe_error }}
+            </div>
+        {% endif %}
+
+        <!-- Current Balance -->
+        {% if user_balance %}
+        <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-blue-700">
+                        Current balance: <span class="font-semibold">{{ user_balance.remaining_hours }} hours</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Pricing Plans -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {% for plan in pricing_plans %}
+            <div class="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer pricing-plan" 
+                 data-plan-id="{{ plan.id }}" 
+                 data-price="{{ plan.price }}"
+                 data-hours="{{ plan.tutoring_hours }}">
+                <div class="text-center">
+                    <h3 class="text-lg font-semibold text-gray-800">{{ plan.plan_type.name }}</h3>
+                    <div class="text-3xl font-bold text-blue-600 my-2">£{{ plan.price }}</div>
+                    <p class="text-gray-600">{{ plan.tutoring_hours }} hours</p>
+                    <p class="text-sm text-gray-500 mt-2">{{ plan.description }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Payment Form -->
+        <form id="payment-form" class="hidden">
+            <div class="mb-4">
+                <h3 class="text-lg font-semibold text-gray-800 mb-4">Payment Details</h3>
+                <div id="card-element" class="p-3 border border-gray-300 rounded-md">
+                    <!-- Stripe Elements will create form elements here -->
+                </div>
+                <div id="card-errors" role="alert" class="text-red-600 text-sm mt-2"></div>
+            </div>
+
+            <div class="mb-6">
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-700">Selected Plan:</span>
+                        <span id="selected-plan-name" class="font-semibold"></span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-700">Hours:</span>
+                        <span id="selected-plan-hours" class="font-semibold"></span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-700">Total:</span>
+                        <span id="selected-plan-price" class="font-semibold text-lg"></span>
+                    </div>
+                </div>
+            </div>
+
+            <button id="submit-payment" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                <span id="button-text">Complete Payment</span>
+                <div id="spinner" class="hidden inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin ml-2"></div>
+            </button>
+        </form>
+
+        <!-- Payment Success/Error Messages -->
+        <div id="payment-messages" class="hidden mt-4"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Stripe
+    const stripe = Stripe('{{ stripe_public_key }}');
+    const elements = stripe.elements();
+    const cardElement = elements.create('card');
+    
+    let selectedPlan = null;
+    
+    // Mount card element
+    cardElement.mount('#card-element');
+    
+    // Handle plan selection
+    document.querySelectorAll('.pricing-plan').forEach(function(plan) {
+        plan.addEventListener('click', function() {
+            // Remove previous selection
+            document.querySelectorAll('.pricing-plan').forEach(p => p.classList.remove('border-blue-500', 'bg-blue-50'));
+            
+            // Add selection styling
+            this.classList.add('border-blue-500', 'bg-blue-50');
+            
+            // Store selected plan
+            selectedPlan = {
+                id: this.dataset.planId,
+                name: this.querySelector('h3').textContent,
+                price: this.dataset.price,
+                hours: this.dataset.hours
+            };
+            
+            // Update form display
+            document.getElementById('selected-plan-name').textContent = selectedPlan.name;
+            document.getElementById('selected-plan-hours').textContent = selectedPlan.hours + ' hours';
+            document.getElementById('selected-plan-price').textContent = '£' + selectedPlan.price;
+            
+            // Show payment form
+            document.getElementById('payment-form').classList.remove('hidden');
+        });
+    });
+    
+    // Handle form submission
+    document.getElementById('payment-form').addEventListener('submit', async function(event) {
+        event.preventDefault();
+        
+        if (!selectedPlan) {
+            showError('Please select a plan');
+            return;
+        }
+        
+        setLoading(true);
+        
+        try {
+            // Create payment intent
+            const response = await fetch('{% url "finances:payment-create" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: 'plan_id=' + selectedPlan.id
+            });
+            
+            const result = await response.json();
+            
+            if (result.error) {
+                showError(result.error);
+                setLoading(false);
+                return;
+            }
+            
+            // Confirm payment with Stripe
+            const {error} = await stripe.confirmCardPayment(result.client_secret, {
+                payment_method: {
+                    card: cardElement,
+                }
+            });
+            
+            if (error) {
+                showError(error.message);
+                setLoading(false);
+            } else {
+                // Payment succeeded, confirm on server
+                confirmPayment(result.payment_intent_id);
+            }
+        } catch (error) {
+            showError('Payment processing failed');
+            setLoading(false);
+        }
+    });
+    
+    async function confirmPayment(paymentIntentId) {
+        try {
+            const response = await fetch('{% url "finances:payment-confirm" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'HX-Request': 'true'
+                },
+                body: 'payment_intent_id=' + paymentIntentId
+            });
+            
+            if (response.ok) {
+                const html = await response.text();
+                document.getElementById('payment-messages').innerHTML = html;
+                document.getElementById('payment-messages').classList.remove('hidden');
+                
+                // Hide the form
+                document.getElementById('payment-form').style.display = 'none';
+                
+                // Scroll to success message
+                document.getElementById('payment-messages').scrollIntoView({ behavior: 'smooth' });
+            } else {
+                const result = await response.json();
+                showError(result.error || 'Payment confirmation failed');
+            }
+        } catch (error) {
+            showError('Payment confirmation failed');
+        }
+        
+        setLoading(false);
+    }
+    
+    function showError(message) {
+        const messagesDiv = document.getElementById('payment-messages');
+        messagesDiv.innerHTML = `
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                ${message}
+            </div>
+        `;
+        messagesDiv.classList.remove('hidden');
+    }
+    
+    function setLoading(loading) {
+        const button = document.getElementById('submit-payment');
+        const buttonText = document.getElementById('button-text');
+        const spinner = document.getElementById('spinner');
+        
+        if (loading) {
+            button.disabled = true;
+            buttonText.textContent = 'Processing...';
+            spinner.classList.remove('hidden');
+        } else {
+            button.disabled = false;
+            buttonText.textContent = 'Complete Payment';
+            spinner.classList.add('hidden');
+        }
+    }
+});
+</script>
+{% endblock %}

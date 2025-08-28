@@ -149,10 +149,12 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "json": {
-            "()": "common.logging_utils.JSONFormatter",
+            "format": "%(levelname)s %(asctime)s %(module)s %(message)s",
+            "style": "%",
         },
         "security": {
-            "()": "common.logging_utils.SecurityFormatter",
+            "format": "SECURITY {asctime} {levelname} {module} {message}",
+            "style": "{",
         },
         "verbose": {
             "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
@@ -160,15 +162,8 @@ LOGGING = {
         },
     },
     "filters": {
-        "sensitive_data": {
-            "()": "common.logging_utils.SensitiveDataFilter",
-        },
-        "correlation": {
-            "()": "common.logging_utils.CorrelationFilter",
-        },
-        "rate_limit": {
-            "()": "common.logging_utils.RateLimitFilter",
-            "rate_limit_seconds": 30,  # Faster rate limiting in production
+        "require_debug_false": {
+            "()": "django.utils.log.RequireDebugFalse",
         },
     },
     "handlers": {

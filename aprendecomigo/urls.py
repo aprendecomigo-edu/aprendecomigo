@@ -45,11 +45,11 @@ urlpatterns = [
     # API routes for DRF endpoints (TODO: Migrate to Django views for PWA)
     # path("api/accounts/", include("accounts.api_urls")),  # Account management APIs - REMOVED
     path("api/classroom/", include("classroom.urls")),  # Chat functionality (Django views)
-    # path("api/finances/", include("finances.urls")),  # Financial operations - TODO: Migrate to Django views (REST framework dependency)
+    path("finances/", include("finances.urls", namespace="finances")),  # Financial operations - Converted to Django views with HTMX
     path("api/scheduler/", include("scheduler.urls")),  # Scheduling + Session booking
     path("messaging/", include("messaging.urls", namespace="messaging")),  # Messaging - Converted to Django views with HTMX
-    # Education routes (Milestone 3 - Core Educational Features)???
-    path("education/", include("education.urls", namespace="education")),
+    # Education routes (Milestone 3 - Core Educational Features) - TODO: Create education app
+    # path("education/", include("education.urls", namespace="education")),
     # Push notification endpoints
     path("webpush/", include("webpush.urls")),  # Push notification endpoints
 ]

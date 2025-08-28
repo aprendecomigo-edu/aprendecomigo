@@ -25,7 +25,7 @@ from django.views.decorators.csrf import csrf_protect
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from sesame.utils import get_query_string
 
-from common.messaging import send_magic_link_email, send_sms_otp
+from messaging.services import send_magic_link_email, send_sms_otp
 
 from .db_queries import get_user_by_email, user_exists
 from .models import School, SchoolMembership, TeacherInvitation

@@ -76,11 +76,8 @@ LOGGING = {
         },
     },
     "filters": {
-        "sensitive_data": {
-            "()": "common.logging_utils.SensitiveDataFilter",
-        },
-        "correlation": {
-            "()": "common.logging_utils.CorrelationFilter",
+        "require_debug_false": {
+            "()": "django.utils.log.RequireDebugFalse",
         },
     },
     "handlers": {
@@ -89,7 +86,6 @@ LOGGING = {
             "level": "WARNING",  # Only warnings and errors in tests
             "class": "logging.StreamHandler",
             "formatter": "simple",
-            "filters": ["sensitive_data"],
         },
         # Memory handler for capturing logs during tests
         "memory": {
@@ -98,7 +94,6 @@ LOGGING = {
             "capacity": 1000,
             "target": "console",
             "formatter": "test_detailed",
-            "filters": ["sensitive_data", "correlation"],
         },
         # Null handler to discard logs entirely
         "null": {

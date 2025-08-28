@@ -1,0 +1,38 @@
+<!-- Top-up Form Partial (for HTMX modal) -->
+<form hx-post="{% url 'finances:top-up-form' %}" hx-target="#top-up-modal">
+    {% csrf_token %}
+    
+    <div class="space-y-4">
+        <h4 class="text-base font-medium text-gray-900">Select a Quick Top-up Plan</h4>
+        
+        <div class="space-y-3">
+            {% for plan in pricing_plans %}
+            <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                <input type="radio" name="plan_id" value="{{ plan.id }}" class="mr-3">
+                <div class="flex-1">
+                    <div class="flex justify-between items-center">
+                        <span class="font-medium text-gray-900">{{ plan.plan_type.name }}</span>
+                        <span class="text-lg font-bold text-blue-600">£{{ plan.price }}</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm text-gray-600">
+                        <span>{{ plan.tutoring_hours }} hours</span>
+                        <span>£{{ plan.price|floatformat:2 }}{% if plan.tutoring_hours > 0 %} per hour: £{{ plan.price|div:plan.tutoring_hours|floatformat:2 }}{% endif %}</span>
+                    </div>
+                </div>
+            </label>
+            {% endfor %}
+        </div>
+        
+        <div class="flex space-x-3 pt-4">
+            <button type="submit" 
+                    class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                Continue to Payment
+            </button>
+            <button type="button" 
+                    onclick="document.getElementById('top-up-modal').classList.add('hidden')"
+                    class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors">
+                Cancel
+            </button>
+        </div>
+    </div>
+</form>

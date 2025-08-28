@@ -1,0 +1,48 @@
+<!-- Payment Success Partial (for HTMX) -->
+<div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">
+    <div class="flex items-center">
+        <svg class="h-5 w-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <div>
+            <h3 class="text-lg font-semibold">Payment Successful!</h3>
+            <p class="text-sm mt-1">Your tutoring hours have been added to your account.</p>
+        </div>
+    </div>
+    
+    {% if transaction %}
+    <div class="mt-4 p-3 bg-white bg-opacity-50 rounded">
+        <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+                <span class="font-medium">Hours Purchased:</span>
+                <span class="ml-2">{{ transaction.tutoring_hours_purchased }} hours</span>
+            </div>
+            <div>
+                <span class="font-medium">Amount Paid:</span>
+                <span class="ml-2">£{{ transaction.amount_paid }}</span>
+            </div>
+            <div>
+                <span class="font-medium">Transaction ID:</span>
+                <span class="ml-2 font-mono text-xs">{{ transaction.id }}</span>
+            </div>
+            {% if new_balance %}
+            <div>
+                <span class="font-medium">New Balance:</span>
+                <span class="ml-2 font-semibold text-green-800">{{ new_balance.remaining_hours }} hours</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="mt-4 flex space-x-3">
+        <a href="{% url 'finances:balance-overview' %}" 
+           class="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 transition-colors">
+            View Balance
+        </a>
+        <a href="{% url 'dashboard:student' %}" 
+           class="bg-gray-600 text-white px-4 py-2 rounded text-sm hover:bg-gray-700 transition-colors">
+            Back to Dashboard
+        </a>
+    </div>
+</div>

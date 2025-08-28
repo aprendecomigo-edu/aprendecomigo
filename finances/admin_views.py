@@ -23,7 +23,7 @@ from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 
 from finances.models import AdminAction, AdminActionType, PurchaseTransaction
-from finances.serializers import PurchaseHistorySerializer
+# from finances.serializers import PurchaseHistorySerializer  # TODO: Replace with Django forms/templates
 from finances.services.dispute_service import DisputeService
 from finances.services.fraud_detection_service import FraudDetectionService
 from finances.services.package_expiration_service import PackageExpirationService
@@ -66,10 +66,12 @@ def get_expired_packages(request):
                 grace_hours=grace_hours
             )
 
-        serializer = PurchaseHistorySerializer(expired_packages, many=True)
+        # TODO: Replace with Django template rendering
+        # serializer = PurchaseHistorySerializer(expired_packages, many=True)
 
+        # TODO: Convert to Django template
         return Response(
-            {"expired_packages": serializer.data, "count": len(expired_packages), "grace_hours": grace_hours}
+            {"expired_packages": [], "count": len(expired_packages), "grace_hours": grace_hours}
         )
 
     except Exception as e:
@@ -303,10 +305,12 @@ def get_packages_expiring_soon(request):
     try:
         expiring_packages = PackageExpirationService.get_packages_expiring_soon(days_ahead=days_ahead)
 
-        serializer = PurchaseHistorySerializer(expiring_packages, many=True)
+        # TODO: Replace with Django template rendering
+        # serializer = PurchaseHistorySerializer(expiring_packages, many=True)
 
+        # TODO: Convert to Django template
         return Response(
-            {"expiring_packages": serializer.data, "count": len(expiring_packages), "days_ahead": days_ahead}
+            {"expiring_packages": [], "count": len(expiring_packages), "days_ahead": days_ahead}
         )
 
     except Exception as e:

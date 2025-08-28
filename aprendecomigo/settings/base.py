@@ -71,19 +71,15 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "common.middleware.performance.PerformanceMonitoringMiddleware",  # Performance monitoring
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "sesame.middleware.AuthenticationMiddleware",  # Magic link authentication - must come after AuthenticationMiddleware
     "django_htmx.middleware.HtmxMiddleware",  # HTMX request detection
-    # "common.logging_utils.setup_logging_context_middleware",  # Add logging context - disabled for now
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "common.middleware.performance.DatabaseQueryLoggingMiddleware",  # Query performance monitoring
 ]
 
 ROOT_URLCONF = "aprendecomigo.urls"
@@ -338,27 +334,24 @@ LOGGING = {
             "style": "{",
         },
         "json": {
-            "()": "common.logging_utils.JSONFormatter",
+            "format": "%(levelname)s %(asctime)s %(module)s %(message)s",
+            "style": "%",
         },
         "development": {
-            "()": "common.logging_utils.DevelopmentFormatter",
             "format": "{asctime} {name} {levelname} {message}",
             "style": "{",
         },
         "security": {
-            "()": "common.logging_utils.SecurityFormatter",
+            "format": "SECURITY {asctime} {levelname} {module} {message}",
+            "style": "{",
         },
     },
     "filters": {
-        "sensitive_data": {
-            "()": "common.logging_utils.SensitiveDataFilter",
+        "require_debug_false": {
+            "()": "django.utils.log.RequireDebugFalse",
         },
-        "correlation": {
-            "()": "common.logging_utils.CorrelationFilter",
-        },
-        "rate_limit": {
-            "()": "common.logging_utils.RateLimitFilter",
-            "rate_limit_seconds": 60,
+        "require_debug_true": {
+            "()": "django.utils.log.RequireDebugTrue",
         },
     },
     "handlers": {
@@ -370,7 +363,6 @@ LOGGING = {
             "maxBytes": 10 * 1024 * 1024,  # 10MB
             "backupCount": 5,
             "formatter": "verbose",
-            "filters": ["sensitive_data", "correlation"],
         },
         # Error-only logs
         "error_file": {
@@ -380,7 +372,6 @@ LOGGING = {
             "maxBytes": 5 * 1024 * 1024,  # 5MB
             "backupCount": 10,
             "formatter": "verbose",
-            "filters": ["sensitive_data", "correlation"],
         },
         # Security events
         "security_file": {
@@ -391,7 +382,6 @@ LOGGING = {
             "interval": 1,
             "backupCount": 90,  # Keep 90 days for security events
             "formatter": "security",
-            "filters": ["correlation"],
         },
         # Business events and audit trail
         "business_file": {
@@ -402,7 +392,6 @@ LOGGING = {
             "interval": 1,
             "backupCount": 30,
             "formatter": "json",
-            "filters": ["sensitive_data", "correlation"],
         },
         # Performance monitoring
         "performance_file": {
@@ -412,14 +401,13 @@ LOGGING = {
             "maxBytes": 5 * 1024 * 1024,  # 5MB
             "backupCount": 5,
             "formatter": "json",
-            "filters": ["correlation"],
         },
         # Console output
         "console": {
             "level": "INFO",
             "class": "logging.StreamHandler",
             "formatter": "simple",
-            "filters": ["sensitive_data", "rate_limit"],
+            "filters": ["require_debug_true"],
         },
     },
     "root": {

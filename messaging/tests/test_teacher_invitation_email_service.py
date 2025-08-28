@@ -17,7 +17,7 @@ from django.core import mail
 from django.utils import timezone
 
 from accounts.models import EmailDeliveryStatus, InvitationStatus, SchoolRole, TeacherInvitation
-from common.messaging import TeacherInvitationEmailService
+from messaging.services import TeacherInvitationEmailService
 from messaging.tests.test_base import MessagingTestBase
 
 
@@ -159,7 +159,7 @@ class TeacherInvitationEmailServiceTest(MessagingTestBase):
             self.assertEqual(invitation.email_delivery_status, EmailDeliveryStatus.SENT)
             self.assertEqual(invitation.status, InvitationStatus.SENT)
 
-    @patch("common.messaging.TeacherInvitationEmailService.send_invitation_email")
+    @patch("messaging.services.TeacherInvitationEmailService.send_invitation_email")
     def test_bulk_processing_resilience_continues_despite_individual_failures(self, mock_send_invitation):
         """Test business rule: bulk processing is resilient and continues processing even when some individual invitations fail."""
         # Business scenario: multiple invitations with some delivery issues
@@ -224,7 +224,7 @@ class TeacherInvitationEmailServiceTest(MessagingTestBase):
         self.assertIn("Maximum retry attempts", result["error"])
         self.assertEqual(result["retry_count"], 3)
 
-    @patch("common.messaging.TeacherInvitationEmailService.send_invitation_email")
+    @patch("messaging.services.TeacherInvitationEmailService.send_invitation_email")
     def test_retry_failed_invitation_email_still_fails(self, mock_send_invitation):
         """Test retry that still fails."""
         # Mock continued failure

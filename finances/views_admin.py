@@ -9,8 +9,6 @@ import logging
 
 from django.db.models import Q
 from django.utils import timezone
-from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
 from rest_framework import permissions, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.generics import ListAPIView
@@ -19,15 +17,16 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from finances.models import PurchaseTransaction, WebhookEventLog
-from finances.serializers_admin import (
-    AdminTransactionSerializer,
-    AdminWebhookEventSerializer,
-    PaymentMetricsQuerySerializer,
-    PaymentMetricsSerializer,
-    TransactionHistoryQuerySerializer,
-    WebhookStatusQuerySerializer,
-    WebhookStatusResponseSerializer,
-)
+# TODO: Replace with Django forms/templates
+# from finances.serializers_admin import (
+#     AdminTransactionSerializer,
+#     AdminWebhookEventSerializer,
+#     PaymentMetricsQuerySerializer,
+#     PaymentMetricsSerializer,
+#     TransactionHistoryQuerySerializer,
+#     WebhookStatusQuerySerializer,
+#     WebhookStatusResponseSerializer,
+# )
 from finances.services.payment_analytics_service import PaymentAnalyticsService
 
 logger = logging.getLogger(__name__)

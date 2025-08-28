@@ -64,7 +64,6 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {
         "development": {
-            "()": "common.logging_utils.DevelopmentFormatter",
             "format": "{asctime} {name} {levelname} {message}",
             "style": "{",
         },
@@ -73,15 +72,13 @@ LOGGING = {
             "style": "{",
         },
         "json": {
-            "()": "common.logging_utils.JSONFormatter",
+            "format": "%(levelname)s %(asctime)s %(module)s %(message)s",
+            "style": "%",
         },
     },
     "filters": {
-        "sensitive_data": {
-            "()": "common.logging_utils.SensitiveDataFilter",
-        },
-        "correlation": {
-            "()": "common.logging_utils.CorrelationFilter",
+        "require_debug_true": {
+            "()": "django.utils.log.RequireDebugTrue",
         },
     },
     "handlers": {
@@ -89,7 +86,6 @@ LOGGING = {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
             "formatter": "development",
-            "filters": ["sensitive_data", "correlation"],
         },
         # Optional file handler for debugging specific issues
         "debug_file": {
@@ -97,7 +93,6 @@ LOGGING = {
             "class": "logging.FileHandler",
             "filename": BASE_DIR.parent / "logs" / "development-debug.log",
             "formatter": "json",
-            "filters": ["sensitive_data", "correlation"],
         },
     },
     "root": {

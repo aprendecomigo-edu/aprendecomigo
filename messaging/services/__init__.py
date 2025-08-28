@@ -4,6 +4,7 @@ Messaging services module.
 This module contains all email-related services for the Aprende Comigo platform.
 """
 
+from .auth_email_service import send_email_verification_code, send_magic_link_email, send_sms_otp
 from .balance_monitoring_service import BalanceMonitoringService
 from .email_sequence_service import EmailSequenceOrchestrationService
 from .email_template_service import EmailTemplateRenderingService, SchoolEmailTemplateManager
@@ -23,4 +24,8 @@ __all__ = [
     "SecureTemplateEngine",
     "TeacherInvitationEmailService",
     "TemplateVariableValidator",
+    # Auth email functions
+    "send_email_verification_code",
+    "send_magic_link_email",
+    "send_sms_otp",
 ]

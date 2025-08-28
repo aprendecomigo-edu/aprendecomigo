@@ -1,0 +1,64 @@
+<!-- Balance Widget Partial (for HTMX refresh) -->
+<div class="bg-white rounded-lg shadow-md p-6">
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold text-gray-800">Current Balance</h2>
+        <button hx-get="{% url 'finances:balance-refresh' %}" 
+                hx-target="#balance-widget"
+                class="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-50 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+        </button>
+    </div>
+    
+    <div class="text-center py-6">
+        <div class="text-4xl font-bold text-blue-600 mb-2">
+            {{ balance.remaining_hours|default:"0.00" }}
+        </div>
+        <p class="text-gray-600">Tutoring Hours Remaining</p>
+        
+        {% if balance.last_updated %}
+        <p class="text-xs text-gray-500 mt-2">
+            Last updated: {{ balance.last_updated|date:"M d, Y H:i" }}
+        </p>
+        {% endif %}
+    </div>
+    
+    <!-- Balance Status Indicator -->
+    <div class="mt-4">
+        {% if balance.remaining_hours >= 5 %}
+            <div class="flex items-center text-green-600">
+                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+                <span class="text-sm font-medium">Good balance</span>
+            </div>
+        {% elif balance.remaining_hours >= 2 %}
+            <div class="flex items-center text-yellow-600">
+                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                <span class="text-sm font-medium">Low balance - consider topping up</span>
+            </div>
+        {% else %}
+            <div class="flex items-center text-red-600">
+                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+                <span class="text-sm font-medium">Very low balance - purchase hours to continue</span>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Quick Action Buttons -->
+    <div class="mt-6 flex space-x-3">
+        <a href="{% url 'finances:payment-form' %}" 
+           class="flex-1 bg-blue-600 text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+            Add Hours
+        </a>
+        <a href="{% url 'finances:transaction-history' %}" 
+           class="flex-1 bg-gray-100 text-gray-700 text-center py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium">
+            View History
+        </a>
+    </div>
+</div>
