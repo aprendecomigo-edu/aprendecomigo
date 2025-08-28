@@ -1,0 +1,223 @@
+{% extends "base_dashboard.html" %}
+{% load static %}
+
+{% block title %}School Settings - {{ object.name }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <div class="max-w-4xl mx-auto">
+        <div class="mb-6">
+            <div class="flex items-center">
+                <a href="/dashboard/" 
+                   class="text-gray-500 hover:text-gray-700 mr-4">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <h1 class="text-3xl font-bold text-gray-900">School Settings</h1>
+            </div>
+            <p class="text-gray-600 mt-2">Manage settings for {{ object.name }}</p>
+        </div>
+
+        <div class="bg-white shadow rounded-lg">
+            <form hx-post="{% url 'accounts:school_settings' object.pk %}"
+                  hx-target="#form-container"
+                  hx-swap="innerHTML"
+                  class="p-6">
+                {% csrf_token %}
+                
+                <div id="form-container">
+                    {% if form.non_field_errors %}
+                        <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                            <div class="flex">
+                                <i class="fas fa-exclamation-triangle text-red-400 mr-3 mt-1"></i>
+                                <div class="text-sm text-red-700">
+                                    {{ form.non_field_errors }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Basic Information -->
+                    <div class="mb-8">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Basic Information</h3>
+                        
+                        <!-- School Name -->
+                        <div class="mb-6">
+                            <label for="{{ form.name.id_for_label }}" 
+                                   class="block text-sm font-medium text-gray-700 mb-2">
+                                School Name *
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-6">
+                            <label for="{{ form.description.id_for_label }}" 
+                                   class="block text-sm font-medium text-gray-700 mb-2">
+                                Description
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-sm text-gray-500">
+                                Brief description of your school
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="mb-8 pt-8 border-t border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Contact Information</h3>
+                        
+                        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                            <!-- Contact Email -->
+                            <div>
+                                <label for="{{ form.contact_email.id_for_label }}" 
+                                       class="block text-sm font-medium text-gray-700 mb-2">
+                                    Contact Email
+                                </label>
+                                {{ form.contact_email }}
+                                {% if form.contact_email.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.contact_email.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Phone Number -->
+                            <div>
+                                <label for="{{ form.phone_number.id_for_label }}" 
+                                       class="block text-sm font-medium text-gray-700 mb-2">
+                                    Phone Number
+                                </label>
+                                {{ form.phone_number }}
+                                {% if form.phone_number.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.phone_number.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Address -->
+                        <div class="mt-6">
+                            <label for="{{ form.address.id_for_label }}" 
+                                   class="block text-sm font-medium text-gray-700 mb-2">
+                                Address
+                            </label>
+                            {{ form.address }}
+                            {% if form.address.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.address.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Website -->
+                        <div class="mt-6">
+                            <label for="{{ form.website.id_for_label }}" 
+                                   class="block text-sm font-medium text-gray-700 mb-2">
+                                Website
+                            </label>
+                            {{ form.website }}
+                            {% if form.website.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.website.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Branding -->
+                    <div class="mb-8 pt-8 border-t border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Branding</h3>
+                        
+                        <!-- Logo -->
+                        <div class="mb-6">
+                            <label for="{{ form.logo.id_for_label }}" 
+                                   class="block text-sm font-medium text-gray-700 mb-2">
+                                School Logo
+                            </label>
+                            {{ form.logo }}
+                            {% if form.logo.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.logo.errors.0 }}</p>
+                            {% endif %}
+                            <p class="mt-1 text-sm text-gray-500">
+                                Upload your school logo (recommended: 400x400px)
+                            </p>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                            <!-- Primary Color -->
+                            <div>
+                                <label for="{{ form.primary_color.id_for_label }}" 
+                                       class="block text-sm font-medium text-gray-700 mb-2">
+                                    Primary Color
+                                </label>
+                                {{ form.primary_color }}
+                                {% if form.primary_color.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.primary_color.errors.0 }}</p>
+                                {% endif %}
+                                <p class="mt-1 text-sm text-gray-500">
+                                    Primary brand color (hex format)
+                                </p>
+                            </div>
+
+                            <!-- Secondary Color -->
+                            <div>
+                                <label for="{{ form.secondary_color.id_for_label }}" 
+                                       class="block text-sm font-medium text-gray-700 mb-2">
+                                    Secondary Color
+                                </label>
+                                {{ form.secondary_color }}
+                                {% if form.secondary_color.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.secondary_color.errors.0 }}</p>
+                                {% endif %}
+                                <p class="mt-1 text-sm text-gray-500">
+                                    Secondary brand color (hex format)
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                        <a href="/dashboard/" 
+                           class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            Cancel
+                        </a>
+                        <button type="submit" 
+                                class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                            <i class="fas fa-save mr-2"></i>Save Settings
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Form styling for better appearance */
+#form-container select,
+#form-container input[type="text"],
+#form-container input[type="email"],
+#form-container input[type="tel"],
+#form-container input[type="url"],
+#form-container input[type="color"],
+#form-container textarea,
+#form-container input[type="file"] {
+    @apply mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm;
+}
+
+#form-container textarea {
+    @apply h-20 resize-none;
+}
+
+#form-container select:focus,
+#form-container input:focus,
+#form-container textarea:focus {
+    @apply outline-none ring-2 ring-blue-500 border-transparent;
+}
+
+/* Color input specific styling */
+#form-container input[type="color"] {
+    @apply h-10 w-20 rounded-md;
+}
+</style>
+{% endblock %}

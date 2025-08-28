@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Teacher Invitation - {{ invitation.school.name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="text-center">
+            <i class="fas fa-envelope-open text-blue-500 text-6xl mb-4"></i>
+            <h2 class="text-3xl font-extrabold text-gray-900">Teacher Invitation</h2>
+            <p class="mt-2 text-sm text-gray-600">You've been invited to join as a teacher</p>
+        </div>
+    </div>
+
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+            <!-- Invitation Details -->
+            <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div class="flex items-start">
+                    <i class="fas fa-school text-blue-500 mr-3 mt-1"></i>
+                    <div>
+                        <h3 class="text-lg font-medium text-blue-900">{{ invitation.school.name }}</h3>
+                        <p class="text-sm text-blue-700 mt-1">
+                            Role: <span class="font-medium">{{ invitation.get_role_display }}</span>
+                        </p>
+                        <p class="text-sm text-blue-700">
+                            Invited by: <span class="font-medium">{{ invitation.invited_by.get_full_name|default:invitation.invited_by.email }}</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {% if invitation.custom_message %}
+                <div class="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <h4 class="text-sm font-medium text-gray-900 mb-2">Personal Message:</h4>
+                    <p class="text-sm text-gray-700">{{ invitation.custom_message|linebreaks }}</p>
+                </div>
+            {% endif %}
+
+            <!-- Invitation Actions -->
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <button type="submit" 
+                            name="action" 
+                            value="accept"
+                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+                        <i class="fas fa-check mr-2"></i>Accept Invitation
+                    </button>
+                    
+                    <button type="submit" 
+                            name="action" 
+                            value="decline"
+                            onclick="return confirm('Are you sure you want to decline this invitation?')"
+                            class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        <i class="fas fa-times mr-2"></i>Decline
+                    </button>
+                </div>
+            </form>
+
+            <!-- Additional Information -->
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <div class="text-sm text-gray-500 space-y-2">
+                    <div class="flex items-center">
+                        <i class="fas fa-clock mr-2"></i>
+                        <span>Expires: {{ invitation.expires_at|date:"F j, Y \a\t g:i A" }}</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-envelope mr-2"></i>
+                        <span>Invited: {{ invitation.email }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- What happens next -->
+            <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                <h4 class="text-sm font-medium text-gray-900 mb-2">What happens when you accept?</h4>
+                <ul class="text-sm text-gray-700 space-y-1">
+                    <li>• You'll become a teacher at {{ invitation.school.name }}</li>
+                    <li>• You can manage classes and students</li>
+                    <li>• You'll have access to the school dashboard</li>
+                    <li>• You can schedule and conduct lessons</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Login Link -->
+        <div class="mt-6 text-center">
+            <p class="text-sm text-gray-600">
+                Already have an account? 
+                <a href="{% url 'accounts:signin' %}" class="font-medium text-blue-600 hover:text-blue-500">
+                    Sign in here
+                </a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

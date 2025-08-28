@@ -1,0 +1,184 @@
+{% extends "base_dashboard.html" %}
+{% load static %}
+
+{% block title %}My Profile - Aprende Comigo{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <div class="max-w-4xl mx-auto">
+        <div class="mb-6">
+            <div class="flex justify-between items-center">
+                <h1 class="text-3xl font-bold text-gray-900">My Profile</h1>
+                <a href="{% url 'accounts:profile_edit' %}" 
+                   class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md font-medium transition-colors">
+                    <i class="fas fa-edit mr-2"></i>Edit Profile
+                </a>
+            </div>
+            <p class="text-gray-600 mt-2">Your account information and school memberships</p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <!-- Profile Information -->
+            <div class="lg:col-span-2">
+                <div class="bg-white shadow rounded-lg">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-medium text-gray-900">Personal Information</h2>
+                    </div>
+                    <div class="px-6 py-4 space-y-4">
+                        <div class="flex justify-between">
+                            <span class="text-sm font-medium text-gray-500">Full Name:</span>
+                            <span class="text-sm text-gray-900">
+                                {{ profile_user.get_full_name|default:"Not provided" }}
+                            </span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm font-medium text-gray-500">Email Address:</span>
+                            <span class="text-sm text-gray-900">{{ profile_user.email }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm font-medium text-gray-500">Phone Number:</span>
+                            <span class="text-sm text-gray-900">
+                                {{ profile_user.phone_number|default:"Not provided" }}
+                                {% if profile_user.phone_verified %}
+                                    <span class="text-green-600 ml-2"><i class="fas fa-check-circle"></i></span>
+                                {% else %}
+                                    <span class="text-yellow-600 ml-2"><i class="fas fa-exclamation-circle"></i></span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if profile_user.bio %}
+                            <div>
+                                <span class="text-sm font-medium text-gray-500 block mb-2">Bio:</span>
+                                <p class="text-sm text-gray-900">{{ profile_user.bio|linebreaks }}</p>
+                            </div>
+                        {% endif %}
+                        <div class="flex justify-between">
+                            <span class="text-sm font-medium text-gray-500">Member Since:</span>
+                            <span class="text-sm text-gray-900">{{ profile_user.date_joined|date:"F j, Y" }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- School Memberships -->
+                {% if memberships %}
+                    <div class="mt-6 bg-white shadow rounded-lg">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h2 class="text-lg font-medium text-gray-900">School Memberships</h2>
+                        </div>
+                        <div class="divide-y divide-gray-200">
+                            {% for membership in memberships %}
+                                <div class="px-6 py-4">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0">
+                                                {% if membership.school.logo %}
+                                                    <img class="h-10 w-10 rounded-full object-cover" 
+                                                         src="{{ membership.school.logo.url }}" 
+                                                         alt="{{ membership.school.name }}">
+                                                {% else %}
+                                                    <div class="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
+                                                        <i class="fas fa-school text-white text-sm"></i>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="ml-4">
+                                                <div class="text-sm font-medium text-gray-900">
+                                                    {{ membership.school.name }}
+                                                </div>
+                                                <div class="text-sm text-gray-500">
+                                                    {{ membership.get_role_display }} • Joined {{ membership.joined_at|date:"M Y" }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                Active
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Account Status Sidebar -->
+            <div class="lg:col-span-1">
+                <div class="bg-white shadow rounded-lg">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-medium text-gray-900">Account Status</h2>
+                    </div>
+                    <div class="px-6 py-4 space-y-4">
+                        <!-- Phone Verification -->
+                        <div class="flex items-center">
+                            {% if profile_user.phone_verified %}
+                                <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900">Phone Verified</div>
+                                    <div class="text-xs text-gray-500">SMS notifications enabled</div>
+                                </div>
+                            {% else %}
+                                <i class="fas fa-exclamation-circle text-yellow-500 mr-3"></i>
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900">Phone Not Verified</div>
+                                    <div class="text-xs text-gray-500">Verify to enable SMS</div>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Email Status -->
+                        <div class="flex items-center">
+                            <i class="fas fa-envelope text-blue-500 mr-3"></i>
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">Email Active</div>
+                                <div class="text-xs text-gray-500">Receiving notifications</div>
+                            </div>
+                        </div>
+
+                        <!-- Account Type -->
+                        <div class="flex items-center">
+                            <i class="fas fa-user text-gray-500 mr-3"></i>
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">Standard Account</div>
+                                <div class="text-xs text-gray-500">
+                                    {% if memberships %}
+                                        {{ memberships|length }} school membership{{ memberships|length|pluralize }}
+                                    {% else %}
+                                        No school memberships
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="mt-6 bg-white shadow rounded-lg">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-medium text-gray-900">Quick Actions</h2>
+                    </div>
+                    <div class="px-6 py-4 space-y-3">
+                        <a href="{% url 'accounts:profile_edit' %}" 
+                           class="flex items-center text-sm text-blue-600 hover:text-blue-900">
+                            <i class="fas fa-edit mr-2"></i>Edit Profile
+                        </a>
+                        
+                        {% if not profile_user.phone_verified %}
+                            <a href="{% url 'accounts:verify_otp' %}" 
+                               class="flex items-center text-sm text-yellow-600 hover:text-yellow-900">
+                                <i class="fas fa-phone mr-2"></i>Verify Phone
+                            </a>
+                        {% endif %}
+                        
+                        <a href="{% url 'accounts:logout' %}" 
+                           class="flex items-center text-sm text-red-600 hover:text-red-900">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Sign Out
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

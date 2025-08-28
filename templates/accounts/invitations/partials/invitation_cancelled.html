@@ -1,0 +1,36 @@
+<tr class="hover:bg-gray-50 opacity-50">
+    <td class="px-6 py-4 whitespace-nowrap">
+        <div>
+            <div class="text-sm font-medium text-gray-900">{{ invitation.email }}</div>
+            {% if invitation.custom_message %}
+                <div class="text-sm text-gray-500">With custom message</div>
+            {% endif %}
+        </div>
+    </td>
+    <td class="px-6 py-4 whitespace-nowrap">
+        <div class="text-sm text-gray-900">{{ invitation.school.name }}</div>
+        <div class="text-sm text-gray-500">{{ invitation.get_role_display }}</div>
+    </td>
+    <td class="px-6 py-4 whitespace-nowrap">
+        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+            Cancelled
+        </span>
+    </td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+        {% if invitation.email_sent_at %}
+            {{ invitation.email_sent_at|date:"M j, Y H:i" }}
+        {% else %}
+            Not sent
+        {% endif %}
+    </td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+        {{ invitation.expires_at|date:"M j, Y" }}
+        <span class="text-gray-400">(Cancelled)</span>
+    </td>
+    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+        <div class="flex justify-end space-x-2">
+            <a href="{% url 'accounts:invitation_detail' invitation.pk %}" 
+               class="text-blue-600 hover:text-blue-900">View</a>
+        </div>
+    </td>
+</tr>
