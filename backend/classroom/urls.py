@@ -12,8 +12,9 @@ from .views import (
     chat_school_users,
 )
 
-# Pure Django views for chat functionality
+# Pure Django views for chat functionality and classroom management
 urlpatterns = [
+    # Chat endpoints
     path("chat/", ChatView.as_view(), name="chat"),
     path("chat/users/search/", ChatUserSearchView.as_view(), name="chat_user_search"),
     path("chat/users/school/", chat_school_users, name="chat_school_users"),

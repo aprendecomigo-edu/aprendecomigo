@@ -12,7 +12,10 @@
       "WebFetch(domain:www.colby.so)",
       "WebFetch(domain:www.penguinui.com)",
       "mcp__playwright__browser_handle_dialog",
-      "mcp__ide__executeCode"
+      "mcp__ide__executeCode",
+      "mcp__playwright__browser_fill_form",
+      "WebFetch(domain:help.pythonanywhere.com)",
+      "WebFetch(domain:docs.railway.com)"
     ],
     "deny": [],
     "ask": []

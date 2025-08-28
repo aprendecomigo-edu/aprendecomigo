@@ -1,0 +1,24 @@
+<div id="search-results" class="max-h-60 overflow-y-auto">
+    {% if search_results %}
+        {% for user_data in search_results %}
+            <div class="flex items-center p-2 hover:bg-gray-100 rounded cursor-pointer"
+                 hx-post="{% url 'chat' %}"
+                 hx-target="#channels-list"
+                 hx-swap="innerHTML"
+                 hx-vals='{"action": "create_channel", "participant_id": "{{ user_data.id }}"}'
+                 @click="showNewDMModal = false; userSearchQuery = ''">
+                <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center mr-3">
+                    <span class="text-white font-medium text-sm">{{ user_data.first_name|first|upper }}</span>
+                </div>
+                <div>
+                    <div class="font-medium">{{ user_data.first_name }} {{ user_data.last_name }}</div>
+                    <div class="text-sm text-gray-500">{{ user_data.email }}</div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        {% if query %}
+            <div class="text-center py-4 text-gray-500">No users found</div>
+        {% endif %}
+    {% endif %}
+</div>

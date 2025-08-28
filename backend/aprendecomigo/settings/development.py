@@ -38,6 +38,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:19006",  # Expo web port
 ]
 
+# Will override cache settings after base import
+
 # Disable some security settings for development
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
@@ -228,6 +230,20 @@ LOGGING = {
 
 # Import all settings from base.py
 from .base import *  # noqa: E402
+
+# Override cache to use local memory instead of Redis (must be after base import)
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "default-cache",
+        "TIMEOUT": 60 * 15,
+    },
+    "sessions": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "sessions-cache", 
+        "TIMEOUT": 60 * 60 * 24,
+    },
+}
 
 # Development-specific overrides
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "192.168.1.98", "192.168.1.98:8000", "10.1.14.101", "10.1.14.101:8000", "*"]

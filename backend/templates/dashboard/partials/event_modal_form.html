@@ -1,0 +1,158 @@
+<!-- Event Creation Modal Form -->
+<div class="fixed inset-0 z-50 overflow-y-auto" id="event-modal" style="display: none;">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="closeEventModal()"></div>
+
+        <!-- Modal panel -->
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <!-- Modal content will be populated by Alpine.js or HTMX -->
+            <form hx-post="{% url 'calendar' %}" 
+                  hx-target="#calendar-grid"
+                  hx-swap="outerHTML"
+                  hx-on::after-request="if(event.detail.successful) closeEventModal()">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_event">
+                
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="w-full">
+                            <!-- Modal Header -->
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg leading-6 font-bold text-gray-900">
+                                    Criar Nova Aula
+                                </h3>
+                                <button type="button" @click="closeEventModal()" class="text-gray-400 hover:text-gray-600">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <!-- Form Fields -->
+                            <div class="space-y-4">
+                                <!-- Title -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                                        Título <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           name="title"
+                                           x-model="eventModalData.title"
+                                           required
+                                           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                           placeholder="Ex: Aula de Matemática">
+                                </div>
+
+                                <!-- Description -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                                    <textarea name="description"
+                                             x-model="eventModalData.description"
+                                             rows="2"
+                                             class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                             placeholder="Descrição opcional da aula"></textarea>
+                                </div>
+
+                                <!-- Date and Time -->
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                                            Data <span class="text-red-500">*</span>
+                                        </label>
+                                        <input type="date" 
+                                               name="date"
+                                               x-model="eventModalData.date"
+                                               required
+                                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Início</label>
+                                        <input type="time" 
+                                               name="start_time"
+                                               x-model="eventModalData.time"
+                                               @change="updateEndTime()"
+                                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Fim</label>
+                                        <input type="time" 
+                                               name="end_time"
+                                               x-model="eventModalData.endTime"
+                                               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    </div>
+                                </div>
+
+                                <!-- Class Type -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Aula</label>
+                                    <select name="class_type"
+                                            x-model="eventModalData.class_type"
+                                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="individual">Individual</option>
+                                        <option value="group">Grupo</option>
+                                        <option value="trial">Experimental</option>
+                                    </select>
+                                </div>
+
+                                <!-- Teacher -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                                        Professor <span class="text-red-500">*</span>
+                                    </label>
+                                    <select name="teacher"
+                                            x-model="eventModalData.teacher"
+                                            required
+                                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">Selecione um professor</option>
+                                        {% for teacher in teachers %}
+                                            <option value="{{ teacher.id }}">{{ teacher.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <!-- Student -->
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                                        Aluno <span class="text-red-500">*</span>
+                                    </label>
+                                    <select name="student"
+                                            x-model="eventModalData.student"
+                                            required
+                                            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="">Selecione um aluno</option>
+                                        {% for student in students %}
+                                            <option value="{{ student.id }}">{{ student.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Modal Footer -->
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="submit"
+                            :disabled="eventModalLoading"
+                            :class="eventModalLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'"
+                            class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+                        <span x-show="!eventModalLoading">Criar Aula</span>
+                        <span x-show="eventModalLoading" class="flex items-center">
+                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Criando...
+                        </span>
+                    </button>
+                    <button type="button" 
+                            @click="closeEventModal()" 
+                            class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

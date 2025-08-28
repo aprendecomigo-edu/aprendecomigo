@@ -6,6 +6,7 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from . import views
+from .views import InvitationAPIView
 
 app_name = "messaging"
 
@@ -32,4 +33,6 @@ urlpatterns = [
     path("notifications/unread-count/", views.NotificationUnreadCountView.as_view(), name="notification-unread-count"),
     # Legacy endpoint (kept for backward compatibility)
     path("notifications/counts/", views.notification_counts, name="counts"),
+    # Invitations API
+    path("invitations/", InvitationAPIView.as_view(), name="invitation-api"),
 ]

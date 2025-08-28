@@ -9,7 +9,7 @@
 </style>
 
 <!-- People Management Component with Alpine.js -->
-<div x-data="peopleManager()" x-init="init()" class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+<div x-data="peopleManager()" class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
     <!-- Page Header -->
     <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900 mb-2">Gestão de Pessoas</h1>
@@ -19,30 +19,72 @@
     <!-- Tab Navigation -->
     <div class="mb-8">
         <div class="flex space-x-1 bg-white rounded-lg border border-gray-200 p-1">
-            <template x-for="tab in tabs" :key="tab.id">
-                <button 
-                    @click="activeTab = tab.id"
+            <button 
+                @click="activeTab = 'teachers'"
+                :class="[
+                    'flex-1 py-3 px-4 rounded-md font-medium text-sm transition-colors',
+                    activeTab === 'teachers' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-transparent text-gray-700 hover:text-gray-900'
+                ]"
+                class="flex items-center justify-center space-x-2"
+            >
+                <span>Professores</span>
+                <span 
                     :class="[
-                        'flex-1 py-3 px-4 rounded-md font-medium text-sm transition-colors',
-                        activeTab === tab.id 
-                            ? 'bg-blue-600 text-white' 
-                            : 'bg-transparent text-gray-700 hover:text-gray-900'
+                        'text-xs px-2 py-0.5 rounded-full',
+                        activeTab === 'teachers' 
+                            ? 'bg-white text-blue-600' 
+                            : 'bg-gray-100 text-gray-600'
                     ]"
-                    class="flex items-center justify-center space-x-2"
                 >
-                    <span x-text="tab.label"></span>
-                    <span 
-                        x-show="tab.count !== undefined"
-                        :class="[
-                            'text-xs px-2 py-0.5 rounded-full',
-                            activeTab === tab.id 
-                                ? 'bg-white text-blue-600' 
-                                : 'bg-gray-100 text-gray-600'
-                        ]"
-                        x-text="tab.count"
-                    ></span>
-                </button>
-            </template>
+                    {{ teacher_stats.total }}
+                </span>
+            </button>
+            <button 
+                @click="activeTab = 'students'"
+                :class="[
+                    'flex-1 py-3 px-4 rounded-md font-medium text-sm transition-colors',
+                    activeTab === 'students' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-transparent text-gray-700 hover:text-gray-900'
+                ]"
+                class="flex items-center justify-center space-x-2"
+            >
+                <span>Alunos</span>
+                <span 
+                    :class="[
+                        'text-xs px-2 py-0.5 rounded-full',
+                        activeTab === 'students' 
+                            ? 'bg-white text-blue-600' 
+                            : 'bg-gray-100 text-gray-600'
+                    ]"
+                >
+                    {{ student_stats.total }}
+                </span>
+            </button>
+            <button 
+                @click="activeTab = 'staff'"
+                :class="[
+                    'flex-1 py-3 px-4 rounded-md font-medium text-sm transition-colors',
+                    activeTab === 'staff' 
+                        ? 'bg-blue-600 text-white' 
+                        : 'bg-transparent text-gray-700 hover:text-gray-900'
+                ]"
+                class="flex items-center justify-center space-x-2"
+            >
+                <span>Funcionários</span>
+                <span 
+                    :class="[
+                        'text-xs px-2 py-0.5 rounded-full',
+                        activeTab === 'staff' 
+                            ? 'bg-white text-blue-600' 
+                            : 'bg-gray-100 text-gray-600'
+                    ]"
+                >
+                    0
+                </span>
+            </button>
         </div>
     </div>
 
@@ -73,16 +115,12 @@
                     </button>
                 </div>
 
-                <!-- Filter -->
+                <!-- Filter - TODO: Implement filtering via HTMX -->
                 <div class="flex items-center space-x-2">
                     <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
                     </svg>
-                    <select 
-                        x-model="teacherFilter"
-                        @change="loadTeachers()"
-                        class="border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                    >
+                    <select class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
                         <option value="all">Todos os Professores</option>
                         <option value="active">Ativos</option>
                         <option value="pending">Pendentes</option>
@@ -91,78 +129,8 @@
                 </div>
             </div>
 
-            <!-- Teachers Loading -->
-            <div x-show="teachersLoading" class="flex justify-center items-center py-12">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span class="ml-3 text-gray-600">Carregando professores...</span>
-            </div>
-
-            <!-- Teachers List -->
-            <div x-show="!teachersLoading && teachers.length > 0" class="grid gap-4">
-                <template x-for="teacher in filteredTeachers" :key="teacher.id">
-                    <div class="bg-white rounded-lg border border-gray-200 p-4">
-                        <div class="flex justify-between items-start">
-                            <div class="flex-1">
-                                <h3 class="font-semibold text-gray-900" x-text="teacher.user?.name || 'Unknown Teacher'"></h3>
-                                <p class="text-sm text-gray-600" x-text="teacher.user?.email || 'No email'"></p>
-                                <span 
-                                    :class="getStatusBadgeClass(teacher.status || 'pending')"
-                                    class="inline-block mt-2 px-2 py-1 text-xs font-medium rounded-full"
-                                    x-text="teacher.status || 'pending'"
-                                ></span>
-                            </div>
-                            <button 
-                                @click="viewTeacher(teacher)"
-                                class="border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded-lg text-sm"
-                            >
-                                View
-                            </button>
-                        </div>
-                    </div>
-                </template>
-            </div>
-
-            <!-- Teachers Empty State -->
-            <div x-show="!teachersLoading && teachers.length === 0" class="text-center py-12 bg-white rounded-lg border border-gray-200">
-                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-                </svg>
-                <h3 class="mt-2 text-lg font-semibold text-gray-700">Nenhum professor encontrado</h3>
-                <p class="text-gray-600">
-                    <span x-show="teacherFilter === 'all'">Adicione professores à sua escola para começar.</span>
-                    <span x-show="teacherFilter !== 'all'" x-text="`Nenhum professor com status '${teacherFilter}' encontrado.`"></span>
-                </p>
-                <button 
-                    x-show="teacherFilter === 'all'"
-                    @click="openModal('addTeacher')"
-                    class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
-                >
-                    Adicionar Primeiro Professor
-                </button>
-            </div>
-
-            <!-- Teachers Stats -->
-            <div x-show="!teachersLoading && teachers.length > 0" class="mt-6 bg-white rounded-lg border border-gray-200 p-4">
-                <h3 class="font-semibold text-gray-900 mb-3">Resumo</h3>
-                <div class="grid grid-cols-4 gap-4">
-                    <div class="text-center">
-                        <div class="text-2xl font-bold text-green-600" x-text="teacherStats.active"></div>
-                        <div class="text-sm text-gray-600">Ativos</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-2xl font-bold text-yellow-600" x-text="teacherStats.pending"></div>
-                        <div class="text-sm text-gray-600">Pendentes</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-2xl font-bold text-red-600" x-text="teacherStats.inactive"></div>
-                        <div class="text-sm text-gray-600">Inativos</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-2xl font-bold text-gray-900" x-text="teachers.length"></div>
-                        <div class="text-sm text-gray-600">Total</div>
-                    </div>
-                </div>
-            </div>
+            <!-- Teachers List - Server-side rendered -->
+            {% include 'dashboard/partials/teachers_list.html' %}
         </div>
 
         <!-- Students Tab -->
@@ -191,22 +159,8 @@
                 </div>
             </div>
 
-            <!-- Students Loading -->
-            <div x-show="studentsLoading" class="flex justify-center items-center py-12">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span class="ml-3 text-gray-600">Carregando alunos...</span>
-            </div>
-
-            <!-- Students Table Placeholder -->
-            <div x-show="!studentsLoading" class="bg-white rounded-lg border border-gray-200 p-6">
-                <div class="text-center py-8">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                    </svg>
-                    <h3 class="mt-2 text-lg font-semibold text-gray-700">Gestão de Alunos</h3>
-                    <p class="text-gray-600">A lista de alunos e funcionalidades de gestão serão exibidas aqui.</p>
-                </div>
-            </div>
+            <!-- Students List - Server-side rendered -->
+            {% include 'dashboard/partials/students_list.html' %}
         </div>
 
         <!-- Staff Tab -->
@@ -244,28 +198,35 @@
                         </div>
                     </div>
                     
-                    <form @submit.prevent="addTeacher" class="mt-6 space-y-4">
+                    <form hx-post="/people/" 
+                          hx-target="#teachers-content"
+                          hx-swap="outerHTML" 
+                          hx-trigger="submit"
+                          class="mt-6 space-y-4"
+                          @htmx:after-request="if(event.detail.successful) { showAddTeacherModal = false; handleSuccess('Teacher added successfully!'); }">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add_teacher">
+                        
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Email</label>
-                            <input type="email" x-model="addTeacherForm.email" required 
+                            <input type="email" name="email" x-model="addTeacherForm.email" required 
                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Bio</label>
-                            <textarea x-model="addTeacherForm.bio" rows="3"
+                            <textarea name="bio" x-model="addTeacherForm.bio" rows="3"
                                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Specialty</label>
-                            <input type="text" x-model="addTeacherForm.specialty"
+                            <input type="text" name="specialty" x-model="addTeacherForm.specialty"
                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                         </div>
                         
                         <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
-                            <button type="submit" :disabled="addTeacherLoading"
-                                    class="inline-flex justify-center w-full px-4 py-2 text-base font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:col-start-2 sm:text-sm disabled:opacity-50">
-                                <span x-show="!addTeacherLoading">Add Teacher</span>
-                                <span x-show="addTeacherLoading">Adding...</span>
+                            <button type="submit"
+                                    class="inline-flex justify-center w-full px-4 py-2 text-base font-medium text-white bg-blue-600 border border-transparent rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:col-start-2 sm:text-sm">
+                                Add Teacher
                             </button>
                             <button type="button" @click="showAddTeacherModal = false"
                                     class="mt-3 inline-flex justify-center w-full px-4 py-2 text-base font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm">
@@ -297,29 +258,36 @@
                         </div>
                     </div>
                     
-                    <form @submit.prevent="inviteTeacher" class="mt-6 space-y-4">
+                    <form hx-post="/people/" 
+                          hx-target="#message-area"
+                          hx-swap="innerHTML" 
+                          hx-trigger="submit"
+                          class="mt-6 space-y-4"
+                          @htmx:after-request="if(event.detail.successful) { showInviteTeacherModal = false; handleSuccess('Invitation sent successfully!'); }">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="invite_teacher">
+                        
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Email</label>
-                            <input type="email" x-model="inviteTeacherForm.email" required 
+                            <input type="email" name="email" x-model="inviteTeacherForm.email" required 
                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">School ID</label>
-                            <input type="number" x-model="inviteTeacherForm.school_id" required 
+                            <input type="number" name="school_id" x-model="inviteTeacherForm.school_id" required 
                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500"
                                    placeholder="Enter school ID">
                         </div>
                         <div class="flex items-center">
-                            <input type="checkbox" x-model="inviteTeacherForm.send_email" id="send_email"
+                            <input type="checkbox" name="send_email" x-model="inviteTeacherForm.send_email" id="send_email"
                                    class="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded">
                             <label for="send_email" class="ml-2 block text-sm text-gray-700">Send email notification</label>
                         </div>
                         
                         <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
-                            <button type="submit" :disabled="inviteTeacherLoading"
-                                    class="inline-flex justify-center w-full px-4 py-2 text-base font-medium text-white bg-purple-600 border border-transparent rounded-md shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 sm:col-start-2 sm:text-sm disabled:opacity-50">
-                                <span x-show="!inviteTeacherLoading">Send Invitation</span>
-                                <span x-show="inviteTeacherLoading">Sending...</span>
+                            <button type="submit"
+                                    class="inline-flex justify-center w-full px-4 py-2 text-base font-medium text-white bg-purple-600 border border-transparent rounded-md shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 sm:col-start-2 sm:text-sm">
+                                Send Invitation
                             </button>
                             <button type="button" @click="showInviteTeacherModal = false"
                                     class="mt-3 inline-flex justify-center w-full px-4 py-2 text-base font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm">
@@ -351,34 +319,41 @@
                         </div>
                     </div>
                     
-                    <form @submit.prevent="addStudent" class="mt-6 space-y-4">
+                    <form hx-post="/people/" 
+                          hx-target="#students-content"
+                          hx-swap="outerHTML" 
+                          hx-trigger="submit"
+                          class="mt-6 space-y-4"
+                          @htmx:after-request="if(event.detail.successful) { showAddStudentModal = false; handleSuccess('Student added successfully!'); }">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add_student">
+                        
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Name</label>
-                            <input type="text" x-model="addStudentForm.name" required 
+                            <input type="text" name="name" x-model="addStudentForm.name" required 
                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Email</label>
-                            <input type="email" x-model="addStudentForm.email" required 
+                            <input type="email" name="email" x-model="addStudentForm.email" required 
                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Phone Number</label>
-                            <input type="tel" x-model="addStudentForm.phone_number"
+                            <input type="tel" name="phone_number" x-model="addStudentForm.phone_number"
                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">School ID</label>
-                            <input type="number" x-model="addStudentForm.school_id" required 
+                            <label class="block text-sm font-medium text-gray-700">Grade</label>
+                            <input type="text" name="grade" x-model="addStudentForm.grade"
                                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
-                                   placeholder="Enter school ID">
+                                   placeholder="Enter student grade">
                         </div>
                         
                         <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
-                            <button type="submit" :disabled="addStudentLoading"
-                                    class="inline-flex justify-center w-full px-4 py-2 text-base font-medium text-white bg-green-600 border border-transparent rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:col-start-2 sm:text-sm disabled:opacity-50">
-                                <span x-show="!addStudentLoading">Add Student</span>
-                                <span x-show="addStudentLoading">Adding...</span>
+                            <button type="submit"
+                                    class="inline-flex justify-center w-full px-4 py-2 text-base font-medium text-white bg-green-600 border border-transparent rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:col-start-2 sm:text-sm">
+                                Add Student
                             </button>
                             <button type="button" @click="showAddStudentModal = false"
                                     class="mt-3 inline-flex justify-center w-full px-4 py-2 text-base font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm">
@@ -390,6 +365,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Message Area for HTMX responses -->
+    <div id="message-area" class="fixed top-4 right-4 space-y-2 z-50"></div>
 
     <!-- Success Messages -->
     <div 
@@ -445,166 +423,37 @@
 <script>
 function peopleManager() {
     return {
-        // State
+        // UI State only (no server data)
         activeTab: 'teachers',
         error: null,
         successMessage: null,
-        
-        // Tab configuration
-        tabs: [
-            { id: 'teachers', label: 'Professores', count: 0 },
-            { id: 'students', label: 'Alunos', count: 0 },
-            { id: 'staff', label: 'Funcionários', count: 0 }
-        ],
-        
-        // Teachers data
-        teachers: [],
-        teachersLoading: false,
-        teacherFilter: 'all',
-        teacherStats: {
-            active: 0,
-            pending: 0,
-            inactive: 0
-        },
-        
-        // Students data
-        students: [],
-        studentsLoading: false,
         
         // Modal state
         showAddTeacherModal: false,
         showInviteTeacherModal: false,
         showAddStudentModal: false,
         
-        // Form state
+        // Form state for modals - no loading states needed with HTMX
         addTeacherForm: {
             email: '',
             bio: '',
             specialty: ''
         },
-        addTeacherLoading: false,
         
         inviteTeacherForm: {
             email: '',
             school_id: 1,
             send_email: true
         },
-        inviteTeacherLoading: false,
         
         addStudentForm: {
             name: '',
             email: '',
             phone_number: '',
-            school_id: 1
-        },
-        addStudentLoading: false,
-        
-        // Computed properties
-        get filteredTeachers() {
-            if (this.teacherFilter === 'all') return this.teachers;
-            return this.teachers.filter(teacher => 
-                (teacher.status || 'pending').toLowerCase() === this.teacherFilter.toLowerCase()
-            );
+            grade: ''
         },
         
-        // Initialization
-        init() {
-            this.loadTeachers();
-            this.loadStudents();
-        },
-        
-        // API calls
-        async loadTeachers() {
-            this.teachersLoading = true;
-            this.error = null;
-            
-            try {
-                const response = await fetch('/api/accounts/teachers/?include_pending=true', {
-                    headers: {
-                        'Authorization': 'Token e0c8e49d7531f6959b03c70b51f5978e179a1367f609194365e7eebbd19bba03',
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                const data = await response.json();
-                this.teachers = Array.isArray(data) ? data : data.results || [];
-                
-                // Update tab count
-                const teacherTab = this.tabs.find(tab => tab.id === 'teachers');
-                if (teacherTab) {
-                    teacherTab.count = this.teachers.length;
-                }
-                
-                // Calculate stats
-                this.calculateTeacherStats();
-                
-            } catch (error) {
-                console.error('Error loading teachers:', error);
-                this.error = 'Failed to load teachers. Please try again.';
-            } finally {
-                this.teachersLoading = false;
-            }
-        },
-        
-        async loadStudents() {
-            this.studentsLoading = true;
-            
-            try {
-                const response = await fetch('/api/accounts/students/', {
-                    headers: {
-                        'Authorization': 'Token e0c8e49d7531f6959b03c70b51f5978e179a1367f609194365e7eebbd19bba03',
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                const data = await response.json();
-                this.students = Array.isArray(data) ? data : data.results || [];
-                
-                // Update tab count
-                const studentTab = this.tabs.find(tab => tab.id === 'students');
-                if (studentTab) {
-                    studentTab.count = this.students.length;
-                }
-                
-            } catch (error) {
-                console.error('Error loading students:', error);
-                // Don't show error for students since it's still being developed
-            } finally {
-                this.studentsLoading = false;
-            }
-        },
-        
-        // Helper methods
-        calculateTeacherStats() {
-            this.teacherStats = {
-                active: this.teachers.filter(t => (t.status || '').toLowerCase() === 'active').length,
-                pending: this.teachers.filter(t => (t.status || 'pending').toLowerCase() === 'pending').length,
-                inactive: this.teachers.filter(t => (t.status || '').toLowerCase() === 'inactive').length
-            };
-        },
-        
-        getStatusBadgeClass(status) {
-            const statusLower = status.toLowerCase();
-            switch (statusLower) {
-                case 'active':
-                    return 'bg-green-100 text-green-800';
-                case 'pending':
-                    return 'bg-yellow-100 text-yellow-800';
-                case 'inactive':
-                    return 'bg-red-100 text-red-800';
-                default:
-                    return 'bg-gray-100 text-gray-800';
-            }
-        },
-        
+        // Helper methods for UI state
         resetForms() {
             this.addTeacherForm = {
                 email: '',
@@ -620,7 +469,7 @@ function peopleManager() {
                 name: '',
                 email: '',
                 phone_number: '',
-                school_id: 1
+                grade: ''
             };
         },
         
@@ -631,7 +480,7 @@ function peopleManager() {
             }, 5000);
         },
         
-        // Actions
+        // Modal actions - only UI state management
         openModal(modalType) {
             this.resetForms();
             this.error = null;
@@ -653,120 +502,16 @@ function peopleManager() {
             }
         },
         
-        async addTeacher() {
-            this.addTeacherLoading = true;
-            this.error = null;
-            
-            try {
-                const response = await fetch('/api/accounts/teachers/onboarding/', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': 'Token e0c8e49d7531f6959b03c70b51f5978e179a1367f609194365e7eebbd19bba03',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        email: this.addTeacherForm.email,
-                        bio: this.addTeacherForm.bio,
-                        specialty: this.addTeacherForm.specialty,
-                        courses: []
-                    })
-                });
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                const data = await response.json();
-                this.showSuccessMessage('Teacher profile created successfully!');
-                this.showAddTeacherModal = false;
-                this.loadTeachers(); // Refresh the list
-                
-            } catch (error) {
-                console.error('Error adding teacher:', error);
-                this.error = error.message || 'Failed to add teacher. Please try again.';
-            } finally {
-                this.addTeacherLoading = false;
-            }
+        // HTMX event handlers for success/error messages
+        handleSuccess(message) {
+            this.showSuccessMessage(message);
+            this.showAddTeacherModal = false;
+            this.showInviteTeacherModal = false;
+            this.showAddStudentModal = false;
         },
         
-        async inviteTeacher() {
-            this.inviteTeacherLoading = true;
-            this.error = null;
-            
-            try {
-                const response = await fetch('/api/accounts/teachers/invite_existing/', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': 'Token e0c8e49d7531f6959b03c70b51f5978e179a1367f609194365e7eebbd19bba03',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        email: this.inviteTeacherForm.email,
-                        school_id: this.inviteTeacherForm.school_id,
-                        send_email: this.inviteTeacherForm.send_email
-                    })
-                });
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                const data = await response.json();
-                this.showSuccessMessage(`Invitation sent to ${this.inviteTeacherForm.email}!`);
-                this.showInviteTeacherModal = false;
-                this.loadTeachers(); // Refresh the list to show pending invitation
-                
-            } catch (error) {
-                console.error('Error inviting teacher:', error);
-                this.error = error.message || 'Failed to send invitation. Please try again.';
-            } finally {
-                this.inviteTeacherLoading = false;
-            }
-        },
-        
-        async addStudent() {
-            this.addStudentLoading = true;
-            this.error = null;
-            
-            try {
-                const response = await fetch('/api/accounts/students/create_student/', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': 'Token e0c8e49d7531f6959b03c70b51f5978e179a1367f609194365e7eebbd19bba03',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        name: this.addStudentForm.name,
-                        email: this.addStudentForm.email,
-                        phone_number: this.addStudentForm.phone_number,
-                        school_id: this.addStudentForm.school_id
-                    })
-                });
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                const data = await response.json();
-                this.showSuccessMessage(`Student ${this.addStudentForm.name} created successfully!`);
-                this.showAddStudentModal = false;
-                this.loadStudents(); // Refresh the list
-                
-            } catch (error) {
-                console.error('Error adding student:', error);
-                this.error = error.message || 'Failed to add student. Please try again.';
-            } finally {
-                this.addStudentLoading = false;
-            }
-        },
-        
-        viewTeacher(teacher) {
-            // TODO: Navigate to teacher profile
-            console.log('Viewing teacher:', teacher);
-            alert(`Viewing teacher: ${teacher.user?.name || 'Unknown'}`);
+        handleError(message) {
+            this.error = message;
         }
     }
 }

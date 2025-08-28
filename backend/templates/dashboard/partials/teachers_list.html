@@ -1,0 +1,68 @@
+<!-- Teachers List Partial - for HTMX updates -->
+<div id="teachers-content">
+    <!-- Teachers List -->
+    {% if teachers %}
+        <div class="grid gap-4">
+            {% for teacher in teachers %}
+                <div class="bg-white rounded-lg border border-gray-200 p-4">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-gray-900">{{ teacher.full_name|default:"Unknown Teacher" }}</h3>
+                            <p class="text-sm text-gray-600">{{ teacher.email|default:"No email" }}</p>
+                            {% if teacher.specialty %}
+                                <p class="text-sm text-blue-600 mt-1">{{ teacher.specialty }}</p>
+                            {% endif %}
+                            <span class="inline-block mt-2 px-2 py-1 text-xs font-medium rounded-full
+                                {% if teacher.status == 'active' %}bg-green-100 text-green-800{% elif teacher.status == 'inactive' %}bg-red-100 text-red-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                {{ teacher.status|title }}
+                            </span>
+                        </div>
+                        <button class="border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded-lg text-sm">
+                            View
+                        </button>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Teachers Empty State -->
+        <div class="text-center py-12 bg-white rounded-lg border border-gray-200">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+            </svg>
+            <h3 class="mt-2 text-lg font-semibold text-gray-700">Nenhum professor encontrado</h3>
+            <p class="text-gray-600">Adicione professores à sua escola para começar.</p>
+            <button 
+                @click="openModal('addTeacher')"
+                class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+            >
+                Adicionar Primeiro Professor
+            </button>
+        </div>
+    {% endif %}
+
+    <!-- Teachers Stats -->
+    {% if teachers %}
+        <div class="mt-6 bg-white rounded-lg border border-gray-200 p-4">
+            <h3 class="font-semibold text-gray-900 mb-3">Resumo</h3>
+            <div class="grid grid-cols-4 gap-4">
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-green-600">{{ teacher_stats.active }}</div>
+                    <div class="text-sm text-gray-600">Ativos</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-yellow-600">{{ teacher_stats.pending }}</div>
+                    <div class="text-sm text-gray-600">Pendentes</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-red-600">{{ teacher_stats.inactive }}</div>
+                    <div class="text-sm text-gray-600">Inativos</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-gray-900">{{ teacher_stats.total }}</div>
+                    <div class="text-sm text-gray-600">Total</div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>

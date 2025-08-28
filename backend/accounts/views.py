@@ -475,4 +475,29 @@ def resend_code(request):
             {"error": "There was an issue resending the login link. Please try again."},
         )
 
+
+class LogoutView(View):
+    """Handle user logout"""
+
+    def get(self, request):
+        """Handle GET logout request"""
+        return self.post(request)
+
+    def post(self, request):
+        """Handle POST logout request"""
+        from django.contrib.auth import logout
+
+        # Log the logout event
+        if request.user.is_authenticated:
+            logger.info(f"User logged out: {request.user.email}")
+
+        # Perform logout
+        logout(request)
+
+        # Clear any session data
+        request.session.flush()
+
+        # Redirect to home or signin page
+        return redirect("/accounts/signin/")
+
 # Using django-sesame's built-in LoginView directly - no custom implementation needed

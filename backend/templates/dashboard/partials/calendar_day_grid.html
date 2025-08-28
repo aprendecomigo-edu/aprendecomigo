@@ -1,0 +1,30 @@
+<!-- Day View Grid -->
+<div class="calendar-view" id="calendar-grid">
+    <!-- Day Header -->
+    <div class="mb-4 text-center">
+        <h3 class="text-lg font-semibold text-gray-900">{{ current_date|date:'l, F j, Y' }}</h3>
+    </div>
+    
+    <!-- Hour Grid -->
+    <div class="bg-gray-200 rounded-lg overflow-hidden">
+        <div class="grid grid-cols-2 gap-px">
+            {% for hour in hours %}
+                <div class="bg-white border-b border-gray-200 p-4"
+                     @click="openEventModal('{{ current_date|date:'Y-m-d' }}', '{{ hour }}:00')">
+                    <div class="text-sm font-medium text-gray-500 mb-2">{{ hour }}:00</div>
+                    
+                    <!-- Events for this hour -->
+                    {% for event in events %}
+                        {% if event.scheduled_date|date:'Y-m-d' == current_date|date:'Y-m-d' and event.start_time|slice:':2' == hour|stringformat:'02d' %}
+                            <div class="{% if event.status == 'completed' %}bg-green-500 border-green-600{% elif event.status == 'cancelled' %}bg-red-500 border-red-600{% elif event.status == 'in-progress' %}bg-yellow-500 border-yellow-600{% else %}bg-blue-500 border-blue-600{% endif %} text-white text-sm p-2 rounded mb-2 cursor-pointer hover:opacity-90 transition-opacity border-l-4">
+                                <div class="font-medium">{{ event.title }}</div>
+                                <div class="opacity-90 text-xs">{{ event.start_time }} - {{ event.end_time }}</div>
+                                <div class="opacity-90 text-xs">{{ event.description }}</div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>

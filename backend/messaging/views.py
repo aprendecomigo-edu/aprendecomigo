@@ -2,10 +2,15 @@
 Messaging API views - Issue #107: Student Balance Monitoring & Notification System + Email Communication
 """
 
+import json
 import logging
 
+from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from django.http import JsonResponse
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.views import View
 from knox.auth import TokenAuthentication
 from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
@@ -975,3 +980,110 @@ class CommunicationSettingsAPIView(APIView):
             {"message": "Communication settings updated successfully", "settings": response_data},
             status=status.HTTP_200_OK,
         )
+
+
+# Django views for invitations (non-DRF)
+
+
+@method_decorator(login_required, name='dispatch')
+class InvitationAPIView(View):
+    """API endpoints for invitation management"""
+
+    def get(self, request):
+        """List all invitations sent by the current user"""
+        from accounts.models import TeacherInvitation
+
+        # Get invitations sent by the current user
+        invitations = TeacherInvitation.objects.filter(
+            inviter=request.user
+        ).select_related('school', 'invitee')
+
+        invitations_list = []
+        for invitation in invitations:
+            invitations_list.append({
+                'id': invitation.id,
+                'email': invitation.email,
+                'school': invitation.school.name if invitation.school else None,
+                'status': invitation.status,
+                'created_at': invitation.created_at.isoformat(),
+                'accepted_at': invitation.accepted_at.isoformat() if invitation.accepted_at else None,
+                'invitee': {
+                    'id': invitation.invitee.id,
+                    'email': invitation.invitee.email,
+                    'name': invitation.invitee.get_full_name()
+                } if invitation.invitee else None
+            })
+
+        return JsonResponse({'invitations': invitations_list})
+
+    def post(self, request):
+        """Send a new invitation"""
+        from django.conf import settings
+        from django.core.mail import send_mail
+
+        from accounts.models import TeacherInvitation
+
+        try:
+            data = json.loads(request.body)
+            email = data.get('email')
+            message = data.get('message', '')
+            role = data.get('role', 'Teacher')
+
+            if not email:
+                return JsonResponse({'error': 'Email is required'}, status=400)
+
+            # Get user's school (first one if multiple)
+            try:
+                from accounts.models import SchoolMembership
+                membership = SchoolMembership.objects.filter(user=request.user).first()
+                school = membership.school if membership else None
+            except Exception:
+                school = None
+
+            # Create invitation
+            invitation = TeacherInvitation.objects.create(
+                email=email,
+                inviter=request.user,
+                school=school,
+                custom_message=message
+            )
+
+            # Send email invitation
+            subject = f"Invitation to join {school.name if school else 'our school'}"
+            email_message = f"""
+Hello,
+
+You've been invited to join {school.name if school else 'our school'} as a {role}.
+
+{message}
+
+Best regards,
+{request.user.get_full_name()}
+            """
+
+            try:
+                send_mail(
+                    subject,
+                    email_message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [email],
+                    fail_silently=False,
+                )
+                email_sent = True
+            except Exception as e:
+                email_sent = False
+                print(f"Failed to send invitation email: {e!s}")
+
+            return JsonResponse({
+                'id': invitation.id,
+                'email': invitation.email,
+                'school': school.name if school else None,
+                'status': invitation.status,
+                'created_at': invitation.created_at.isoformat(),
+                'email_sent': email_sent
+            })
+
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)

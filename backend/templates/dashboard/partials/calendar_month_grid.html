@@ -1,0 +1,44 @@
+<!-- Month View Grid -->
+<div class="calendar-view" id="calendar-grid">
+    <!-- Month Header -->
+    <div class="mb-4 text-center">
+        <h3 class="text-lg font-semibold text-gray-900">{{ current_date|date:'F Y' }}</h3>
+    </div>
+    
+    <!-- Days of Week Header -->
+    <div class="grid grid-cols-7 gap-px mb-px bg-gray-200 rounded-t-lg overflow-hidden">
+        <div class="bg-gray-50 p-3 text-center"><div class="text-xs font-medium text-gray-500">Dom</div></div>
+        <div class="bg-gray-50 p-3 text-center"><div class="text-xs font-medium text-gray-500">Seg</div></div>
+        <div class="bg-gray-50 p-3 text-center"><div class="text-xs font-medium text-gray-500">Ter</div></div>
+        <div class="bg-gray-50 p-3 text-center"><div class="text-xs font-medium text-gray-500">Qua</div></div>
+        <div class="bg-gray-50 p-3 text-center"><div class="text-xs font-medium text-gray-500">Qui</div></div>
+        <div class="bg-gray-50 p-3 text-center"><div class="text-xs font-medium text-gray-500">Sex</div></div>
+        <div class="bg-gray-50 p-3 text-center"><div class="text-xs font-medium text-gray-500">Sáb</div></div>
+    </div>
+    
+    <!-- Month Grid -->
+    <div class="grid grid-cols-7 gap-px bg-gray-200 rounded-b-lg overflow-hidden">
+        {% for day in month_days %}
+            <div class="bg-white hover:bg-gray-50 transition-colors cursor-pointer relative min-h-[100px] p-2 
+                        {% if not day.is_current_month %}bg-gray-50 text-gray-400{% endif %}
+                        {% if day.is_today %}bg-blue-50 ring-2 ring-blue-500{% endif %}"
+                 @click="openEventModal('{{ day.date|date:'Y-m-d' }}', '09:00')">
+                
+                <div class="font-semibold mb-1">{{ day.date|date:'j' }}</div>
+                
+                <!-- Events for this day (show first 2) -->
+                {% with day_events=events|default:'' %}
+                    {% for event in day_events %}
+                        {% if event.scheduled_date|date:'Y-m-d' == day.date|date:'Y-m-d' %}
+                            {% if forloop.counter <= 2 %}
+                                <div class="{% if event.status == 'completed' %}bg-green-500 border-green-600{% elif event.status == 'cancelled' %}bg-red-500 border-red-600{% elif event.status == 'in-progress' %}bg-yellow-500 border-yellow-600{% else %}bg-blue-500 border-blue-600{% endif %} text-white text-xs p-1 rounded mb-1 cursor-pointer hover:opacity-90 transition-opacity border-l-4">
+                                    <div class="font-medium truncate">{{ event.title }}</div>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                {% endwith %}
+            </div>
+        {% endfor %}
+    </div>
+</div>

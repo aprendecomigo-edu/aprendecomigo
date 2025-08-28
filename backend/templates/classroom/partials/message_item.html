@@ -1,0 +1,49 @@
+<div class="message-item flex items-start space-x-3">
+    <!-- Avatar -->
+    <div class="w-8 h-8 rounded-full flex items-center justify-center
+                {% if message.sender.username == user.username %}bg-blue-600{% else %}bg-gray-600{% endif %}">
+        <span class="text-white font-medium text-sm">{{ message.sender.first_name|first|upper }}</span>
+    </div>
+    
+    <!-- Message Content -->
+    <div class="flex-1 max-w-3xl">
+        <div class="flex items-center space-x-2 mb-1">
+            <span class="font-medium text-gray-900">
+                {% if message.sender.username == user.username %}
+                    You
+                {% else %}
+                    {{ message.sender.first_name }} {{ message.sender.last_name }}
+                {% endif %}
+            </span>
+            <span class="text-xs text-gray-500">
+                {% load tz %}
+                {% timezone "Europe/Lisbon" %}
+                    {{ message.timestamp|date:"g:i A" }}
+                {% endtimezone %}
+            </span>
+        </div>
+        <div class="bg-white rounded-lg p-3 shadow-sm border">
+            <p class="text-gray-700">{{ message.content }}</p>
+            <!-- File attachment -->
+            {% if message.file %}
+                <div class="mt-2">
+                    <a href="{{ message.file.url }}" target="_blank" 
+                       class="text-blue-600 hover:text-blue-800 text-sm underline">
+                        📎 View attachment
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Reactions -->
+        {% if message.reactions.exists %}
+            <div class="flex space-x-1 mt-2">
+                {% for reaction in message.reactions.all %}
+                    <span class="bg-gray-100 px-2 py-1 rounded-full text-xs cursor-pointer hover:bg-gray-200">
+                        {{ reaction.emoji }} 1
+                    </span>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+</div>

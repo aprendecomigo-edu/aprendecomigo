@@ -23,8 +23,7 @@ from django.urls import include, path
 from classroom.views import ChatView
 
 # Dashboard views
-from dashboard.views import InvitationsView, PeopleView, StudentsView, TeachersView
-from scheduler.calendar_views import CalendarView
+from dashboard.views import CalendarView, InvitationsView, PeopleView, StudentsView, TeachersView
 
 urlpatterns = [
     # Admin route
@@ -45,6 +44,7 @@ urlpatterns = [
     path("people/", PeopleView.as_view(), name="people"),
 
     # API routes for DRF endpoints
+    path("api/accounts/", include("accounts.api_urls")),  # Account management APIs
     path("api/classroom/", include("classroom.urls")),  # Chat functionality (Django views)
     path("api/finances/", include("finances.urls")),  # Financial operations
     path("api/scheduler/", include("scheduler.urls")),  # Scheduling + Session booking

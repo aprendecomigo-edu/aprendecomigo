@@ -17,7 +17,7 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.http import require_http_methods
 
-from accounts.models import School, SchoolMembership
+from accounts.models import School, SchoolMembership, SchoolRole
 
 from .models import Channel, Message, Reaction
 
@@ -508,11 +508,205 @@ class ChatView(View):
     """Chat page view with real-time messaging"""
 
     def get(self, request):
-        """Render chat page"""
+        """Render chat page with initial data"""
+        # Fetch user's channels for server-side rendering
+        channels = Channel.objects.filter(
+            participants=request.user
+        ).prefetch_related(
+            Prefetch('participants', queryset=User.objects.only('id', 'username', 'first_name', 'last_name', 'email')),
+            Prefetch('online', queryset=User.objects.only('id', 'username', 'first_name', 'last_name'))
+        ).order_by('-updated_at')
+        
+        # Get initial channel and messages if any
+        selected_channel = channels.first() if channels else None
+        messages = []
+        if selected_channel:
+            messages = Message.objects.filter(
+                channel=selected_channel
+            ).select_related('sender').prefetch_related('reactions__user').order_by('timestamp')[:50]
+
         return render(request, 'classroom/chat.html', {
             'title': 'Chat - Aprende Comigo',
             'user': request.user,
-            'active_section': 'chat'
+            'active_section': 'chat',
+            'channels': channels,
+            'selected_channel': selected_channel,
+            'messages': messages,
+        })
+
+    def post(self, request):
+        """Handle HTMX actions"""
+        action = request.POST.get('action')
+        
+        if action == 'send_message':
+            return self._handle_send_message(request)
+        elif action == 'load_channel':
+            return self._load_channel_messages(request)
+        elif action == 'create_channel':
+            return self._handle_create_channel(request)
+        elif action == 'search_users':
+            return self._search_users(request)
+            
+        return JsonResponse({'error': 'Invalid action'}, status=400)
+        
+    def _load_channel_messages(self, request):
+        """Load messages for a specific channel"""
+        channel_id = request.POST.get('channel_id')
+        channel = get_object_or_404(Channel, id=channel_id, participants=request.user)
+        
+        messages = Message.objects.filter(
+            channel=channel
+        ).select_related('sender').prefetch_related('reactions__user').order_by('timestamp')[:50]
+        
+        return render(request, 'classroom/partials/messages_list.html', {
+            'messages': messages,
+            'channel': channel,
+            'user': request.user,
+        })
+        
+    def _handle_send_message(self, request):
+        """Send a message via HTMX"""
+        channel_id = request.POST.get('channel_id')
+        content = request.POST.get('content', '').strip()
+        
+        if not content:
+            return JsonResponse({'error': 'Message content is required'}, status=400)
+            
+        channel = get_object_or_404(Channel, id=channel_id, participants=request.user)
+        
+        message = Message.objects.create(
+            channel=channel,
+            sender=request.user,
+            content=content
+        )
+        
+        # Update channel timestamp
+        channel.save()
+        
+        # Broadcast via WebSocket (same as before)
+        try:
+            from asgiref.sync import async_to_sync
+            channel_layer = get_channel_layer()
+            if channel_layer:
+                group_name = f"chat_{channel.id}"
+                message_data = {
+                    'id': message.id,
+                    'content': message.content,
+                    'timestamp': message.timestamp.isoformat(),
+                    'sender': {
+                        'id': message.sender.id,
+                        'username': message.sender.username,
+                        'first_name': message.sender.first_name,
+                        'last_name': message.sender.last_name,
+                    },
+                }
+                async_to_sync(channel_layer.group_send)(
+                    group_name,
+                    {"type": "chat_message", "message": message_data},
+                )
+        except Exception:
+            pass  # Silently fail in test environments
+        
+        # Return the new message HTML
+        return render(request, 'classroom/partials/message_item.html', {
+            'message': message,
+            'user': request.user,
+        })
+        
+    def _handle_create_channel(self, request):
+        """Create a new channel (DM)"""
+        participant_id = request.POST.get('participant_id')
+        
+        if not participant_id:
+            return JsonResponse({'error': 'Participant ID required'}, status=400)
+            
+        # Verify participant is from same schools as current user
+        user_schools = get_user_schools(request.user)
+        school_users_data = get_school_users(user_schools)
+        valid_user_ids = {user_data['id'] for user_data in school_users_data}
+        
+        if int(participant_id) not in valid_user_ids:
+            return JsonResponse({'error': 'Invalid participant - not in same school'}, status=400)
+        
+        # Check if DM already exists
+        existing_dm = Channel.objects.filter(
+            is_direct=True,
+            participants=request.user
+        ).filter(
+            participants=participant_id
+        ).first()
+        
+        if existing_dm:
+            # Return existing DM channel list
+            channels = Channel.objects.filter(
+                participants=request.user
+            ).prefetch_related('participants', 'online').order_by('-updated_at')
+            
+            return render(request, 'classroom/partials/channels_list.html', {
+                'channels': channels,
+                'selected_channel': existing_dm,
+                'user': request.user,
+            })
+        
+        # Create new DM
+        channel_name = f'DM_{min(request.user.id, int(participant_id))}_{max(request.user.id, int(participant_id))}'
+        channel = Channel.objects.create(
+            name=channel_name,
+            is_direct=True
+        )
+        channel.participants.add(request.user.id, participant_id)
+        
+        # Return updated channel list
+        channels = Channel.objects.filter(
+            participants=request.user
+        ).prefetch_related('participants', 'online').order_by('-updated_at')
+        
+        return render(request, 'classroom/partials/channels_list.html', {
+            'channels': channels,
+            'selected_channel': channel,
+            'user': request.user,
+        })
+        
+    def _search_users(self, request):
+        """Search users for creating new conversations"""
+        query = request.POST.get('search', '').strip()
+        
+        if not query or len(query) < 2:
+            return render(request, 'classroom/partials/user_search_results.html', {
+                'search_results': [],
+                'query': query,
+            })
+        
+        # Get schools where current user is a member
+        user_schools = get_user_schools(request.user)
+        
+        if not user_schools.exists():
+            return render(request, 'classroom/partials/user_search_results.html', {
+                'search_results': [],
+                'query': query,
+            })
+        
+        # Get all users from these schools
+        school_users = get_school_users(user_schools, exclude_user=request.user)
+        
+        # Filter users based on search query
+        filtered_users = []
+        query_lower = query.lower()
+        
+        for user_data in school_users:
+            # Search in name, email, or username
+            if (query_lower in user_data['first_name'].lower() or
+                query_lower in user_data['last_name'].lower() or
+                query_lower in user_data['email'].lower() or
+                query_lower in user_data['username'].lower()):
+                filtered_users.append(user_data)
+        
+        # Limit results to 20
+        filtered_users = filtered_users[:20]
+        
+        return render(request, 'classroom/partials/user_search_results.html', {
+            'search_results': filtered_users,
+            'query': query,
         })
 
 
