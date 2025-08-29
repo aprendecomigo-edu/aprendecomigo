@@ -112,7 +112,7 @@
                         <!-- Complete Class -->
                         {% if perms.scheduler.change_classschedule and user.teacher_profile and schedule.teacher == user.teacher_profile %}
                         <button 
-                            hx-get="{% url 'scheduler:schedules-detail' schedule.id %}?action=complete_form"
+                            hx-get="{% url 'scheduler:schedule-home' %}?schedule_id={{ schedule.id }}&action=complete_form"
                             hx-target="#completion-modal-content"
                             hx-swap="innerHTML"
                             data-modal-target="completion-modal"
@@ -137,7 +137,7 @@
                     
                     <!-- View/Edit -->
                     <button 
-                        hx-get="{% url 'scheduler:schedules-detail' schedule.id %}"
+                        hx-get="{% url 'scheduler:schedule-home' %}?schedule_id={{ schedule.id }}"
                         hx-target="#schedule-detail-content"
                         hx-swap="innerHTML"
                         class="inline-flex items-center px-2 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
@@ -147,7 +147,7 @@
                     <!-- Delete (Admin only) -->
                     {% if perms.scheduler.delete_classschedule and user_is_admin %}
                     <button 
-                        hx-delete="{% url 'scheduler:schedules-detail' schedule.id %}"
+                        hx-delete="{% url 'scheduler:schedule-home' %}?schedule_id={{ schedule.id }}"
                         hx-target="closest .bg-white"
                         hx-swap="outerHTML"
                         hx-confirm="{% trans 'Are you sure you want to delete this class? This action cannot be undone.' %}"
@@ -166,7 +166,7 @@
             <div class="flex-1 flex justify-between sm:hidden">
                 {% if page_obj.has_previous %}
                 <button 
-                    hx-get="{% url 'scheduler:schedules-list' %}?page={{ page_obj.previous_page_number }}"
+                    hx-get="{% url 'scheduler:schedule-home' %}?page={{ page_obj.previous_page_number }}"
                     hx-target="#schedule-list-content"
                     class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                     {% trans "Previous" %}
@@ -174,7 +174,7 @@
                 {% endif %}
                 {% if page_obj.has_next %}
                 <button 
-                    hx-get="{% url 'scheduler:schedules-list' %}?page={{ page_obj.next_page_number }}"
+                    hx-get="{% url 'scheduler:schedule-home' %}?page={{ page_obj.next_page_number }}"
                     hx-target="#schedule-list-content"
                     class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
                     {% trans "Next" %}
@@ -191,7 +191,7 @@
                     <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                         {% if page_obj.has_previous %}
                         <button 
-                            hx-get="{% url 'scheduler:schedules-list' %}?page={{ page_obj.previous_page_number }}"
+                            hx-get="{% url 'scheduler:schedule-home' %}?page={{ page_obj.previous_page_number }}"
                             hx-target="#schedule-list-content"
                             class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                             {% trans "Previous" %}
@@ -199,7 +199,7 @@
                         {% endif %}
                         {% if page_obj.has_next %}
                         <button 
-                            hx-get="{% url 'scheduler:schedules-list' %}?page={{ page_obj.next_page_number }}"
+                            hx-get="{% url 'scheduler:schedule-home' %}?page={{ page_obj.next_page_number }}"
                             hx-target="#schedule-list-content"
                             class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
                             {% trans "Next" %}

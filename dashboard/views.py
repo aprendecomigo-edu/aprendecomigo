@@ -978,9 +978,9 @@ class PeopleView(View):
             user = membership.user
             try:
                 profile = user.student_profile
-                grade = profile.grade
-            except StudentProfile.DoesNotExist:
-                grade = ''
+                school_year = profile.school_year
+            except (StudentProfile.DoesNotExist, AttributeError):
+                school_year = ''
 
             students.append({
                 'id': user.id,
@@ -988,7 +988,7 @@ class PeopleView(View):
                 'first_name': user.first_name,
                 'last_name': user.last_name,
                 'full_name': user.get_full_name(),
-                'grade': grade,
+                'school_year': school_year,
                 'school': {
                     'id': membership.school.id,
                     'name': membership.school.name
@@ -1100,11 +1100,12 @@ class PeopleView(View):
         try:
             email = request.POST.get('email')
             name = request.POST.get('name')
-            grade = request.POST.get('grade', '')
+            school_year = request.POST.get('school_year', '')
+            birth_date = request.POST.get('birth_date')
 
-            if not email or not name:
+            if not email or not name or not birth_date:
                 return render(request, 'dashboard/partials/error_message.html', {
-                    'error': 'Email and name are required'
+                    'error': 'Email, name and birth date are required'
                 })
 
             # Get user's schools
@@ -1135,10 +1136,11 @@ class PeopleView(View):
             # Create or update student profile
             student_profile, created = StudentProfile.objects.get_or_create(
                 user=user,
-                defaults={'grade': grade}
+                defaults={'school_year': school_year, 'birth_date': birth_date}
             )
             if not created:
-                student_profile.grade = grade
+                student_profile.school_year = school_year
+                student_profile.birth_date = birth_date
                 student_profile.save()
 
             # Add to user's schools as student
@@ -1249,9 +1251,9 @@ class PeopleView(View):
             user = membership.user
             try:
                 profile = user.student_profile
-                grade = profile.grade
-            except StudentProfile.DoesNotExist:
-                grade = ''
+                school_year = profile.school_year
+            except (StudentProfile.DoesNotExist, AttributeError):
+                school_year = ''
 
             students.append({
                 'id': user.id,
@@ -1259,7 +1261,7 @@ class PeopleView(View):
                 'first_name': user.first_name,
                 'last_name': user.last_name,
                 'full_name': user.get_full_name(),
-                'grade': grade,
+                'school_year': school_year,
                 'school': {
                     'id': membership.school.id,
                     'name': membership.school.name

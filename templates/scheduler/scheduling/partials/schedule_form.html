@@ -1,7 +1,7 @@
 {% load i18n %}
 
 <form 
-    hx-post="{% if edit_mode and schedule %}{% url 'scheduler:schedules-detail' schedule.id %}{% else %}{% url 'scheduler:schedules-list' %}{% endif %}"
+    hx-post="{% if edit_mode and schedule %}{% url 'scheduler:schedule-home' %}?schedule_id={{ schedule.id }}{% else %}{% url 'scheduler:schedule-home' %}{% endif %}"
     hx-vals='{"action": "{% if edit_mode %}update_schedule{% else %}create_schedule{% endif %}"}'
     hx-target="{% if edit_mode %}#schedule-form-response{% else %}#schedule-content{% endif %}"
     hx-swap="{% if edit_mode %}innerHTML{% else %}afterbegin{% endif %}"

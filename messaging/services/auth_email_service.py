@@ -90,12 +90,25 @@ If you didn't request this code, please ignore this message."""
     try:
         # Configure SMS service based on settings
         if not hasattr(settings, 'SMS_SERVICE_URL') or not settings.SMS_SERVICE_URL:
-            logger.warning("SMS service not configured, skipping SMS send")
-            return {
-                "success": False,
-                "error": "SMS service not configured",
-                "phone_number": phone_number
-            }
+            # Development fallback: log SMS to console
+            if settings.DEBUG:
+                logger.info(f"[SMS DEVELOPMENT MODE] To: {phone_number}")
+                logger.info(f"[SMS DEVELOPMENT MODE] Message: {message}")
+                logger.info(f"[SMS DEVELOPMENT MODE] OTP Code: {otp_code}")
+                return {
+                    "success": True,
+                    "phone_number": phone_number,
+                    "sent_at": datetime.now().isoformat(),
+                    "development_mode": True,
+                    "otp_code": otp_code  # Only in development!
+                }
+            else:
+                logger.warning("SMS service not configured, skipping SMS send")
+                return {
+                    "success": False,
+                    "error": "SMS service not configured",
+                    "phone_number": phone_number
+                }
             
         # Send SMS via configured service
         with httpx.Client(timeout=30.0) as client:

@@ -69,7 +69,7 @@
     <!-- Calendar Navigation -->
     <div class="flex items-center justify-between mt-4">
         <button 
-            hx-get="{% url 'scheduler:schedules-list' %}?view=calendar&month={{ prev_month }}"
+            hx-get="{% url 'scheduler:schedule-home' %}?view=calendar&month={{ prev_month }}"
             hx-target="#schedule-content"
             class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,7 +83,7 @@
         </h3>
         
         <button 
-            hx-get="{% url 'scheduler:schedules-list' %}?view=calendar&month={{ next_month }}"
+            hx-get="{% url 'scheduler:schedule-home' %}?view=calendar&month={{ next_month }}"
             hx-target="#schedule-content"
             class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
             {% trans "Next" %}
