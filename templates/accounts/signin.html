@@ -1,56 +1,75 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<!-- Full screen container with proper flex hierarchy -->
-<div class="flex flex-1 w-full h-screen">
-    <!-- White background with colorful geometric shapes -->
-    <div class="flex-1 w-full bg-white relative overflow-hidden">
-        <!-- Colorful tilted background shape - single large circle -->
-        <div class="absolute inset-0">
-            <!-- Single large top-left gradient shape -->
-            <div class="absolute -top-56 -left-70 w-[90rem] h-[50rem] rounded-full opacity-80 bg-gradient-primary" 
-                 style="transform: rotate(-40deg);"></div>
+<div class="min-h-screen relative overflow-hidden flex items-center p-4">
+    <!-- Background gradient shape -->
+    <div class="absolute -top-56 -left-70 w-[90rem] h-[50rem] rounded-full opacity-80 bg-gradient-primary" 
+         style="transform: rotate(-40deg);"></div>
+
+    <!-- DaisyUI Card -->
+    <div class="card w-full max-w-lg mx-auto glass-container p-4 rounded-xl relative z-10">
+        <div class="card-body">
+            <!-- Header -->
+            <div class="text-center mb-8">
+               <span class="text-gradient-primary mb-8 font-brand text-lg">aprendecomigo</span>
+                <h1 class="card-title color-primary font-primary text-4xl font-bold justify-center">Login</h1>
+            </div>
+
+            <!-- Form -->
+            <div id="signin-form-container" class="mb-6">
+                <!-- Sign In Form -->
+<form hx-post="{% url 'accounts:signin' %}" 
+      hx-target="#signin-form-container" 
+      hx-swap="innerHTML"
+      class="w-full space-y-8">
+    {% csrf_token %}
+    
+    <!-- Email or Phone Field with Join Component -->
+    <div class="form-control">
+        <label class="label">
+            <span class="label-text font-primary font-medium">Email or phone number</span>
+        </label>
+        <div class="relative">
+        <div class="join htmx-request:opacity-50 htmx-request:pointer-events-none transition-opacity">
+        <div>
+            <label class="input validator join-item">
+                    <input type="text" 
+                           name="email" 
+                           value="{{ email|default:'' }}"
+                           placeholder="your_email@example.com or +351 94567890"
+                           pattern="^([^\s@]+@[^\s@]+\.[^\s@]+|[\+]?[1-9][\d]{0,15})$"
+                           title="Must be a valid email address or phone number"
+                           autocomplete="email tel"
+                           required />
+            </label>
+            <div class="validator-hint">
+                Must be either a valid email address or phone number
+            </div>
         </div>
+            
+        
+        <button type="submit" class="btn btn-neutral join-item bg-gradient-primary border-none text-white">
+            Send Code
+        </button>
+        </div>
+        
+        <!-- Loading Spinner Overlay -->
+        <div class="htmx-indicator absolute inset-0 flex items-center justify-center bg-base-100/50 backdrop-blur-sm rounded-lg opacity-0 invisible">
+            <div class="loading loading-spinner loading-md text-primary"></div>
+        </div>
+    </div>
 
-        <!-- Content container - above the background shapes -->
-        <div class="flex flex-1 w-full items-center p-4 md:p-6 relative z-10 min-h-screen">
-            <div class="w-full max-w-2xl mx-auto my-auto flex-1 justify-center">
-                <!-- Glassmorphism card container -->
-                <div class="glass-container rounded-2xl p-6 md:p-8 backdrop-blur-xl">
-                    <!-- Header with modern typography and gradient text -->
-                    <div class="flex flex-col items-center space-y-4 mb-8">
-                        <!-- Brand logo -->
-                        <div class="flex flex-col items-center mb-2">
-                            <p class="text-center text-gradient-primary font-brand text-lg font-medium">
-                                aprendecomigo
-                            </p>
-                        </div>
+</form>
+    </div>
+            </div>
 
-                        <div class="flex flex-col items-center space-y-2">
-                            <h1 class="text-center font-primary text-4xl font-bold">
-                                <span class="text-gradient-primary font-primary">Login</span>
-                            </h1>
-                            <p class="text-center text-gray-600 font-body text-base leading-relaxed"></p>
-                        </div>
-                    </div>
-
-                    <!-- Form with glass inputs -->
-                    <div class="w-full space-y-8">
-                        <!-- Form container for HTMX updates -->
-                        <div id="signin-form-container">
-                            {% include 'accounts/partials/signin_form.html' %}
-                        </div>
-                    </div>
-
-                    <!-- Footer with clean typography -->
-                    <div class="flex flex-col items-center mt-8 space-y-2">
-                        <p class="text-center text-gray-600 font-body text-sm">
-                            Don't have an account?
-                        </p>
-                        <a href="/accounts/signup/" class="text-white text-sm font-bold py-1 px-1 rounded-xl font-primary bg-black">
-                            Create your account
-                        </a>
-                    </div>
+            <!-- Footer -->
+            <div class="card-actions justify-center">
+                <div class="text-center space-y-2">
+                    <p class="text-base-content/70 font-body text-sm">Don't have an account?</p>
+                    <a href="{% url 'accounts:signup' %}" class="btn btn-neutral btn-sm font-primary">
+                        Create your account
+                    </a>
                 </div>
             </div>
         </div>

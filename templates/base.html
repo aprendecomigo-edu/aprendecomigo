@@ -1,4 +1,5 @@
 {% load pwa %}
+{% load tailwind_tags %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,111 +11,19 @@
     <!-- PWA Meta Tags -->
     {% progressive_web_app_meta %}
     
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kirang+Haerang&family=Work+Sans:wght@400;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    
     <!-- HTMX -->
-    <script src="https://unpkg.com/htmx.org@2.0.3" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js"></script>
     
     <!-- Alpine.js -->
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
     <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Custom CSS and Tailwind Config -->
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            50: '#f0f9ff',
-                            100: '#e0f2fe',
-                            200: '#bae6fd',
-                            300: '#7dd3fc',
-                            400: '#38bdf8',
-                            500: '#0ea5e9',
-                            600: '#0284c7',
-                            700: '#0369a1',
-                            800: '#075985',
-                            900: '#0c4a6e',
-                        }
-                    },
-                    backgroundImage: {
-                        'gradient-primary': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    },
-                    fontFamily: {
-                        'brand': ['Inter', 'system-ui', 'sans-serif'],
-                        'primary': ['Inter', 'system-ui', 'sans-serif'],
-                        'body': ['Inter', 'system-ui', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-    
-    <style>
-        /* Glassmorphism styles matching React Native design */
-        .glass-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-        }
-        
-        .glass-light {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-        
-        /* Original brand gradient text */
-        .text-gradient-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .bg-gradient-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
-        .active\:scale-98:active {
-            transform: scale(0.98);
-        }
-        
-        .transition-all {
-            transition: all 0.2s ease-in-out;
-        }
-        
-        /* Form input styles */
-        .form-input {
-            background: transparent;
-            border: none;
-            outline: none;
-            color: #1f2937;
-            font-size: 1rem;
-            width: 100%;
-            padding: 0;
-        }
-        
-        .form-input::placeholder {
-            color: #94a3b8;
-        }
-        
-        /* HTMX loading indicators */
-        .htmx-indicator {
-            opacity: 0;
-            transition: opacity 200ms ease-in;
-        }
-        .htmx-request .htmx-indicator {
-            opacity: 1;
-        }
-        .htmx-request.htmx-indicator {
-            opacity: 1;
-        }
-    </style>
+    {% tailwind_css %}
 </head>
 <body class="min-h-screen bg-white" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
     {% block content %}

@@ -159,7 +159,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 # Additional static files directories (for PWA files)
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR.parent, "static"),
+    os.path.join(BASE_DIR, "static"),  # Fixed path - should be BASE_DIR not BASE_DIR.parent
 ]
 
 # Media files for uploads (like student/teacher photos)

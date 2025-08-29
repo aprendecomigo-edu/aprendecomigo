@@ -15,7 +15,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -850,3 +850,14 @@ class SchoolMemberListView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin, Lis
 
 
 # Using django-sesame's built-in LoginView directly - no custom implementation needed
+
+def root_redirect(request):
+    """
+    Root path handler: redirects based on authentication status
+    - Authenticated users → /dashboard/
+    - Anonymous users → /accounts/signin/
+    """
+    if request.user.is_authenticated:
+        return HttpResponseRedirect(reverse('dashboard:general'))
+    else:
+        return HttpResponseRedirect(reverse('accounts:signin'))

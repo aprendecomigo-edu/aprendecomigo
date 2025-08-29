@@ -28,7 +28,7 @@ urlpatterns = [
     path("", include("pwa.urls")),
 
     # Authentication and dashboard routes (HTML interface)
-    path("accounts/", include("accounts.urls")),
+    path("", include("accounts.urls")),
 
     # Clean dashboard routes at root level
     path("dashboard/", include("dashboard.urls")),

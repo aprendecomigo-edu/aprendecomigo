@@ -5,6 +5,7 @@ from sesame.views import LoginView
 from .views import (
     # Authentication views
     LogoutView,
+    root_redirect,
     SignInView,
     SignUpView,
     VerifyOTPView,
@@ -28,6 +29,8 @@ app_name = "accounts"
 
 # URL patterns for the accounts app - PWA migration (Django web views only)
 urlpatterns = [
+    # Root redirect function
+    path("", root_redirect, name="root_redirect"),
     # Django web authentication views
     path("signin/", SignInView.as_view(), name="signin"),
     path("signup/", SignUpView.as_view(), name="signup"),
