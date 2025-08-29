@@ -1,0 +1,272 @@
+name: User Journey Design
+description: Design and document a complete user flow for a specific feature or process
+title: "[User Journey] "
+labels: ["user-experience", "design", "user-journey"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Flow Overview
+        
+  - type: input
+    id: flow_name
+    attributes:
+      label: Flow Name
+      description: e.g., "Account Registration Flow", "Course Enrollment Flow"
+      placeholder: Enter the name of the user flow
+    validations:
+      required: true
+      
+  - type: textarea
+    id: user_goal
+    attributes:
+      label: User Goal
+      description: What the user wants to achieve
+      placeholder: Describe what the user is trying to accomplish
+    validations:
+      required: true
+      
+  - type: textarea
+    id: business_goal
+    attributes:
+      label: Business Goal
+      description: What you want to achieve
+      placeholder: Describe the business objective
+    validations:
+      required: true
+      
+  - type: input
+    id: entry_point
+    attributes:
+      label: Entry Point
+      description: How user gets to this flow
+      placeholder: e.g., "Landing page CTA", "Dashboard button"
+    validations:
+      required: true
+      
+  - type: textarea
+    id: success_criteria
+    attributes:
+      label: Success Criteria
+      description: How you'll know it worked
+      placeholder: Define measurable success indicators
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Design Principles for This Flow
+        
+  - type: checkboxes
+    id: design_principles
+    attributes:
+      label: Core Principles
+      description: Select the principles that apply to this flow
+      options:
+        - label: "**Minimize cognitive load** - Keep each step simple"
+        - label: "**Progressive disclosure** - Only show what's needed now"
+        - label: "**Clear progress** - User knows where they are"
+        - label: "**Easy exit/return** - User can leave and come back"
+        - label: "**Mobile-first** - Works great on smallest screen"
+        
+  - type: textarea
+    id: additional_principles
+    attributes:
+      label: Additional Principles
+      description: Add any flow-specific design principles
+      placeholder: List any additional principles specific to this user journey
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Step-by-Step Flow Design
+        
+  - type: textarea
+    id: flow_steps
+    attributes:
+      label: Flow Steps
+      description: Design each step of the user journey
+      placeholder: |
+        ### Step 1: [Step Name - e.g., "Landing/Entry"]
+        **User Intent**: [What brings them to this step]
+        
+        **Information Needed FROM User**:
+        - [What data/decisions you need from them]
+        - [Optional vs required information]
+        
+        **Information Needed BY User**:
+        - [What they need to know to proceed]
+        - [Context, benefits, next steps]
+        
+        **Primary Action**: [Main button/action]
+        **Secondary Actions**: [Alternative paths, like "Back" or "Skip"]
+        
+        **Screen Elements**:
+        - [ ] Headline: [Clear description of this step]
+        - [ ] Explanation: [Brief context if needed]
+        - [ ] Form fields: [List specific fields]
+        - [ ] Progress indicator: [If multi-step]
+        - [ ] Help/support: [If complex]
+        
+        **Decision Points**:
+        - [If user does X, then Y happens]
+        - [Different paths based on user choice]
+        
+        **Success Criteria**: [User completes X to move forward]
+        
+        ---
+        
+        ### Step 2: [Step Name]
+        [Repeat the same structure for additional steps]
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Alternative Paths & Edge Cases
+        
+  - type: textarea
+    id: alternative_paths
+    attributes:
+      label: Alternative Paths
+      description: Document different user paths and edge cases
+      placeholder: |
+        ### Path A: [e.g., "Social Login"]
+        - **Trigger**: [User chooses social login]
+        - **Steps**: [Different sequence]
+        - **Rejoins main flow at**: [Step X]
+        
+        ### Path B: [e.g., "Existing User"]
+        - **Trigger**: [Email already exists]
+        - **Steps**: [Redirect to login]
+        - **Alternative outcome**: [Different end state]
+        
+        ### Error Scenarios:
+        - **Network failure**: [How to handle]
+        - **Invalid input**: [Error messages & recovery]
+        - **Service unavailable**: [Graceful degradation]
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Content Strategy
+        
+  - type: textarea
+    id: tone_voice
+    attributes:
+      label: Tone & Voice
+      description: Define the communication style for this flow
+      placeholder: |
+        - [Friendly, professional, encouraging, etc.]
+        - [Specific phrases to use/avoid]
+        
+  - type: textarea
+    id: key_messages
+    attributes:
+      label: Key Messages & Micro-copy
+      description: Define messaging for each step and interface elements
+      placeholder: |
+        ### Key Messages:
+        - **Step 1**: [Main message user should understand]
+        - **Step 2**: [Main message user should understand]
+        
+        ### Micro-copy:
+        - **Button labels**: [Be specific about what happens next]
+        - **Error messages**: [Helpful, not blame-y]
+        - **Success messages**: [Celebrate progress]
+        - **Help text**: [Just-in-time assistance]
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Technical Considerations
+        
+  - type: textarea
+    id: technical_requirements
+    attributes:
+      label: Technical Requirements
+      description: Define technical needs and constraints
+      placeholder: |
+        ### Data Collection:
+        - [What you're storing at each step]
+        - [When you save progress]
+        - [How you handle incomplete flows]
+        
+        ### Performance:
+        - [Page load considerations]
+        - [Auto-save functionality]
+        - [Offline capabilities]
+        
+        ### Security:
+        - [Data validation requirements]
+        - [Privacy considerations]
+        - [Secure transmission needs]
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Success Metrics & Validation
+        
+  - type: textarea
+    id: success_metrics
+    attributes:
+      label: Success Metrics
+      description: How will you measure the success of this flow?
+      placeholder: |
+        ### Quantitative Metrics:
+        - **Conversion rate**: [% who complete entire flow]
+        - **Step-by-step drop-off**: [Where people abandon]
+        - **Time to completion**: [How long it takes]
+        - **Error rates**: [How often users hit errors]
+        
+  - type: checkboxes
+    id: validation_methods
+    attributes:
+      label: Validation Methods
+      description: Select validation approaches to use
+      options:
+        - label: "**Card sorting** - Do steps make logical sense?"
+        - label: "**Paper prototype** - Test sequence before building"
+        - label: "**5-second test** - Is each step's purpose clear?"
+        - label: "**Cognitive walkthrough** - Think through user's mental model"
+        
+  - type: textarea
+    id: validation_questions
+    attributes:
+      label: Key Validation Questions
+      description: What questions need to be answered during validation?
+      placeholder: |
+        - Does the sequence feel logical?
+        - Is any step asking for too much at once?
+        - Would users understand why each piece of info is needed?
+        - Are there any unnecessary steps?
+        - What would make someone abandon at each step?
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Implementation Notes
+        
+  - type: textarea
+    id: design_decisions
+    attributes:
+      label: Design Decisions Log
+      description: Document key decisions and alternatives considered
+      placeholder: |
+        ### Key Decisions Made:
+        - **Decision**: [Reasoning]
+        
+        ### Alternatives Considered:
+        - **Alternative**: [Why rejected]
+        
+        ### Still Need to Decide:
+        - [ ] [Decision point]
+        
+  - type: textarea
+    id: additional_notes
+    attributes:
+      label: Additional Notes
+      description: Any other relevant information or considerations
+      placeholder: Add any additional context, dependencies, or considerations
