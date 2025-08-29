@@ -53,9 +53,20 @@ class SignInView(View):
     def post(self, request):
         """Handle sign in form submission via HTMX"""
         email = request.POST.get("email", "").strip().lower()
-
-        # Validate email
-        if not email or not re.match(r"^[^@]+@[^@]+\.[^@]+$", email):
+        logger.info(f"[SIGNIN] Starting signin process for: {email}")
+        
+        # Validate email using the same pattern as the HTML form
+        email_pattern = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
+        
+        if not email:
+            return render(
+                request,
+                "accounts/partials/signin_form.html",
+                {"error": "Please enter your email address", "email": email},
+            )
+        
+        # Check if it's a valid email
+        if not re.match(email_pattern, email):
             return render(
                 request,
                 "accounts/partials/signin_form.html",
@@ -68,39 +79,45 @@ class SignInView(View):
                 # Log the event for security monitoring
                 logger.warning(f"Authentication attempt with unregistered email: {email}")
                 # Still show success to prevent email enumeration
-                return render(request, "accounts/partials/signin_success.html", {"email": email})
+                return render(request, "accounts/partials/signin_success_with_verify.html", {"email": email})
 
-            # User exists - generate SMS OTP for existing users
-            logger.info(f"SMS OTP requested for registered email: {email}")
+            # User exists - generate dual verification for existing users
+            logger.info(f"Dual verification requested for registered email: {email}")
             user = get_user_by_email(email)
 
-            # Check if user has phone number
-            if not user.phone_number:
-                return render(
-                    request,
-                    "accounts/partials/signin_form.html",
-                    {"error": "No phone number on file. Please contact support.", "email": email},
-                )
+            # Generate magic link for email verification
+            login_url = reverse("accounts:magic_login")
+            magic_link = request.build_absolute_uri(login_url) + get_query_string(user)
 
-            # Generate secure 6-digit OTP code
+            # Generate secure 6-digit OTP code for SMS verification
             otp_code = str(secrets.randbelow(900000) + 100000)
             otp_expires = (timezone.now() + timedelta(minutes=5)).timestamp()
+            logger.info(f"Generated OTP code: {otp_code} for user: {user.email}")
 
             try:
-                sms_result = send_sms_otp(user.phone_number, otp_code, user.name or user.first_name)
+                # Send both magic link and SMS OTP (if phone available)
+                email_result = send_magic_link_email(email, magic_link, user.name or user.first_name)
+                
+                # Check if user has phone number for SMS
+                if user.phone_number:
+                    sms_result = send_sms_otp(user.phone_number, otp_code, user.name or user.first_name)
+                else:
+                    sms_result = {"success": True}  # Continue if no phone number
+                    logger.warning(f"User {email} has no phone number on file")
 
-                if sms_result.get("success"):
-                    # Store verification data in session for SMS OTP verification
+                if email_result.get("success") and sms_result.get("success"):
+                    # Store verification data in session
+                    request.session["verification_email"] = email
                     request.session["verification_phone"] = user.phone_number
                     request.session["verification_user_id"] = user.id
                     request.session["verification_otp_code"] = otp_code
                     request.session["verification_otp_expires"] = otp_expires
                     request.session["is_signin"] = True
 
-                    logger.info(f"SMS OTP sent successfully to: {user.phone_number}")
+                    logger.info(f"Dual verification sent successfully to: {email} and {user.phone_number or 'no phone'}")
                     return render(
                         request,
-                        "accounts/partials/signin_success.html",
+                        "accounts/partials/signin_success_with_verify.html",
                         {"email": email, "phone_number": user.phone_number},
                     )
                 else:
@@ -108,17 +125,17 @@ class SignInView(View):
                         request,
                         "accounts/partials/signin_form.html",
                         {
-                            "error": "There was an issue sending the verification code. Please try again.",
+                            "error": "There was an issue sending the verification codes. Please try again.",
                             "email": email,
                         },
                     )
 
-            except Exception as sms_error:
-                logger.error(f"Failed to send SMS OTP to {user.phone_number}: {sms_error}")
+            except Exception as verification_error:
+                logger.error(f"Failed to send verification codes to {email}: {verification_error}")
                 return render(
                     request,
                     "accounts/partials/signin_form.html",
-                    {"error": "There was an issue sending the verification code. Please try again.", "email": email},
+                    {"error": "There was an issue sending the verification codes. Please try again.", "email": email},
                 )
 
         except Exception as e:
@@ -126,7 +143,7 @@ class SignInView(View):
             return render(
                 request,
                 "accounts/partials/signin_form.html",
-                {"error": "There was an issue sending the verification code. Please try again.", "email": email},
+                {"error": "There was an issue sending the verification codes. Please try again.", "email": email},
             )
 
 
@@ -326,18 +343,18 @@ class VerifyOTPView(View):
         expected_otp = request.session.get("verification_otp_code")
         otp_expires = request.session.get("verification_otp_expires")
         phone = request.session.get("verification_phone")
+        email = request.session.get("verification_email")  # Get email for combined template
         is_signup = request.session.get("is_signup", False)
         is_signin = request.session.get("is_signin", False)
 
         if not all([user_id, expected_otp, phone, otp_code]):
             return render(
                 request,
-                "accounts/partials/verify_form.html",
+                "accounts/partials/signin_success_with_verify.html",
                 {
                     "error": "Please enter the verification code.",
+                    "email": email,
                     "phone_number": phone,
-                    "is_signup": is_signup,
-                    "is_signin": is_signin,
                 },
             )
 
@@ -345,12 +362,11 @@ class VerifyOTPView(View):
         if otp_expires and timezone.now().timestamp() > otp_expires:
             return render(
                 request,
-                "accounts/partials/verify_form.html",
+                "accounts/partials/signin_success_with_verify.html",
                 {
                     "error": "Verification code has expired. Please request a new one.",
+                    "email": email,
                     "phone_number": phone,
-                    "is_signup": is_signup,
-                    "is_signin": is_signin,
                 },
             )
 
@@ -398,12 +414,11 @@ class VerifyOTPView(View):
             else:
                 return render(
                     request,
-                    "accounts/partials/verify_form.html",
+                    "accounts/partials/signin_success_with_verify.html",
                     {
                         "error": "Invalid verification code. Please try again.",
+                        "email": email,
                         "phone_number": phone,
-                        "is_signup": is_signup,
-                        "is_signin": is_signin,
                     },
                 )
 
@@ -411,12 +426,11 @@ class VerifyOTPView(View):
             logger.error(f"OTP verification error: {e}")
             return render(
                 request,
-                "accounts/partials/verify_form.html",
+                "accounts/partials/signin_success_with_verify.html",
                 {
                     "error": "There was an issue verifying your code. Please try again.",
+                    "email": email,
                     "phone_number": phone,
-                    "is_signup": is_signup,
-                    "is_signin": is_signin,
                 },
             )
 

@@ -29,7 +29,10 @@
       "Read(/var/folders/m_/s52pr9c10lq39wx4__v3cgph0000gn/T/TemporaryItems/NSIRD_screencaptureui_sQe8Pc/**)",
       "Read(/var/folders/m_/s52pr9c10lq39wx4__v3cgph0000gn/T/TemporaryItems/NSIRD_screencaptureui_Ui3qdv/**)",
       "Read(/var/folders/m_/s52pr9c10lq39wx4__v3cgph0000gn/T/TemporaryItems/NSIRD_screencaptureui_yQ4ob8/**)",
-      "Read(/var/folders/m_/s52pr9c10lq39wx4__v3cgph0000gn/T/TemporaryItems/NSIRD_screencaptureui_NoBY5Z/**)"
+      "Read(/var/folders/m_/s52pr9c10lq39wx4__v3cgph0000gn/T/TemporaryItems/NSIRD_screencaptureui_NoBY5Z/**)",
+      "Read(/var/folders/m_/s52pr9c10lq39wx4__v3cgph0000gn/T/TemporaryItems/NSIRD_screencaptureui_PbU5rJ/**)",
+      "WebFetch(domain:daisyui.com)",
+      "Read(/var/folders/m_/s52pr9c10lq39wx4__v3cgph0000gn/T/TemporaryItems/NSIRD_screencaptureui_nV68kv/**)"
     ],
     "deny": [],
     "ask": []

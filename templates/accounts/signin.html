@@ -17,50 +17,8 @@
 
             <!-- Form -->
             <div id="signin-form-container" class="mb-6">
-                <!-- Sign In Form -->
-<form hx-post="{% url 'accounts:signin' %}" 
-      hx-target="#signin-form-container" 
-      hx-swap="innerHTML"
-      class="w-full space-y-8">
-    {% csrf_token %}
-    
-    <!-- Email or Phone Field with Join Component -->
-    <div class="form-control">
-        <label class="label">
-            <span class="label-text font-primary font-medium">Email or phone number</span>
-        </label>
-        <div class="relative">
-        <div class="join htmx-request:opacity-50 htmx-request:pointer-events-none transition-opacity">
-        <div>
-            <label class="input validator join-item">
-                    <input type="text" 
-                           name="email" 
-                           value="{{ email|default:'' }}"
-                           placeholder="your_email@example.com or +351 94567890"
-                           pattern="^([^\s@]+@[^\s@]+\.[^\s@]+|[\+]?[1-9][\d]{0,15})$"
-                           title="Must be a valid email address or phone number"
-                           autocomplete="email tel"
-                           required />
-            </label>
-            <div class="validator-hint">
-                Must be either a valid email address or phone number
+                {% include 'accounts/partials/signin_form.html' %}
             </div>
-        </div>
-            
-        
-        <button type="submit" class="btn btn-neutral join-item bg-gradient-primary border-none text-white">
-            Send Code
-        </button>
-        </div>
-        
-        <!-- Loading Spinner Overlay -->
-        <div class="htmx-indicator absolute inset-0 flex items-center justify-center bg-base-100/50 backdrop-blur-sm rounded-lg opacity-0 invisible">
-            <div class="loading loading-spinner loading-md text-primary"></div>
-        </div>
-    </div>
-
-</form>
-    </div>
             </div>
 
             <!-- Footer -->

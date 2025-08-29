@@ -154,7 +154,7 @@
                         </a>
                     </li>
                     <li class="mt-auto">
-                        <a href="/accounts/logout/" 
+                        <a href="{% url 'accounts:logout' %}" 
                            class="group flex gap-x-3 rounded-xl p-3 text-sm leading-6 font-semibold text-red-600 hover:bg-red-50 transition-colors">
                             <svg class="h-5 w-5 shrink-0 text-red-500 group-hover:text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
@@ -170,7 +170,7 @@
     <!-- Mobile Bottom Navigation -->
     <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 z-50">
         <div class="flex items-center justify-around py-2">
-            <a href="/dashboard/" 
+            <a href="{% url 'dashboard' %}" 
                class="flex flex-col items-center py-2 px-3 rounded-lg transition-colors"
                :class="activeSection === 'dashboard' ? 'text-blue-600' : 'text-gray-500'">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
