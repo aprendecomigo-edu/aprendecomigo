@@ -56,7 +56,26 @@ body:
   - type: markdown
     attributes:
       value: |
-        ## Design Principles for This Flow
+        ## User Persona
+        
+  - type: textarea
+    id: user_persona
+    attributes:
+      label: Primary User Persona
+      description: Who is the main user for this flow?
+      placeholder: |
+        **User Type**: [e.g., New teacher, Returning student, Parent]
+        **Context**: [When/why they're using this flow]
+        **Tech Comfort**: [High/Medium/Low]
+        **Device**: [Mobile/Desktop preference]
+        **Pain Points**: [Current frustrations this flow should solve]
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Design Principles
         
   - type: checkboxes
     id: design_principles
@@ -88,37 +107,18 @@ body:
       label: Flow Steps
       description: Design each step of the user journey
       placeholder: |
-        ### Step 1: [Step Name - e.g., "Landing/Entry"]
-        **User Intent**: [What brings them to this step]
-        
-        **Information Needed FROM User**:
-        - [What data/decisions you need from them]
-        - [Optional vs required information]
-        
-        **Information Needed BY User**:
-        - [What they need to know to proceed]
-        - [Context, benefits, next steps]
-        
+        ### Step 1: [Step Name]
+        **User Intent**: [What brings them here]
+        **User Provides**: [Data/decisions needed from user]
+        **User Needs**: [Info/context to proceed]
         **Primary Action**: [Main button/action]
-        **Secondary Actions**: [Alternative paths, like "Back" or "Skip"]
-        
-        **Screen Elements**:
-        - [ ] Headline: [Clear description of this step]
-        - [ ] Explanation: [Brief context if needed]
-        - [ ] Form fields: [List specific fields]
-        - [ ] Progress indicator: [If multi-step]
-        - [ ] Help/support: [If complex]
-        
-        **Decision Points**:
-        - [If user does X, then Y happens]
-        - [Different paths based on user choice]
-        
-        **Success Criteria**: [User completes X to move forward]
+        **Screen Elements**: [Key UI components]
+        **Success**: [How to move forward]
         
         ---
         
         ### Step 2: [Step Name]
-        [Repeat the same structure for additional steps]
+        [Repeat for each step]
     validations:
       required: true
 
@@ -151,58 +151,39 @@ body:
   - type: markdown
     attributes:
       value: |
-        ## Content Strategy
+        ## Content & Messaging
         
   - type: textarea
-    id: tone_voice
+    id: content_strategy
     attributes:
-      label: Tone & Voice
-      description: Define the communication style for this flow
+      label: Content Strategy
+      description: Define tone, key messages, and micro-copy
       placeholder: |
-        - [Friendly, professional, encouraging, etc.]
-        - [Specific phrases to use/avoid]
+        **Tone & Voice**: [Friendly, professional, encouraging, etc.]
         
-  - type: textarea
-    id: key_messages
-    attributes:
-      label: Key Messages & Micro-copy
-      description: Define messaging for each step and interface elements
-      placeholder: |
-        ### Key Messages:
-        - **Step 1**: [Main message user should understand]
-        - **Step 2**: [Main message user should understand]
+        **Key Messages by Step**:
+        - **Step 1**: [Main message]
+        - **Step 2**: [Main message]
         
-        ### Micro-copy:
-        - **Button labels**: [Be specific about what happens next]
-        - **Error messages**: [Helpful, not blame-y]
-        - **Success messages**: [Celebrate progress]
-        - **Help text**: [Just-in-time assistance]
+        **Micro-copy**:
+        - **Buttons**: [Specific action labels]
+        - **Errors**: [Helpful, not blame-y]
+        - **Success**: [Celebrate progress]
 
   - type: markdown
     attributes:
       value: |
-        ## Technical Considerations
+        ## Technical & Implementation
         
   - type: textarea
     id: technical_requirements
     attributes:
       label: Technical Requirements
-      description: Define technical needs and constraints
+      description: Key technical considerations
       placeholder: |
-        ### Data Collection:
-        - [What you're storing at each step]
-        - [When you save progress]
-        - [How you handle incomplete flows]
-        
-        ### Performance:
-        - [Page load considerations]
-        - [Auto-save functionality]
-        - [Offline capabilities]
-        
-        ### Security:
-        - [Data validation requirements]
-        - [Privacy considerations]
-        - [Secure transmission needs]
+        **Data**: [What's stored, when saved, incomplete flow handling]
+        **Performance**: [Load time, auto-save, offline needs]
+        **Security**: [Validation, privacy, transmission requirements]
 
   - type: markdown
     attributes:
@@ -213,36 +194,24 @@ body:
     id: success_metrics
     attributes:
       label: Success Metrics
-      description: How will you measure the success of this flow?
+      description: How will you measure and validate this flow?
       placeholder: |
-        ### Quantitative Metrics:
-        - **Conversion rate**: [% who complete entire flow]
-        - **Step-by-step drop-off**: [Where people abandon]
-        - **Time to completion**: [How long it takes]
-        - **Error rates**: [How often users hit errors]
+        **Metrics**: Conversion rate, drop-off points, completion time, error rates
+        
+        **Validation Methods**: [Card sorting, prototyping, user testing, etc.]
+        
+        **Key Questions**: Does sequence feel logical? Any unnecessary steps? What causes abandonment?
         
   - type: checkboxes
     id: validation_methods
     attributes:
-      label: Validation Methods
-      description: Select validation approaches to use
+      label: Validation Approaches
+      description: Select methods you'll use
       options:
-        - label: "**Card sorting** - Do steps make logical sense?"
-        - label: "**Paper prototype** - Test sequence before building"
-        - label: "**5-second test** - Is each step's purpose clear?"
-        - label: "**Cognitive walkthrough** - Think through user's mental model"
-        
-  - type: textarea
-    id: validation_questions
-    attributes:
-      label: Key Validation Questions
-      description: What questions need to be answered during validation?
-      placeholder: |
-        - Does the sequence feel logical?
-        - Is any step asking for too much at once?
-        - Would users understand why each piece of info is needed?
-        - Are there any unnecessary steps?
-        - What would make someone abandon at each step?
+        - label: "Card sorting - Test logical sequence"
+        - label: "Paper prototype - Test before building"
+        - label: "User testing - Validate with real users"
+        - label: "Cognitive walkthrough - Expert review"
 
   - type: markdown
     attributes:
@@ -252,21 +221,11 @@ body:
   - type: textarea
     id: design_decisions
     attributes:
-      label: Design Decisions Log
-      description: Document key decisions and alternatives considered
+      label: Design Decisions & Notes
+      description: Document key decisions, alternatives, and additional considerations
       placeholder: |
-        ### Key Decisions Made:
-        - **Decision**: [Reasoning]
-        
-        ### Alternatives Considered:
-        - **Alternative**: [Why rejected]
-        
-        ### Still Need to Decide:
-        - [ ] [Decision point]
-        
-  - type: textarea
-    id: additional_notes
-    attributes:
-      label: Additional Notes
-      description: Any other relevant information or considerations
-      placeholder: Add any additional context, dependencies, or considerations
+        **Key Decisions**: [Decision + reasoning]
+        **Alternatives Considered**: [Why rejected]
+        **Still to Decide**: [Open questions]
+        **Dependencies**: [Other features/teams needed]
+        **Additional Notes**: [Context, constraints, etc.]
