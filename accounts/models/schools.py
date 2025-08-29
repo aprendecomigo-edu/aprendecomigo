@@ -112,6 +112,48 @@ class SchoolMembership(models.Model):
         role_display = dict(SchoolRole.choices).get(self.role, self.role)
         return str(role_display)  # Convert _StrPromise to str
 
+    def clean(self):
+        """Validate business rules for school membership"""
+        from django.core.exceptions import ValidationError
+        
+        super().clean()
+        
+        # If deactivating a membership, ensure user will still have active memberships
+        if self.pk and not self.is_active:
+            # Skip validation for superusers
+            if self.user.is_superuser:
+                return
+                
+            # Count remaining active memberships (excluding this one)
+            remaining_active = self.user.school_memberships.filter(
+                is_active=True
+            ).exclude(pk=self.pk).count()
+            
+            if remaining_active == 0:
+                raise ValidationError(
+                    f"Cannot deactivate the last active school membership for non-superuser {self.user.email}. "
+                    "This would violate the fundamental business rule that every user must have a school association."
+                )
+
+    def delete(self, *args, **kwargs):
+        """Override delete to prevent removing the last active membership"""
+        from django.core.exceptions import ValidationError
+        
+        # Skip validation for superusers
+        if not self.user.is_superuser:
+            # Count remaining active memberships (excluding this one)
+            remaining_active = self.user.school_memberships.filter(
+                is_active=True
+            ).exclude(pk=self.pk).count()
+            
+            if remaining_active == 0:
+                raise ValidationError(
+                    f"Cannot delete the last active school membership for non-superuser {self.user.email}. "
+                    "This would violate the fundamental business rule that every user must have a school association."
+                )
+        
+        super().delete(*args, **kwargs)
+
 
 class SchoolActivity(models.Model):
     """
@@ -157,7 +199,7 @@ class SchoolSettings(models.Model):
         related_name="schools_using_system",
         help_text=_("Educational system used by this school"),
         verbose_name=_("educational system"),
-        default=EducationalSystemType.PORTUGAL,  # Portugal system as default
+        default=1,  # Default to Portugal system (ID=1)
     )
     grade_levels: models.JSONField = models.JSONField(
         _("grade levels"), default=list, blank=True, help_text=_("List of grade levels offered by this school")

@@ -125,6 +125,46 @@ def get_user_by_email(email: str) -> CustomUser:
     return CustomUser.objects.get(email=email)
 
 
+def create_user_school_and_membership(user: CustomUser, school_name: str) -> School:
+    """
+    Create a school and membership for a new user during signup.
+    
+    Creates a personal school for the user and assigns them as SCHOOL_OWNER.
+    Must be called within a transaction - will raise exceptions if creation fails.
+    
+    Args:
+        user: The newly created user who needs a school
+        school_name: The name for the school (from signup form)
+        
+    Returns:
+        School: The created school instance
+        
+    Raises:
+        Exception: If school or membership creation fails (by design for transaction rollback)
+    """
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    
+    # Create a school for the user (no try/catch - let exceptions bubble up)
+    school = School.objects.create(
+        name=school_name,
+        description=f"Personal tutoring school for {user.first_name or user.email}",
+        contact_email=user.email,
+    )
+    
+    # Create school membership as owner (no try/catch - let exceptions bubble up)
+    SchoolMembership.objects.create(
+        user=user,
+        school=school,
+        role=SchoolRole.SCHOOL_OWNER,
+        is_active=True,
+    )
+    
+    logger.info(f"Created school '{school_name}' and owner membership for user: {user.email}")
+    return school
+
+
 def can_user_manage_school(user: CustomUser, school_id: int) -> bool:
     """
     Check if a user can manage a specific school (is owner or admin).

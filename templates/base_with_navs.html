@@ -1,7 +1,91 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50" x-data="{ sidebarOpen: false, activeSection: '{{ active_section|default:'dashboard' }}' }">
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50" x-data="{
+    sidebarOpen: false,
+    sidebarCollapsed: false,
+    activeSection: '{{ active_section|default:'dashboard' }}',
+    
+    navigation: [
+        { 
+            id: 'dashboard', 
+            label: 'Home', 
+            desktopLabel: 'Dashboard',
+            url: '{% url 'dashboard:dashboard' %}', 
+            icon: 'home', 
+            priority: 1 
+        },
+        { 
+            id: 'people', 
+            label: 'People', 
+            desktopLabel: 'People',
+            url: '/people/', 
+            icon: 'users', 
+            priority: 1, 
+        },
+        { 
+            id: 'scheduler', 
+            label: 'Schedule', 
+            desktopLabel: 'Schedule',
+            url: '/scheduler/', 
+            icon: 'calendar', 
+            priority: 1 
+        },
+        { 
+            id: 'chat', 
+            label: 'Chat', 
+            desktopLabel: 'Chat',
+            url: '/chat/', 
+            icon: 'message-circle', 
+            priority: 1 
+        },
+        { 
+            id: 'notifications', 
+            label: 'Notifications', 
+            desktopLabel: 'Notifications',
+            url: '/messaging/notifications/', 
+            icon: 'bell', 
+            priority: 2, 
+            badge: { count: 0, color: 'red' },
+            htmx: {
+                get: '/messaging/notifications/unread-count/',
+                trigger: 'every 30s',
+                target: '#notification-badge',
+                swap: 'outerHTML'
+            }
+        },
+    ],
+    
+    isActive(itemId) {
+        return this.activeSection === itemId;
+    },
+    
+    getMobileNavItems() {
+        return this.navigation.filter(item => item.priority === 1);
+    },
+    
+    getDesktopNavItems() {
+        return this.navigation.filter(item => item.priority <= 2);
+    },
+    
+    getBadgeClasses(color) {
+        const colors = {
+            'purple': 'bg-purple-100 text-purple-600',
+            'red': 'bg-red-100 text-red-600',
+            'yellow': 'bg-yellow-100 text-yellow-600'
+        };
+        return colors[color] || 'bg-gray-100 text-gray-600';
+    },
+    
+    init() {
+        // Initialize Lucide icons after Alpine component mounts
+        this.$nextTick(() => {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        });
+    }
+}">
     
     <!-- Mobile Header -->
     <header class="lg:hidden bg-white/90 backdrop-blur-sm border-b border-gray-200 px-4 py-3 fixed top-0 left-0 right-0 z-40">
@@ -24,142 +108,62 @@
     </header>
 
     <!-- Desktop Sidebar -->
-    <nav class="hidden lg:flex lg:fixed lg:inset-y-0 lg:z-50 lg:w-64 lg:flex-col">
-        <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-white/80 backdrop-blur-xl border-r border-white/20 px-6 py-4">
+    <nav class="hidden lg:flex lg:fixed lg:inset-y-0 lg:z-50 lg:flex-col transition-all duration-300 ease-in-out"
+         :class="sidebarCollapsed ? 'w-16' : 'w-64'">
+        <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-white/80 backdrop-blur-xl border-r border-white/20 transition-all duration-300"
+             :class="sidebarCollapsed ? 'px-2 py-4' : 'px-6 py-4'">
             <!-- Brand Header -->
-            <div class="flex items-center space-x-3">
-                <div class="bg-gradient-primary rounded-lg h-10 w-10 flex items-center justify-center">
-                    <span class="text-white font-bold text-lg">A</span>
-                </div>
-                <div>
-                    <h1 class="text-lg font-bold text-gradient-primary font-brand">aprendecomigo</h1>
-                    <p class="text-xs text-gray-600">Admin Portal</p>
-                </div>
+            <div class="flex items-center" :class="sidebarCollapsed ? 'justify-center' : 'justify-between'">
+                <h1 class="text-lg font-bold text-gradient-primary font-brand" x-show="!sidebarCollapsed">aprendecomigo</h1>
+                <button @click="sidebarCollapsed = !sidebarCollapsed; $nextTick(() => lucide.createIcons())" class="p-1 rounded-lg hover:bg-white/50 transition-colors">
+                    <i :data-lucide="sidebarCollapsed ? 'chevrons-right' : 'chevrons-left'" class="h-5 w-5 text-gray-600"></i>
+                </button>
             </div>
 
             <!-- Navigation Menu -->
             <nav class="flex flex-1 flex-col">
                 <ul role="list" class="flex flex-1 flex-col gap-y-2">
-                    <li>
-                        <a href="/dashboard/" 
-                           class="group flex gap-x-3 rounded-xl p-3 text-sm leading-6 font-semibold hover:bg-white/50 transition-colors"
-                           :class="activeSection === 'dashboard' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:text-gray-900'">
-                            <svg class="h-5 w-5 shrink-0" :class="activeSection === 'dashboard' ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-                            </svg>
-                            Dashboard
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/people/" 
-                           class="group flex gap-x-3 rounded-xl p-3 text-sm leading-6 font-semibold hover:bg-white/50 transition-colors justify-between items-center"
-                           :class="activeSection === 'people' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:text-gray-900'">
-                            <div class="flex gap-x-3 items-center">
-                                <svg class="h-5 w-5 shrink-0" :class="activeSection === 'people' ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
-                                </svg>
-                                People
-                            </div>
-                            <span class="bg-purple-100 text-purple-600 text-xs font-medium px-2 py-1 rounded-full">15</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/scheduler/" 
-                           class="group flex gap-x-3 rounded-xl p-3 text-sm leading-6 font-semibold hover:bg-white/50 transition-colors"
-                           :class="activeSection === 'scheduler' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:text-gray-900'">
-                            <svg class="h-5 w-5 shrink-0" :class="activeSection === 'scheduler' ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 9.75h18m-18 0v8.25a2.25 2.25 0 0 0 2.25 2.25h13.5a2.25 2.25 0 0 0 2.25-2.25V9.75m-18 0V6a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 6v3.75" />
-                            </svg>
-                            Schedule
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/chat/" 
-                           class="group flex gap-x-3 rounded-xl p-3 text-sm leading-6 font-semibold hover:bg-white/50 transition-colors"
-                           :class="activeSection === 'chat' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:text-gray-900'">
-                            <svg class="h-5 w-5 shrink-0" :class="activeSection === 'chat' ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.691 1.309 3.061 2.927 3.061 1.618 0 2.927-1.37 2.927-3.061 0-1.691-1.309-3.061-2.927-3.061S0 6.819 0 8.51Z" />
-                            </svg>
-                            Chat
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/tasks/" 
-                           class="group flex gap-x-3 rounded-xl p-3 text-sm leading-6 font-semibold hover:bg-white/50 transition-colors"
-                           :class="activeSection === 'tasks' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:text-gray-900'">
-                            <svg class="h-5 w-5 shrink-0" :class="activeSection === 'tasks' ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
-                            </svg>
-                            Tasks
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/messaging/notifications/" 
-                           class="group flex gap-x-3 rounded-xl p-3 text-sm leading-6 font-semibold hover:bg-white/50 transition-colors justify-between items-center"
-                           :class="activeSection === 'notifications' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:text-gray-900'"
-                           hx-get="/messaging/notifications/unread-count/"
-                           hx-trigger="every 30s"
-                           hx-target="#notification-badge"
-                           hx-swap="outerHTML">
-                            <div class="flex gap-x-3 items-center">
-                                <svg class="h-5 w-5 shrink-0" :class="activeSection === 'notifications' ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-                                </svg>
-                                Notifications
-                            </div>
-                            <span id="notification-badge" class="bg-red-100 text-red-600 text-xs font-medium px-2 py-1 rounded-full">0</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/messaging/email-templates/" 
-                           class="group flex gap-x-3 rounded-xl p-3 text-sm leading-6 font-semibold hover:bg-white/50 transition-colors"
-                           :class="activeSection === 'email-templates' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:text-gray-900'">
-                            <svg class="h-5 w-5 shrink-0" :class="activeSection === 'email-templates' ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
-                            </svg>
-                            Email Templates
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/messaging/communications/" 
-                           class="group flex gap-x-3 rounded-xl p-3 text-sm leading-6 font-semibold hover:bg-white/50 transition-colors"
-                           :class="activeSection === 'communications' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:text-gray-900'">
-                            <svg class="h-5 w-5 shrink-0" :class="activeSection === 'communications' ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zm0 0c0 1.657 1.007 3 2.25 3S21 13.657 21 12a9 9 0 10-2.636 6.364M16.5 12V8.25" />
-                            </svg>
-                            Communications
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/analytics/" 
-                           class="group flex gap-x-3 rounded-xl p-3 text-sm leading-6 font-semibold hover:bg-white/50 transition-colors"
-                           :class="activeSection === 'analytics' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:text-gray-900'">
-                            <svg class="h-5 w-5 shrink-0" :class="activeSection === 'analytics' ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
-                            </svg>
-                            Analytics
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/invitations/" 
-                           class="group flex gap-x-3 rounded-xl p-3 text-sm leading-6 font-semibold hover:bg-white/50 transition-colors justify-between items-center"
-                           :class="activeSection === 'invitations' ? 'bg-blue-500 text-white' : 'text-gray-700 hover:text-gray-900'">
-                            <div class="flex gap-x-3 items-center">
-                                <svg class="h-5 w-5 shrink-0" :class="activeSection === 'invitations' ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
-                                </svg>
-                                Invitations
-                            </div>
-                            <span class="bg-yellow-100 text-yellow-600 text-xs font-medium px-2 py-1 rounded-full">2</span>
-                        </a>
-                    </li>
+                    <template x-for="item in getDesktopNavItems()" :key="item.id">
+                        <li>
+                            <a :href="item.url" 
+                               class="group flex rounded-xl p-3 text-sm leading-6 font-semibold hover:bg-white/50 transition-colors"
+                               :class="[
+                                   isActive(item.id) ? 'bg-blue-500 text-white' : 'text-gray-700 hover:text-gray-900',
+                                   item.badge ? 'justify-between items-center' : '',
+                                   sidebarCollapsed ? 'justify-center' : 'gap-x-3'
+                               ]"
+                               :title="sidebarCollapsed ? item.desktopLabel : ''"
+                               x-bind="item.htmx ? {
+                                   'hx-get': item.htmx.get,
+                                   'hx-trigger': item.htmx.trigger,
+                                   'hx-target': item.htmx.target,
+                                   'hx-swap': item.htmx.swap
+                               } : {}">
+                                
+                                <div class="flex items-center" :class="sidebarCollapsed ? 'justify-center' : 'gap-x-3'">
+                                    <i :data-lucide="item.icon" 
+                                       class="h-5 w-5 shrink-0" 
+                                       :class="isActive(item.id) ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'"></i>
+                                    <span x-text="item.desktopLabel" x-show="!sidebarCollapsed"></span>
+                                </div>
+                                
+                                <template x-if="item.badge && !sidebarCollapsed">
+                                    <span :id="item.id === 'notifications' ? 'notification-badge' : ''"
+                                          :class="getBadgeClasses(item.badge.color)" 
+                                          class="text-xs font-medium px-2 py-1 rounded-full"
+                                          x-show="item.badge.count > 0 || item.id === 'notifications'"
+                                          x-text="item.badge.count"></span>
+                                </template>
+                            </a>
+                        </li>
+                    </template>
                     <li class="mt-auto">
                         <a href="{% url 'accounts:logout' %}" 
-                           class="group flex gap-x-3 rounded-xl p-3 text-sm leading-6 font-semibold text-red-600 hover:bg-red-50 transition-colors">
-                            <svg class="h-5 w-5 shrink-0 text-red-500 group-hover:text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
-                            </svg>
-                            Logout
+                           class="group flex rounded-xl p-3 text-sm leading-6 font-semibold text-red-600 hover:bg-red-50 transition-colors"
+                           :class="sidebarCollapsed ? 'justify-center' : 'gap-x-3'"
+                           :title="sidebarCollapsed ? 'Logout' : ''">
+                            <i data-lucide="log-out" class="h-5 w-5 shrink-0 text-red-500 group-hover:text-red-700"></i>
+                            <span x-show="!sidebarCollapsed">Logout</span>
                         </a>
                     </li>
                 </ul>
@@ -170,68 +174,41 @@
     <!-- Mobile Bottom Navigation -->
     <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 z-50">
         <div class="flex items-center justify-around py-2">
-            <a href="{% url 'dashboard' %}" 
-               class="flex flex-col items-center py-2 px-3 rounded-lg transition-colors"
-               :class="activeSection === 'dashboard' ? 'text-blue-600' : 'text-gray-500'">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-                </svg>
-                <span class="text-xs font-medium mt-1">Home</span>
-            </a>
-            <a href="/people/" 
-               class="flex flex-col items-center py-2 px-3 rounded-lg transition-colors relative"
-               :class="activeSection === 'people' ? 'text-blue-600' : 'text-gray-500'">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
-                </svg>
-                <span class="text-xs font-medium mt-1">People</span>
-                <span class="absolute -top-1 -right-1 bg-purple-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">15</span>
-            </a>
-            <a href="/scheduler/" 
-               class="flex flex-col items-center py-2 px-3 rounded-lg transition-colors"
-               :class="activeSection === 'scheduler' ? 'text-blue-600' : 'text-gray-500'">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 9.75h18m-18 0v8.25a2.25 2.25 0 0 0 2.25 2.25h13.5a2.25 2.25 0 0 0 2.25-2.25V9.75m-18 0V6a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 6v3.75" />
-                </svg>
-                <span class="text-xs font-medium mt-1">Schedule</span>
-            </a>
-            <a href="/tasks/" 
-               class="flex flex-col items-center py-2 px-3 rounded-lg transition-colors"
-               :class="activeSection === 'tasks' ? 'text-blue-600' : 'text-gray-500'">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
-                </svg>
-                <span class="text-xs font-medium mt-1">Tasks</span>
-            </a>
-            <a href="/chat/" 
-               class="flex flex-col items-center py-2 px-3 rounded-lg transition-colors"
-               :class="activeSection === 'chat' ? 'text-blue-600' : 'text-gray-500'">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.691 1.309 3.061 2.927 3.061 1.618 0 2.927-1.37 2.927-3.061 0-1.691-1.309-3.061-2.927-3.061S0 6.819 0 8.51Z" />
-                </svg>
-                <span class="text-xs font-medium mt-1">Chat</span>
-            </a>
-            <a href="/analytics/" 
-               class="flex flex-col items-center py-2 px-3 rounded-lg transition-colors"
-               :class="activeSection === 'analytics' ? 'text-blue-600' : 'text-gray-500'">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
-                </svg>
-                <span class="text-xs font-medium mt-1">Analytics</span>
-            </a>
+            <template x-for="item in getMobileNavItems()" :key="item.id">
+                <a :href="item.url" 
+                   class="flex flex-col items-center py-2 px-3 rounded-lg transition-colors relative"
+                   :class="isActive(item.id) ? 'text-blue-600' : 'text-gray-500'">
+                    <i :data-lucide="item.icon" class="w-5 h-5"></i>
+                    <span class="text-xs font-medium mt-1" x-text="item.label"></span>
+                    
+                    <template x-if="item.badge">
+                        <span class="absolute -top-1 -right-1 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center"
+                              :class="item.badge.color === 'purple' ? 'bg-purple-500' : 'bg-red-500'"
+                              x-show="item.badge.count > 0"
+                              x-text="item.badge.count"></span>
+                    </template>
+                </a>
+            </template>
         </div>
     </nav>
 
     <!-- Main Content Area - Single responsive layout -->
-    <main class="pt-16 pb-24 lg:pl-64 lg:pt-0 lg:pb-0">
+    <main class="pt-16 pb-24 lg:pt-0 lg:pb-0 transition-all duration-300 ease-in-out" 
+          :class="sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'">
         <!-- Desktop Header Bar -->
         <div class="hidden lg:block bg-white/90 backdrop-blur-sm border-b border-gray-200 px-6 py-4">
             <div class="flex items-center justify-between">
-                <h1 class="text-2xl font-semibold text-gray-900">{% block page_title %}Dashboard{% endblock %}</h1>
+                <h1 class="text-2xl font-semibold text-gray-900">{{ school_name|default:"School Name" }}</h1>
                 <div class="flex items-center space-x-3">
-                    <span class="text-sm text-gray-500">Welcome, {{ user.first_name }}</span>
-                    <div class="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center">
-                        <span class="text-white font-medium text-sm">{{ user.first_name.0|upper|default:"A" }}</span>
+                    <div class="flex items-center space-x-2">
+                        <div class="avatar">
+                            <div class="w-8 rounded-full ring ring-primary ring-offset-base-100 ring-offset-1">
+                                <div class="bg-gradient-primary rounded-full flex items-center justify-center w-full h-full">
+                                    <span class="text-white font-medium text-sm">{{ user_first_name.0|upper|default:"A" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="badge badge-secondary badge-sm">{{ user_role|default:"n/a" }}</div>
                     </div>
                 </div>
             </div>
@@ -245,6 +222,26 @@
 </div>
 
 {% block dashboard_scripts %}
-<!-- Page-specific scripts go here -->
+<!-- Initialize Lucide icons -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize icons after Alpine.js is ready
+    setTimeout(() => {
+        lucide.createIcons();
+    }, 100);
+});
+
+// Re-initialize icons when Alpine.js updates the DOM
+document.addEventListener('alpine:updated', function() {
+    lucide.createIcons();
+});
+
+// Also initialize when Alpine initializes
+document.addEventListener('alpine:init', function() {
+    setTimeout(() => {
+        lucide.createIcons();
+    }, 50);
+});
+</script>
 {% endblock %}
 {% endblock %}

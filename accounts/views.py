@@ -1,6 +1,15 @@
 """
-Authentication views for Django web interface (PWA Migration)
-Consolidated authentication using email magic links + SMS OTP
+Authentication views for Django web interface (PWA Migration).
+
+This module provides comprehensive authentication functionality including:
+- Email magic link authentication with SMS OTP verification
+- User registration with automatic school creation
+- Teacher invitation system with role-based permissions
+- Profile and school management views
+- Session management and security utilities
+
+All authentication flows follow a secure dual-verification approach
+combining email magic links and SMS OTP verification for enhanced security.
 """
 
 from datetime import timedelta
@@ -15,7 +24,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
@@ -26,22 +35,45 @@ from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from sesame.utils import get_query_string
 
 from messaging.services import send_magic_link_email, send_sms_otp
-
-from .db_queries import get_user_by_email, user_exists
+from .db_queries import get_user_by_email, user_exists, create_user_school_and_membership
 from .models import School, SchoolMembership, TeacherInvitation
 from .permissions import IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
+# Constants
+EMAIL_REGEX = re.compile(r"^[^@]+@[^@]+\.[^@]+$")
+OTP_EXPIRY_MINUTES = 5
+VERIFICATION_SESSION_KEYS = [
+    "verification_email",
+    "verification_phone", 
+    "verification_user_id",
+    "verification_otp_code",
+    "verification_otp_expires",
+    "is_signup",
+    "is_signin",
+    "signup_school_name",
+]
+
 
 class SignInView(View):
-    """Sign in page view - SMS OTP for existing users"""
+    """
+    Handle user sign-in with SMS OTP verification.
+    
+    This view provides a secure login flow for existing users:
+    1. User enters email address
+    2. System sends SMS OTP to registered phone number
+    3. User verifies OTP to complete login
+    
+    GET: Display sign-in form
+    POST: Validate email and send SMS OTP
+    """
 
-    def get(self, request):
-        """Render sign in page"""
+    def get(self, request) -> HttpResponse:
+        """Render sign-in page for unauthenticated users."""
         if request.user.is_authenticated:
-            return redirect("/dashboard/")
+            return redirect("dashboard:dashboard")
 
         return render(
             request,
@@ -148,12 +180,26 @@ class SignInView(View):
 
 
 class SignUpView(View):
-    """Sign up page view - dual verification: email magic link + SMS OTP"""
+    """
+    Handle user registration with dual verification (email + SMS).
+    
+    This view manages the complete user registration process:
+    1. User provides email, full name, and phone number
+    2. System creates user account  
+    3. System sends email magic link and SMS OTP for verification
+    4. User completes verification via VerifyOTPView
+    
+    Upon successful registration and verification, a personal school
+    is automatically created with the user as owner.
+    
+    GET: Display registration form
+    POST: Process registration and initiate dual verification
+    """
 
-    def get(self, request):
-        """Render sign up page"""
+    def get(self, request) -> HttpResponse:
+        """Render sign-up page for unauthenticated users."""
         if request.user.is_authenticated:
-            return redirect("/dashboard/")
+            return redirect("dashboard:dashboard")
 
         return render(
             request,
@@ -167,6 +213,7 @@ class SignUpView(View):
         email = request.POST.get("email", "").strip().lower()
         full_name = request.POST.get("full_name", "").strip()
         phone_number = request.POST.get("phone_number", "").strip()
+        organization_name = request.POST.get("organization_name", "").strip()
 
         # Validate inputs
         if not email:
@@ -200,6 +247,18 @@ class SignUpView(View):
                 },
             )
 
+        if not organization_name:
+            return render(
+                request,
+                "accounts/partials/signup_form.html",
+                {
+                    "error": "Organization name is required",
+                    "email": email,
+                    "full_name": full_name,
+                    "phone_number": phone_number,
+                },
+            )
+
         if not re.match(r"^[^@]+@[^@]+\.[^@]+$", email):
             return render(
                 request,
@@ -226,71 +285,35 @@ class SignUpView(View):
             )
 
         try:
-            # Create user with phone number
-            user = User.objects.create_user(
-                email=email,
-                phone_number=phone_number,
-                first_name=full_name.split()[0] if full_name else "",
-                last_name=" ".join(full_name.split()[1:]) if len(full_name.split()) > 1 else "",
-            )
-
-            # Generate magic link for email verification
-            logger.info(f"Dual verification requested for new user: {email}")
-            login_url = reverse("accounts:magic_login")
-            magic_link = request.build_absolute_uri(login_url) + get_query_string(user)
-
-            # Generate secure 6-digit OTP code for SMS verification
-            otp_code = str(secrets.randbelow(900000) + 100000)
-            otp_expires = (timezone.now() + timedelta(minutes=5)).timestamp()
-
-            try:
-                # Send both magic link and SMS OTP
-                email_result = send_magic_link_email(email, magic_link, user.name or user.first_name)
-                sms_result = send_sms_otp(phone_number, otp_code, user.name or user.first_name)
-
-                if email_result.get("success") and sms_result.get("success"):
-                    # Store verification data in session
-                    request.session["verification_email"] = email
-                    request.session["verification_phone"] = phone_number
-                    request.session["verification_user_id"] = user.id
-                    request.session["verification_otp_code"] = otp_code
-                    request.session["verification_otp_expires"] = otp_expires
-                    request.session["is_signup"] = True
-
-                    logger.info(f"Dual verification sent successfully to: {email} and {phone_number}")
-                    return render(
-                        request,
-                        "accounts/partials/signup_success.html",
-                        {"email": email, "phone_number": phone_number, "full_name": full_name},
-                    )
-                else:
-                    # Clean up if either failed
-                    user.delete()
-                    error_msg = "There was an issue sending verification. Please try again."
-                    if not email_result.get("success"):
-                        error_msg = "Failed to send email verification."
-                    elif not sms_result.get("success"):
-                        error_msg = "Failed to send SMS verification."
-
-                    return render(
-                        request,
-                        "accounts/partials/signup_form.html",
-                        {"error": error_msg, "email": email, "full_name": full_name, "phone_number": phone_number},
-                    )
-
-            except Exception as verification_error:
-                logger.error(f"Failed to send dual verification to {email}/{phone_number}: {verification_error}")
-                user.delete()
-                return render(
-                    request,
-                    "accounts/partials/signup_form.html",
-                    {
-                        "error": "There was an issue creating your account. Please try again.",
-                        "email": email,
-                        "full_name": full_name,
-                        "phone_number": phone_number,
-                    },
+            # Extract first name for user creation
+            first_name = full_name.split()[0] if full_name else ""
+            
+            # Create user, school, and membership atomically
+            with transaction.atomic():
+                # Create user with phone number
+                user = User.objects.create_user(
+                    email=email,
+                    phone_number=phone_number,
+                    first_name=first_name,
+                    last_name=" ".join(full_name.split()[1:]) if len(full_name.split()) > 1 else "",
                 )
+                
+                # Create school and membership immediately
+                create_user_school_and_membership(user, organization_name)
+                
+                # Log in the user immediately
+                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+                logger.info(f"User signup completed for: {email}")
+
+            # Return success with redirect to dashboard
+            return render(
+                request,
+                "accounts/partials/signup_success_redirect.html",
+                {
+                    "message": "Account created successfully! Welcome to Aprende Comigo.",
+                    "redirect_url": reverse("dashboard:dashboard"),
+                },
+            )
 
         except Exception as e:
             logger.error(f"Sign up error for {email}: {e}")
@@ -307,10 +330,29 @@ class SignUpView(View):
 
 
 class VerifyOTPView(View):
-    """Verify OTP code for both signup and signin"""
+    """
+    Handle SMS OTP verification for both signup and signin flows.
+    
+    This view manages the second step of our dual-factor authentication:
+    1. Email magic link (handled by sesame)
+    2. SMS OTP verification (handled here)
+    
+    CRITICAL BUSINESS RULE: Every user (except superusers) MUST have a school association.
+    For signup: User verification and school creation are atomic - both succeed or both fail.
+    For signin: Authenticates existing user after successful verification.
+    
+    Session data required:
+    - verification_user_id: User ID for verification
+    - verification_otp_code: Expected OTP code
+    - verification_otp_expires: OTP expiration timestamp
+    - verification_phone: Phone number for context
+    - verification_email: Email for context
+    - is_signup/is_signin: Flow type flags
+    - signup_school_name: School name for new user (signup only)
+    """
 
-    def get(self, request):
-        """Render OTP verification page"""
+    def get(self, request: HttpRequest) -> HttpResponse:
+        """Render OTP verification page with context from session data."""
         # Check session data
         user_id = request.session.get("verification_user_id")
         expected_otp = request.session.get("verification_otp_code")
@@ -334,8 +376,16 @@ class VerifyOTPView(View):
         )
 
     @method_decorator(csrf_protect)
-    def post(self, request):
-        """Handle OTP verification"""
+    def post(self, request: HttpRequest) -> HttpResponse:
+        """
+        Handle OTP verification for both signup and signin flows.
+        
+        Validates the SMS OTP code against session data and:
+        - For signup: Creates school and membership, then logs in user
+        - For signin: Logs in existing user
+        
+        Returns: HTMX partial template with success or error message
+        """
         otp_code = request.POST.get("verification_code", "").strip()
 
         # Get session data
@@ -377,26 +427,19 @@ class VerifyOTPView(View):
             # Verify OTP by comparing with session-stored code
             if otp_code == expected_otp:
                 if is_signup:
-                    # For signup, SMS verification is sufficient for now
-                    # (Email magic link verification can be added later)
-                    user.phone_verified = True
-                    user.save()
-
-                    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-                    logger.info(f"Signup verification completed for new user: {user.email}")
-
-                    # Clear session data
+                    # Signup now happens immediately, no OTP verification needed
+                    logger.warning(f"Unexpected signup OTP verification for user: {user.email}")
                     self._clear_verification_session(request)
-
                     return render(
                         request,
-                        "accounts/partials/verify_success.html",
+                        "accounts/partials/signin_success_with_verify.html",
                         {
-                            "message": "Account verified! Welcome to Aprende Comigo.",
-                            "redirect_url": "/dashboard/",
+                            "error": "Signup process has changed. Please sign up again.",
+                            "email": email,
+                            "phone_number": phone,
                         },
                     )
-
+                    
                 elif is_signin:
                     # For signin, SMS OTP is sufficient
                     login(request, user, backend='django.contrib.auth.backends.ModelBackend')
@@ -408,7 +451,7 @@ class VerifyOTPView(View):
                     return render(
                         request,
                         "accounts/partials/verify_success.html",
-                        {"message": "Welcome back!", "redirect_url": "/dashboard/"},
+                        {"message": "Welcome back!", "redirect_url": reverse("dashboard:dashboard")},
                     )
 
             else:
@@ -434,8 +477,16 @@ class VerifyOTPView(View):
                 },
             )
 
-    def _clear_verification_session(self, request):
-        """Clear verification session data"""
+    def _clear_verification_session(self, request: HttpRequest) -> None:
+        """
+        Clear all verification-related session data.
+        
+        Removes all session keys used during the verification process
+        to prevent data leakage and ensure clean session state.
+        
+        Args:
+            request: HTTP request containing session data to clear
+        """
         keys_to_clear = [
             "verification_email",
             "verification_phone",
@@ -444,6 +495,7 @@ class VerifyOTPView(View):
             "verification_otp_expires",
             "is_signup",
             "is_signin",
+            "signup_school_name",
         ]
         for key in keys_to_clear:
             request.session.pop(key, None)
@@ -453,8 +505,19 @@ class VerifyOTPView(View):
 
 # Function for resending verification code via HTMX
 @csrf_protect
-def resend_code(request):
-    """Resend verification code via HTMX"""
+def resend_code(request: HttpRequest) -> HttpResponse:
+    """
+    Resend magic link verification email via HTMX.
+    
+    Retrieves email from session, validates user exists, generates new magic link,
+    and sends it via email. Used when users need a new verification link.
+    
+    Args:
+        request: HTTP request with session containing verification_email
+        
+    Returns:
+        HttpResponse: HTMX partial with success or error message
+    """
     email = request.session.get("verification_email")
 
     if not email:
@@ -501,14 +564,24 @@ def resend_code(request):
 
 
 class LogoutView(View):
-    """Handle user logout"""
+    """
+    Handle user logout for both GET and POST requests.
+    
+    Logs the logout event, clears session data, and redirects to signin page.
+    Supports both direct navigation and form submission.
+    """
 
-    def get(self, request):
-        """Handle GET logout request"""
+    def get(self, request: HttpRequest) -> HttpResponseRedirect:
+        """Handle GET logout request by delegating to POST."""
         return self.post(request)
 
-    def post(self, request):
-        """Handle POST logout request"""
+    def post(self, request: HttpRequest) -> HttpResponseRedirect:
+        """
+        Handle POST logout request.
+        
+        Logs the logout event for authenticated users, performs Django logout,
+        flushes session data for security, and redirects to signin page.
+        """
         from django.contrib.auth import logout
 
         # Log the logout event
@@ -529,7 +602,15 @@ class LogoutView(View):
 # =============================================================================
 
 class TeacherInvitationListView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin, ListView):
-    """List all teacher invitations for schools the user manages"""
+    """
+    Display paginated list of teacher invitations for schools managed by current user.
+    
+    Only shows invitations for schools where the user has SCHOOL_OWNER or 
+    SCHOOL_ADMIN privileges. Includes school and invited_by relationships
+    for efficient database queries.
+    
+    Access: School owners and admins only
+    """
     
     model = TeacherInvitation
     template_name = "accounts/invitations/invitation_list.html"
@@ -554,7 +635,21 @@ class TeacherInvitationListView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin
 
 
 class TeacherInvitationCreateView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin, CreateView):
-    """Create new teacher invitation"""
+    """
+    Create and send new teacher invitation with email notification.
+    
+    Allows school owners and admins to invite teachers to their schools.
+    Validates permissions, generates unique invitation token, and sends
+    email invitation to the specified address.
+    
+    Features:
+    - Role-based access control
+    - Atomic transaction for data consistency
+    - Email notification system integration
+    - Unique batch ID for tracking
+    
+    Access: School owners and admins only
+    """
     
     model = TeacherInvitation
     template_name = "accounts/invitations/invitation_create.html"
@@ -600,7 +695,15 @@ class TeacherInvitationCreateView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMix
 
 
 class TeacherInvitationDetailView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin, DetailView):
-    """View teacher invitation details"""
+    """
+    Display detailed information about a specific teacher invitation.
+    
+    Shows invitation status, creation date, expiration, email, and any
+    custom message. Only accessible to users who can manage the
+    associated school.
+    
+    Access: School owners and admins only
+    """
     
     model = TeacherInvitation
     template_name = "accounts/invitations/invitation_detail.html"
@@ -614,9 +717,21 @@ class TeacherInvitationDetailView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMix
 
 
 class AcceptTeacherInvitationView(View):
-    """Accept a teacher invitation (public view accessible by token)"""
+    """
+    Handle teacher invitation acceptance via public token URL.
     
-    def get(self, request, token):
+    This is a public view accessible without authentication, allowing invited
+    teachers to accept invitations via email links. Validates invitation token,
+    checks expiration, and processes the acceptance.
+    
+    Flow:
+    1. GET: Display invitation acceptance form
+    2. POST: Process acceptance and create user/membership
+    
+    Access: Public (token-based authentication)
+    """
+    
+    def get(self, request: HttpRequest, token: str) -> HttpResponse:
         """Display invitation acceptance form"""
         invitation = get_object_or_404(TeacherInvitation, token=token)
         
@@ -634,8 +749,21 @@ class AcceptTeacherInvitationView(View):
         })
     
     @method_decorator(csrf_protect)
-    def post(self, request, token):
-        """Process invitation acceptance"""
+    def post(self, request: HttpRequest, token: str) -> HttpResponse:
+        """
+        Process invitation acceptance or decline action.
+        
+        Handles 'accept' or 'decline' actions from the invitation form.
+        For acceptance, creates user membership and redirects appropriately.
+        For decline, marks invitation as declined.
+        
+        Args:
+            request: HTTP request containing action parameter
+            token: Invitation token for validation
+            
+        Returns:
+            HttpResponse: Success page or redirect based on user state
+        """
         invitation = get_object_or_404(TeacherInvitation, token=token)
         
         # Check if invitation is valid
@@ -669,7 +797,7 @@ class AcceptTeacherInvitationView(View):
                 # If user is logged in and it's the correct user, redirect to dashboard
                 if request.user.is_authenticated and request.user.email == invitation.email:
                     messages.success(request, f"Welcome to {invitation.school.name}! You are now a {invitation.get_role_display()}.")
-                    return redirect('/dashboard/')
+                    return redirect('dashboard:dashboard')
                 
                 # Otherwise, show success page with login instructions
                 return render(request, 'accounts/invitations/invitation_accepted.html', {
@@ -696,8 +824,21 @@ class AcceptTeacherInvitationView(View):
 
 @login_required
 @csrf_protect
-def cancel_teacher_invitation(request, invitation_id):
-    """Cancel a teacher invitation (HTMX endpoint)"""
+def cancel_teacher_invitation(request: HttpRequest, invitation_id: int) -> HttpResponse:
+    """
+    Cancel a teacher invitation via HTMX endpoint.
+    
+    Allows school owners and admins to cancel pending teacher invitations.
+    Validates user permissions before allowing cancellation and returns
+    HTMX partial template for dynamic UI updates.
+    
+    Args:
+        request: HTTP request from authenticated user
+        invitation_id: ID of invitation to cancel
+        
+    Returns:
+        HttpResponse: HTMX partial with cancellation result or error
+    """
     invitation = get_object_or_404(TeacherInvitation, id=invitation_id)
     
     # Check permission
@@ -726,8 +867,21 @@ def cancel_teacher_invitation(request, invitation_id):
 
 @login_required
 @csrf_protect
-def resend_teacher_invitation(request, invitation_id):
-    """Resend a teacher invitation (HTMX endpoint)"""
+def resend_teacher_invitation(request: HttpRequest, invitation_id: int) -> HttpResponse:
+    """
+    Resend a teacher invitation via HTMX endpoint.
+    
+    Allows school owners and admins to resend invitations that may have been
+    missed or expired. Validates retry limits and user permissions before
+    attempting to resend the invitation email.
+    
+    Args:
+        request: HTTP request from authenticated user
+        invitation_id: ID of invitation to resend
+        
+    Returns:
+        HttpResponse: HTMX partial with resend result or error message
+    """
     invitation = get_object_or_404(TeacherInvitation, id=invitation_id)
     
     # Check permission

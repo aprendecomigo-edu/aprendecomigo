@@ -29,8 +29,7 @@ class DashboardView(View):
                 logger.info(f"Auto-login successful for testing user: {admin_user}")
             except User.DoesNotExist:
                 # Create a test admin user if it doesn't exist
-                from django.contrib.auth.models import User as AuthUser
-                admin_user = AuthUser.objects.create_user(
+                admin_user = User.objects.create_user(
                     username='admin@test.com',
                     email='admin@test.com',
                     first_name='Admin',
