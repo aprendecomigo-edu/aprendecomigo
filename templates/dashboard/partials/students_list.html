@@ -9,8 +9,8 @@
                         <div class="flex-1">
                             <h3 class="font-semibold text-gray-900">{{ student.full_name|default:"Unknown Student" }}</h3>
                             <p class="text-sm text-gray-600">{{ student.email|default:"No email" }}</p>
-                            {% if student.grade %}
-                                <p class="text-sm text-blue-600 mt-1">Grade: {{ student.grade }}</p>
+                            {% if student.school_year %}
+                                <p class="text-sm text-blue-600 mt-1">School Year: {{ student.school_year }}</p>
                             {% endif %}
                             <span class="inline-block mt-2 px-2 py-1 text-xs font-medium rounded-full
                                 {% if student.status == 'active' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
