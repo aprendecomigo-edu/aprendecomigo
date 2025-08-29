@@ -124,7 +124,7 @@ class TeacherUnavailability(models.Model):
         return f"{self.teacher.user.name} - {self.date} {self.start_time}-{self.end_time}"
 
     def clean(self):
-        """Validate unavailability times and date"""
+        """Validate unavailability times and check for overlaps"""
         # Validate that date is not in the past
         from django.utils import timezone
 
@@ -138,6 +138,41 @@ class TeacherUnavailability(models.Model):
                 )
             if self.start_time >= self.end_time:
                 raise ValidationError({"end_time": _("End time must be after start time.")})
+        
+        # Check for overlapping unavailabilities
+        if self.teacher and self.school and self.date:
+            overlapping_unavailability = TeacherUnavailability.objects.filter(
+                teacher=self.teacher,
+                school=self.school,
+                date=self.date
+            )
+            
+            # Exclude current instance if updating
+            if self.pk:
+                overlapping_unavailability = overlapping_unavailability.exclude(pk=self.pk)
+            
+            # Check for exact overlap or any time overlap
+            if self.is_all_day:
+                # If this is all day, check if any other unavailability exists for this date
+                if overlapping_unavailability.exists():
+                    raise ValidationError({
+                        "date": _("There is already an unavailability for this teacher on this date.")
+                    })
+            else:
+                # Check for time-based overlaps
+                for existing in overlapping_unavailability:
+                    if existing.is_all_day:
+                        # Existing is all day, so any partial day overlaps
+                        raise ValidationError({
+                            "date": _("Teacher is already unavailable all day on this date.")
+                        })
+                    
+                    # Check time overlap: start_time < existing.end_time AND end_time > existing.start_time
+                    if (self.start_time < existing.end_time and 
+                        self.end_time > existing.start_time):
+                        raise ValidationError({
+                            "start_time": _("This time period overlaps with an existing unavailability.")
+                        })
 
 
 class ClassSchedule(models.Model):

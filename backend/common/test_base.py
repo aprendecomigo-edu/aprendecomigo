@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 from django.test import TestCase, override_settings
 from rest_framework.test import APITestCase
+from .stripe_test_fixtures import StripeServiceMocker
 
 # Test settings that disable throttling and external services
 THROTTLE_FREE_TEST_SETTINGS = {
@@ -43,22 +44,26 @@ class BaseAPITestCase(APITestCase):
     - No throttling interferes with tests
     - No real emails are sent
     - Cache doesn't persist between tests
-    - External services are properly mocked
+    - All Stripe API calls are comprehensively mocked
     """
 
     def setUp(self):
-        """Set up test environment with common mocking."""
+        """Set up test environment with comprehensive mocking."""
         super().setUp()
-
-        # Mock Stripe configuration to prevent real API calls
-        self.stripe_patcher = patch.multiple(
-            "django.conf.settings",
-            STRIPE_SECRET_KEY="sk_test_mock_key",
-            STRIPE_PUBLIC_KEY="pk_test_mock_key",
-            STRIPE_WEBHOOK_SECRET="whsec_test_mock",
+        
+        # Start comprehensive Stripe API mocking
+        self.stripe_mocker = StripeServiceMocker()
+        self.stripe_mocks = self.stripe_mocker.start_mocking()
+        
+        # Mock Stripe configuration settings
+        self.stripe_config_patcher = patch.multiple(
+            'django.conf.settings',
+            STRIPE_SECRET_KEY='sk_test_4eC39HqLyjWDarjtT1zdp7dc',  # Stripe's published test key
+            STRIPE_PUBLIC_KEY='pk_test_TYooMQauvdEDq54NiTphI7jx',   # Stripe's published test key
+            STRIPE_WEBHOOK_SECRET='whsec_test_mock_webhook_secret'
         )
-        self.stripe_patcher.start()
-
+        self.stripe_config_patcher.start()
+        
         # Clear cache to ensure test isolation
         from django.core.cache import cache
 
@@ -66,7 +71,12 @@ class BaseAPITestCase(APITestCase):
 
     def tearDown(self):
         """Clean up after test."""
-        self.stripe_patcher.stop()
+        # Stop Stripe API mocking
+        self.stripe_mocker.stop_mocking()
+        
+        # Stop configuration patching
+        self.stripe_config_patcher.stop()
+        
         super().tearDown()
 
 
@@ -80,52 +90,76 @@ class BaseModelTestCase(TestCase):
     """
 
     def setUp(self):
-        """Set up test environment with common mocking."""
+        """Set up test environment with comprehensive mocking."""
         super().setUp()
-
+        
+        # Start comprehensive Stripe API mocking for model tests that might trigger payment operations
+        self.stripe_mocker = StripeServiceMocker()
+        self.stripe_mocks = self.stripe_mocker.start_mocking()
+        
+        # Mock Stripe configuration settings
+        self.stripe_config_patcher = patch.multiple(
+            'django.conf.settings',
+            STRIPE_SECRET_KEY='sk_test_4eC39HqLyjWDarjtT1zdp7dc',
+            STRIPE_PUBLIC_KEY='pk_test_TYooMQauvdEDq54NiTphI7jx',
+            STRIPE_WEBHOOK_SECRET='whsec_test_mock_webhook_secret'
+        )
+        self.stripe_config_patcher.start()
+        
         # Clear cache to ensure test isolation
         from django.core.cache import cache
 
         cache.clear()
+    
+    def tearDown(self):
+        """Clean up after test."""
+        # Stop Stripe API mocking
+        self.stripe_mocker.stop_mocking()
+        
+        # Stop configuration patching  
+        self.stripe_config_patcher.stop()
+        
+        super().tearDown()
 
 
 def mock_external_services(test_func):
     """
-    Decorator to mock common external services for unit tests.
-
+    Decorator to comprehensively mock all external services for unit tests.
+    
     This decorator automatically mocks:
     - Email sending (send_mail)
-    - Stripe API calls
-    - SMS services (via httpx)
-
+    - Complete Stripe API (PaymentIntent, Customer, PaymentMethod, etc.)
+    - SMS services
+    - HTTP requests
+    
     Usage:
         @mock_external_services
         def test_my_feature(self):
-            # Test code here - external services are mocked
+            # Test code here - all external services are comprehensively mocked
             pass
     """
 
     def wrapper(*args, **kwargs):
-        with (
-            patch("django.core.mail.send_mail") as mock_send_mail,
-            patch("stripe.PaymentIntent.create") as mock_stripe_pi,
-            patch("stripe.Customer.create") as mock_stripe_customer,
-            patch("httpx.Client.post") as mock_httpx_post,
-            patch("httpx.AsyncClient.post") as mock_httpx_async_post,
-        ):
-            # Set up default mock return values
-            mock_send_mail.return_value = True
-            mock_stripe_pi.return_value.id = "pi_mock_test"
-            mock_stripe_pi.return_value.client_secret = "pi_mock_test_secret"
-            mock_stripe_customer.return_value.id = "cus_mock_test"
-
-            # Set up httpx mock return values
-            mock_httpx_response = type(
-                "MockResponse", (), {"status_code": 200, "json": lambda: {"success": True, "mock": True}}
-            )()
-            mock_httpx_post.return_value = mock_httpx_response
-            mock_httpx_async_post.return_value = mock_httpx_response
-
-            return test_func(*args, **kwargs)
-
+        # Initialize comprehensive Stripe mocking
+        stripe_mocker = StripeServiceMocker()
+        
+        try:
+            # Start comprehensive Stripe mocking
+            stripe_mocks = stripe_mocker.start_mocking()
+            
+            with patch('django.core.mail.send_mail') as mock_send_mail, \
+                 patch('requests.get') as mock_requests_get, \
+                 patch('requests.post') as mock_requests_post:
+                
+                # Configure basic service mocks
+                mock_send_mail.return_value = True
+                mock_requests_get.return_value.status_code = 200
+                mock_requests_post.return_value.status_code = 200
+                
+                return test_func(*args, **kwargs)
+                
+        finally:
+            # Always clean up Stripe mocking
+            stripe_mocker.stop_mocking()
+    
     return wrapper

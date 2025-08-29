@@ -16,6 +16,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from rest_framework import status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes, throttle_classes
+from rest_framework.exceptions import ParseError
 from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -1176,9 +1177,21 @@ def purchase_initiate(request):
 
     try:
         # DRF automatically parses JSON, so we can just use request.data
-        # Handle JSON parsing errors are automatically handled by DRF
+        # Handle JSON parsing errors explicitly
         request_data = request.data
-
+        
+    except ParseError as e:
+        logger.warning(f"JSON parse error in purchase initiation: {str(e)}")
+        return Response(
+            {
+                'success': False,
+                'error_type': 'parse_error',
+                'message': 'Invalid JSON format in request body'
+            },
+            status=status.HTTP_400_BAD_REQUEST
+        )
+        
+    try:
         # Validate request data using serializer
         serializer = PurchaseInitiationRequestSerializer(data=request_data)
         if not serializer.is_valid():

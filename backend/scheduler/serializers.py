@@ -24,6 +24,7 @@ class TeacherAvailabilitySerializer(serializers.ModelSerializer):
         queryset=TeacherProfile.objects.all(),
         required=False,  # Made optional so teachers can create their own availability
         allow_null=True,
+        allow_empty=True
     )
 
     class Meta:
@@ -64,7 +65,7 @@ class TeacherAvailabilitySerializer(serializers.ModelSerializer):
 
             # Override with new data, resolving foreign key relationships
             for field_name, value in data.items():
-                if field_name == "teacher" and isinstance(value, int):
+                if field_name == 'teacher' and value is not None and isinstance(value, int):
                     # Convert teacher ID to TeacherProfile instance
                     temp_data[field_name] = TeacherProfile.objects.get(id=value)
                 elif field_name == "school" and isinstance(value, int):
@@ -83,9 +84,10 @@ class TeacherAvailabilitySerializer(serializers.ModelSerializer):
             temp_data = data.copy()
 
             # Resolve foreign key fields to actual model instances
-            if "teacher" in temp_data and isinstance(temp_data["teacher"], int):
-                temp_data["teacher"] = TeacherProfile.objects.get(id=temp_data["teacher"])
-            if "school" in temp_data and isinstance(temp_data["school"], int):
+            if 'teacher' in temp_data and temp_data['teacher'] is not None:
+                if isinstance(temp_data['teacher'], int):
+                    temp_data['teacher'] = TeacherProfile.objects.get(id=temp_data['teacher'])
+            if 'school' in temp_data and isinstance(temp_data['school'], int):
                 from accounts.models import School
 
                 temp_data["school"] = School.objects.get(id=temp_data["school"])
@@ -155,7 +157,7 @@ class TeacherUnavailabilitySerializer(serializers.ModelSerializer):
 
             # Override with new data, resolving foreign key relationships
             for field_name, value in data.items():
-                if field_name == "teacher" and isinstance(value, int):
+                if field_name == 'teacher' and value is not None and isinstance(value, int):
                     # Convert teacher ID to TeacherProfile instance
                     temp_data[field_name] = TeacherProfile.objects.get(id=value)
                 elif field_name == "school" and isinstance(value, int):

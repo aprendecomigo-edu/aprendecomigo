@@ -38,7 +38,11 @@ class TestTeacherAvailabilitySerializer(BaseAPITestCase):
         availability = TeacherAvailability.objects.create(
             teacher=self.teacher,
             school=self.school,
+<<<<<<< HEAD
             day_of_week="monday",
+=======
+            day_of_week="monday",  # Monday - use string value from WeekDay choices
+>>>>>>> da5a5d4 (✅ Security & Testing Infrastructure Enhancements)
             start_time=datetime.time(9, 0),
             end_time=datetime.time(17, 0),
             is_active=True,
@@ -60,6 +64,7 @@ class TestTeacherAvailabilitySerializer(BaseAPITestCase):
         ]
         for field in required_fields:
             self.assertIn(field, data)
+<<<<<<< HEAD
 
     def test_availability_validation_rules(self):
         """Test various validation rules for teacher availability."""
@@ -88,6 +93,123 @@ class TestTeacherAvailabilitySerializer(BaseAPITestCase):
                 "should_be_valid": True,
                 "description": "valid time range",
             },
+=======
+        
+        self.assertEqual(data['teacher_name'], 'Test Teacher')
+        self.assertEqual(data['school_name'], 'Test School')
+        self.assertEqual(data['day_of_week'], 'monday')
+        self.assertEqual(data['start_time'], '09:00:00')
+        self.assertEqual(data['end_time'], '17:00:00')
+
+    def test_day_of_week_display(self):
+        """Test day of week display field."""
+        serializer = TeacherAvailabilitySerializer(self.availability)
+        data = serializer.data
+        
+        # Should display Monday for day_of_week='monday'
+        self.assertIn('Monday', data['day_of_week_display'])
+
+    def test_teacher_field_optional(self):
+        """Test teacher field is optional for self-creation."""
+        data = {
+            'school': self.school.id,
+            'day_of_week': 'tuesday',
+            'start_time': '10:00:00',
+            'end_time': '18:00:00',
+            'is_active': True
+        }
+        
+        serializer = TeacherAvailabilitySerializer(data=data)
+        # Should be valid even without teacher field (for teachers creating their own availability)
+        if not serializer.is_valid():
+            print(f"Validation errors: {serializer.errors}")
+        self.assertTrue(serializer.is_valid())
+
+    def test_model_validation_integration(self):
+        """Test serializer integrates with model validation."""
+        # Create overlapping availability that should fail model validation
+        data = {
+            'teacher': self.teacher.id,
+            'school': self.school.id,
+            'day_of_week': 'monday',  # Same day as existing
+            'start_time': '08:00:00',  # Overlaps with existing 9:00-17:00
+            'end_time': '10:00:00',
+            'is_active': True
+        }
+        
+        serializer = TeacherAvailabilitySerializer(data=data)
+        # Should fail due to model validation
+        self.assertFalse(serializer.is_valid())
+
+    def test_time_validation(self):
+        """Test start time must be before end time."""
+        data = {
+            'teacher': self.teacher.id,
+            'school': self.school.id,
+            'day_of_week': 'tuesday',
+            'start_time': '18:00:00',  # After end time
+            'end_time': '10:00:00',
+            'is_active': True
+        }
+        
+        serializer = TeacherAvailabilitySerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+
+    def test_update_validation_with_existing_data(self):
+        """Test validation works correctly during updates."""
+        # Update should work with partial data
+        data = {
+            'start_time': '08:30:00',
+            'end_time': '16:30:00'
+        }
+        
+        serializer = TeacherAvailabilitySerializer(
+            self.availability, 
+            data=data, 
+            partial=True
+        )
+        self.assertTrue(serializer.is_valid())
+
+    def test_foreign_key_resolution_create(self):
+        """Test foreign key resolution during creation."""
+        data = {
+            'teacher': self.teacher.id,  # Should resolve to TeacherProfile instance
+            'school': self.school.id,    # Should resolve to School instance
+            'day_of_week': 3,
+            'start_time': '09:00:00',
+            'end_time': '17:00:00',
+            'is_active': True
+        }
+        
+        serializer = TeacherAvailabilitySerializer(data=data)
+        self.assertTrue(serializer.is_valid())
+
+    def test_invalid_day_of_week(self):
+        """Test validation of day_of_week field."""
+        invalid_days = [-1, 8, 'monday', None]
+        
+        for day in invalid_days:
+            with self.subTest(day=day):
+                data = {
+                    'teacher': self.teacher.id,
+                    'school': self.school.id,
+                    'day_of_week': day,
+                    'start_time': '09:00:00',
+                    'end_time': '17:00:00',
+                    'is_active': True
+                }
+                
+                serializer = TeacherAvailabilitySerializer(data=data)
+                self.assertFalse(serializer.is_valid())
+
+    def test_invalid_time_formats(self):
+        """Test validation of time field formats."""
+        invalid_times = [
+            ('25:00:00', '17:00:00'),  # Invalid hour
+            ('09:70:00', '17:00:00'),  # Invalid minute
+            ('09:00', '17:00:00'),     # Wrong format
+            ('9am', '5pm'),            # Wrong format
+>>>>>>> da5a5d4 (✅ Security & Testing Infrastructure Enhancements)
         ]
 
         for test_case in validation_tests:
@@ -278,8 +400,241 @@ class TestCreateClassScheduleSerializer(BaseAPITestCase):
         with patch("scheduler.services.BookingOrchestratorService") as mock_orchestrator:
             mock_orchestrator.return_value.validate_booking_request.return_value = {"is_valid": True, "errors": []}
 
+<<<<<<< HEAD
             if serializer.is_valid():
                 self.assertEqual(serializer.validated_data["duration_minutes"], 60)
+=======
+    def test_class_reminder_serialization(self):
+        """Test serializing class reminder data."""
+        serializer = ClassReminderSerializer(self.reminder)
+        data = serializer.data
+        
+        # Verify all expected fields
+        expected_fields = [
+            'id', 'class_schedule', 'class_title', 'reminder_type',
+            'reminder_type_display', 'recipient', 'recipient_name',
+            'recipient_type', 'communication_channel',
+            'communication_channel_display', 'status', 'status_display',
+            'scheduled_for', 'sent_at', 'subject', 'message',
+            'error_message', 'retry_count', 'max_retries',
+            'external_message_id', 'metadata', 'is_overdue',
+            'time_until_send', 'can_retry'
+        ]
+        for field in expected_fields:
+            self.assertIn(field, data)
+        
+        self.assertEqual(data['class_title'], 'Math Lesson')
+        self.assertEqual(data['recipient_name'], 'Test Student')
+        self.assertEqual(data['subject'], 'Class Reminder: Math Lesson')
+
+    def test_display_fields(self):
+        """Test display fields for enums."""
+        serializer = ClassReminderSerializer(self.reminder)
+        data = serializer.data
+        
+        # Should have human-readable display values
+        self.assertIsNotNone(data['reminder_type_display'])
+        self.assertIsNotNone(data['communication_channel_display'])
+        self.assertIsNotNone(data['status_display'])
+
+    def test_time_until_send_calculation(self):
+        """Test time until send calculation."""
+        # Create reminder scheduled for 2 hours from now
+        future_reminder = ClassReminder.objects.create(
+            class_schedule=self.class_schedule,
+            reminder_type=ReminderType.CLASS_REMINDER,
+            recipient=self.student,
+            recipient_type='student',
+            communication_channel=CommunicationChannel.EMAIL,
+            status=ReminderStatus.PENDING,
+            scheduled_for=timezone.now() + datetime.timedelta(hours=2),
+            subject='Future Reminder',
+            message='Test message'
+        )
+        
+        serializer = ClassReminderSerializer(future_reminder)
+        data = serializer.data
+        
+        # Should show remaining time
+        self.assertIsNotNone(data['time_until_send'])
+        self.assertNotEqual(data['time_until_send'], 'Overdue')
+
+    def test_overdue_reminder_time(self):
+        """Test overdue reminder time calculation."""
+        # Create overdue reminder
+        overdue_reminder = ClassReminder.objects.create(
+            class_schedule=self.class_schedule,
+            reminder_type=ReminderType.CLASS_REMINDER,
+            recipient=self.student,
+            recipient_type='student',
+            communication_channel=CommunicationChannel.EMAIL,
+            status=ReminderStatus.PENDING,
+            scheduled_for=timezone.now() - datetime.timedelta(hours=1),  # 1 hour ago
+            subject='Overdue Reminder',
+            message='Test message'
+        )
+        
+        serializer = ClassReminderSerializer(overdue_reminder)
+        data = serializer.data
+        
+        # Should show as overdue
+        self.assertEqual(data['time_until_send'], 'Overdue')
+
+    def test_sent_reminder_fields(self):
+        """Test fields for sent reminders."""
+        sent_reminder = ClassReminder.objects.create(
+            class_schedule=self.class_schedule,
+            reminder_type=ReminderType.CLASS_REMINDER,
+            recipient=self.student,
+            recipient_type='student',
+            communication_channel=CommunicationChannel.EMAIL,
+            status=ReminderStatus.SENT,
+            scheduled_for=timezone.now() - datetime.timedelta(hours=1),
+            sent_at=timezone.now(),
+            subject='Sent Reminder',
+            message='Test message',
+            external_message_id='msg_12345'
+        )
+        
+        serializer = ClassReminderSerializer(sent_reminder)
+        data = serializer.data
+        
+        self.assertIsNotNone(data['sent_at'])
+        self.assertEqual(data['status'], 'sent')
+        self.assertEqual(data['external_message_id'], 'msg_12345')
+
+    def test_failed_reminder_fields(self):
+        """Test fields for failed reminders."""
+        failed_reminder = ClassReminder.objects.create(
+            class_schedule=self.class_schedule,
+            reminder_type=ReminderType.CLASS_REMINDER,
+            recipient=self.student,
+            recipient_type='student',
+            communication_channel=CommunicationChannel.EMAIL,
+            status=ReminderStatus.FAILED,
+            scheduled_for=timezone.now() - datetime.timedelta(hours=1),
+            subject='Failed Reminder',
+            message='Test message',
+            error_message='SMTP connection failed',
+            retry_count=2,
+            max_retries=3
+        )
+        
+        serializer = ClassReminderSerializer(failed_reminder)
+        data = serializer.data
+        
+        self.assertEqual(data['status'], 'failed')
+        self.assertEqual(data['error_message'], 'SMTP connection failed')
+        self.assertEqual(data['retry_count'], 2)
+        self.assertEqual(data['max_retries'], 3)
+
+    def test_read_only_fields_protection(self):
+        """Test read-only fields are properly protected."""
+        read_only_fields = [
+            'sent_at', 'error_message', 'retry_count', 'external_message_id',
+            'created_at', 'updated_at', 'is_overdue', 'can_retry'
+        ]
+        
+        serializer = ClassReminderSerializer()
+        meta_read_only = serializer.Meta.read_only_fields
+        
+        for field in read_only_fields:
+            self.assertIn(field, meta_read_only)
+
+
+class TestTriggerReminderSerializer(BaseAPITestCase):
+    """Test suite for TriggerReminderSerializer - Manual reminder triggering."""
+
+    def test_valid_reminder_trigger_data(self):
+        """Test valid reminder trigger data."""
+        data = {
+            'reminder_type': ReminderType.CLASS_REMINDER,
+            'message': 'Custom reminder message',
+            'channels': [CommunicationChannel.EMAIL, CommunicationChannel.SMS],
+            'subject': 'Custom Subject'
+        }
+        
+        serializer = TriggerReminderSerializer(data=data)
+        self.assertTrue(serializer.is_valid())
+
+    def test_reminder_type_validation(self):
+        """Test reminder type validation."""
+        valid_types = [choice[0] for choice in ReminderType.choices]
+        
+        for reminder_type in valid_types:
+            with self.subTest(reminder_type=reminder_type):
+                data = {
+                    'reminder_type': reminder_type,
+                    'message': 'Test message'
+                }
+                
+                serializer = TriggerReminderSerializer(data=data)
+                self.assertTrue(serializer.is_valid(),
+                               f"Should accept type: {reminder_type}. Errors: {serializer.errors}")
+
+    def test_invalid_reminder_type(self):
+        """Test invalid reminder types are rejected."""
+        invalid_types = ['invalid_type', 'REMINDER', 'not_a_valid_type']
+        
+        for reminder_type in invalid_types:
+            with self.subTest(reminder_type=reminder_type):
+                data = {
+                    'reminder_type': reminder_type,
+                    'message': 'Test message'
+                }
+                
+                serializer = TriggerReminderSerializer(data=data)
+                self.assertFalse(serializer.is_valid())
+                self.assertIn('reminder_type', serializer.errors)
+
+    def test_communication_channels_validation(self):
+        """Test communication channels validation."""
+        valid_channels = [choice[0] for choice in CommunicationChannel.choices]
+        
+        data = {
+            'reminder_type': ReminderType.CLASS_REMINDER,
+            'channels': valid_channels
+        }
+        
+        serializer = TriggerReminderSerializer(data=data)
+        self.assertTrue(serializer.is_valid())
+
+    def test_optional_fields(self):
+        """Test optional fields work correctly."""
+        # Minimal required data
+        data = {
+            'reminder_type': ReminderType.CLASS_REMINDER
+        }
+        
+        serializer = TriggerReminderSerializer(data=data)
+        self.assertTrue(serializer.is_valid())
+
+    def test_message_length_validation(self):
+        """Test message field length validation."""
+        long_message = 'A' * 1001  # Over 1000 character limit
+        
+        data = {
+            'reminder_type': ReminderType.CLASS_REMINDER,
+            'message': long_message
+        }
+        
+        serializer = TriggerReminderSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('message', serializer.errors)
+
+    def test_subject_length_validation(self):
+        """Test subject field length validation."""
+        long_subject = 'A' * 256  # Over 255 character limit
+        
+        data = {
+            'reminder_type': ReminderType.CLASS_REMINDER,
+            'subject': long_subject
+        }
+        
+        serializer = TriggerReminderSerializer(data=data)
+        self.assertFalse(serializer.is_valid())
+        self.assertIn('subject', serializer.errors)
+>>>>>>> da5a5d4 (✅ Security & Testing Infrastructure Enhancements)
 
 
 class TestCancelClassSerializer(BaseAPITestCase):

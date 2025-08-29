@@ -49,6 +49,14 @@ class ReceiptGenerationService:
             raise TypeError(f"transaction_id must be an integer, got {type(transaction_id).__name__}")
 
         try:
+            # Validate transaction_id parameter type
+            if not isinstance(transaction_id, int):
+                return {
+                    'success': False,
+                    'error_type': 'invalid_parameter',
+                    'message': f'Transaction ID must be an integer, got {type(transaction_id).__name__}'
+                }
+            
             # Get and validate transaction
             try:
                 transaction = PurchaseTransaction.objects.select_related("student").get(id=transaction_id)
@@ -121,8 +129,18 @@ class ReceiptGenerationService:
             raise TypeError(f"receipt_id must be an integer, got {type(receipt_id).__name__}")
 
         try:
-            receipt = Receipt.objects.select_related("student", "transaction").get(id=receipt_id)
-
+            # Validate receipt_id parameter type
+            if not isinstance(receipt_id, int):
+                return {
+                    'success': False,
+                    'error_type': 'invalid_parameter',
+                    'message': f'Receipt ID must be an integer, got {type(receipt_id).__name__}'
+                }
+            
+            receipt = Receipt.objects.select_related('student', 'transaction').get(
+                id=receipt_id
+            )
+            
             # Validate ownership
             if receipt.student != student_user:
                 return {
