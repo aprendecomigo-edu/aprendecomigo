@@ -54,6 +54,24 @@
                 swap: 'outerHTML'
             }
         },
+        {% if user.school_memberships.exists %}
+        { 
+            id: 'settings', 
+            label: 'Settings', 
+            desktopLabel: 'School Settings',
+            url: '{% url 'accounts:school_settings' pk=user.school_memberships.first.school.pk %}', 
+            icon: 'settings', 
+            priority: 3
+        },
+        {% endif %}
+        { 
+            id: 'profile', 
+            label: 'Profile', 
+            desktopLabel: 'My Profile',
+            url: '{% url 'accounts:profile' %}', 
+            icon: 'user', 
+            priority: 3
+        },
     ],
     
     isActive(itemId) {
@@ -65,7 +83,7 @@
     },
     
     getDesktopNavItems() {
-        return this.navigation.filter(item => item.priority <= 2);
+        return this.navigation.filter(item => item.priority <= 3);
     },
     
     getBadgeClasses(color) {

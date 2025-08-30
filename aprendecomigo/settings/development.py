@@ -230,6 +230,9 @@ CACHES = {
     },
 }
 
+# Override session backend to use database for reliable persistence in development
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+
 # Development-specific overrides
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "192.168.1.98", "192.168.1.98:8000", "10.1.14.101", "10.1.14.101:8000", "*"]
 

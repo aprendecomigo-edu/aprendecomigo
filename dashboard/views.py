@@ -2,15 +2,26 @@
 Dashboard views with clean URLs outside of accounts app
 """
 
+import json
 import logging
+from datetime import datetime, timedelta
+from uuid import uuid4
 
-from django.contrib.auth import get_user_model, login
+from django.db import models
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views import View
 
-User = get_user_model()
+from accounts.models import (
+    CustomUser, SchoolMembership, School, TeacherInvitation, InvitationStatus
+)
+from accounts.models.schools import SchoolRole
+from accounts.models.profiles import TeacherProfile, StudentProfile
+from finances.models import PurchaseTransaction
+from scheduler.models import ClassSchedule
+from tasks.models import Task
+
 logger = logging.getLogger('accounts.auth')
 
 class DashboardView(View):
@@ -18,33 +29,8 @@ class DashboardView(View):
 
     def get(self, request):
         """Render appropriate dashboard template based on user role"""
-        # Debug session information
-        logger.info(f"Dashboard access: session_key={request.session.session_key}, authenticated={request.user.is_authenticated}, user={request.user}")
-
-        # Auto-login for testing (TODO: Remove in production)
+        # Require authentication for dashboard access
         if not request.user.is_authenticated:
-            try:
-                admin_user = User.objects.get(email='admin@test.com')
-                login(request, admin_user, backend='django.contrib.auth.backends.ModelBackend')
-                logger.info(f"Auto-login successful for testing user: {admin_user}")
-            except User.DoesNotExist:
-                # Create a test admin user if it doesn't exist
-                admin_user = User.objects.create_user(
-                    username='admin@test.com',
-                    email='admin@test.com',
-                    first_name='Admin',
-                    last_name='User',
-                    is_staff=True,
-                    is_superuser=True
-                )
-                admin_user.set_unusable_password()
-                admin_user.save()
-                login(request, admin_user, backend='django.contrib.auth.backends.ModelBackend')
-                logger.info(f"Created and logged in test admin user: {admin_user}")
-
-        # If still not authenticated after auto-login attempt, redirect to signin
-        if not request.user.is_authenticated:
-            logger.warning(f"Unauthenticated dashboard access from session {request.session.session_key}")
             return redirect('accounts:signin')
 
         # Render appropriate dashboard template based on user role
@@ -57,11 +43,13 @@ class DashboardView(View):
         elif request.user.is_staff:
             return self._render_admin_dashboard(request)
         else:
-            return self._render_general_dashboard(request)
-
-    def _render_general_dashboard(self, request):
-        """Render general dashboard for users without specific profiles"""
-        return self._render_admin_dashboard(request)
+            # Fallback for users without specific profiles - render basic dashboard
+            return render(request, 'dashboard/basic_dashboard.html', {
+                'title': 'Dashboard - Aprende Comigo',
+                'user': request.user,
+                'active_section': 'dashboard',
+                'message': 'Welcome to Aprende Comigo! Please complete your profile setup.'
+            })
     
     def _render_teacher_dashboard(self, request):
         """Render teacher-specific dashboard"""
@@ -77,12 +65,6 @@ class DashboardView(View):
 
     def _render_admin_dashboard(self, request):
         """Render admin dashboard directly at /dashboard/ - moved from AdminDashboardView"""
-        from datetime import timedelta
-        import json
-
-        from django.utils import timezone
-
-        from accounts.models import StudentProfile, TeacherProfile
         from scheduler.models import ClassSchedule
 
         # Get the logged-in user (authentication handled by main get() method)
@@ -102,7 +84,6 @@ class DashboardView(View):
         ).count()
 
         # Get revenue this month from actual financial data
-        from django.db import models
 
         from finances.models import PurchaseTransaction
         current_month = today.month
@@ -148,14 +129,14 @@ class DashboardView(View):
             # Get real teacher name
             teacher_name = 'Professor'
             if schedule.teacher and schedule.teacher.user:
-                teacher_name = f"{schedule.teacher.user.first_name} {schedule.teacher.user.last_name}".strip()
+                teacher_name = schedule.teacher.user.name
                 if not teacher_name:
                     teacher_name = schedule.teacher.user.email.split('@')[0]
 
             # Get real student name
             student_name = 'Aluno'
             if schedule.student:
-                student_name = f"{schedule.student.first_name} {schedule.student.last_name}".strip()
+                student_name = schedule.student.name
                 if not student_name:
                     student_name = schedule.student.email.split('@')[0] if schedule.student.email else 'Aluno'
 
@@ -226,28 +207,10 @@ class CalendarView(View):
 
     def get(self, request):
         """Render calendar page with server-side events"""
-        from datetime import timedelta, datetime
-        import json
 
-        from django.contrib.auth import get_user_model, login
-        from django.http import JsonResponse
-        from django.utils import timezone
-        from accounts.models import TeacherProfile, StudentProfile, SchoolMembership, School
-        from scheduler.models import ClassSchedule
-
-        User = get_user_model()
-
+        
         if not request.user.is_authenticated:
-            try:
-                admin_user = User.objects.get(email='admin@test.com')
-                login(request, admin_user, backend='django.contrib.auth.backends.ModelBackend')
-            except User.DoesNotExist:
-                return redirect('accounts:signin')
-
-        try:
-            test_user = User.objects.get(email='admin@test.com')
-        except User.DoesNotExist:
-            test_user = request.user if request.user.is_authenticated else None
+            return redirect('accounts:signin')
 
         # Handle HTMX requests
         if request.headers.get('HX-Request'):
@@ -278,15 +241,15 @@ class CalendarView(View):
         events = self._load_events_for_range(start_date, end_date)
 
         # Load teachers and students for form dropdowns
-        teachers = self._get_available_teachers(test_user)
-        students = self._get_available_students(test_user)
+        teachers = self._get_available_teachers(request.user)
+        students = self._get_available_students(request.user)
 
         # Generate additional data for templates
         template_data = self._get_template_data(current_view, current_date)
 
         return render(request, 'dashboard/calendar.html', {
             'title': 'Calendar - Aprende Comigo',
-            'user': test_user,
+            'user': request.user,
             'active_section': 'calendar',
             'events': events,  # Server-side events
             'current_view': current_view,
@@ -313,7 +276,6 @@ class CalendarView(View):
 
     def _calculate_date_range(self, view, current_date):
         """Calculate start and end dates for the given view and date"""
-        from datetime import timedelta
         
         if view == 'week':
             # Start from Monday of current week
@@ -336,7 +298,6 @@ class CalendarView(View):
 
     def _load_events_for_range(self, start_date, end_date):
         """Load events for the specified date range"""
-        from scheduler.models import ClassSchedule
         
         schedules = ClassSchedule.objects.select_related(
             'teacher__user', 'student'
@@ -350,14 +311,14 @@ class CalendarView(View):
             # Get teacher name
             teacher_name = 'Professor'
             if schedule.teacher and schedule.teacher.user:
-                teacher_name = f"{schedule.teacher.user.first_name} {schedule.teacher.user.last_name}".strip()
+                teacher_name = schedule.teacher.user.name
                 if not teacher_name:
                     teacher_name = schedule.teacher.user.email.split('@')[0]
 
             # Get student name
             student_name = 'Aluno'
             if schedule.student:
-                student_name = f"{schedule.student.first_name} {schedule.student.last_name}".strip()
+                student_name = schedule.student.name
                 if not student_name:
                     student_name = schedule.student.email.split('@')[0] if schedule.student.email else 'Aluno'
 
@@ -385,7 +346,6 @@ class CalendarView(View):
 
     def _get_available_teachers(self, user):
         """Get available teachers for form dropdown"""
-        from accounts.models import TeacherProfile, SchoolMembership, School
         
         # Get user's schools
         if user.is_staff or user.is_superuser:
@@ -398,11 +358,10 @@ class CalendarView(View):
             user__school_memberships__school__in=schools
         ).select_related('user').distinct()
         
-        return [{'id': t.id, 'name': f"{t.user.first_name} {t.user.last_name}".strip() or t.user.email} for t in teachers]
+        return [{'id': t.id, 'name': t.user.name or t.user.email} for t in teachers]
 
     def _get_available_students(self, user):
         """Get available students for form dropdown"""
-        from accounts.models import CustomUser, SchoolMembership, SchoolRole, School
         
         # Get user's schools
         if user.is_staff or user.is_superuser:
@@ -417,11 +376,10 @@ class CalendarView(View):
             school_memberships__role=SchoolRole.STUDENT.value
         ).distinct()
         
-        return [{'id': s.id, 'name': f"{s.first_name} {s.last_name}".strip() or s.email} for s in student_users]
+        return [{'id': s.id, 'name': s.name or s.email} for s in student_users]
 
     def _get_template_data(self, current_view, current_date):
         """Generate additional data needed for templates"""
-        from datetime import timedelta
         
         data = {
             'hours': list(range(8, 20))  # 8AM to 7PM
@@ -435,7 +393,6 @@ class CalendarView(View):
             
         elif current_view == 'month':
             # Generate month grid (42 days - 6 weeks)
-            from django.utils import timezone
             
             # First day of the month
             first_day = current_date.replace(day=1)
@@ -484,7 +441,6 @@ class CalendarView(View):
                 })
 
             # Get teacher and student objects
-            from accounts.models import TeacherProfile, CustomUser
             try:
                 teacher = TeacherProfile.objects.get(id=teacher_id)
                 student = CustomUser.objects.get(id=student_id)
@@ -494,8 +450,6 @@ class CalendarView(View):
                 })
 
             # Create the schedule
-            from scheduler.models import ClassSchedule
-            from accounts.models import School
             
             # Get user's first school (TODO: allow school selection)
             school = School.objects.first()
@@ -527,7 +481,6 @@ class CalendarView(View):
 
     def _handle_load_events(self, request):
         """Handle loading events for a date range via HTMX"""
-        from datetime import datetime
         
         current_view = request.GET.get('view') or request.POST.get('view', 'week')
         current_date_str = request.GET.get('date') or request.POST.get('date')
@@ -536,10 +489,8 @@ class CalendarView(View):
             try:
                 current_date = datetime.strptime(current_date_str, '%Y-%m-%d').date()
             except ValueError:
-                from django.utils import timezone
                 current_date = timezone.now().date()
         else:
-            from django.utils import timezone
             current_date = timezone.now().date()
         
         start_date, end_date = self._calculate_date_range(current_view, current_date)
@@ -559,7 +510,6 @@ class CalendarView(View):
 
     def _handle_navigate(self, request):
         """Handle navigation (prev/next) via HTMX"""
-        from datetime import datetime, timedelta
         
         current_view = request.POST.get('view', 'week')
         current_date_str = request.POST.get('date')
@@ -569,10 +519,8 @@ class CalendarView(View):
             try:
                 current_date = datetime.strptime(current_date_str, '%Y-%m-%d').date()
             except ValueError:
-                from django.utils import timezone
                 current_date = timezone.now().date()
         else:
-            from django.utils import timezone
             current_date = timezone.now().date()
         
         # Calculate new date based on direction and view
@@ -597,7 +545,6 @@ class CalendarView(View):
             else:  # day
                 new_date = current_date + timedelta(days=1)
         else:  # today
-            from django.utils import timezone
             new_date = timezone.now().date()
         
         start_date, end_date = self._calculate_date_range(current_view, new_date)
@@ -649,25 +596,10 @@ class InvitationsView(View):
 
     def get(self, request):
         """Render invitations page with server-side data"""
-        from django.contrib.auth import get_user_model, login
-        from accounts.models import TeacherInvitation, SchoolMembership, School
-        from uuid import uuid4
 
-        User = get_user_model()
-
-        # TODO: Remove authentication bypass in production
+        
         if not request.user.is_authenticated:
-            try:
-                admin_user = User.objects.get(email='admin@test.com')
-                login(request, admin_user, backend='django.contrib.auth.backends.ModelBackend')
-            except User.DoesNotExist:
-                return redirect('accounts:signin')
-
-        # Get test user for testing
-        try:
-            test_user = User.objects.get(email='admin@test.com')
-        except User.DoesNotExist:
-            test_user = request.user if request.user.is_authenticated else None
+            return redirect('accounts:signin')
 
         # Get user's schools - using same logic as PeopleView
         def get_user_schools(user):
@@ -676,7 +608,7 @@ class InvitationsView(View):
             school_ids = SchoolMembership.objects.filter(user=user).values_list('school_id', flat=True)
             return School.objects.filter(id__in=school_ids)
 
-        user_schools = get_user_schools(test_user)
+        user_schools = get_user_schools(request.user)
 
         # Check if this is a partial request for invitations list
         if request.GET.get('load_invitations'):
@@ -703,7 +635,7 @@ class InvitationsView(View):
 
         return render(request, 'dashboard/invitations.html', {
             'title': 'Invitations - Aprende Comigo',
-            'user': test_user,
+            'user': request.user,
             'active_section': 'invitations',
             'invitations': invitations,
             'user_schools': user_schools,
@@ -726,13 +658,8 @@ class InvitationsView(View):
 
     def _handle_send_invitation(self, request):
         """Handle sending a new teacher invitation"""
-        from accounts.models import TeacherInvitation, SchoolMembership, School, InvitationStatus
-        from django.contrib.auth import get_user_model
-        from uuid import uuid4
-        from django.utils import timezone
 
-        User = get_user_model()
-
+        
         try:
             email = request.POST.get('email')
             role = request.POST.get('role', 'teacher')
@@ -863,8 +790,6 @@ class InvitationsView(View):
 
     def _render_invitations_list(self, request):
         """Render invitations list partial for HTMX updates"""
-        from accounts.models import TeacherInvitation, SchoolMembership, School
-        from django.utils import timezone
 
         # Get user's schools - using same logic as main view
         def get_user_schools(user):
@@ -904,23 +829,9 @@ class PeopleView(View):
 
     def get(self, request):
         """Render people management page with initial data server-side"""
-        from django.contrib.auth import get_user_model, login
-        from accounts.models import SchoolMembership, SchoolRole, School, TeacherProfile, StudentProfile
-        User = get_user_model()
-
+        
         if not request.user.is_authenticated:
-            # TODO: Temporary authentication for testing - use same pattern as accounts views
-            try:
-                admin_user = User.objects.get(email='admin@test.com')
-                login(request, admin_user, backend='django.contrib.auth.backends.ModelBackend')
-            except User.DoesNotExist:
-                return redirect('accounts:signin')
-
-        # TODO: Get test user for testing
-        try:
-            test_user = User.objects.get(email='admin@test.com')
-        except User.DoesNotExist:
-            test_user = request.user if request.user.is_authenticated else None
+            return redirect('accounts:signin')
 
         # Get user's schools - using same logic as API views
         def get_user_schools(user):
@@ -929,7 +840,7 @@ class PeopleView(View):
             school_ids = SchoolMembership.objects.filter(user=user).values_list('school_id', flat=True)
             return School.objects.filter(id__in=school_ids)
 
-        user_schools = get_user_schools(test_user)
+        user_schools = get_user_schools(request.user)
 
         # Get teachers data with profiles
         teacher_memberships = SchoolMembership.objects.filter(
@@ -953,8 +864,7 @@ class PeopleView(View):
             teachers.append({
                 'id': user.id,
                 'email': user.email,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
+                'name': user.name,
                 'full_name': user.get_full_name(),
                 'bio': bio,
                 'specialty': specialty,
@@ -984,8 +894,7 @@ class PeopleView(View):
             students.append({
                 'id': user.id,
                 'email': user.email,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
+                'name': user.name,
                 'full_name': user.get_full_name(),
                 'school_year': school_year,
                 'school': {
@@ -1009,7 +918,7 @@ class PeopleView(View):
 
         return render(request, 'dashboard/people.html', {
             'title': 'People - Aprende Comigo',
-            'user': test_user,
+            'user': request.user,
             'active_section': 'people',
             'teachers': teachers,
             'students': students,
@@ -1032,8 +941,6 @@ class PeopleView(View):
 
     def _handle_add_teacher(self, request):
         """Handle adding a new teacher"""
-        from accounts.models import CustomUser, TeacherProfile, SchoolMembership, SchoolRole, School
-        import json
 
         try:
             email = request.POST.get('email')
@@ -1058,12 +965,11 @@ class PeopleView(View):
             try:
                 user = CustomUser.objects.get(email=email)
             except CustomUser.DoesNotExist:
-                # Create new user if doesn't exist
+                # Create new user if doesn't exist - use email prefix as default name
+                default_name = email.split('@')[0].replace('.', ' ').replace('_', ' ').title()
                 user = CustomUser.objects.create_user(
                     email=email,
-                    username=email,
-                    first_name=request.POST.get('first_name', ''),
-                    last_name=request.POST.get('last_name', '')
+                    name=default_name  # Use the name field that exists on CustomUser
                 )
 
             # Create or update teacher profile
@@ -1094,7 +1000,6 @@ class PeopleView(View):
 
     def _handle_add_student(self, request):
         """Handle adding a new student"""
-        from accounts.models import CustomUser, StudentProfile, SchoolMembership, SchoolRole, School
 
         try:
             email = request.POST.get('email')
@@ -1121,15 +1026,9 @@ class PeopleView(View):
                 user = CustomUser.objects.get(email=email)
             except CustomUser.DoesNotExist:
                 # Create new user if doesn't exist
-                names = name.split(' ', 1)
-                first_name = names[0]
-                last_name = names[1] if len(names) > 1 else ''
-                
                 user = CustomUser.objects.create_user(
                     email=email,
-                    username=email,
-                    first_name=first_name,
-                    last_name=last_name
+                    name=name  # Use the name field that exists on CustomUser
                 )
 
             # Create or update student profile
@@ -1167,7 +1066,9 @@ class PeopleView(View):
 
     def _render_teachers_partial(self, request):
         """Render teachers list partial for HTMX updates"""
-        from accounts.models import SchoolMembership, SchoolRole, School, TeacherProfile
+        from accounts.models import SchoolMembership, School
+        from accounts.models.schools import SchoolRole
+        from accounts.models.profiles import TeacherProfile
         
         # Get user's schools
         def get_user_schools(user):
@@ -1200,8 +1101,7 @@ class PeopleView(View):
             teachers.append({
                 'id': user.id,
                 'email': user.email,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
+                'name': user.name,
                 'full_name': user.get_full_name(),
                 'bio': bio,
                 'specialty': specialty,
@@ -1228,7 +1128,9 @@ class PeopleView(View):
 
     def _render_students_partial(self, request):
         """Render students list partial for HTMX updates"""
-        from accounts.models import SchoolMembership, SchoolRole, School, StudentProfile
+        from accounts.models import SchoolMembership, School
+        from accounts.models.schools import SchoolRole
+        from accounts.models.profiles import StudentProfile
         
         # Get user's schools
         def get_user_schools(user):
@@ -1257,8 +1159,7 @@ class PeopleView(View):
             students.append({
                 'id': user.id,
                 'email': user.email,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
+                'name': user.name,
                 'full_name': user.get_full_name(),
                 'school_year': school_year,
                 'school': {

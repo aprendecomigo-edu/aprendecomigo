@@ -18,7 +18,8 @@ from django.views import View
 from django.views.generic import DetailView, ListView, TemplateView
 
 from accounts.db_queries import list_school_ids_owned_or_managed
-from accounts.models import School, SchoolMembership
+from accounts.models import School
+from accounts.permissions import IsSchoolOwnerOrAdminMixin
 
 from .models import (
     EmailCommunication,
@@ -33,35 +34,8 @@ logger = logging.getLogger(__name__)
 
 
 # =======================
-# PERMISSION MIXINS
+# NOTIFICATION VIEWS
 # =======================
-
-
-class SchoolOwnerOrAdminMixin:
-    """
-    Django mixin to check if user is an owner or admin of any school.
-    Converted from DRF IsSchoolOwnerOrAdmin permission.
-    """
-    
-    def dispatch(self, request, *args, **kwargs):
-        # Check if user has permission
-        if not self.has_school_permission(request.user):
-            raise PermissionDenied("You must be a school owner or administrator to perform this action.")
-        return super().dispatch(request, *args, **kwargs)
-    
-    def has_school_permission(self, user):
-        """Check if user is a school owner or admin."""
-        if user and user.is_authenticated:
-            # Allow superusers and staff for admin purposes
-            if user.is_superuser or user.is_staff:
-                return True
-            # Check school membership roles
-            return SchoolMembership.objects.filter(
-                user=user,
-                role__in=["school_owner", "school_admin"],
-                is_active=True,
-            ).exists()
-        return False
 
 
 # =======================
@@ -212,7 +186,7 @@ class NotificationUnreadCountView(LoginRequiredMixin, View):
 # =======================
 
 
-class SchoolEmailTemplateListView(LoginRequiredMixin, SchoolOwnerOrAdminMixin, ListView):
+class SchoolEmailTemplateListView(IsSchoolOwnerOrAdminMixin, ListView):
     """
     List email templates for user's schools.
     
@@ -255,7 +229,7 @@ class SchoolEmailTemplateListView(LoginRequiredMixin, SchoolOwnerOrAdminMixin, L
         return [self.template_name]
 
 
-class SchoolEmailTemplateDetailView(LoginRequiredMixin, SchoolOwnerOrAdminMixin, DetailView):
+class SchoolEmailTemplateDetailView(IsSchoolOwnerOrAdminMixin, DetailView):
     """
     View email template details.
     
@@ -272,7 +246,7 @@ class SchoolEmailTemplateDetailView(LoginRequiredMixin, SchoolOwnerOrAdminMixin,
         return SchoolEmailTemplate.objects.filter(school_id__in=school_ids)
 
 
-class SchoolEmailTemplateCreateView(LoginRequiredMixin, SchoolOwnerOrAdminMixin, TemplateView):
+class SchoolEmailTemplateCreateView(IsSchoolOwnerOrAdminMixin, TemplateView):
     """
     Create new email template.
     
@@ -344,7 +318,7 @@ class SchoolEmailTemplateCreateView(LoginRequiredMixin, SchoolOwnerOrAdminMixin,
                 return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
 
-class SchoolEmailTemplateEditView(LoginRequiredMixin, SchoolOwnerOrAdminMixin, DetailView):
+class SchoolEmailTemplateEditView(IsSchoolOwnerOrAdminMixin, DetailView):
     """
     Edit email template.
     
@@ -411,7 +385,7 @@ class SchoolEmailTemplateEditView(LoginRequiredMixin, SchoolOwnerOrAdminMixin, D
                 return JsonResponse({'success': False, 'error': str(e)}, status=400)
 
 
-class SchoolEmailTemplatePreviewView(LoginRequiredMixin, SchoolOwnerOrAdminMixin, DetailView):
+class SchoolEmailTemplatePreviewView(IsSchoolOwnerOrAdminMixin, DetailView):
     """
     Preview email template with variables.
     
@@ -463,7 +437,7 @@ class SchoolEmailTemplatePreviewView(LoginRequiredMixin, SchoolOwnerOrAdminMixin
 # =======================
 
 
-class EmailCommunicationListView(LoginRequiredMixin, SchoolOwnerOrAdminMixin, ListView):
+class EmailCommunicationListView(IsSchoolOwnerOrAdminMixin, ListView):
     """
     List email communications with filtering.
     
@@ -524,7 +498,7 @@ class EmailCommunicationListView(LoginRequiredMixin, SchoolOwnerOrAdminMixin, Li
         return [self.template_name]
 
 
-class EmailAnalyticsView(LoginRequiredMixin, SchoolOwnerOrAdminMixin, TemplateView):
+class EmailAnalyticsView(IsSchoolOwnerOrAdminMixin, TemplateView):
     """
     Display email analytics dashboard.
     

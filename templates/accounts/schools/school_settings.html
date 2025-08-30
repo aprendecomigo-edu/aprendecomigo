@@ -175,6 +175,112 @@
                         </div>
                     </div>
 
+                    <!-- Legal & Billing Information -->
+                    <div class="mb-8 pt-8 border-t border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Legal & Billing Information</h3>
+                        
+                        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                            <!-- Tax ID (NIF) -->
+                            <div>
+                                <label for="{{ form.tax_id.id_for_label }}" 
+                                       class="block text-sm font-medium text-gray-700 mb-2">
+                                    Tax ID (NIF)
+                                </label>
+                                {{ form.tax_id }}
+                                {% if form.tax_id.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.tax_id.errors.0 }}</p>
+                                {% endif %}
+                                <p class="mt-1 text-sm text-gray-500">
+                                    Portuguese tax identification number
+                                </p>
+                            </div>
+
+                            <!-- Billing Contact Name -->
+                            <div>
+                                <label for="{{ form.billing_contact_name.id_for_label }}" 
+                                       class="block text-sm font-medium text-gray-700 mb-2">
+                                    Billing Contact Name
+                                </label>
+                                {{ form.billing_contact_name }}
+                                {% if form.billing_contact_name.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.billing_contact_name.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mt-6">
+                            <!-- Billing Contact Email -->
+                            <div class="mb-6">
+                                <label for="{{ form.billing_contact_email.id_for_label }}" 
+                                       class="block text-sm font-medium text-gray-700 mb-2">
+                                    Billing Contact Email
+                                </label>
+                                {{ form.billing_contact_email }}
+                                {% if form.billing_contact_email.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.billing_contact_email.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Billing Address -->
+                            <div>
+                                <label for="{{ form.billing_address.id_for_label }}" 
+                                       class="block text-sm font-medium text-gray-700 mb-2">
+                                    Billing Address
+                                </label>
+                                {{ form.billing_address }}
+                                {% if form.billing_address.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.billing_address.errors.0 }}</p>
+                                {% endif %}
+                                <p class="mt-1 text-sm text-gray-500">
+                                    Complete billing address for invoices
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Operational Settings -->
+                    <div class="mb-8 pt-8 border-t border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-900 mb-4">Operational Settings</h3>
+                        
+                        <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                            <!-- Timezone -->
+                            <div>
+                                <label for="{{ form.timezone.id_for_label }}" 
+                                       class="block text-sm font-medium text-gray-700 mb-2">
+                                    Timezone
+                                </label>
+                                {{ form.timezone }}
+                                {% if form.timezone.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.timezone.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Language -->
+                            <div>
+                                <label for="{{ form.language.id_for_label }}" 
+                                       class="block text-sm font-medium text-gray-700 mb-2">
+                                    Default Language
+                                </label>
+                                {{ form.language }}
+                                {% if form.language.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.language.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Currency -->
+                            <div>
+                                <label for="{{ form.currency_code.id_for_label }}" 
+                                       class="block text-sm font-medium text-gray-700 mb-2">
+                                    Currency
+                                </label>
+                                {{ form.currency_code }}
+                                {% if form.currency_code.errors %}
+                                    <p class="mt-1 text-sm text-red-600">{{ form.currency_code.errors.0 }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Action Buttons -->
                     <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
                         <a href="{% url 'dashboard:dashboard' %}" 

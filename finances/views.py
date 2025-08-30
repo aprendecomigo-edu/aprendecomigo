@@ -265,16 +265,8 @@ class TopUpFormView(LoginRequiredMixin, View):
 # School Billing Settings Views
 # =============================================================================
 
-class SchoolBillingSettingsMixin(SchoolPermissionMixin):
-    """Mixin for school billing settings permissions."""
-    
-    def get_user_schools(self):
-        """Get schools the user has access to."""
-        # Implementation from the original mixin
-        return super().get_user_schools()
 
-
-class BillingSettingsView(LoginRequiredMixin, SchoolBillingSettingsMixin, TemplateView):
+class BillingSettingsView(LoginRequiredMixin, SchoolPermissionMixin, TemplateView):
     """Display and manage school billing settings."""
     template_name = 'finances/admin/billing_settings.html'
 
@@ -291,7 +283,7 @@ class BillingSettingsView(LoginRequiredMixin, SchoolBillingSettingsMixin, Templa
         return context
 
 
-class BillingSettingsUpdateView(LoginRequiredMixin, SchoolBillingSettingsMixin, UpdateView):
+class BillingSettingsUpdateView(LoginRequiredMixin, SchoolPermissionMixin, UpdateView):
     """Update school billing settings."""
     model = SchoolBillingSettings
     template_name = 'finances/admin/billing_settings_form.html'
@@ -310,7 +302,7 @@ class BillingSettingsUpdateView(LoginRequiredMixin, SchoolBillingSettingsMixin, 
 # Teacher Compensation Views
 # =============================================================================
 
-class TeacherCompensationView(LoginRequiredMixin, SchoolBillingSettingsMixin, ListView):
+class TeacherCompensationView(LoginRequiredMixin, SchoolPermissionMixin, ListView):
     """Display teacher compensation rules and payments."""
     model = TeacherCompensationRule
     template_name = 'finances/admin/teacher_compensation.html'

@@ -3,9 +3,7 @@ Context processors for accounts app.
 Provides global template context variables for authenticated users.
 """
 
-from django.contrib.sessions.models import Session
 from .models.schools import School, SchoolMembership
-from .models.users import CustomUser
 
 
 def user_context(request):
@@ -21,7 +19,7 @@ def user_context(request):
     
     if request.user.is_authenticated:
         # Get user info
-        context['user_first_name'] = request.user.first_name or 'User'
+        context['user_first_name'] = request.user.first_name
         
         # Get current school
         current_school = get_current_school(request)
@@ -33,11 +31,6 @@ def user_context(request):
         else:
             context['school_name'] = 'No School Selected'
             context['user_role'] = 'guest'
-    else:
-        # Default values for unauthenticated users
-        context['user_first_name'] = ''
-        context['school_name'] = ''
-        context['user_role'] = ''
     
     return context
 
@@ -80,12 +73,5 @@ def get_user_role_for_school(user, school):
     
     Returns the user's role (admin, teacher, student, etc.) for the given school.
     """
-    try:
-        membership = SchoolMembership.objects.get(user=user, school=school, is_active=True)
-        return membership.role.lower()
-    except SchoolMembership.DoesNotExist:
-        # User doesn't have membership in this school
-        return 'guest'
-    except AttributeError:
-        # Handle case where role field might not exist or be None
-        return 'member'
+    membership = SchoolMembership.objects.get(user=user, school=school, is_active=True)
+    return membership.role.lower()

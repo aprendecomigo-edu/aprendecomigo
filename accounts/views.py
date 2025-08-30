@@ -18,11 +18,12 @@ import re
 import secrets
 import uuid
 
+from django import forms
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, PermissionDenied
 from django.db import transaction
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
@@ -31,16 +32,54 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_protect
-from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from django.views.generic import CreateView, DetailView, ListView, UpdateView, FormView
 from sesame.utils import get_query_string
 
 from messaging.services import send_magic_link_email, send_sms_otp
 from .db_queries import get_user_by_email, user_exists, create_user_school_and_membership
-from .models import School, SchoolMembership, TeacherInvitation
+from .models import School, SchoolMembership, SchoolSettings, TeacherInvitation
 from .permissions import IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
+email_confirmation_logger = logging.getLogger('accounts.email_confirmation')
+
+# =============================================================================
+# EMAIL CONFIRMATION LOGGING SYSTEM (Development Environment)
+# =============================================================================
+
+def log_email_confirmation_sent(email: str, confirmation_token: str = None) -> None:
+    """Log email confirmation sent in development environment"""
+    token_info = f" (Token: {confirmation_token})" if confirmation_token else ""
+    email_confirmation_logger.info(
+        f"📧 Email confirmation sent to {email}{token_info} - "
+        f"User needs to confirm their email to activate account"
+    )
+
+def log_email_confirmation_success(email: str) -> None:
+    """Log successful email confirmation in development environment"""
+    email_confirmation_logger.info(
+        f"✅ Email confirmation successful for {email} - Account activated"
+    )
+
+def log_email_confirmation_failure(email: str, reason: str = "Unknown") -> None:
+    """Log failed email confirmation in development environment"""
+    email_confirmation_logger.warning(
+        f"❌ Email confirmation failed for {email} - Reason: {reason}"
+    )
+
+def log_email_confirmation_resent(email: str, confirmation_token: str = None) -> None:
+    """Log email confirmation resent in development environment"""
+    token_info = f" (New Token: {confirmation_token})" if confirmation_token else ""
+    email_confirmation_logger.info(
+        f"🔄 Email confirmation resent to {email}{token_info}"
+    )
+
+def log_email_confirmation_expired(email: str) -> None:
+    """Log email confirmation token expiry in development environment"""
+    email_confirmation_logger.warning(
+        f"⏰ Email confirmation token expired for {email} - User needs new confirmation"
+    )
 
 # Constants
 EMAIL_REGEX = re.compile(r"^[^@]+@[^@]+\.[^@]+$")
@@ -129,6 +168,14 @@ class SignInView(View):
             try:
                 # Send both magic link and SMS OTP (if phone available)
                 email_result = send_magic_link_email(email, magic_link, user.name or user.first_name)
+                
+                # Log email confirmation for development environment
+                if email_result.get("success"):
+                    # Extract token from magic link for logging (last part after 'sesame=')
+                    token = magic_link.split('sesame=')[-1] if 'sesame=' in magic_link else 'generated'
+                    log_email_confirmation_sent(email, token[:8] + "...")  # Show partial token for security
+                else:
+                    log_email_confirmation_failure(email, "Email sending failed")
                 
                 # Check if user has phone number for SMS
                 if user.phone_number:
@@ -540,6 +587,11 @@ def resend_code(request: HttpRequest) -> HttpResponse:
         try:
             send_magic_link_email(email, magic_link, user.name or user.first_name)
             logger.info(f"Magic link resent successfully to: {email}")
+            
+            # Log email confirmation resent for development environment
+            token = magic_link.split('sesame=')[-1] if 'sesame=' in magic_link else 'generated'
+            log_email_confirmation_resent(email, token[:8] + "...")  # Show partial token for security
+            
             return render(
                 request,
                 "accounts/partials/resend_success.html",
@@ -548,6 +600,9 @@ def resend_code(request: HttpRequest) -> HttpResponse:
 
         except Exception as email_error:
             logger.error(f"Failed to resend magic link to {email}: {email_error}")
+            # Log email confirmation failure for development environment
+            log_email_confirmation_failure(email, f"Resend failed: {str(email_error)}")
+            
             return render(
                 request,
                 "accounts/partials/resend_error.html",
@@ -926,11 +981,14 @@ def resend_teacher_invitation(request: HttpRequest, invitation_id: int) -> HttpR
 # =============================================================================
 
 class ProfileEditView(LoginRequiredMixin, UpdateView):
-    """Edit user profile"""
+    """Edit comprehensive user profile"""
     
     model = User
     template_name = "accounts/profile/profile_edit.html"
-    fields = ['first_name', 'last_name', 'phone_number', 'bio', 'timezone', 'preferred_language']
+    fields = [
+        'name', 'email', 'phone_number', 'profile_photo', 
+        'primary_contact'
+    ]
     success_url = reverse_lazy('accounts:profile')
 
     def get_object(self):
@@ -939,6 +997,14 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
     def form_valid(self, form):
         messages.success(self.request, "Your profile has been updated successfully.")
         return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user'] = self.request.user
+        # Add verification status for display
+        context['email_verified'] = self.request.user.email_verified
+        context['phone_verified'] = self.request.user.phone_verified
+        return context
 
 
 class ProfileView(LoginRequiredMixin, DetailView):
@@ -968,27 +1034,187 @@ class ProfileView(LoginRequiredMixin, DetailView):
 # SCHOOL MANAGEMENT VIEWS
 # =============================================================================
 
-class SchoolSettingsView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin, UpdateView):
-    """Edit school settings"""
+class ComprehensiveSchoolSettingsForm(forms.Form):
+    """Comprehensive form for both School and SchoolSettings"""
     
-    model = School
+    # School fields
+    name = forms.CharField(max_length=150, label="School Name")
+    description = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 3}), 
+        required=False, 
+        label="Description"
+    )
+    address = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 2}), 
+        required=False, 
+        label="Address"
+    )
+    contact_email = forms.EmailField(required=False, label="Contact Email")
+    phone_number = forms.CharField(max_length=20, required=False, label="Phone Number")
+    website = forms.URLField(required=False, label="Website")
+    logo = forms.ImageField(required=False, label="School Logo")
+    primary_color = forms.CharField(
+        max_length=7, 
+        widget=forms.TextInput(attrs={'type': 'color'}),
+        initial="#3B82F6",
+        label="Primary Color"
+    )
+    secondary_color = forms.CharField(
+        max_length=7, 
+        widget=forms.TextInput(attrs={'type': 'color'}),
+        initial="#1F2937", 
+        label="Secondary Color"
+    )
+    
+    # SchoolSettings fields - Legal & Billing
+    tax_id = forms.CharField(max_length=50, required=False, label="Tax ID (NIF)")
+    billing_address = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 3}), 
+        required=False, 
+        label="Billing Address"
+    )
+    billing_contact_name = forms.CharField(max_length=100, required=False, label="Billing Contact Name")
+    billing_contact_email = forms.EmailField(required=False, label="Billing Contact Email")
+    
+    # SchoolSettings fields - Operational
+    timezone = forms.CharField(max_length=50, initial="Europe/Lisbon", label="Timezone")
+    language = forms.ChoiceField(
+        choices=[('pt', 'Portuguese'), ('en', 'English')], 
+        initial='pt', 
+        label="Default Language"
+    )
+    currency_code = forms.ChoiceField(
+        choices=[('EUR', 'Euro'), ('USD', 'US Dollar'), ('GBP', 'British Pound')], 
+        initial='EUR', 
+        label="Currency"
+    )
+    
+    def __init__(self, school, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.school = school
+        
+        # Get or create SchoolSettings
+        try:
+            self.school_settings = school.settings
+        except SchoolSettings.DoesNotExist:
+            self.school_settings = SchoolSettings(school=school)
+            
+        # Populate initial data
+        if not kwargs.get('data'):
+            # School fields
+            self.initial.update({
+                'name': school.name or '',
+                'description': school.description or '',
+                'address': school.address or '',
+                'contact_email': school.contact_email or '',
+                'phone_number': school.phone_number or '',
+                'website': school.website or '',
+                'primary_color': school.primary_color or '#3B82F6',
+                'secondary_color': school.secondary_color or '#1F2937',
+            })
+            
+            # SchoolSettings fields - only if the settings exist
+            if hasattr(self.school_settings, 'pk') and self.school_settings.pk:
+                self.initial.update({
+                    'tax_id': self.school_settings.tax_id,
+                    'billing_address': self.school_settings.billing_address,
+                    'billing_contact_name': self.school_settings.billing_contact_name,
+                    'billing_contact_email': self.school_settings.billing_contact_email,
+                    'timezone': self.school_settings.timezone,
+                    'language': self.school_settings.language,
+                    'currency_code': self.school_settings.currency_code,
+                })
+    
+    def save(self):
+        """Save both School and SchoolSettings"""
+        with transaction.atomic():
+            # Update School fields
+            self.school.name = self.cleaned_data['name']
+            self.school.description = self.cleaned_data['description']
+            self.school.address = self.cleaned_data['address']
+            self.school.contact_email = self.cleaned_data['contact_email']
+            self.school.phone_number = self.cleaned_data['phone_number']
+            self.school.website = self.cleaned_data['website']
+            self.school.primary_color = self.cleaned_data['primary_color']
+            self.school.secondary_color = self.cleaned_data['secondary_color']
+            
+            if self.cleaned_data.get('logo'):
+                self.school.logo = self.cleaned_data['logo']
+            
+            self.school.save()
+            
+            # Update SchoolSettings fields
+            self.school_settings.school = self.school
+            self.school_settings.tax_id = self.cleaned_data['tax_id']
+            self.school_settings.billing_address = self.cleaned_data['billing_address']
+            self.school_settings.billing_contact_name = self.cleaned_data['billing_contact_name']
+            self.school_settings.billing_contact_email = self.cleaned_data['billing_contact_email']
+            self.school_settings.timezone = self.cleaned_data['timezone']
+            self.school_settings.language = self.cleaned_data['language']
+            self.school_settings.currency_code = self.cleaned_data['currency_code']
+            
+            self.school_settings.save()
+            
+        return self.school
+
+class SchoolSettingsView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin, FormView):
+    """Edit comprehensive school settings including School and SchoolSettings"""
+    
     template_name = "accounts/schools/school_settings.html"
-    fields = [
-        'name', 'description', 'address', 'contact_email', 
-        'phone_number', 'website', 'logo', 'primary_color', 'secondary_color'
-    ]
-
-    def get_queryset(self):
-        # Limit to schools the user can manage
-        return self.get_user_schools_by_role('school_owner') | \
-               self.get_user_schools_by_role('school_admin')
-
+    form_class = ComprehensiveSchoolSettingsForm
+    
+    def dispatch(self, request, *args, **kwargs):
+        # Store request for later use (before authentication check)
+        self.request = request
+        self.args = args
+        self.kwargs = kwargs
+        
+        # First, ensure authentication is handled by calling LoginRequiredMixin's test
+        if not self.request.user.is_authenticated:
+            # Let parent mixins handle authentication redirects
+            return super().dispatch(request, *args, **kwargs)
+        
+        # Now that we know the user is authenticated, check school-specific permissions
+        from .models.schools import SchoolRole
+        school_queryset = self.get_user_schools_by_role(SchoolRole.SCHOOL_OWNER) | \
+                         self.get_user_schools_by_role(SchoolRole.SCHOOL_ADMIN)
+        try:
+            self.school = school_queryset.get(pk=kwargs['pk'])
+        except School.DoesNotExist:
+            raise PermissionDenied("You don't have permission to edit this school's settings.")
+        
+        # Continue with normal dispatch
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_user_schools_by_role(self, role):
+        """Helper method to get schools by role"""
+        # Defensive check: ensure user is authenticated before querying
+        if not self.request.user.is_authenticated:
+            return School.objects.none()
+            
+        return School.objects.filter(
+            memberships__user=self.request.user,
+            memberships__role=role,
+            memberships__is_active=True
+        )
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['school'] = self.school
+        return kwargs
+    
     def form_valid(self, form):
-        messages.success(self.request, f"Settings for {form.instance.name} have been updated.")
+        form.save()
+        messages.success(self.request, f"Settings for {self.school.name} have been updated successfully.")
         return super().form_valid(form)
-
+    
     def get_success_url(self):
-        return reverse('accounts:school_settings', kwargs={'pk': self.object.pk})
+        return reverse('accounts:school_settings', kwargs={'pk': self.school.pk})
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['object'] = self.school
+        return context
 
 
 class SchoolMemberListView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin, ListView):
