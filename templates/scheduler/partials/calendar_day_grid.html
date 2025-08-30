@@ -1,0 +1,72 @@
+<!-- Day View Grid - EventCalendar Inspired -->
+<div class="calendar-view" id="calendar-grid">
+    <!-- Day Header -->
+    <div class="overflow-hidden bg-white border border-gray-200 rounded-lg">
+        <div class="bg-gray-50 border-b border-gray-200 p-3 text-center">
+            <h3 class="text-lg font-semibold text-gray-900">{{ current_date|date:'l' }}</h3>
+        </div>
+        
+        <!-- All-day events section -->
+        <div class="border-b border-gray-200">
+            <div class="grid" style="grid-template-columns: 80px 1fr;">
+                <div class="bg-gray-50 border-r border-gray-200 p-3">
+                    <div class="text-xs font-medium text-gray-500 text-right">all-day</div>
+                </div>
+                <div class="p-2 min-h-[40px] bg-white">
+                    {% for event in events %}
+                        {% if event.scheduled_date|date:'Y-m-d' == current_date|date:'Y-m-d' and event.all_day %}
+                            <div class="bg-purple-100 border-l-4 border-purple-400 text-purple-800 text-sm p-2 rounded mb-2 cursor-pointer hover:bg-purple-200 transition-colors shadow-sm">
+                                <div class="font-medium">{{ event.title }}</div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Hourly timeline -->
+        <div class="grid" style="grid-template-columns: 80px 1fr;">
+            <!-- Time labels column -->
+            <div class="bg-gray-50 border-r border-gray-200">
+                {% for hour in hours %}
+                    <div class="h-20 border-t border-gray-200 first:border-t-0 flex items-start justify-end pr-3 pt-2">
+                        <span class="text-sm font-medium text-gray-500">{{ hour }}:00 {% if hour < 12 %}AM{% else %}PM{% endif %}</span>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Events column -->
+            <div class="relative">
+                <!-- Current time indicator (client-side updated) -->
+                <div class="current-time-indicator absolute left-0 right-0 h-0.5 bg-red-500 z-10" style="top: 0; display: none;">
+                    <div class="absolute -left-2 -top-2 w-4 h-4 bg-red-500 rounded-full"></div>
+                </div>
+                
+                {% for hour in hours %}
+                    <div class="h-20 border-t border-gray-200 first:border-t-0 bg-white relative hover:bg-blue-50 transition-colors cursor-pointer group"
+                         @click="openEventModal('{{ current_date|date:'Y-m-d' }}', '{{ hour }}:00')">
+                        
+                        <!-- Click to book hint -->
+                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span class="text-sm text-blue-600 font-medium">Click to book class</span>
+                        </div>
+                        
+                        <!-- Events for this hour -->
+                        {% for event in events %}
+                            {% if event.scheduled_date|date:'Y-m-d' == current_date|date:'Y-m-d' and event.start_time|slice:':2' == hour|stringformat:'02d' %}
+                                <div class="absolute left-2 right-2 {% if event.status == 'completed' %}bg-green-500 border-green-600{% elif event.status == 'cancelled' %}bg-red-500 border-red-600{% elif event.status == 'in-progress' %}bg-yellow-500 border-yellow-600{% else %}bg-blue-500 border-blue-600{% endif %} text-white p-2 rounded-md cursor-pointer hover:opacity-90 transition-opacity shadow-md border-l-4 z-20"
+                                     style="top: 4px; height: calc(100% - 8px);">
+                                    <div class="font-semibold text-sm leading-tight mb-1">{{ event.title }}</div>
+                                    <div class="text-xs opacity-90 leading-tight mb-1">{{ event.start_time }} - {{ event.end_time }}</div>
+                                    {% if event.description %}
+                                        <div class="text-xs opacity-80 leading-tight">{{ event.description|truncatewords:8 }}</div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,16 +1,14 @@
 <!-- Event Creation Modal Form -->
-<div class="fixed inset-0 z-50 overflow-y-auto" id="event-modal" style="display: none;">
-    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <!-- Background overlay -->
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="closeEventModal()"></div>
-
+<div class="fixed inset-0 z-50 overflow-y-auto" id="event-modal" x-show="showEventModal" x-cloak>
+    <!-- Modal container -->
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center relative z-10">
         <!-- Modal panel -->
-        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full" style="background-color: white !important;">
             <!-- Modal content will be populated by Alpine.js or HTMX -->
             <form hx-post="{% url 'calendar' %}" 
                   hx-target="#calendar-grid"
                   hx-swap="outerHTML"
-                  hx-on::after-request="if(event.detail.successful) closeEventModal()">
+                  @htmx:after-request.window="if($event.detail.successful) closeEventModal()"
                 {% csrf_token %}
                 <input type="hidden" name="action" value="create_event">
                 

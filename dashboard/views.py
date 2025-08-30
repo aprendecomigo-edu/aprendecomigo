@@ -31,35 +31,27 @@ class DashboardView(LoginRequiredMixin, View):
     def get(self, request):
         """Render appropriate dashboard template based on user role"""
 
-        # Render appropriate dashboard template based on user role
-        if hasattr(request.user, 'teacherprofile'):
-            return self._render_teacher_dashboard(request)
-        elif hasattr(request.user, 'studentprofile'):
-            return self._render_student_dashboard(request)
-        elif hasattr(request.user, 'parentprofile'):
-            return self._render_parent_dashboard(request)
-        elif request.user.is_staff:
-            return self._render_admin_dashboard(request)
-        else:
-            # Fallback for users without specific profiles - render basic dashboard
-            return render(request, 'dashboard/basic_dashboard.html', {
-                'title': 'Dashboard - Aprende Comigo',
-                'user': request.user,
-                'active_section': 'dashboard',
-                'message': 'Welcome to Aprende Comigo! Please complete your profile setup.'
-            })
-    
-    def _render_teacher_dashboard(self, request):
-        """Render teacher-specific dashboard"""
-        return render(request, 'dashboard/teacher_dashboard.html')
-    
-    def _render_student_dashboard(self, request):
-        """Render student-specific dashboard"""
-        return render(request, 'dashboard/student_dashboard.html')
-    
-    def _render_parent_dashboard(self, request):
-        """Render parent-specific dashboard"""
-        return render(request, 'dashboard/parent_dashboard.html')
+        # Get user's active school membership to determine role
+        active_membership = SchoolMembership.objects.filter(
+            user=request.user, 
+            is_active=True
+        ).first()
+
+        if active_membership:
+            role = active_membership.role
+            # Check school role first (higher priority than individual profiles)
+            if role in [SchoolRole.SCHOOL_OWNER.value, SchoolRole.SCHOOL_ADMIN.value]:
+                return self._render_admin_dashboard(request)
+            elif role == SchoolRole.TEACHER.value:
+                return self._render_teacher_dashboard(request)
+            elif role == SchoolRole.STUDENT.value:
+                return self._render_student_dashboard(request)
+            elif role == SchoolRole.PARENT.value:
+                return self._render_parent_dashboard(request)
+
+        # TODO: No Fallbacks something is wrong if there's no active membership
+        logger.error(f"User {request.user.id} has no active school membership.")
+        return JsonResponse({'error': 'No active school membership found.'}, status=403)
 
     def _render_admin_dashboard(self, request):
         """Render admin dashboard directly at /dashboard/ - moved from AdminDashboardView"""
@@ -200,359 +192,6 @@ class DashboardView(LoginRequiredMixin, View):
 
 
 
-class CalendarView(LoginRequiredMixin, View):
-    """Calendar page view with HTMX support for dynamic updates"""
-
-    def get(self, request):
-        """Render calendar page with server-side events"""
-
-        
-        # Handle HTMX requests
-        if request.headers.get('HX-Request'):
-            action = request.GET.get('action')
-            if action == 'load_events':
-                return self._handle_load_events(request)
-            elif action == 'switch_view':
-                return self._handle_switch_view(request)
-            elif action == 'navigate':
-                return self._handle_navigate(request)
-
-        # Get current view and date from query params or defaults
-        current_view = request.GET.get('view', 'week')
-        current_date_str = request.GET.get('date')
-        
-        if current_date_str:
-            try:
-                current_date = datetime.strptime(current_date_str, '%Y-%m-%d').date()
-            except ValueError:
-                current_date = timezone.now().date()
-        else:
-            current_date = timezone.now().date()
-
-        # Calculate date range based on view
-        start_date, end_date = self._calculate_date_range(current_view, current_date)
-
-        # Load events for the current view
-        events = self._load_events_for_range(start_date, end_date)
-
-        # Load teachers and students for form dropdowns
-        teachers = self._get_available_teachers(request.user)
-        students = self._get_available_students(request.user)
-
-        # Generate additional data for templates
-        template_data = self._get_template_data(current_view, current_date)
-
-        return render(request, 'dashboard/calendar.html', {
-            'title': 'Calendar - Aprende Comigo',
-            'user': request.user,
-            'active_section': 'calendar',
-            'events': events,  # Server-side events
-            'current_view': current_view,
-            'current_date': current_date,
-            'teachers': teachers,
-            'students': students,
-            **template_data,  # Additional template data (week_days, month_days, hours)
-        })
-
-    def post(self, request):
-        """Handle calendar form submissions via HTMX"""
-        action = request.POST.get('action')
-        
-        if action == 'create_event':
-            return self._handle_create_event(request)
-        elif action == 'load_events':
-            return self._handle_load_events(request)
-        elif action == 'switch_view':
-            return self._handle_switch_view(request)
-        elif action == 'navigate':
-            return self._handle_navigate(request)
-        else:
-            return JsonResponse({'error': 'Invalid action'}, status=400)
-
-    def _calculate_date_range(self, view, current_date):
-        """Calculate start and end dates for the given view and date"""
-        
-        if view == 'week':
-            # Start from Monday of current week
-            days_since_monday = current_date.weekday()
-            start_date = current_date - timedelta(days=days_since_monday)
-            end_date = start_date + timedelta(days=6)
-        elif view == 'month':
-            # Start from first day of month, end at last day
-            start_date = current_date.replace(day=1)
-            if start_date.month == 12:
-                next_month = start_date.replace(year=start_date.year + 1, month=1)
-            else:
-                next_month = start_date.replace(month=start_date.month + 1)
-            end_date = next_month - timedelta(days=1)
-        else:  # day view
-            start_date = current_date
-            end_date = current_date
-            
-        return start_date, end_date
-
-    def _load_events_for_range(self, start_date, end_date):
-        """Load events for the specified date range"""
-        
-        schedules = ClassSchedule.objects.select_related(
-            'teacher__user', 'student'
-        ).filter(
-            scheduled_date__gte=start_date,
-            scheduled_date__lte=end_date
-        ).order_by('scheduled_date', 'start_time')
-
-        events = []
-        for schedule in schedules:
-            # Get teacher name
-            teacher_name = 'Professor'
-            if schedule.teacher and schedule.teacher.user:
-                teacher_name = schedule.teacher.user.name
-                if not teacher_name:
-                    teacher_name = schedule.teacher.user.email.split('@')[0]
-
-            # Get student name
-            student_name = 'Aluno'
-            if schedule.student:
-                student_name = schedule.student.name
-                if not student_name:
-                    student_name = schedule.student.email.split('@')[0] if schedule.student.email else 'Aluno'
-
-            # Get title
-            if schedule.title and schedule.title.strip():
-                title = schedule.title
-            else:
-                class_type_display = schedule.get_class_type_display() if schedule.class_type else 'Aula'
-                title = f"{class_type_display} - {teacher_name}"
-
-            events.append({
-                'id': schedule.pk,
-                'title': title,
-                'description': schedule.description or f'{teacher_name} - {schedule.get_class_type_display()}',
-                'scheduled_date': schedule.scheduled_date,
-                'start_time': schedule.start_time.strftime('%H:%M') if schedule.start_time else '09:00',
-                'end_time': schedule.end_time.strftime('%H:%M') if schedule.end_time else '10:00',
-                'status': schedule.status.lower() or 'scheduled',
-                'class_type': schedule.class_type,
-                'teacher_name': teacher_name,
-                'student_name': student_name,
-            })
-        
-        return events
-
-    def _get_available_teachers(self, user):
-        """Get available teachers for form dropdown"""
-        
-        # Get user's schools
-        if user.is_staff or user.is_superuser:
-            schools = School.objects.all()
-        else:
-            school_ids = SchoolMembership.objects.filter(user=user).values_list('school_id', flat=True)
-            schools = School.objects.filter(id__in=school_ids)
-        
-        teachers = TeacherProfile.objects.filter(
-            user__school_memberships__school__in=schools
-        ).select_related('user').distinct()
-        
-        return [{'id': t.id, 'name': t.user.name or t.user.email} for t in teachers]
-
-    def _get_available_students(self, user):
-        """Get available students for form dropdown"""
-        
-        # Get user's schools
-        if user.is_staff or user.is_superuser:
-            schools = School.objects.all()
-        else:
-            school_ids = SchoolMembership.objects.filter(user=user).values_list('school_id', flat=True)
-            schools = School.objects.filter(id__in=school_ids)
-        
-        # Get students through school memberships
-        student_users = CustomUser.objects.filter(
-            school_memberships__school__in=schools,
-            school_memberships__role=SchoolRole.STUDENT.value
-        ).distinct()
-        
-        return [{'id': s.id, 'name': s.name or s.email} for s in student_users]
-
-    def _get_template_data(self, current_view, current_date):
-        """Generate additional data needed for templates"""
-        
-        data = {
-            'hours': list(range(8, 20))  # 8AM to 7PM
-        }
-        
-        if current_view == 'week':
-            # Generate week days (Monday to Sunday)
-            days_since_monday = current_date.weekday()
-            monday = current_date - timedelta(days=days_since_monday)
-            data['week_days'] = [monday + timedelta(days=i) for i in range(7)]
-            
-        elif current_view == 'month':
-            # Generate month grid (42 days - 6 weeks)
-            
-            # First day of the month
-            first_day = current_date.replace(day=1)
-            # Last day of the month
-            if first_day.month == 12:
-                next_month = first_day.replace(year=first_day.year + 1, month=1)
-            else:
-                next_month = first_day.replace(month=first_day.month + 1)
-            last_day = next_month - timedelta(days=1)
-            
-            # Start from Sunday of the week containing the first day
-            days_from_sunday = (first_day.weekday() + 1) % 7
-            grid_start = first_day - timedelta(days=days_from_sunday)
-            
-            # Generate 42 days for complete month view
-            month_days = []
-            today = timezone.now().date()
-            
-            for i in range(42):
-                day = grid_start + timedelta(days=i)
-                month_days.append({
-                    'date': day,
-                    'is_current_month': day.month == current_date.month and day.year == current_date.year,
-                    'is_today': day == today
-                })
-            
-            data['month_days'] = month_days
-            
-        return data
-
-    def _handle_create_event(self, request):
-        """Handle creating a new calendar event"""
-        try:
-            title = request.POST.get('title')
-            description = request.POST.get('description', '')
-            scheduled_date = request.POST.get('date')
-            start_time = request.POST.get('start_time')
-            end_time = request.POST.get('end_time')
-            class_type = request.POST.get('class_type', 'individual')
-            teacher_id = request.POST.get('teacher')
-            student_id = request.POST.get('student')
-
-            if not all([title, scheduled_date, start_time, end_time, teacher_id, student_id]):
-                return render(request, 'dashboard/partials/error_message.html', {
-                    'error': 'Por favor, preencha todos os campos obrigatórios.'
-                })
-
-            # Get teacher and student objects
-            try:
-                teacher = TeacherProfile.objects.get(id=teacher_id)
-                student = CustomUser.objects.get(id=student_id)
-            except (TeacherProfile.DoesNotExist, CustomUser.DoesNotExist):
-                return render(request, 'dashboard/partials/error_message.html', {
-                    'error': 'Professor ou aluno não encontrado.'
-                })
-
-            # Create the schedule
-            
-            # Get user's first school (TODO: allow school selection)
-            school = School.objects.first()
-            
-            schedule = ClassSchedule.objects.create(
-                title=title,
-                description=description,
-                scheduled_date=scheduled_date,
-                start_time=start_time,
-                end_time=end_time,
-                class_type=class_type,
-                teacher=teacher,
-                student=student,
-                school=school,
-                booked_by=request.user
-            )
-
-            # Return success message and trigger calendar refresh
-            response = render(request, 'dashboard/partials/success_message.html', {
-                'message': 'Aula criada com sucesso!'
-            })
-            response['HX-Trigger'] = 'refreshCalendar'
-            return response
-
-        except Exception as e:
-            return render(request, 'dashboard/partials/error_message.html', {
-                'error': f'Erro ao criar aula: {str(e)}'
-            })
-
-    def _handle_load_events(self, request):
-        """Handle loading events for a date range via HTMX"""
-        
-        current_view = request.GET.get('view') or request.POST.get('view', 'week')
-        current_date_str = request.GET.get('date') or request.POST.get('date')
-        
-        if current_date_str:
-            try:
-                current_date = datetime.strptime(current_date_str, '%Y-%m-%d').date()
-            except ValueError:
-                current_date = timezone.now().date()
-        else:
-            current_date = timezone.now().date()
-        
-        start_date, end_date = self._calculate_date_range(current_view, current_date)
-        events = self._load_events_for_range(start_date, end_date)
-        template_data = self._get_template_data(current_view, current_date)
-        
-        return render(request, f'dashboard/partials/calendar_{current_view}_grid.html', {
-            'events': events,
-            'current_date': current_date,
-            'current_view': current_view,
-            **template_data,
-        })
-
-    def _handle_switch_view(self, request):
-        """Handle view switching via HTMX"""
-        return self._handle_load_events(request)
-
-    def _handle_navigate(self, request):
-        """Handle navigation (prev/next) via HTMX"""
-        
-        current_view = request.POST.get('view', 'week')
-        current_date_str = request.POST.get('date')
-        direction = request.POST.get('direction')
-        
-        if current_date_str:
-            try:
-                current_date = datetime.strptime(current_date_str, '%Y-%m-%d').date()
-            except ValueError:
-                current_date = timezone.now().date()
-        else:
-            current_date = timezone.now().date()
-        
-        # Calculate new date based on direction and view
-        if direction == 'previous':
-            if current_view == 'week':
-                new_date = current_date - timedelta(weeks=1)
-            elif current_view == 'month':
-                if current_date.month == 1:
-                    new_date = current_date.replace(year=current_date.year - 1, month=12)
-                else:
-                    new_date = current_date.replace(month=current_date.month - 1)
-            else:  # day
-                new_date = current_date - timedelta(days=1)
-        elif direction == 'next':
-            if current_view == 'week':
-                new_date = current_date + timedelta(weeks=1)
-            elif current_view == 'month':
-                if current_date.month == 12:
-                    new_date = current_date.replace(year=current_date.year + 1, month=1)
-                else:
-                    new_date = current_date.replace(month=current_date.month + 1)
-            else:  # day
-                new_date = current_date + timedelta(days=1)
-        else:  # today
-            new_date = timezone.now().date()
-        
-        start_date, end_date = self._calculate_date_range(current_view, new_date)
-        events = self._load_events_for_range(start_date, end_date)
-        template_data = self._get_template_data(current_view, new_date)
-        
-        return render(request, f'dashboard/partials/calendar_{current_view}_grid.html', {
-            'events': events,
-            'current_date': new_date,
-            'current_view': current_view,
-            **template_data,
-        })
-
 
 class TeachersView(View):
     """Teachers management page"""
@@ -658,7 +297,7 @@ class InvitationsView(LoginRequiredMixin, View):
             custom_message = request.POST.get('custom_message', '')
 
             if not email:
-                return render(request, 'dashboard/partials/error_message.html', {
+                return render(request, 'shared/partials/error_message.html', {
                     'error': 'Email is required'
                 })
 
@@ -672,7 +311,7 @@ class InvitationsView(LoginRequiredMixin, View):
             user_schools = get_user_schools(request.user)
             
             if not user_schools.exists():
-                return render(request, 'dashboard/partials/error_message.html', {
+                return render(request, 'shared/partials/error_message.html', {
                     'error': 'No schools found for this user'
                 })
 
@@ -694,7 +333,7 @@ class InvitationsView(LoginRequiredMixin, View):
             ).first()
 
             if existing:
-                return render(request, 'dashboard/partials/error_message.html', {
+                return render(request, 'shared/partials/error_message.html', {
                     'error': 'An active invitation already exists for this email and school'
                 })
 
@@ -713,14 +352,14 @@ class InvitationsView(LoginRequiredMixin, View):
             invitation.mark_email_sent()
 
             # Return success message and update the invitations list
-            response = render(request, 'dashboard/partials/success_message.html', {
+            response = render(request, 'shared/partials/success_message.html', {
                 'message': f'Invitation sent successfully to {email}!'
             })
             response['HX-Trigger'] = 'refreshInvitations'
             return response
 
         except Exception as e:
-            return render(request, 'dashboard/partials/error_message.html', {
+            return render(request, 'shared/partials/error_message.html', {
                 'error': f'Failed to send invitation: {str(e)}'
             })
 
@@ -729,7 +368,7 @@ class InvitationsView(LoginRequiredMixin, View):
         try:
             invitation_id = request.POST.get('invitation_id')
             if not invitation_id:
-                return render(request, 'dashboard/partials/error_message.html', {
+                return render(request, 'shared/partials/error_message.html', {
                     'error': 'Invitation ID is required'
                 })
 
@@ -738,18 +377,18 @@ class InvitationsView(LoginRequiredMixin, View):
             # TODO: Resend email using messaging service
             invitation.mark_email_sent()
 
-            response = render(request, 'dashboard/partials/success_message.html', {
+            response = render(request, 'shared/partials/success_message.html', {
                 'message': f'Invitation resent to {invitation.email}!'
             })
             response['HX-Trigger'] = 'refreshInvitations'
             return response
 
         except TeacherInvitation.DoesNotExist:
-            return render(request, 'dashboard/partials/error_message.html', {
+            return render(request, 'shared/partials/error_message.html', {
                 'error': 'Invitation not found'
             })
         except Exception as e:
-            return render(request, 'dashboard/partials/error_message.html', {
+            return render(request, 'shared/partials/error_message.html', {
                 'error': f'Failed to resend invitation: {str(e)}'
             })
 
@@ -758,25 +397,25 @@ class InvitationsView(LoginRequiredMixin, View):
         try:
             invitation_id = request.POST.get('invitation_id')
             if not invitation_id:
-                return render(request, 'dashboard/partials/error_message.html', {
+                return render(request, 'shared/partials/error_message.html', {
                     'error': 'Invitation ID is required'
                 })
 
             invitation = TeacherInvitation.objects.get(pk=invitation_id)
             invitation.cancel()
 
-            response = render(request, 'dashboard/partials/success_message.html', {
+            response = render(request, 'shared/partials/success_message.html', {
                 'message': f'Invitation to {invitation.email} has been cancelled!'
             })
             response['HX-Trigger'] = 'refreshInvitations'
             return response
 
         except TeacherInvitation.DoesNotExist:
-            return render(request, 'dashboard/partials/error_message.html', {
+            return render(request, 'shared/partials/error_message.html', {
                 'error': 'Invitation not found'
             })
         except Exception as e:
-            return render(request, 'dashboard/partials/error_message.html', {
+            return render(request, 'shared/partials/error_message.html', {
                 'error': f'Failed to cancel invitation: {str(e)}'
             })
 
@@ -937,7 +576,7 @@ class PeopleView(LoginRequiredMixin, View):
             specialty = request.POST.get('specialty', '')
 
             if not email:
-                return render(request, 'dashboard/partials/error_message.html', {
+                return render(request, 'shared/partials/error_message.html', {
                     'error': 'Email is required'
                 })
 
@@ -983,7 +622,7 @@ class PeopleView(LoginRequiredMixin, View):
             return self._render_teachers_partial(request)
 
         except Exception as e:
-            return render(request, 'dashboard/partials/error_message.html', {
+            return render(request, 'shared/partials/error_message.html', {
                 'error': f'Failed to add teacher: {str(e)}'
             })
 
@@ -997,7 +636,7 @@ class PeopleView(LoginRequiredMixin, View):
             birth_date = request.POST.get('birth_date')
 
             if not email or not name or not birth_date:
-                return render(request, 'dashboard/partials/error_message.html', {
+                return render(request, 'shared/partials/error_message.html', {
                     'error': 'Email, name and birth date are required'
                 })
 
@@ -1042,14 +681,14 @@ class PeopleView(LoginRequiredMixin, View):
             return self._render_students_partial(request)
 
         except Exception as e:
-            return render(request, 'dashboard/partials/error_message.html', {
+            return render(request, 'shared/partials/error_message.html', {
                 'error': f'Failed to add student: {str(e)}'
             })
 
     def _handle_invite_teacher(self, request):
         """Handle teacher invitation"""
         # TODO: Implement teacher invitation logic
-        return render(request, 'dashboard/partials/success_message.html', {
+        return render(request, 'shared/partials/success_message.html', {
             'message': 'Teacher invitation functionality coming soon'
         })
 

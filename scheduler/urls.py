@@ -2,6 +2,7 @@ from django.urls import path
 
 from .views import (
     # Template-based views (HTMX/PWA)
+    CalendarView,
     ClassScheduleTemplateView,
     TeacherAvailabilityTemplateView,
     
@@ -17,6 +18,7 @@ app_name = "scheduler"
 # PWA URL patterns - all API endpoints removed
 urlpatterns = [
     # === MAIN PWA VIEWS (HTMX/Server-side rendering) ===
+    # Note: Calendar view is now accessed via main URLs at /calendar/
     
     # Class scheduling - main interface
     path("", ClassScheduleTemplateView.as_view(), name="schedule-home"),

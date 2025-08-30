@@ -19,7 +19,10 @@ from django.contrib import admin
 from django.urls import include, path
 
 # Dashboard views
-from dashboard.views import CalendarView, InvitationsView, PeopleView, StudentsView, TeachersView
+from dashboard.views import InvitationsView, PeopleView, StudentsView, TeachersView
+
+# Scheduler views 
+from scheduler.views import CalendarView
 
 urlpatterns = [
     # Admin route
@@ -32,15 +35,13 @@ urlpatterns = [
 
     # Clean dashboard routes at root level
     path("dashboard/", include("dashboard.urls")),
-    path("calendar/", CalendarView.as_view(), name="calendar"),
+    path("calendar/", CalendarView.as_view(), name="calendar"),  # Calendar is now handled by scheduler
     path("teachers/", TeachersView.as_view(), name="teachers"),
     path("students/", StudentsView.as_view(), name="students"),
     path("invitations/", InvitationsView.as_view(), name="invitations"),
     path("people/", PeopleView.as_view(), name="people"),
-    path("tasks/", include("tasks.urls")),  # Task management (PWA)
-    path("scheduler/", include("scheduler.urls")),  # Class scheduling & teacher availability (PWA)
 
-    # PWA Routes - All DRF/API routes removed
+    # PWA Routes
     path("classroom/", include("classroom.urls")),  # Chat functionality (Django views)
     path("finances/", include("finances.urls", namespace="finances")),  # Financial operations - Converted to Django views with HTMX
     path("messaging/", include("messaging.urls", namespace="messaging")),  # Messaging - Converted to Django views with HTMX

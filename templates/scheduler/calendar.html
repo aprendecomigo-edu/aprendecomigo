@@ -1,0 +1,250 @@
+{% extends 'base_with_navs.html' %}
+{% load static %}
+
+{% block page_title %}Calendar{% endblock %}
+
+{% block dashboard_content %}
+{% csrf_token %}
+
+<style>
+[x-cloak] { display: none !important; }
+</style>
+
+<!-- Calendar Component with Alpine.js and HTMX -->
+<div id="calendar-component" x-data="{
+        currentView: '{{ current_view }}',
+        currentDate: '{{ current_date|date:'Y-m-d' }}',
+        loading: false,
+        error: null,
+        showEventModal: false,
+        eventModalData: {
+            date: null,
+            time: '09:00',
+            endTime: '10:00',
+            title: '',
+            description: '',
+            class_type: 'individual',
+            teacher: null,
+            student: null
+        },
+        eventModalLoading: false,
+        currentTimeInterval: null,
+        
+        openEventModal(date = null, time = '09:00') {
+            const selectedDate = date || this.currentDate;
+            this.eventModalData = {
+                date: selectedDate,
+                time: time,
+                endTime: this.calculateEndTime(time, 60),
+                title: '',
+                description: '',
+                class_type: 'individual',
+                teacher: null,
+                student: null
+            };
+            this.showEventModal = true;
+        },
+        
+        closeEventModal() {
+            this.showEventModal = false;
+            this.eventModalData = {
+                date: null,
+                time: '09:00',
+                endTime: '10:00',
+                title: '',
+                description: '',
+                class_type: 'individual',
+                teacher: null,
+                student: null
+            };
+        },
+        
+        calculateEndTime(startTime, durationMinutes) {
+            const [hours, minutes] = startTime.split(':').map(Number);
+            const startDate = new Date();
+            startDate.setHours(hours, minutes, 0, 0);
+            const endDate = new Date(startDate.getTime() + durationMinutes * 60000);
+            return endDate.toTimeString().slice(0, 5);
+        },
+        
+        updateEndTime() {
+            this.eventModalData.endTime = this.calculateEndTime(this.eventModalData.time, 60);
+        },
+        
+        updateCurrentTimeIndicator() {
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
+            const currentHour = now.getHours();
+            const currentMinutes = now.getMinutes();
+            
+            // Only show indicator if viewing today
+            const viewingDate = this.currentView === 'week' ? today : this.currentDate;
+            const isToday = (this.currentView === 'day' && this.currentDate === today) || 
+                           (this.currentView === 'week');
+            
+            if (!isToday) return;
+            
+            // Calculate position based on time (assumes 64px height per hour in week, 80px in day)
+            const hourHeight = this.currentView === 'day' ? 80 : 64;
+            const startHour = 8; // Calendar starts at 8 AM
+            const totalMinutesFromStart = (currentHour - startHour) * 60 + currentMinutes;
+            const position = (totalMinutesFromStart / 60) * hourHeight;
+            
+            // Update all current time indicators
+            const indicators = document.querySelectorAll('.current-time-indicator');
+            indicators.forEach(indicator => {
+                // Only update indicators for today's column
+                const dayColumn = indicator.closest('[data-date]');
+                if (!dayColumn || dayColumn.dataset.date === today || this.currentView === 'day') {
+                    indicator.style.top = position + 'px';
+                    indicator.style.display = (position >= 0 && currentHour >= startHour && currentHour <= 20) ? 'block' : 'none';
+                }
+            });
+        },
+        
+        initCurrentTimeIndicator() {
+            // Update immediately
+            this.updateCurrentTimeIndicator();
+            
+            // Update every 5 minutes (300000 ms)
+            this.currentTimeInterval = setInterval(() => {
+                this.updateCurrentTimeIndicator();
+            }, 300000);
+        },
+        
+        destroyCurrentTimeIndicator() {
+            if (this.currentTimeInterval) {
+                clearInterval(this.currentTimeInterval);
+                this.currentTimeInterval = null;
+            }
+        }
+     }" 
+     x-init="initCurrentTimeIndicator()"
+     @destroy="destroyCurrentTimeIndicator()"
+     hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+    
+    <div class="bg-white rounded-lg shadow-sm p-6">
+        <!-- Calendar Header - EventCalendar Inspired -->
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+            <!-- Left section: Navigation and current period -->
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2">
+                    <button hx-post="{% url 'calendar' %}"
+                            hx-target="#calendar-grid"
+                            hx-vals='{"action": "navigate", "direction": "previous", "view": "{{ current_view }}", "date": "{{ current_date|date:'Y-m-d' }}"}'
+                            @htmx:afterSettle="$nextTick(() => initCurrentTimeIndicator())"
+                            class="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+                    <button hx-post="{% url 'calendar' %}"
+                            hx-target="#calendar-grid"
+                            hx-vals='{"action": "navigate", "direction": "next", "view": "{{ current_view }}", "date": "{{ current_date|date:'Y-m-d' }}"}'
+                            @htmx:afterSettle="$nextTick(() => initCurrentTimeIndicator())"
+                            class="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <button hx-post="{% url 'calendar' %}"
+                        hx-target="#calendar-grid"
+                        hx-vals='{"action": "navigate", "direction": "today", "view": "{{ current_view }}", "date": "{{ current_date|date:'Y-m-d' }}"}'
+                        @htmx:afterSettle="$nextTick(() => initCurrentTimeIndicator())"
+                        class="px-3 py-1.5 text-sm bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded transition-colors font-medium">
+                    today
+                </button>
+                
+                <h1 class="text-2xl font-normal text-gray-900">
+                    {% if current_view == 'month' %}
+                        {{ current_date|date:'F Y' }}
+                    {% elif current_view == 'week' %}
+                        {{ week_start|date:'M j' }} – {{ week_end|date:'M j, Y' }}
+                    {% elif current_view == 'day' %}
+                        {{ current_date|date:'l, F j, Y' }}
+                    {% else %}
+                        {{ current_date|date:'F Y' }}
+                    {% endif %}
+                </h1>
+            </div>
+            
+            <!-- Right section: View switcher and actions -->
+            <div class="flex items-center space-x-3">
+                <button @click="openEventModal()" 
+                        class="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors flex items-center space-x-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    <span>Book Class</span>
+                </button>
+                
+                <!-- View Switcher -->
+                <div class="flex bg-white border border-gray-300 rounded overflow-hidden">
+                    <button hx-post="{% url 'calendar' %}"
+                            hx-target="#calendar-grid"
+                            hx-vals='{"action": "switch_view", "view": "month", "date": "{{ current_date|date:'Y-m-d' }}"}'
+                            @click="currentView = 'month'"
+                            @htmx:afterSettle="$nextTick(() => initCurrentTimeIndicator())"
+                            :class="currentView === 'month' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'"
+                            class="px-3 py-1.5 text-sm font-medium border-r border-gray-300 last:border-r-0 transition-colors">
+                        month
+                    </button>
+                    <button hx-post="{% url 'calendar' %}"
+                            hx-target="#calendar-grid"
+                            hx-vals='{"action": "switch_view", "view": "week", "date": "{{ current_date|date:'Y-m-d' }}"}'
+                            @click="currentView = 'week'"
+                            @htmx:afterSettle="$nextTick(() => initCurrentTimeIndicator())"
+                            :class="currentView === 'week' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'"
+                            class="px-3 py-1.5 text-sm font-medium border-r border-gray-300 last:border-r-0 transition-colors">
+                        week
+                    </button>
+                    <button hx-post="{% url 'calendar' %}"
+                            hx-target="#calendar-grid"
+                            hx-vals='{"action": "switch_view", "view": "day", "date": "{{ current_date|date:'Y-m-d' }}"}'
+                            @click="currentView = 'day'"
+                            @htmx:afterSettle="$nextTick(() => initCurrentTimeIndicator())"
+                            :class="currentView === 'day' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'"
+                            class="px-3 py-1.5 text-sm font-medium border-r border-gray-300 last:border-r-0 transition-colors">
+                        day
+                    </button>
+                    <button hx-post="{% url 'calendar' %}"
+                            hx-target="#calendar-grid"
+                            hx-vals='{"action": "switch_view", "view": "list", "date": "{{ current_date|date:'Y-m-d' }}"}'
+                            @click="currentView = 'list'"
+                            @htmx:afterSettle="$nextTick(() => initCurrentTimeIndicator())"
+                            :class="currentView === 'list' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'"
+                            class="px-3 py-1.5 text-sm font-medium border-r border-gray-300 last:border-r-0 transition-colors">
+                        list
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar Grid - Server-side rendered with HTMX updates -->
+        {% if current_view == 'week' %}
+            {% include 'scheduler/partials/calendar_week_grid.html' %}
+        {% elif current_view == 'month' %}
+            {% include 'scheduler/partials/calendar_month_grid.html' %}
+        {% elif current_view == 'day' %}
+            {% include 'scheduler/partials/calendar_day_grid.html' %}
+        {% elif current_view == 'list' %}
+            {% include 'scheduler/partials/calendar_list_grid.html' %}
+        {% else %}
+            {% include 'scheduler/partials/calendar_week_grid.html' %}
+        {% endif %}
+    </div>
+
+    <!-- Event Creation Modal -->
+    {% include 'scheduler/partials/event_modal_form.html' %}
+
+    <!-- HTMX Event Listeners -->
+    <div hx-trigger="refreshCalendar from:body" 
+         hx-post="{% url 'calendar' %}" 
+         hx-target="#calendar-grid"
+         hx-vals='{"action": "load_events", "view": "{{ current_view }}", "date": "{{ current_date|date:'Y-m-d' }}"}'
+         @htmx:afterSettle="$nextTick(() => initCurrentTimeIndicator())">
+    </div>
+</div>
+{% endblock %}
