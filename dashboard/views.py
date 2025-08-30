@@ -9,8 +9,9 @@ from uuid import uuid4
 
 from django.db import models
 from django.http import JsonResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import render
 from django.utils import timezone
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import View
 
 from accounts.models import (
@@ -24,14 +25,11 @@ from tasks.models import Task
 
 logger = logging.getLogger('accounts.auth')
 
-class DashboardView(View):
+class DashboardView(LoginRequiredMixin, View):
     """Main dashboard view that renders appropriate template based on user role"""
 
     def get(self, request):
         """Render appropriate dashboard template based on user role"""
-        # Require authentication for dashboard access
-        if not request.user.is_authenticated:
-            return redirect('accounts:signin')
 
         # Render appropriate dashboard template based on user role
         if hasattr(request.user, 'teacherprofile'):
@@ -202,16 +200,13 @@ class DashboardView(View):
 
 
 
-class CalendarView(View):
+class CalendarView(LoginRequiredMixin, View):
     """Calendar page view with HTMX support for dynamic updates"""
 
     def get(self, request):
         """Render calendar page with server-side events"""
 
         
-        if not request.user.is_authenticated:
-            return redirect('accounts:signin')
-
         # Handle HTMX requests
         if request.headers.get('HX-Request'):
             action = request.GET.get('action')
@@ -591,16 +586,13 @@ class StudentsView(View):
         })
 
 
-class InvitationsView(View):
+class InvitationsView(LoginRequiredMixin, View):
     """Invitations management page"""
 
     def get(self, request):
         """Render invitations page with server-side data"""
 
         
-        if not request.user.is_authenticated:
-            return redirect('accounts:signin')
-
         # Get user's schools - using same logic as PeopleView
         def get_user_schools(user):
             if user.is_staff or user.is_superuser:
@@ -824,15 +816,12 @@ class InvitationsView(View):
         })
 
 
-class PeopleView(View):
+class PeopleView(LoginRequiredMixin, View):
     """Unified people management page with tabs for teachers, students, staff"""
 
     def get(self, request):
         """Render people management page with initial data server-side"""
         
-        if not request.user.is_authenticated:
-            return redirect('accounts:signin')
-
         # Get user's schools - using same logic as API views
         def get_user_schools(user):
             if user.is_staff or user.is_superuser:

@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 
 from django.contrib.auth import get_user_model
 from django.http import JsonResponse
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views import View
@@ -16,14 +17,11 @@ User = get_user_model()
 logger = logging.getLogger('tasks.views')
 
 
-class TaskListView(View):
+class TaskListView(LoginRequiredMixin, View):
     """Main tasks page with filtering and HTMX support"""
 
     def get(self, request):
         """Render tasks page with server-side data"""
-        # Ensure user is authenticated
-        if not request.user.is_authenticated:
-            return redirect('accounts:signin')
 
         # Handle HTMX partial requests
         if request.headers.get('HX-Request'):
@@ -262,13 +260,11 @@ class TaskListView(View):
             })
 
 
-class TaskDetailView(View):
+class TaskDetailView(LoginRequiredMixin, View):
     """Task detail/edit view"""
 
     def get(self, request, task_id):
         """Render task detail/edit form"""
-        if not request.user.is_authenticated:
-            return redirect('accounts:signin')
 
         task = get_object_or_404(Task, id=task_id, user=request.user)
 
@@ -288,8 +284,6 @@ class TaskDetailView(View):
 
     def post(self, request, task_id):
         """Handle task update"""
-        if not request.user.is_authenticated:
-            return redirect('accounts:signin')
 
         task = get_object_or_404(Task, id=task_id, user=request.user)
 
@@ -330,13 +324,11 @@ class TaskDetailView(View):
             })
 
 
-class TaskSummaryView(View):
+class TaskSummaryView(LoginRequiredMixin, View):
     """Task summary widget for dashboard"""
 
     def get(self, request):
         """Return task summary partial"""
-        if not request.user.is_authenticated:
-            return JsonResponse({'error': 'Authentication required'}, status=401)
 
         task_list_view = TaskListView()
         summary = task_list_view._get_task_summary(request.user)

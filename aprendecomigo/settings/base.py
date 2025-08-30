@@ -260,9 +260,9 @@ AUTHENTICATION_BACKENDS = [
 SITE_ID = 1
 
 # Login URLs - Django web interface
-LOGIN_URL = "/accounts/signin/"
+LOGIN_URL = "/signin/"
 LOGIN_REDIRECT_URL = "/dashboard/"
-LOGOUT_REDIRECT_URL = "/accounts/signin/"
+LOGOUT_REDIRECT_URL = "/signin/"
 
 # Django-sesame settings moved to the PWA section below
 
