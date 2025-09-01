@@ -4,8 +4,8 @@ Django staging settings for aprendecomigo project.
 
 import os
 
-# Import specific settings from base
-from .base import BASE_DIR, SIMPLE_JWT as BASE_SIMPLE_JWT
+# Import all settings from base.py
+from .base import *  # noqa: E402
 
 # SECURITY WARNING: keep the secret key used in production secret!
 secret_key = os.getenv("SECRET_KEY")
@@ -14,7 +14,7 @@ if not secret_key:
 SECRET_KEY = str(secret_key)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", "False") == "True"
+DEBUG = os.getenv("DEBUG", "True") == "True"  # Railway docs recommend DEBUG=True for staging
 
 # Define allowed hosts
 allowed_hosts = os.getenv("ALLOWED_HOSTS", "")
@@ -24,10 +24,15 @@ ALLOWED_HOSTS = allowed_hosts.split(",")
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+# Use PostgreSQL in staging as per Railway docs
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ["PGDATABASE"],
+        'USER': os.environ["PGUSER"],
+        'PASSWORD': os.environ["PGPASSWORD"],
+        'HOST': os.environ["PGHOST"],
+        'PORT': os.environ["PGPORT"],
     }
 }
 
@@ -74,12 +79,4 @@ SECURE_REFERRER_POLICY = "same-origin"
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
-# Google API settings
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
-GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 
-# Set JWT signing key
-SIMPLE_JWT = {**BASE_SIMPLE_JWT, "SIGNING_KEY": SECRET_KEY}
-
-# Import all settings from base.py
-from .base import *  # noqa: E402

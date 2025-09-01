@@ -11,6 +11,7 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
+# Railway deployment pattern - use environment variable with fallback
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "aprendecomigo.settings")
 
 application = get_wsgi_application()

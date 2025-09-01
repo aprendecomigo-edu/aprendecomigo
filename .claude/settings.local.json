@@ -45,7 +45,13 @@
       "Read(/var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_Pb0lKb/**)",
       "Read(/var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_pziuUa/**)",
       "Read(/var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_8Sd1r4/**)",
-      "Read(/var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_Wi7Ds7/**)"
+      "Read(/var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_Wi7Ds7/**)",
+      "mcp__Railway__check-railway-status",
+      "mcp__Railway__list-projects",
+      "mcp__Railway__link-environment",
+      "mcp__Railway__list-variables",
+      "mcp__Railway__list-services",
+      "mcp__Railway__link-service"
     ],
     "deny": [],
     "ask": []

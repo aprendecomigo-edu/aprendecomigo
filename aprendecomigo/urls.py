@@ -17,6 +17,7 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import include, path
+from django.http import JsonResponse
 
 # Dashboard views
 from dashboard.views import InvitationsView, PeopleView, StudentsView, TeachersView
@@ -24,7 +25,14 @@ from dashboard.views import InvitationsView, PeopleView, StudentsView, TeachersV
 # Scheduler views 
 from scheduler.views import CalendarView
 
+# Health check for Railway deployment
+def health_check(request):
+    return JsonResponse({"status": "ok"})
+
 urlpatterns = [
+    # Railway health check
+    path("health/", health_check, name="health_check"),
+    
     # Admin route
     path("admin/", admin.site.urls),
     # PWA infrastructure (django-pwa)

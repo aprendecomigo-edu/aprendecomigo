@@ -5,7 +5,7 @@ Django production settings for aprendecomigo project.
 import os
 
 # Import specific settings from base
-from .base import BASE_DIR, SIMPLE_JWT as BASE_SIMPLE_JWT
+from .base import BASE_DIR
 
 # SECURITY WARNING: keep the secret key used in production secret!
 secret_key = os.getenv("SECRET_KEY")
@@ -25,12 +25,16 @@ ALLOWED_HOSTS = allowed_hosts.split(",")
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 # Use PostgreSQL in production
-if os.getenv("DATABASE_URL"):
-    import dj_database_url  # type: ignore
-
-    DATABASES = {"default": dj_database_url.config(default=os.getenv("DATABASE_URL"))}
-else:
-    raise ValueError("DATABASE_URL environment variable is not set")
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ["PGDATABASE"],
+        'USER': os.environ["PGUSER"],
+        'PASSWORD': os.environ["PGPASSWORD"],
+        'HOST': os.environ["PGHOST"],
+        'PORT': os.environ["PGPORT"],
+    }
+}
 
 # Email configuration
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
@@ -417,14 +421,6 @@ LOGGING = {
         },
     },
 }
-
-# Google API settings
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
-GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
-
-# Set JWT signing key
-SIMPLE_JWT = {**BASE_SIMPLE_JWT, "SIGNING_KEY": SECRET_KEY}
-
 # Production overrides for reminder system
 REMINDER_MOCK_MODE = False  # Disable mock mode in production
 COMMUNICATION_SERVICE_ENABLED = True  # Enable real communication service in production

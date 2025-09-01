@@ -31,7 +31,9 @@ SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-r0i5j27-gmjj&c6v@0mf5=mz$o
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else ["localhost", "127.0.0.1", "testserver"]
+# Railway deployment recommends ALLOWED_HOSTS = ["*"] for flexibility
+# Environment-specific settings will override this as needed
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "*").split(",") if os.getenv("ALLOWED_HOSTS") != "*" else ["*"]
 
 
 # Application definition
@@ -70,6 +72,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # Railway recommended for static file serving
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
