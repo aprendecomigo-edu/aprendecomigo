@@ -10,8 +10,6 @@ import uuid
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from accounts.models.educational import EducationalSystemType
-
 from .enums import (
     ActivityType,
     CalendarIntegrationChoices,
@@ -115,20 +113,20 @@ class SchoolMembership(models.Model):
     def clean(self):
         """Validate business rules for school membership"""
         from django.core.exceptions import ValidationError
-        
+
         super().clean()
-        
+
         # If deactivating a membership, ensure user will still have active memberships
         if self.pk and not self.is_active:
             # Skip validation for superusers
             if self.user.is_superuser:
                 return
-                
+
             # Count remaining active memberships (excluding this one)
             remaining_active = self.user.school_memberships.filter(
                 is_active=True
             ).exclude(pk=self.pk).count()
-            
+
             if remaining_active == 0:
                 raise ValidationError(
                     f"Cannot deactivate the last active school membership for non-superuser {self.user.email}. "
@@ -138,20 +136,20 @@ class SchoolMembership(models.Model):
     def delete(self, *args, **kwargs):
         """Override delete to prevent removing the last active membership"""
         from django.core.exceptions import ValidationError
-        
+
         # Skip validation for superusers
         if not self.user.is_superuser:
             # Count remaining active memberships (excluding this one)
             remaining_active = self.user.school_memberships.filter(
                 is_active=True
             ).exclude(pk=self.pk).count()
-            
+
             if remaining_active == 0:
                 raise ValidationError(
                     f"Cannot delete the last active school membership for non-superuser {self.user.email}. "
                     "This would violate the fundamental business rule that every user must have a school association."
                 )
-        
+
         super().delete(*args, **kwargs)
 
 

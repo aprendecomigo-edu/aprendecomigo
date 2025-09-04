@@ -44,7 +44,6 @@ from .profiles import (
 )
 
 # Progress tracking models removed
-
 # Import school models
 from .schools import (
     School,

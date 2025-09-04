@@ -9,7 +9,7 @@ from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from accounts.models import School, SchoolMembership
-from classroom.models import Channel, Message, Reaction, Attachment
+from classroom.models import Attachment, Channel, Message, Reaction
 
 User = get_user_model()
 
@@ -33,7 +33,7 @@ class TestDataFactory:
         """Create a user with default or custom attributes."""
         if email is None:
             email = f"{username}@example.com"
-        
+
         defaults = {
             'first_name': username.title(),
             'last_name': 'User',
@@ -102,45 +102,45 @@ class SchoolBasedTestMixin:
     def setUp(self):
         """Set up school-based test environment."""
         super().setUp()
-        
+
         # Create schools
         self.school1 = TestDataFactory.create_school("School One")
         self.school2 = TestDataFactory.create_school("School Two")
-        
+
         # Create users
         self.teacher1 = TestDataFactory.create_user("teacher1")
         self.teacher2 = TestDataFactory.create_user("teacher2")
         self.student1 = TestDataFactory.create_user("student1")
         self.student2 = TestDataFactory.create_user("student2")
         self.outsider = TestDataFactory.create_user("outsider")
-        
+
         # Create school memberships
         TestDataFactory.create_school_membership(self.teacher1, self.school1, "teacher")
         TestDataFactory.create_school_membership(self.student1, self.school1, "student")
         TestDataFactory.create_school_membership(self.teacher2, self.school2, "teacher")
         TestDataFactory.create_school_membership(self.student2, self.school2, "student")
         # outsider has no school membership
-        
+
         # Create channels
         self.school1_channel = TestDataFactory.create_channel(
-            "School 1 Channel", 
+            "School 1 Channel",
             participants=[self.teacher1, self.student1]
         )
         self.school2_channel = TestDataFactory.create_channel(
-            "School 2 Channel", 
+            "School 2 Channel",
             participants=[self.teacher2, self.student2]
         )
         self.dm_channel = TestDataFactory.create_dm_channel(self.teacher1, self.student1)
-        
+
         # Create messages
         self.message1 = TestDataFactory.create_message(
-            self.school1_channel, 
-            self.teacher1, 
+            self.school1_channel,
+            self.teacher1,
             "Message from teacher1"
         )
         self.message2 = TestDataFactory.create_message(
-            self.school1_channel, 
-            self.student1, 
+            self.school1_channel,
+            self.student1,
             "Message from student1"
         )
 
@@ -171,12 +171,12 @@ class MessageTestMixin:
             sender = getattr(self, 'teacher1', None)
             if sender is None:
                 raise ValueError("No sender provided and no default teacher1 available")
-        
+
         messages = []
         for i in range(count):
             message = TestDataFactory.create_message(
-                channel, 
-                sender, 
+                channel,
+                sender,
                 f"Test message {i+1}"
             )
             messages.append(message)
@@ -186,20 +186,20 @@ class MessageTestMixin:
         """Create messages with various reactions for testing."""
         messages = []
         emojis = ["👍", "❤️", "😂", "😮", "😢"]
-        
+
         for i in range(count):
             message = TestDataFactory.create_message(
-                channel, 
-                sender, 
+                channel,
+                sender,
                 f"Message with reactions {i+1}"
             )
-            
+
             # Add reaction with corresponding emoji
             if i < len(emojis):
                 TestDataFactory.create_reaction(message, sender, emojis[i])
-            
+
             messages.append(message)
-        
+
         return messages
 
 
@@ -220,10 +220,10 @@ class FileTestMixin:
         """Create a message with a file attachment."""
         test_files = self.create_test_files()
         file = test_files.get(file_type, test_files['pdf'])
-        
+
         return TestDataFactory.create_message(
-            channel, 
-            sender, 
+            channel,
+            sender,
             f"Message with {file_type} file",
             file=file
         )
@@ -237,17 +237,17 @@ class WebSocketTestMixin:
         # Create user and channel
         self.ws_user = TestDataFactory.create_user("websocket_user")
         self.ws_channel = TestDataFactory.create_channel(
-            "WebSocket Test Channel", 
+            "WebSocket Test Channel",
             participants=[self.ws_user]
         )
-        
+
         # Create some messages for testing
         self.ws_messages = [
             TestDataFactory.create_message(self.ws_channel, self.ws_user, "WS Message 1"),
             TestDataFactory.create_message(self.ws_channel, self.ws_user, "WS Message 2"),
             TestDataFactory.create_message(self.ws_channel, self.ws_user, "WS Message 3"),
         ]
-        
+
         return self.ws_user, self.ws_channel, self.ws_messages
 
 
@@ -279,28 +279,28 @@ class PermissionTestMixin:
 def create_test_school_environment():
     """Create a complete test environment with schools, users, and channels."""
     factory = TestDataFactory()
-    
+
     # Schools
     school1 = factory.create_school("Test High School")
     school2 = factory.create_school("Community College")
-    
+
     # Users
     teacher1 = factory.create_user("teacher1")
     student1 = factory.create_user("student1")
     teacher2 = factory.create_user("teacher2")
     student2 = factory.create_user("student2")
-    
+
     # School memberships
     factory.create_school_membership(teacher1, school1, "teacher")
     factory.create_school_membership(student1, school1, "student")
     factory.create_school_membership(teacher2, school2, "teacher")
     factory.create_school_membership(student2, school2, "student")
-    
+
     # Channels
     channel1 = factory.create_channel("School 1 General", participants=[teacher1, student1])
     channel2 = factory.create_channel("School 2 General", participants=[teacher2, student2])
     dm_channel = factory.create_dm_channel(teacher1, student1)
-    
+
     return {
         'schools': [school1, school2],
         'users': [teacher1, student1, teacher2, student2],

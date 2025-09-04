@@ -2,23 +2,21 @@
 Dashboard views with clean URLs outside of accounts app
 """
 
+from datetime import timedelta
 import json
 import logging
-from datetime import datetime, timedelta
 from uuid import uuid4
 
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views import View
 
-from accounts.models import (
-    CustomUser, SchoolMembership, School, TeacherInvitation, InvitationStatus
-)
+from accounts.models import CustomUser, InvitationStatus, School, SchoolMembership, TeacherInvitation
+from accounts.models.profiles import StudentProfile, TeacherProfile
 from accounts.models.schools import SchoolRole
-from accounts.models.profiles import TeacherProfile, StudentProfile
 from finances.models import PurchaseTransaction
 from scheduler.models import ClassSchedule
 from tasks.models import Task
@@ -33,7 +31,7 @@ class DashboardView(LoginRequiredMixin, View):
 
         # Get user's active school membership to determine role
         active_membership = SchoolMembership.objects.filter(
-            user=request.user, 
+            user=request.user,
             is_active=True
         ).first()
 
@@ -55,7 +53,6 @@ class DashboardView(LoginRequiredMixin, View):
 
     def _render_admin_dashboard(self, request):
         """Render admin dashboard directly at /dashboard/ - moved from AdminDashboardView"""
-        from scheduler.models import ClassSchedule
 
         # Get the logged-in user (authentication handled by main get() method)
         user = request.user
@@ -75,7 +72,6 @@ class DashboardView(LoginRequiredMixin, View):
 
         # Get revenue this month from actual financial data
 
-        from finances.models import PurchaseTransaction
         current_month = today.month
         current_year = today.year
 
@@ -90,7 +86,6 @@ class DashboardView(LoginRequiredMixin, View):
             revenue_this_month = 0  # Default to 0 if no payment data
 
         # Get tasks from task management system
-        from tasks.models import Task
         try:
             user_tasks = Task.objects.filter(user=user).order_by('-created_at')[:10]
             tasks = []
@@ -231,7 +226,7 @@ class InvitationsView(LoginRequiredMixin, View):
     def get(self, request):
         """Render invitations page with server-side data"""
 
-        
+
         # Get user's schools - using same logic as PeopleView
         def get_user_schools(user):
             if user.is_staff or user.is_superuser:
@@ -275,7 +270,7 @@ class InvitationsView(LoginRequiredMixin, View):
     def post(self, request):
         """Handle invitation form submissions"""
         action = request.POST.get('action')
-        
+
         if action == 'send_invitation':
             return self._handle_send_invitation(request)
         elif action == 'resend_invitation':
@@ -290,7 +285,7 @@ class InvitationsView(LoginRequiredMixin, View):
     def _handle_send_invitation(self, request):
         """Handle sending a new teacher invitation"""
 
-        
+
         try:
             email = request.POST.get('email')
             role = request.POST.get('role', 'teacher')
@@ -309,7 +304,7 @@ class InvitationsView(LoginRequiredMixin, View):
                 return School.objects.filter(id__in=school_ids)
 
             user_schools = get_user_schools(request.user)
-            
+
             if not user_schools.exists():
                 return render(request, 'shared/partials/error_message.html', {
                     'error': 'No schools found for this user'
@@ -360,7 +355,7 @@ class InvitationsView(LoginRequiredMixin, View):
 
         except Exception as e:
             return render(request, 'shared/partials/error_message.html', {
-                'error': f'Failed to send invitation: {str(e)}'
+                'error': f'Failed to send invitation: {e!s}'
             })
 
     def _handle_resend_invitation(self, request):
@@ -373,7 +368,7 @@ class InvitationsView(LoginRequiredMixin, View):
                 })
 
             invitation = TeacherInvitation.objects.get(pk=invitation_id)
-            
+
             # TODO: Resend email using messaging service
             invitation.mark_email_sent()
 
@@ -389,7 +384,7 @@ class InvitationsView(LoginRequiredMixin, View):
             })
         except Exception as e:
             return render(request, 'shared/partials/error_message.html', {
-                'error': f'Failed to resend invitation: {str(e)}'
+                'error': f'Failed to resend invitation: {e!s}'
             })
 
     def _handle_cancel_invitation(self, request):
@@ -416,7 +411,7 @@ class InvitationsView(LoginRequiredMixin, View):
             })
         except Exception as e:
             return render(request, 'shared/partials/error_message.html', {
-                'error': f'Failed to cancel invitation: {str(e)}'
+                'error': f'Failed to cancel invitation: {e!s}'
             })
 
     def _render_invitations_list(self, request):
@@ -460,7 +455,7 @@ class PeopleView(LoginRequiredMixin, View):
 
     def get(self, request):
         """Render people management page with initial data server-side"""
-        
+
         # Get user's schools - using same logic as API views
         def get_user_schools(user):
             if user.is_staff or user.is_superuser:
@@ -557,7 +552,7 @@ class PeopleView(LoginRequiredMixin, View):
     def post(self, request):
         """Handle form submissions for adding teachers/students"""
         action = request.POST.get('action')
-        
+
         if action == 'add_teacher':
             return self._handle_add_teacher(request)
         elif action == 'add_student':
@@ -623,7 +618,7 @@ class PeopleView(LoginRequiredMixin, View):
 
         except Exception as e:
             return render(request, 'shared/partials/error_message.html', {
-                'error': f'Failed to add teacher: {str(e)}'
+                'error': f'Failed to add teacher: {e!s}'
             })
 
     def _handle_add_student(self, request):
@@ -682,7 +677,7 @@ class PeopleView(LoginRequiredMixin, View):
 
         except Exception as e:
             return render(request, 'shared/partials/error_message.html', {
-                'error': f'Failed to add student: {str(e)}'
+                'error': f'Failed to add student: {e!s}'
             })
 
     def _handle_invite_teacher(self, request):
@@ -694,10 +689,10 @@ class PeopleView(LoginRequiredMixin, View):
 
     def _render_teachers_partial(self, request):
         """Render teachers list partial for HTMX updates"""
-        from accounts.models import SchoolMembership, School
-        from accounts.models.schools import SchoolRole
+        from accounts.models import School, SchoolMembership
         from accounts.models.profiles import TeacherProfile
-        
+        from accounts.models.schools import SchoolRole
+
         # Get user's schools
         def get_user_schools(user):
             if user.is_staff or user.is_superuser:
@@ -706,7 +701,7 @@ class PeopleView(LoginRequiredMixin, View):
             return School.objects.filter(id__in=school_ids)
 
         user_schools = get_user_schools(request.user)
-        
+
         # Get teachers data with profiles
         teacher_memberships = SchoolMembership.objects.filter(
             school__in=user_schools,
@@ -756,10 +751,10 @@ class PeopleView(LoginRequiredMixin, View):
 
     def _render_students_partial(self, request):
         """Render students list partial for HTMX updates"""
-        from accounts.models import SchoolMembership, School
-        from accounts.models.schools import SchoolRole
+        from accounts.models import School, SchoolMembership
         from accounts.models.profiles import StudentProfile
-        
+        from accounts.models.schools import SchoolRole
+
         # Get user's schools
         def get_user_schools(user):
             if user.is_staff or user.is_superuser:
@@ -768,7 +763,7 @@ class PeopleView(LoginRequiredMixin, View):
             return School.objects.filter(id__in=school_ids)
 
         user_schools = get_user_schools(request.user)
-        
+
         # Get students data with profiles
         student_memberships = SchoolMembership.objects.filter(
             school__in=user_schools,

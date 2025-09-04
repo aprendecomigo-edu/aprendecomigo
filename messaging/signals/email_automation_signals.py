@@ -263,7 +263,7 @@ def _calculate_profile_completion(user, teacher_profile) -> dict:
     # Use the teacher profile's critical fields check
     is_complete = teacher_profile.has_critical_fields()
     missing_fields = teacher_profile.get_missing_critical_fields()
-    
+
     # Simple completion percentage: 100% if complete, 50% otherwise
     completion_percentage = 100 if is_complete else 50
 

@@ -80,23 +80,23 @@ class NotificationListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
+
         # Add filter options for template
         context['notification_types'] = [
             ('low_balance', 'Low Balance'),
             ('package_expiring', 'Package Expiring'),
             ('balance_depleted', 'Balance Depleted'),
         ]
-        
+
         # Current filter values
         context['current_type'] = self.request.GET.get('notification_type', '')
         context['current_read_status'] = self.request.GET.get('is_read', '')
-        
+
         # Unread count for badge
         context['unread_count'] = Notification.objects.filter(
             user=self.request.user, is_read=False
         ).count()
-        
+
         return context
 
     def get_template_names(self):
@@ -131,7 +131,7 @@ class NotificationMarkReadView(LoginRequiredMixin, View):
     
     HTMX: Returns updated notification item or unread count
     """
-    
+
     def post(self, request, pk):
         """Mark notification as read."""
         notification = get_object_or_404(
@@ -203,7 +203,7 @@ class SchoolEmailTemplateListView(IsSchoolOwnerOrAdminMixin, ListView):
         school_ids = list_school_ids_owned_or_managed(user)
         if not school_ids:
             return SchoolEmailTemplate.objects.none()
-            
+
         return (
             SchoolEmailTemplate.objects.filter(school_id__in=school_ids)
             .select_related("school", "created_by")
@@ -212,14 +212,14 @@ class SchoolEmailTemplateListView(IsSchoolOwnerOrAdminMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
+
         # Add template type options
         context['template_types'] = EmailTemplateType.choices
-        
+
         # Current user's schools
         school_ids = list_school_ids_owned_or_managed(self.request.user)
         context['user_schools'] = School.objects.filter(id__in=school_ids)
-        
+
         return context
 
     def get_template_names(self):
@@ -257,14 +257,14 @@ class SchoolEmailTemplateCreateView(IsSchoolOwnerOrAdminMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
+
         # Template type options
         context['template_types'] = EmailTemplateType.choices
-        
+
         # Current user's schools
         school_ids = list_school_ids_owned_or_managed(self.request.user)
         context['user_schools'] = School.objects.filter(id__in=school_ids)
-        
+
         return context
 
     def post(self, request):
@@ -309,7 +309,7 @@ class SchoolEmailTemplateCreateView(IsSchoolOwnerOrAdminMixin, TemplateView):
 
         except Exception as e:
             logger.error(f"Failed to create template: {e}")
-            
+
             if request.htmx:
                 return render(request, 'messaging/email_templates/partials/create_error.html', {
                     'error': str(e)
@@ -337,20 +337,20 @@ class SchoolEmailTemplateEditView(IsSchoolOwnerOrAdminMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
+
         # Template type options
         context['template_types'] = EmailTemplateType.choices
-        
+
         # Current user's schools
         school_ids = list_school_ids_owned_or_managed(self.request.user)
         context['user_schools'] = School.objects.filter(id__in=school_ids)
-        
+
         return context
 
     def post(self, request, pk):
         """Update email template."""
         template = self.get_object()
-        
+
         try:
             # Update template fields
             template.name = request.POST.get('name', template.name)
@@ -360,7 +360,7 @@ class SchoolEmailTemplateEditView(IsSchoolOwnerOrAdminMixin, DetailView):
             template.use_school_branding = request.POST.get('use_school_branding') == 'on'
             template.custom_css = request.POST.get('custom_css', '')
             template.is_active = request.POST.get('is_active') == 'on'
-            
+
             template.save()
 
             if request.htmx:
@@ -376,7 +376,7 @@ class SchoolEmailTemplateEditView(IsSchoolOwnerOrAdminMixin, DetailView):
 
         except Exception as e:
             logger.error(f"Failed to update template {pk}: {e}")
-            
+
             if request.htmx:
                 return render(request, 'messaging/email_templates/partials/edit_error.html', {
                     'error': str(e)
@@ -403,11 +403,11 @@ class SchoolEmailTemplatePreviewView(IsSchoolOwnerOrAdminMixin, DetailView):
     def post(self, request, pk):
         """Generate template preview with provided variables."""
         template = self.get_object()
-        
+
         try:
             # Get template variables from request
             variables = json.loads(request.POST.get('variables', '{}'))
-            
+
             # Render template with variables using secure service
             from messaging.services.email_template_service import EmailTemplateRenderingService
 
@@ -454,7 +454,7 @@ class EmailCommunicationListView(IsSchoolOwnerOrAdminMixin, ListView):
         school_ids = list_school_ids_owned_or_managed(user)
         if not school_ids:
             return EmailCommunication.objects.none()
-            
+
         queryset = (
             EmailCommunication.objects.filter(school_id__in=school_ids)
             .select_related("school", "template", "sequence", "created_by")
@@ -484,11 +484,11 @@ class EmailCommunicationListView(IsSchoolOwnerOrAdminMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
+
         # Add filter options
         context['communication_types'] = EmailCommunicationType.choices
         context['delivery_statuses'] = EmailDeliveryStatus.choices
-        
+
         return context
 
     def get_template_names(self):
@@ -508,12 +508,13 @@ class EmailAnalyticsView(IsSchoolOwnerOrAdminMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
+
         user = self.request.user
         school_ids = list_school_ids_owned_or_managed(user)
-        
+
         if school_ids:
             from datetime import timedelta
+
             from django.utils import timezone
 
             # Calculate date range (last 30 days)
@@ -522,8 +523,8 @@ class EmailAnalyticsView(IsSchoolOwnerOrAdminMixin, TemplateView):
 
             # Get communications for user's schools
             communications = EmailCommunication.objects.filter(
-                school_id__in=school_ids, 
-                sent_at__gte=start_date, 
+                school_id__in=school_ids,
+                sent_at__gte=start_date,
                 sent_at__lte=end_date
             )
 
@@ -549,7 +550,7 @@ class EmailAnalyticsView(IsSchoolOwnerOrAdminMixin, TemplateView):
                 'click_rate': round(click_rate, 2),
                 'recent_communications': communications.order_by("-sent_at")[:10],
             })
-        
+
         return context
 
 

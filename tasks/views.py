@@ -1,17 +1,17 @@
 """
 Task management views following Django + HTMX patterns for PWA migration
 """
-import logging
 from datetime import datetime, timedelta
+import logging
 
 from django.contrib.auth import get_user_model
-from django.http import JsonResponse
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import get_object_or_404, redirect, render
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.views import View
 
-from .models import Task, TaskComment
+from .models import Task
 
 User = get_user_model()
 logger = logging.getLogger('tasks.views')
@@ -48,7 +48,7 @@ class TaskListView(LoginRequiredMixin, View):
     def post(self, request):
         """Handle task actions via HTMX"""
         action = request.POST.get('action')
-        
+
         if action == 'create_task':
             return self._handle_create_task(request)
         elif action == 'complete_task':
@@ -70,7 +70,7 @@ class TaskListView(LoginRequiredMixin, View):
     def _filter_tasks(self, tasks, filter_type):
         """Filter tasks based on filter type"""
         now = timezone.now()
-        
+
         if filter_type == 'pending':
             return tasks.filter(status='pending')
         elif filter_type == 'in_progress':
@@ -79,7 +79,7 @@ class TaskListView(LoginRequiredMixin, View):
             return tasks.filter(status='completed')
         elif filter_type == 'overdue':
             return tasks.filter(
-                due_date__lt=now, 
+                due_date__lt=now,
                 status__in=['pending', 'in_progress']
             )
         elif filter_type == 'due_today':
@@ -109,11 +109,11 @@ class TaskListView(LoginRequiredMixin, View):
             'in_progress_tasks': tasks.filter(status='in_progress').count(),
             'completed_tasks': tasks.filter(status='completed').count(),
             'overdue_tasks': tasks.filter(
-                due_date__lt=now, 
+                due_date__lt=now,
                 status__in=['pending', 'in_progress']
             ).count(),
             'urgent_tasks': tasks.filter(
-                is_urgent=True, 
+                is_urgent=True,
                 status__in=['pending', 'in_progress']
             ).count(),
             'tasks_due_today': tasks.filter(

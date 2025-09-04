@@ -225,7 +225,7 @@ CACHES = {
     },
     "sessions": {
         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-        "LOCATION": "sessions-cache", 
+        "LOCATION": "sessions-cache",
         "TIMEOUT": 60 * 60 * 24,
     },
 }

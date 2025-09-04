@@ -50,7 +50,7 @@ The Aprende Comigo Team""",
             recipient_list=[email],
             fail_silently=False,
         )
-        
+
         logger.info(f"Magic link email sent successfully to {email}")
         return {
             "success": True,
@@ -79,7 +79,7 @@ def send_sms_otp(phone_number: str, otp_code: str, user_name: str | None = None)
         dict with success status and details
     """
     greeting = f"Hello {user_name}" if user_name else "Hello"
-    
+
     message = f"""{greeting},
 
 Your Aprende Comigo verification code is: {otp_code}
@@ -91,31 +91,31 @@ If you didn't request this code, please ignore this message."""
     try:
         # Use the new SMS service
         result = send_sms(to=phone_number, message=message)
-        
+
         # Add additional metadata for OTP context
         result.update({
             "phone_number": phone_number,
             "sent_at": datetime.now().isoformat(),
             "service": "otp_verification",
         })
-        
+
         # Only include OTP code in development mode for debugging
         if settings.DEBUG and not result.get('success'):
             logger.info(f"[SMS DEBUG] OTP Code for {phone_number}: {otp_code}")
             result["debug_otp_code"] = otp_code
-        
+
         if result['success']:
             logger.info(f"SMS OTP sent successfully to {phone_number}: {result.get('message_id', 'N/A')}")
         else:
             logger.error(f"SMS OTP failed for {phone_number}: {result.get('error', 'Unknown error')}")
-            
+
         return result
-        
+
     except Exception as e:
-        logger.error(f"SMS OTP error for {phone_number}: {str(e)}")
+        logger.error(f"SMS OTP error for {phone_number}: {e!s}")
         return {
             "success": False,
-            "error": f"SMS service error: {str(e)}",
+            "error": f"SMS service error: {e!s}",
             "phone_number": phone_number,
             "sent_at": datetime.now().isoformat()
         }

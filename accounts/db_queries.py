@@ -143,16 +143,16 @@ def create_user_school_and_membership(user: CustomUser, school_name: str) -> Sch
         Exception: If school or membership creation fails (by design for transaction rollback)
     """
     import logging
-    
+
     logger = logging.getLogger(__name__)
-    
+
     # Create a school for the user (no try/catch - let exceptions bubble up)
     school = School.objects.create(
         name=school_name,
         description=f"Personal tutoring school for {user.first_name or user.email}",
         contact_email=user.email,
     )
-    
+
     # Create school membership as owner (no try/catch - let exceptions bubble up)
     SchoolMembership.objects.create(
         user=user,
@@ -160,7 +160,7 @@ def create_user_school_and_membership(user: CustomUser, school_name: str) -> Sch
         role=SchoolRole.SCHOOL_OWNER,
         is_active=True,
     )
-    
+
     logger.info(f"Created school '{school_name}' and owner membership for user: {user.email}")
     return school
 

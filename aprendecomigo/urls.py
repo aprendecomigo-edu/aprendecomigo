@@ -16,14 +16,15 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import include, path
 from django.http import JsonResponse
+from django.urls import include, path
 
 # Dashboard views
 from dashboard.views import InvitationsView, PeopleView, StudentsView, TeachersView
 
-# Scheduler views 
+# Scheduler views
 from scheduler.views import CalendarView
+
 
 # Health check for Railway deployment
 def health_check(request):
@@ -32,7 +33,7 @@ def health_check(request):
 urlpatterns = [
     # Railway health check
     path("health/", health_check, name="health_check"),
-    
+
     # Admin route
     path("admin/", admin.site.urls),
     # PWA infrastructure (django-pwa)

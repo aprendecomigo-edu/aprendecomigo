@@ -11,7 +11,7 @@ import os
 
 from django.core.asgi import get_asgi_application
 
-# Railway deployment pattern - use environment variable with fallback  
+# Railway deployment pattern - use environment variable with fallback
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "aprendecomigo.settings")
 
 # Initialize Django ASGI application early to ensure the app is loaded

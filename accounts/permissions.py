@@ -14,7 +14,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 from .models import School, SchoolMembership
 
-
 # =======================
 # SCHOOL PERMISSION MIXINS
 # =======================
@@ -45,7 +44,7 @@ class IsSchoolOwnerOrAdminMixin(LoginRequiredMixin, UserPassesTestMixin):
             role__in=["school_owner", "school_admin"],
             is_active=True,
         ).exists()
-        
+
         if not has_basic_permission:
             return False
 
@@ -87,7 +86,7 @@ class IsSchoolOwnerOrAdminMixin(LoginRequiredMixin, UserPassesTestMixin):
 
 
 # =======================
-# HELPER MIXINS  
+# HELPER MIXINS
 # =======================
 
 
@@ -115,7 +114,7 @@ class SchoolPermissionMixin:
 
         # Get schools where user has any active membership
         user_memberships = SchoolMembership.objects.filter(
-            user=self.request.user, 
+            user=self.request.user,
             is_active=True
         ).values_list("school_id", flat=True)
 

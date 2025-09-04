@@ -25,10 +25,8 @@ import pytz
 from accounts.models import CustomUser, School, TeacherProfile
 
 from .conflict_detection_utils import (
-    ClassScheduleConflictDetector,
     ConflictDetectionOrchestrator,
     TimeOverlapDetector,
-    UnavailabilityConflictDetector,
 )
 from .constants import (
     DEFAULT_CANCELLATION_DEADLINE_HOURS,

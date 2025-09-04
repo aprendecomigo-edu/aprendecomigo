@@ -148,17 +148,17 @@ class CustomUser(AbstractUser):
     def clean(self):
         """Validate that non-superusers have at least one active school membership"""
         from django.core.exceptions import ValidationError
-        
+
         super().clean()
-        
+
         # Skip validation for new users (they don't have PKs yet)
         if not self.pk:
             return
-            
+
         # Skip validation for superusers
         if self.is_superuser:
             return
-            
+
         # Check if user has at least one active school membership
         if not self.school_memberships.filter(is_active=True).exists():
             raise ValidationError(

@@ -7,23 +7,20 @@ from django.urls import path
 app_name = "finances"
 
 from .views import (
-    # Payment Views
-    PaymentFormView,
-    PaymentCreateView,
-    PaymentConfirmView,
-    PaymentSuccessView,
-    
     # Balance Views
     BalanceOverviewView,
     BalanceRefreshView,
-    TransactionHistoryView,
-    TopUpFormView,
-    
+    BillingSettingsUpdateView,
     # School Admin Views
     BillingSettingsView,
-    BillingSettingsUpdateView,
+    PaymentConfirmView,
+    PaymentCreateView,
+    # Payment Views
+    PaymentFormView,
+    PaymentSuccessView,
     TeacherCompensationView,
-    
+    TopUpFormView,
+    TransactionHistoryView,
     # Utility Views
     pricing_plans_list,
     stripe_config,
@@ -92,7 +89,7 @@ urlpatterns = [
     path("payments/create/", PaymentCreateView.as_view(), name="payment-create"),
     path("payments/confirm/", PaymentConfirmView.as_view(), name="payment-confirm"),
     path("payments/success/<int:transaction_id>/", PaymentSuccessView.as_view(), name="payment-success"),
-    
+
     # =============================================================================
     # Balance Management URLs
     # =============================================================================
@@ -100,19 +97,19 @@ urlpatterns = [
     path("balance/refresh/", BalanceRefreshView.as_view(), name="balance-refresh"),
     path("transactions/", TransactionHistoryView.as_view(), name="transaction-history"),
     path("top-up/form/", TopUpFormView.as_view(), name="top-up-form"),
-    
+
     # =============================================================================
     # Pricing and Configuration URLs
     # =============================================================================
     path("pricing-plans/", pricing_plans_list, name="pricing-plans-list"),
     path("stripe/config/", stripe_config, name="stripe-config"),
     path("stripe/test-connection/", stripe_connection_test, name="stripe-connection-test"),
-    
+
     # =============================================================================
     # Webhook URLs
     # =============================================================================
     path("webhooks/stripe/", stripe_webhook, name="stripe-webhook"),
-    
+
     # =============================================================================
     # School Admin URLs
     # =============================================================================

@@ -2,39 +2,22 @@
 Django views for the finances app (PWA conversion from DRF).
 """
 
-from datetime import timedelta
 from decimal import Decimal
-import json
 import logging
 
-from django.apps import apps
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.cache import cache
-from django.db import transaction
-from django.db.models import Q, Sum
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.utils import timezone
-from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.views.generic import (
-    CreateView, 
-    DetailView, 
-    ListView, 
-    TemplateView, 
-    UpdateView, 
-    View
-)
+from django.views.generic import ListView, TemplateView, UpdateView, View
 
 from accounts.permissions import SchoolPermissionMixin
 
 from .models import (
-    ClassSession,
-    PlanType,
     PricingPlan,
     PurchaseTransaction,
     SchoolBillingSettings,
@@ -42,9 +25,7 @@ from .models import (
     TeacherCompensationRule,
     TeacherPaymentEntry,
     TransactionPaymentStatus,
-    TransactionType,
 )
-from .services import BulkPaymentProcessor, TeacherPaymentCalculator
 from .services.payment_service import PaymentService
 from .services.stripe_base import StripeService
 
@@ -62,7 +43,7 @@ class PaymentFormView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         pricing_plans = PricingPlan.objects.filter(is_active=True)
-        
+
         # Get Stripe public key for Elements
         try:
             stripe_service = StripeService()
@@ -70,7 +51,7 @@ class PaymentFormView(LoginRequiredMixin, TemplateView):
         except Exception as e:
             logger.error(f"Failed to get Stripe public key: {e}")
             context['stripe_error'] = "Payment system temporarily unavailable"
-        
+
         context.update({
             'pricing_plans': pricing_plans,
             'user_balance': self._get_user_balance(),
@@ -93,31 +74,31 @@ class PaymentCreateView(LoginRequiredMixin, View):
         try:
             plan_id = request.POST.get('plan_id')
             payment_method_id = request.POST.get('payment_method_id')
-            
+
             if not plan_id:
                 return JsonResponse({'error': 'Plan ID is required'}, status=400)
 
             plan = get_object_or_404(PricingPlan, id=plan_id, is_active=True)
-            
+
             # Initialize payment service
             payment_service = PaymentService()
-            
+
             # Create payment intent
             result = payment_service.create_payment_intent(
                 user=request.user,
                 plan=plan,
                 payment_method_id=payment_method_id
             )
-            
+
             if result.get('error'):
                 return JsonResponse({'error': result['error']}, status=400)
-            
+
             # Return client secret for confirmation
             return JsonResponse({
                 'client_secret': result['client_secret'],
                 'payment_intent_id': result['payment_intent_id']
             })
-            
+
         except Exception as e:
             logger.error(f"Payment creation error: {e}")
             return JsonResponse({'error': 'Payment processing failed'}, status=500)
@@ -129,16 +110,16 @@ class PaymentConfirmView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         try:
             payment_intent_id = request.POST.get('payment_intent_id')
-            
+
             if not payment_intent_id:
                 return JsonResponse({'error': 'Payment intent ID is required'}, status=400)
-            
+
             payment_service = PaymentService()
             result = payment_service.confirm_payment(
                 payment_intent_id=payment_intent_id,
                 user=request.user
             )
-            
+
             if result.get('success'):
                 # Render success partial for HTMX
                 context = {
@@ -148,7 +129,7 @@ class PaymentConfirmView(LoginRequiredMixin, View):
                 return render(request, 'finances/payments/partials/payment_success.html', context)
             else:
                 return JsonResponse({'error': result.get('error', 'Payment confirmation failed')}, status=400)
-                
+
         except Exception as e:
             logger.error(f"Payment confirmation error: {e}")
             return JsonResponse({'error': 'Payment confirmation failed'}, status=500)
@@ -161,7 +142,7 @@ class PaymentSuccessView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         transaction_id = self.kwargs.get('transaction_id')
-        
+
         if transaction_id:
             try:
                 transaction = PurchaseTransaction.objects.get(
@@ -172,7 +153,7 @@ class PaymentSuccessView(LoginRequiredMixin, TemplateView):
                 context['new_balance'] = self._get_user_balance()
             except PurchaseTransaction.DoesNotExist:
                 messages.error(self.request, "Transaction not found")
-        
+
         return context
 
     def _get_user_balance(self):
@@ -194,18 +175,18 @@ class BalanceOverviewView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
+
         # Get or create balance for user
         balance, created = StudentAccountBalance.objects.get_or_create(
             student=self.request.user,
             defaults={'remaining_hours': Decimal('0.00')}
         )
-        
+
         # Get recent transactions
         recent_transactions = PurchaseTransaction.objects.filter(
             student=self.request.user
         ).order_by('-created_at')[:10]
-        
+
         context.update({
             'balance': balance,
             'recent_transactions': recent_transactions,
@@ -225,7 +206,7 @@ class BalanceRefreshView(LoginRequiredMixin, View):
                 student=request.user,
                 remaining_hours=Decimal('0.00')
             )
-        
+
         context = {'balance': balance}
         return render(request, 'finances/balance/partials/balance_widget.html', context)
 
@@ -273,9 +254,9 @@ class BillingSettingsView(LoginRequiredMixin, SchoolPermissionMixin, TemplateVie
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user_schools = self.get_user_schools()
-        
+
         settings = SchoolBillingSettings.objects.filter(school__in=user_schools)
-        
+
         context.update({
             'settings': settings,
             'user_schools': user_schools
@@ -314,13 +295,13 @@ class TeacherCompensationView(LoginRequiredMixin, SchoolPermissionMixin, ListVie
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
+
         # Get recent payments
         user_schools = self.get_user_schools()
         recent_payments = TeacherPaymentEntry.objects.filter(
             teacher__school__in=user_schools
         ).order_by('-created_at')[:10]
-        
+
         context['recent_payments'] = recent_payments
         return context
 
@@ -336,10 +317,10 @@ def stripe_webhook(request):
     try:
         payload = request.body
         sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
-        
+
         stripe_service = StripeService()
         event = stripe_service.verify_webhook(payload, sig_header)
-        
+
         if event['type'] == 'payment_intent.succeeded':
             payment_intent = event['data']['object']
             # Process successful payment
@@ -348,9 +329,9 @@ def stripe_webhook(request):
             payment_intent = event['data']['object']
             # Process failed payment
             _process_payment_failure(payment_intent)
-        
+
         return HttpResponse(status=200)
-    
+
     except Exception as e:
         logger.error(f"Webhook processing error: {e}")
         return HttpResponse(status=400)
@@ -363,20 +344,20 @@ def _process_payment_success(payment_intent):
         transaction = PurchaseTransaction.objects.get(
             stripe_payment_intent_id=payment_intent['id']
         )
-        
+
         # Update transaction status
         transaction.payment_status = TransactionPaymentStatus.COMPLETED
         transaction.save()
-        
+
         # Update student balance
         balance, created = StudentAccountBalance.objects.get_or_create(
             student=transaction.student
         )
         balance.remaining_hours += transaction.tutoring_hours_purchased
         balance.save()
-        
+
         logger.info(f"Payment processed successfully: {payment_intent['id']}")
-        
+
     except PurchaseTransaction.DoesNotExist:
         logger.error(f"Transaction not found for payment intent: {payment_intent['id']}")
     except Exception as e:
@@ -389,12 +370,12 @@ def _process_payment_failure(payment_intent):
         transaction = PurchaseTransaction.objects.get(
             stripe_payment_intent_id=payment_intent['id']
         )
-        
+
         transaction.payment_status = TransactionPaymentStatus.FAILED
         transaction.save()
-        
+
         logger.warning(f"Payment failed: {payment_intent['id']}")
-        
+
     except PurchaseTransaction.DoesNotExist:
         logger.error(f"Transaction not found for failed payment: {payment_intent['id']}")
     except Exception as e:
@@ -409,10 +390,10 @@ def _process_payment_failure(payment_intent):
 def pricing_plans_list(request):
     """List active pricing plans."""
     plans = PricingPlan.objects.filter(is_active=True).order_by('tutoring_hours')
-    
+
     if request.headers.get('HX-Request'):
         return render(request, 'finances/partials/pricing_plans_list.html', {'plans': plans})
-    
+
     return render(request, 'finances/pricing_plans.html', {'plans': plans})
 
 

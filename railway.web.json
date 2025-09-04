@@ -5,9 +5,6 @@
     "nixpacksPlan": {
       "providers": ["python", "node"],
       "phases": {
-        "setup": {
-          "nixPkgs": ["python311", "nodejs_20", "gcc"]
-        },
         "install": {
           "cmds": [
             "pip install --upgrade pip",
