@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "pwa",          # PWA support
     "webpush",      # Web push notifications
     "tailwind",
+    "anymail",      # Email backend with ESP support
     # Custom apps
     "theme",
     "accounts",

@@ -54,28 +54,32 @@ else:
         }
     }
 
-# Email configuration
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+# Email configuration - Mailgun via django-anymail
+EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
 
-email_host = os.getenv("EMAIL_HOST")
-if not email_host:
-    raise ValueError("EMAIL_HOST environment variable is not set")
-EMAIL_HOST = str(email_host)
+# Mailgun configuration
+ANYMAIL = {
+    "MAILGUN_API_KEY": os.getenv("MAILGUN_API_KEY"),
+    "MAILGUN_SENDER_DOMAIN": os.getenv("MAILGUN_SENDER_DOMAIN"),
+    "MAILGUN_API_URL": os.getenv("MAILGUN_API_URL", "https://api.mailgun.net/v3"),  # Use api.eu.mailgun.net for EU
+}
 
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
-EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
+# Validate Mailgun configuration
+if not ANYMAIL.get("MAILGUN_API_KEY"):
+    raise ValueError("MAILGUN_API_KEY environment variable is not set")
+if not ANYMAIL.get("MAILGUN_SENDER_DOMAIN"):
+    raise ValueError("MAILGUN_SENDER_DOMAIN environment variable is not set")
 
-email_host_user = os.getenv("EMAIL_HOST_USER")
-if not email_host_user:
-    raise ValueError("EMAIL_HOST_USER environment variable is not set")
-EMAIL_HOST_USER = str(email_host_user)
+# Email settings
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "Aprende Comigo <noreply@aprendecomigo.com>")
+SERVER_EMAIL = os.getenv("SERVER_EMAIL", "server@aprendecomigo.com")
 
-email_host_password = os.getenv("EMAIL_HOST_PASSWORD")
-if not email_host_password:
-    raise ValueError("EMAIL_HOST_PASSWORD environment variable is not set")
-EMAIL_HOST_PASSWORD = str(email_host_password)
-
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@aprendecomigo.com")
+# Email tracking and analytics for production
+ANYMAIL_SEND_DEFAULTS = {
+    "tags": ["production"],
+    "track_clicks": os.getenv("MAILGUN_TRACK_CLICKS", "True") == "True",
+    "track_opens": os.getenv("MAILGUN_TRACK_OPENS", "True") == "True",
+}
 
 # CORS settings - strict for production
 CORS_ALLOW_ALL_ORIGINS = False

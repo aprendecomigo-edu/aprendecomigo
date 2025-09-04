@@ -53,28 +53,31 @@ else:
         }
     }
 
-# Email configuration
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+# Email configuration - Mailgun via django-anymail
+EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
 
-email_host = os.getenv("EMAIL_HOST", "")
-if not email_host:
-    raise ValueError("EMAIL_HOST environment variable is not set")
-EMAIL_HOST = str(email_host)
+# Mailgun configuration
+ANYMAIL = {
+    "MAILGUN_API_KEY": os.getenv("MAILGUN_API_KEY", ""),
+    "MAILGUN_SENDER_DOMAIN": os.getenv("MAILGUN_SENDER_DOMAIN", "sandbox4b37e78e50fa4f0bba82524e148f5738.mailgun.org"),
+    # For sandbox domains, you need to add authorized recipients in Mailgun dashboard
+    "MAILGUN_API_URL": os.getenv("MAILGUN_API_URL", "https://api.mailgun.net/v3"),  # Use api.eu.mailgun.net for EU
+}
 
-EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
-EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True") == "True"
+# Validate Mailgun API key is set
+if not ANYMAIL["MAILGUN_API_KEY"]:
+    print("WARNING: MAILGUN_API_KEY not set. Email sending will fail.")
 
-email_host_user = os.getenv("EMAIL_HOST_USER")
-if not email_host_user:
-    raise ValueError("EMAIL_HOST_USER environment variable is not set")
-EMAIL_HOST_USER = str(email_host_user)
+# Email settings
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "Aprende Comigo <noreply@sandbox4b37e78e50fa4f0bba82524e148f5738.mailgun.org>")
+SERVER_EMAIL = os.getenv("SERVER_EMAIL", "server@sandbox4b37e78e50fa4f0bba82524e148f5738.mailgun.org")
 
-email_host_password = os.getenv("EMAIL_HOST_PASSWORD")
-if not email_host_password:
-    raise ValueError("EMAIL_HOST_PASSWORD environment variable is not set")
-EMAIL_HOST_PASSWORD = str(email_host_password)
-
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "noreply@aprendecomigo.com")
+# Email tracking and analytics (optional)
+ANYMAIL_SEND_DEFAULTS = {
+    "tags": ["staging"],
+    "track_clicks": True,
+    "track_opens": True,
+}
 
 # CORS settings - more restrictive for staging
 CORS_ALLOW_ALL_ORIGINS = False

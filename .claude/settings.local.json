@@ -51,7 +51,9 @@
       "mcp__Railway__link-environment",
       "mcp__Railway__list-variables",
       "mcp__Railway__list-services",
-      "mcp__Railway__link-service"
+      "mcp__Railway__link-service",
+      "Read(/var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_y51SbH/**)",
+      "WebFetch(domain:anymail.dev)"
     ],
     "deny": [],
     "ask": []
