@@ -10,7 +10,8 @@ from typing import Any
 
 from django.conf import settings
 from django.core.mail import send_mail
-import httpx
+
+from .sms import send_sms
 
 logger = logging.getLogger(__name__)
 
@@ -88,64 +89,35 @@ This code will expire in 5 minutes.
 If you didn't request this code, please ignore this message."""
 
     try:
-        # Configure SMS service based on settings
-        if not hasattr(settings, 'SMS_SERVICE_URL') or not settings.SMS_SERVICE_URL:
-            # Development fallback: log SMS to console
-            if settings.DEBUG:
-                logger.info(f"[SMS DEVELOPMENT MODE] To: {phone_number}")
-                logger.info(f"[SMS DEVELOPMENT MODE] Message: {message}")
-                logger.info(f"[SMS DEVELOPMENT MODE] OTP Code: {otp_code}")
-                return {
-                    "success": True,
-                    "phone_number": phone_number,
-                    "sent_at": datetime.now().isoformat(),
-                    "development_mode": True,
-                    "otp_code": otp_code  # Only in development!
-                }
-            else:
-                logger.warning("SMS service not configured, skipping SMS send")
-                return {
-                    "success": False,
-                    "error": "SMS service not configured",
-                    "phone_number": phone_number
-                }
+        # Use the new SMS service
+        result = send_sms(to=phone_number, message=message)
+        
+        # Add additional metadata for OTP context
+        result.update({
+            "phone_number": phone_number,
+            "sent_at": datetime.now().isoformat(),
+            "service": "otp_verification",
+        })
+        
+        # Only include OTP code in development mode for debugging
+        if settings.DEBUG and not result.get('success'):
+            logger.info(f"[SMS DEBUG] OTP Code for {phone_number}: {otp_code}")
+            result["debug_otp_code"] = otp_code
+        
+        if result['success']:
+            logger.info(f"SMS OTP sent successfully to {phone_number}: {result.get('message_id', 'N/A')}")
+        else:
+            logger.error(f"SMS OTP failed for {phone_number}: {result.get('error', 'Unknown error')}")
             
-        # Send SMS via configured service
-        with httpx.Client(timeout=30.0) as client:
-            response = client.post(
-                settings.SMS_SERVICE_URL,
-                json={
-                    "to": phone_number,
-                    "message": message,
-                    "from": getattr(settings, 'SMS_FROM_NUMBER', 'Aprende Comigo')
-                },
-                headers={
-                    "Authorization": f"Bearer {getattr(settings, 'SMS_API_KEY', '')}",
-                    "Content-Type": "application/json"
-                }
-            )
-            
-            if response.status_code == 200:
-                logger.info(f"SMS OTP sent successfully to {phone_number}")
-                return {
-                    "success": True,
-                    "phone_number": phone_number,
-                    "sent_at": datetime.now().isoformat()
-                }
-            else:
-                logger.error(f"SMS sending failed: {response.status_code} - {response.text}")
-                return {
-                    "success": False,
-                    "error": f"SMS service error: {response.status_code}",
-                    "phone_number": phone_number
-                }
-                
+        return result
+        
     except Exception as e:
-        logger.error(f"SMS sending exception: {e!s}")
+        logger.error(f"SMS OTP error for {phone_number}: {str(e)}")
         return {
             "success": False,
-            "error": f"SMS sending failed: {e!s}",
-            "phone_number": phone_number
+            "error": f"SMS service error: {str(e)}",
+            "phone_number": phone_number,
+            "sent_at": datetime.now().isoformat()
         }
 
 

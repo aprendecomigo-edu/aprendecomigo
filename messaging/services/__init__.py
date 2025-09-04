@@ -10,6 +10,7 @@ from .email_sequence_service import EmailSequenceOrchestrationService
 from .email_template_service import EmailTemplateRenderingService, SchoolEmailTemplateManager
 from .enhanced_email_service import EnhancedEmailService
 from .secure_template_engine import HTMLSanitizer, SecureTemplateEngine, TemplateVariableValidator
+from .sms import send_sms, send_sms_async, send_bulk_sms, send_bulk_sms_async, sms_service
 from .teacher_communication_templates import DefaultEmailTemplates
 from .teacher_invitation_service import TeacherInvitationEmailService
 
@@ -28,4 +29,10 @@ __all__ = [
     "send_email_verification_code",
     "send_magic_link_email",
     "send_sms_otp",
+    # SMS functions
+    "send_sms",
+    "send_sms_async",
+    "send_bulk_sms",
+    "send_bulk_sms_async",
+    "sms_service",
 ]

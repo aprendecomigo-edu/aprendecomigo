@@ -53,31 +53,44 @@ else:
         }
     }
 
-# Email configuration - Mailgun via django-anymail
-EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
+# Email configuration - Amazon SES via django-anymail
+EMAIL_BACKEND = "anymail.backends.amazon_ses.EmailBackend"
 
-# Mailgun configuration
+# Amazon SES configuration
 ANYMAIL = {
-    "MAILGUN_API_KEY": os.getenv("MAILGUN_API_KEY", ""),
-    "MAILGUN_SENDER_DOMAIN": os.getenv("MAILGUN_SENDER_DOMAIN", "sandbox4b37e78e50fa4f0bba82524e148f5738.mailgun.org"),
-    # For sandbox domains, you need to add authorized recipients in Mailgun dashboard
-    "MAILGUN_API_URL": os.getenv("MAILGUN_API_URL", "https://api.mailgun.net/v3"),  # Use api.eu.mailgun.net for EU
+    "AMAZON_SES_CLIENT_PARAMS": {
+        "region_name": os.getenv("AWS_DEFAULT_REGION", "us-east-1"),
+        "aws_access_key_id": os.getenv("AWS_ACCESS_KEY_ID"),
+        "aws_secret_access_key": os.getenv("AWS_SECRET_ACCESS_KEY"),
+    },
+    "AMAZON_SES_CONFIGURATION_SET_NAME": os.getenv("AWS_SES_CONFIGURATION_SET_NAME"),
 }
 
-# Validate Mailgun API key is set
-if not ANYMAIL["MAILGUN_API_KEY"]:
-    print("WARNING: MAILGUN_API_KEY not set. Email sending will fail.")
+# Validate AWS configuration is set
+if not os.getenv("AWS_ACCESS_KEY_ID") and not os.getenv("AWS_PROFILE"):
+    print("WARNING: AWS_ACCESS_KEY_ID not set. Email sending will fail (unless using IAM roles).")
 
 # Email settings
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "Aprende Comigo <noreply@sandbox4b37e78e50fa4f0bba82524e148f5738.mailgun.org>")
-SERVER_EMAIL = os.getenv("SERVER_EMAIL", "server@sandbox4b37e78e50fa4f0bba82524e148f5738.mailgun.org")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "Aprende Comigo <aprendecomigoclaude@gmail.com>")
+SERVER_EMAIL = os.getenv("SERVER_EMAIL", "aprendecomigoclaude@gmail.com")
 
 # Email tracking and analytics (optional)
 ANYMAIL_SEND_DEFAULTS = {
     "tags": ["staging"],
-    "track_clicks": True,
-    "track_opens": True,
+    # Note: SES tracking is configured via Configuration Sets, not per-message settings
+    # "track_clicks" and "track_opens" are not supported at message level for SES
+    "metadata": {
+        "environment": "staging",
+        "application": "aprende-comigo",
+    },
 }
+
+# SMS Configuration - Amazon SNS
+AWS_SNS_REGION = os.getenv("AWS_SNS_REGION", os.getenv("AWS_DEFAULT_REGION", "us-east-1"))
+
+# Validate SMS configuration
+if not os.getenv("AWS_ACCESS_KEY_ID") and not os.getenv("AWS_PROFILE"):
+    print("WARNING: AWS credentials not set. SNS SMS sending will fail.")
 
 # CORS settings - more restrictive for staging
 CORS_ALLOW_ALL_ORIGINS = False

@@ -54,21 +54,26 @@ else:
         }
     }
 
-# Email configuration - Mailgun via django-anymail
-EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
+# Email configuration - Amazon SES via django-anymail
+EMAIL_BACKEND = "anymail.backends.amazon_ses.EmailBackend"
 
-# Mailgun configuration
+# Amazon SES configuration
 ANYMAIL = {
-    "MAILGUN_API_KEY": os.getenv("MAILGUN_API_KEY"),
-    "MAILGUN_SENDER_DOMAIN": os.getenv("MAILGUN_SENDER_DOMAIN"),
-    "MAILGUN_API_URL": os.getenv("MAILGUN_API_URL", "https://api.mailgun.net/v3"),  # Use api.eu.mailgun.net for EU
+    "AMAZON_SES_CLIENT_PARAMS": {
+        "region_name": os.getenv("AWS_DEFAULT_REGION", "us-east-1"),
+        "aws_access_key_id": os.getenv("AWS_ACCESS_KEY_ID"),
+        "aws_secret_access_key": os.getenv("AWS_SECRET_ACCESS_KEY"),
+    },
+    "AMAZON_SES_CONFIGURATION_SET_NAME": os.getenv("AWS_SES_CONFIGURATION_SET_NAME"),
 }
 
-# Validate Mailgun configuration
-if not ANYMAIL.get("MAILGUN_API_KEY"):
-    raise ValueError("MAILGUN_API_KEY environment variable is not set")
-if not ANYMAIL.get("MAILGUN_SENDER_DOMAIN"):
-    raise ValueError("MAILGUN_SENDER_DOMAIN environment variable is not set")
+# Validate AWS configuration
+if not os.getenv("AWS_ACCESS_KEY_ID") and not os.getenv("AWS_PROFILE"):
+    raise ValueError("AWS_ACCESS_KEY_ID environment variable is not set (or use AWS_PROFILE for IAM roles)")
+if not os.getenv("AWS_SECRET_ACCESS_KEY") and not os.getenv("AWS_PROFILE"):
+    raise ValueError("AWS_SECRET_ACCESS_KEY environment variable is not set (or use AWS_PROFILE for IAM roles)")
+if not os.getenv("AWS_DEFAULT_REGION"):
+    raise ValueError("AWS_DEFAULT_REGION environment variable is not set")
 
 # Email settings
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "Aprende Comigo <noreply@aprendecomigo.com>")
@@ -77,9 +82,16 @@ SERVER_EMAIL = os.getenv("SERVER_EMAIL", "server@aprendecomigo.com")
 # Email tracking and analytics for production
 ANYMAIL_SEND_DEFAULTS = {
     "tags": ["production"],
-    "track_clicks": os.getenv("MAILGUN_TRACK_CLICKS", "True") == "True",
-    "track_opens": os.getenv("MAILGUN_TRACK_OPENS", "True") == "True",
+    # Note: SES tracking is configured via Configuration Sets, not per-message settings
+    # "track_clicks" and "track_opens" are not supported at message level for SES
+    "metadata": {
+        "environment": "production",
+        "application": "aprende-comigo",
+    },
 }
+
+# SMS Configuration - Amazon SNS
+AWS_SNS_REGION = os.getenv("AWS_SNS_REGION", os.getenv("AWS_DEFAULT_REGION", "us-east-1"))
 
 # CORS settings - strict for production
 CORS_ALLOW_ALL_ORIGINS = False
