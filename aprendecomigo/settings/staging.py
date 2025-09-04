@@ -4,8 +4,10 @@ Django staging settings for aprendecomigo project.
 
 import os
 
+import dj_database_url
+
 # Import all settings from base.py
-from .base import *  # noqa: E402
+from .base import *
 
 # SECURITY WARNING: keep the secret key used in production secret!
 secret_key = os.getenv("SECRET_KEY")
@@ -21,20 +23,35 @@ allowed_hosts = os.getenv("ALLOWED_HOSTS", "")
 if not allowed_hosts:
     raise ValueError("ALLOWED_HOSTS environment variable is not set")
 ALLOWED_HOSTS = allowed_hosts.split(",")
-
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-# Use PostgreSQL in staging as per Railway docs
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ["PGDATABASE"],
-        'USER': os.environ["PGUSER"],
-        'PASSWORD': os.environ["PGPASSWORD"],
-        'HOST': os.environ["PGHOST"],
-        'PORT': os.environ["PGPORT"],
+# Use PostgreSQL in production
+# Railway provides DATABASE_URL automatically when PostgreSQL is provisioned
+# Falls back to individual PG* variables if DATABASE_URL is not set
+if os.environ.get("DATABASE_URL"):
+    DATABASES = {
+        'default': dj_database_url.parse(
+            os.environ["DATABASE_URL"],
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ["PGDATABASE"],
+            'USER': os.environ["PGUSER"],
+            'PASSWORD': os.environ["PGPASSWORD"],
+            'HOST': os.environ["PGHOST"],
+            'PORT': os.environ["PGPORT"],
+            'CONN_MAX_AGE': 600,
+            'OPTIONS': {
+                'connect_timeout': 10,
+                'MAX_CONNS': 20,
+            }
+        }
+    }
 
 # Email configuration
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"

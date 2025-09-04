@@ -310,11 +310,16 @@ STRIPE_PUBLIC_KEY = os.getenv("STRIPE_PUBLIC_KEY", "")
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 
 # Channel Layers Configuration
+# Parse Redis URL for Channels configuration
+import redis
+redis_url = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379')
+redis_parsed = redis.Redis.from_url(redis_url).connection_pool.connection_kwargs
+
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)],
+            "hosts": [(redis_parsed.get('host', '127.0.0.1'), redis_parsed.get('port', 6379))],
         },
     },
 }

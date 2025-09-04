@@ -4,6 +4,8 @@ Django production settings for aprendecomigo project.
 
 import os
 
+import dj_database_url
+
 # Import specific settings from base
 from .base import BASE_DIR
 
@@ -25,16 +27,32 @@ ALLOWED_HOSTS = allowed_hosts.split(",")
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 # Use PostgreSQL in production
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ["PGDATABASE"],
-        'USER': os.environ["PGUSER"],
-        'PASSWORD': os.environ["PGPASSWORD"],
-        'HOST': os.environ["PGHOST"],
-        'PORT': os.environ["PGPORT"],
+# Railway provides DATABASE_URL automatically when PostgreSQL is provisioned
+# Falls back to individual PG* variables if DATABASE_URL is not set
+if os.environ.get("DATABASE_URL"):
+    DATABASES = {
+        'default': dj_database_url.parse(
+            os.environ["DATABASE_URL"],
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ["PGDATABASE"],
+            'USER': os.environ["PGUSER"],
+            'PASSWORD': os.environ["PGPASSWORD"],
+            'HOST': os.environ["PGHOST"],
+            'PORT': os.environ["PGPORT"],
+            'CONN_MAX_AGE': 600,
+            'OPTIONS': {
+                'connect_timeout': 10,
+                'MAX_CONNS': 20,
+            }
+        }
+    }
 
 # Email configuration
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
@@ -121,11 +139,13 @@ CACHES = {
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 SESSION_CACHE_ALIAS = 'sessions'
 
-# Database Connection Pooling
-DATABASES['default']['OPTIONS'].update({
-    'MAX_CONNS': 20,
-    'CONN_MAX_AGE': 600,  # 10 minutes connection pooling
-})
+# Database Connection Pooling is configured above in DATABASES configuration
+
+# Static Files Configuration - WhiteNoise for Railway
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+WHITENOISE_COMPRESS_OFFLINE = True
+WHITENOISE_USE_FINDERS = False
+WHITENOISE_AUTOREFRESH = False
 
 # Security settings for cookies
 SESSION_COOKIE_SECURE = True
