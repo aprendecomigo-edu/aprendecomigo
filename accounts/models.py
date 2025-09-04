@@ -311,8 +311,6 @@ class EducationalSystem(models.Model):
         """Get the appropriate school year choices for this educational system"""
         if self.code == EducationalSystemType.PORTUGAL:
             return PortugueseSchoolYear.choices
-        elif self.code == EducationalSystemType.BRAZIL:
-            return BrazilianSchoolYear.choices
         else:  # custom or any other system
             return CustomSchoolYear.choices
 
@@ -321,8 +319,6 @@ class EducationalSystem(models.Model):
         """Get the appropriate education level choices for this educational system"""
         if self.code == EducationalSystemType.PORTUGAL:
             return PortugueseEducationLevel.choices
-        elif self.code == EducationalSystemType.BRAZIL:
-            return BrazilianEducationLevel.choices
         else:  # custom or any other system
             return CustomEducationLevel.choices
 

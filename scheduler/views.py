@@ -237,11 +237,7 @@ class CalendarView(LoginRequiredMixin, View):
             # First day of the month
             first_day = current_date.replace(day=1)
             # Last day of the month
-            if first_day.month == 12:
-                next_month = first_day.replace(year=first_day.year + 1, month=1)
-            else:
-                next_month = first_day.replace(month=first_day.month + 1)
-            last_day = next_month - timedelta(days=1)
+            # Month boundary calculation (first_day is sufficient for grid generation)
 
             # Start from Sunday of the week containing the first day
             days_from_sunday = (first_day.weekday() + 1) % 7
@@ -300,7 +296,7 @@ class CalendarView(LoginRequiredMixin, View):
             # Get user's first school (TODO: allow school selection)
             school = School.objects.first()
 
-            schedule = ClassSchedule.objects.create(
+            ClassSchedule.objects.create(
                 title=title,
                 description=description,
                 scheduled_date=scheduled_date,
@@ -738,7 +734,7 @@ class TeacherAvailabilityTemplateView(TemplateView):
                 return JsonResponse({'error': 'Permission denied'}, status=403)
 
             # Create availability
-            availability = TeacherAvailability.objects.create(
+            TeacherAvailability.objects.create(
                 teacher=teacher,
                 school=school,
                 day_of_week=request.POST.get('day_of_week'),

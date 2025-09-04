@@ -128,17 +128,17 @@ def get_user_by_email(email: str) -> CustomUser:
 def create_user_school_and_membership(user: CustomUser, school_name: str) -> School:
     """
     Create a school and membership for a new user during signup.
-    
+
     Creates a personal school for the user and assigns them as SCHOOL_OWNER.
     Must be called within a transaction - will raise exceptions if creation fails.
-    
+
     Args:
         user: The newly created user who needs a school
         school_name: The name for the school (from signup form)
-        
+
     Returns:
         School: The created school instance
-        
+
     Raises:
         Exception: If school or membership creation fails (by design for transaction rollback)
     """

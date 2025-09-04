@@ -3,7 +3,7 @@ Permission mixins for Django views in Aprende Comigo application.
 
 Following Django best practices:
 - Use UserPassesTestMixin for permission checks
-- Clear, descriptive naming convention  
+- Clear, descriptive naming convention
 - Single responsibility principle
 - Centralized location for reusability
 
@@ -22,12 +22,12 @@ from .models import School, SchoolMembership
 class IsSchoolOwnerOrAdminMixin(LoginRequiredMixin, UserPassesTestMixin):
     """
     Mixin to check if user is a school owner or administrator.
-    
+
     Allows access to users with:
     - Django superuser/staff privileges (system admin)
     - School owner role in any school
     - School admin role in any school
-    
+
     For views with get_object(), also checks object-level permissions.
     """
 

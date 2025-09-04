@@ -79,40 +79,11 @@ class CustomEducationLevel(models.TextChoices):
     HIGH_SCHOOL = "high_school", _("High School")
 
 
-class BrazilianSchoolYear(models.TextChoices):
-    """School years for Brazilian education system"""
-
-    # Elementary I (Ensino Fundamental I)
-    FIRST_EF = "1ef", _("1º ano EF")
-    SECOND_EF = "2ef", _("2º ano EF")
-    THIRD_EF = "3ef", _("3º ano EF")
-    FOURTH_EF = "4ef", _("4º ano EF")
-    FIFTH_EF = "5ef", _("5º ano EF")
-    # Elementary II (Ensino Fundamental II)
-    SIXTH_EF = "6ef", _("6º ano EF")
-    SEVENTH_EF = "7ef", _("7º ano EF")
-    EIGHTH_EF = "8ef", _("8º ano EF")
-    NINTH_EF = "9ef", _("9º ano EF")
-    # High School (Ensino Médio)
-    FIRST_EM = "1em", _("1º ano EM")
-    SECOND_EM = "2em", _("2º ano EM")
-    THIRD_EM = "3em", _("3º ano EM")
-
-
-class BrazilianEducationLevel(models.TextChoices):
-    """Education levels for Brazilian system"""
-
-    FUNDAMENTAL_INITIAL = "ensino_fundamental_anos_iniciais", _("Ensino Fundamental Anos Iniciais")
-    FUNDAMENTAL_FINAL = "ensino_fundamental_anos_finais", _("Ensino Fundamental Anos Finais")
-    MEDIO = "ensino_medio", _("Ensino Médio")
-
-
 class EducationalSystemType(models.TextChoices):
     """Types of educational systems"""
 
     PORTUGAL = "pt", _("Portugal")
     CUSTOM = "custom", _("Custom")
-    BRAZIL = "br", _("Brazil")
 
 
 class ActivityType(models.TextChoices):

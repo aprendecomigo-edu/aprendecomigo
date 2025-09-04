@@ -107,9 +107,9 @@ class SchoolSettingsViewTest(BaseTestCase):
     def test_dispatch_method_handles_authentication_correctly(self):
         """
         Regression test: Ensure dispatch method doesn't access user before authentication
-        
+
         This test specifically checks that the dispatch method reordering fix works correctly.
-        Previously, get_user_schools_by_role was called before super().dispatch(), 
+        Previously, get_user_schools_by_role was called before super().dispatch(),
         causing AnonymousUser to be passed to the database query.
         """
         from django.contrib.auth.models import AnonymousUser

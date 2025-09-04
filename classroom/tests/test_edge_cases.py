@@ -563,10 +563,7 @@ class ConcurrencyEdgeCasesTest(SchoolBasedTestMixin, TestCase):
         # Concurrent online/offline operations
         threads = []
         for i in range(10):
-            if i % 2 == 0:
-                thread = Thread(target=mark_user_online)
-            else:
-                thread = Thread(target=mark_user_offline)
+            thread = Thread(target=mark_user_online) if i % 2 == 0 else Thread(target=mark_user_offline)
             threads.append(thread)
 
         for thread in threads:

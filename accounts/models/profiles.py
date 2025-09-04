@@ -12,7 +12,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from .enums import RelationshipType
+from .enums import RelationshipType, SchoolRole
 
 logger = logging.getLogger(__name__)
 

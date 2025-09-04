@@ -9,7 +9,7 @@ from .models.schools import School, SchoolMembership
 def user_context(request):
     """
     Add user and school context to all templates.
-    
+
     Provides:
     - user_first_name: User's first name
     - school_name: Current school name
@@ -38,7 +38,7 @@ def user_context(request):
 def get_current_school(request):
     """
     Determine current school from request.
-    
+
     Priority:
     1. Session-stored school ID
     2. User's primary/default school
@@ -70,7 +70,7 @@ def get_current_school(request):
 def get_user_role_for_school(user, school):
     """
     Get user's role in specific school.
-    
+
     Returns the user's role (admin, teacher, student, etc.) for the given school.
     """
     membership = SchoolMembership.objects.get(user=user, school=school, is_active=True)

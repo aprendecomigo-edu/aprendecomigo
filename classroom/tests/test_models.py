@@ -295,7 +295,7 @@ class ReactionBusinessLogicTest(TestCase):
         reactions = Reaction.objects.filter(message=self.message, user=self.user)
         self.assertEqual(reactions.count(), 2)
 
-        emojis = set(reaction.emoji for reaction in reactions)
+        emojis = {reaction.emoji for reaction in reactions}
         self.assertEqual(emojis, {"👍", "❤️"})
 
     def test_different_users_same_emoji_allowed(self):
@@ -308,7 +308,7 @@ class ReactionBusinessLogicTest(TestCase):
         reactions = Reaction.objects.filter(message=self.message, emoji="👍")
         self.assertEqual(reactions.count(), 2)
 
-        users = set(reaction.user for reaction in reactions)
+        users = {reaction.user for reaction in reactions}
         self.assertEqual(users, {self.user, user2})
 
     def test_reaction_string_representation(self):

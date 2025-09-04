@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class SNSSMSProvider:
     """Amazon SNS SMS provider implementation."""
 
-    def __init__(self, region_name: str = None, aws_access_key_id: str = None, aws_secret_access_key: str = None):
+    def __init__(self, region_name: str | None = None, aws_access_key_id: str | None = None, aws_secret_access_key: str | None = None):
         if boto3 is None:
             raise ImproperlyConfigured("boto3 is required for SNS SMS service. Install with: pip install boto3")
 

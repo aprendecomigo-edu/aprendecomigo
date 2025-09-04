@@ -49,7 +49,7 @@ email_confirmation_logger = logging.getLogger('accounts.email_confirmation')
 # EMAIL CONFIRMATION LOGGING SYSTEM (Development Environment)
 # =============================================================================
 
-def log_email_confirmation_sent(email: str, confirmation_token: str = None) -> None:
+def log_email_confirmation_sent(email: str, confirmation_token: str | None = None) -> None:
     """Log email confirmation sent in development environment"""
     token_info = f" (Token: {confirmation_token})" if confirmation_token else ""
     email_confirmation_logger.info(
@@ -69,7 +69,7 @@ def log_email_confirmation_failure(email: str, reason: str = "Unknown") -> None:
         f"❌ Email confirmation failed for {email} - Reason: {reason}"
     )
 
-def log_email_confirmation_resent(email: str, confirmation_token: str = None) -> None:
+def log_email_confirmation_resent(email: str, confirmation_token: str | None = None) -> None:
     """Log email confirmation resent in development environment"""
     token_info = f" (New Token: {confirmation_token})" if confirmation_token else ""
     email_confirmation_logger.info(
@@ -100,12 +100,12 @@ VERIFICATION_SESSION_KEYS = [
 class SignInView(View):
     """
     Handle user sign-in with SMS OTP verification.
-    
+
     This view provides a secure login flow for existing users:
     1. User enters email address
     2. System sends SMS OTP to registered phone number
     3. User verifies OTP to complete login
-    
+
     GET: Display sign-in form
     POST: Validate email and send SMS OTP
     """
@@ -230,16 +230,16 @@ class SignInView(View):
 class SignUpView(View):
     """
     Handle user registration with dual verification (email + SMS).
-    
+
     This view manages the complete user registration process:
     1. User provides email, full name, and phone number
-    2. System creates user account  
+    2. System creates user account
     3. System sends email magic link and SMS OTP for verification
     4. User completes verification via VerifyOTPView
-    
+
     Upon successful registration and verification, a personal school
     is automatically created with the user as owner.
-    
+
     GET: Display registration form
     POST: Process registration and initiate dual verification
     """
@@ -380,15 +380,15 @@ class SignUpView(View):
 class VerifyOTPView(View):
     """
     Handle SMS OTP verification for both signup and signin flows.
-    
+
     This view manages the second step of our dual-factor authentication:
     1. Email magic link (handled by sesame)
     2. SMS OTP verification (handled here)
-    
+
     CRITICAL BUSINESS RULE: Every user (except superusers) MUST have a school association.
     For signup: User verification and school creation are atomic - both succeed or both fail.
     For signin: Authenticates existing user after successful verification.
-    
+
     Session data required:
     - verification_user_id: User ID for verification
     - verification_otp_code: Expected OTP code
@@ -427,11 +427,11 @@ class VerifyOTPView(View):
     def post(self, request: HttpRequest) -> HttpResponse:
         """
         Handle OTP verification for both signup and signin flows.
-        
+
         Validates the SMS OTP code against session data and:
         - For signup: Creates school and membership, then logs in user
         - For signin: Logs in existing user
-        
+
         Returns: HTMX partial template with success or error message
         """
         otp_code = request.POST.get("verification_code", "").strip()
@@ -528,10 +528,10 @@ class VerifyOTPView(View):
     def _clear_verification_session(self, request: HttpRequest) -> None:
         """
         Clear all verification-related session data.
-        
+
         Removes all session keys used during the verification process
         to prevent data leakage and ensure clean session state.
-        
+
         Args:
             request: HTTP request containing session data to clear
         """
@@ -556,13 +556,13 @@ class VerifyOTPView(View):
 def resend_code(request: HttpRequest) -> HttpResponse:
     """
     Resend magic link verification email via HTMX.
-    
+
     Retrieves email from session, validates user exists, generates new magic link,
     and sends it via email. Used when users need a new verification link.
-    
+
     Args:
         request: HTTP request with session containing verification_email
-        
+
     Returns:
         HttpResponse: HTMX partial with success or error message
     """
@@ -622,7 +622,7 @@ def resend_code(request: HttpRequest) -> HttpResponse:
 class LogoutView(View):
     """
     Handle user logout for both GET and POST requests.
-    
+
     Logs the logout event, clears session data, and redirects to signin page.
     Supports both direct navigation and form submission.
     """
@@ -634,7 +634,7 @@ class LogoutView(View):
     def post(self, request: HttpRequest) -> HttpResponseRedirect:
         """
         Handle POST logout request.
-        
+
         Logs the logout event for authenticated users, performs Django logout,
         flushes session data for security, and redirects to signin page.
         """
@@ -660,11 +660,11 @@ class LogoutView(View):
 class TeacherInvitationListView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin, ListView):
     """
     Display paginated list of teacher invitations for schools managed by current user.
-    
-    Only shows invitations for schools where the user has SCHOOL_OWNER or 
+
+    Only shows invitations for schools where the user has SCHOOL_OWNER or
     SCHOOL_ADMIN privileges. Includes school and invited_by relationships
     for efficient database queries.
-    
+
     Access: School owners and admins only
     """
 
@@ -693,17 +693,17 @@ class TeacherInvitationListView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin
 class TeacherInvitationCreateView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin, CreateView):
     """
     Create and send new teacher invitation with email notification.
-    
+
     Allows school owners and admins to invite teachers to their schools.
     Validates permissions, generates unique invitation token, and sends
     email invitation to the specified address.
-    
+
     Features:
     - Role-based access control
     - Atomic transaction for data consistency
     - Email notification system integration
     - Unique batch ID for tracking
-    
+
     Access: School owners and admins only
     """
 
@@ -753,11 +753,11 @@ class TeacherInvitationCreateView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMix
 class TeacherInvitationDetailView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin, DetailView):
     """
     Display detailed information about a specific teacher invitation.
-    
+
     Shows invitation status, creation date, expiration, email, and any
     custom message. Only accessible to users who can manage the
     associated school.
-    
+
     Access: School owners and admins only
     """
 
@@ -775,15 +775,15 @@ class TeacherInvitationDetailView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMix
 class AcceptTeacherInvitationView(View):
     """
     Handle teacher invitation acceptance via public token URL.
-    
+
     This is a public view accessible without authentication, allowing invited
     teachers to accept invitations via email links. Validates invitation token,
     checks expiration, and processes the acceptance.
-    
+
     Flow:
     1. GET: Display invitation acceptance form
     2. POST: Process acceptance and create user/membership
-    
+
     Access: Public (token-based authentication)
     """
 
@@ -808,15 +808,15 @@ class AcceptTeacherInvitationView(View):
     def post(self, request: HttpRequest, token: str) -> HttpResponse:
         """
         Process invitation acceptance or decline action.
-        
+
         Handles 'accept' or 'decline' actions from the invitation form.
         For acceptance, creates user membership and redirects appropriately.
         For decline, marks invitation as declined.
-        
+
         Args:
             request: HTTP request containing action parameter
             token: Invitation token for validation
-            
+
         Returns:
             HttpResponse: Success page or redirect based on user state
         """
@@ -883,15 +883,15 @@ class AcceptTeacherInvitationView(View):
 def cancel_teacher_invitation(request: HttpRequest, invitation_id: int) -> HttpResponse:
     """
     Cancel a teacher invitation via HTMX endpoint.
-    
+
     Allows school owners and admins to cancel pending teacher invitations.
     Validates user permissions before allowing cancellation and returns
     HTMX partial template for dynamic UI updates.
-    
+
     Args:
         request: HTTP request from authenticated user
         invitation_id: ID of invitation to cancel
-        
+
     Returns:
         HttpResponse: HTMX partial with cancellation result or error
     """
@@ -926,15 +926,15 @@ def cancel_teacher_invitation(request: HttpRequest, invitation_id: int) -> HttpR
 def resend_teacher_invitation(request: HttpRequest, invitation_id: int) -> HttpResponse:
     """
     Resend a teacher invitation via HTMX endpoint.
-    
+
     Allows school owners and admins to resend invitations that may have been
     missed or expired. Validates retry limits and user permissions before
     attempting to resend the invitation email.
-    
+
     Args:
         request: HTTP request from authenticated user
         invitation_id: ID of invitation to resend
-        
+
     Returns:
         HttpResponse: HTMX partial with resend result or error message
     """

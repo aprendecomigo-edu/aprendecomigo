@@ -69,12 +69,12 @@ The Aprende Comigo Team""",
 def send_sms_otp(phone_number: str, otp_code: str, user_name: str | None = None) -> dict[str, Any]:
     """
     Send SMS OTP using external SMS service
-    
+
     Args:
         phone_number: The phone number to send SMS to
         otp_code: The OTP code to send
         user_name: Optional user name for personalization
-        
+
     Returns:
         dict with success status and details
     """

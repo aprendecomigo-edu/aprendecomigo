@@ -3,7 +3,7 @@ Messaging views converted to Django CBVs with HTMX for PWA migration.
 
 Key Features:
 1. Notifications System (list, detail, mark read, unread count)
-2. Email Communications (tracking and analytics)  
+2. Email Communications (tracking and analytics)
 3. School Email Templates (CRUD operations)
 """
 
@@ -46,11 +46,11 @@ logger = logging.getLogger(__name__)
 class NotificationListView(LoginRequiredMixin, ListView):
     """
     List notifications for the authenticated user with pagination and filtering.
-    
+
     GET /notifications/
     GET /notifications/?notification_type=low_balance
     GET /notifications/?is_read=false
-    
+
     HTMX: Returns partial template for dynamic updates
     """
     model = Notification
@@ -109,9 +109,9 @@ class NotificationListView(LoginRequiredMixin, ListView):
 class NotificationDetailView(LoginRequiredMixin, DetailView):
     """
     Get detailed information about a specific notification.
-    
+
     GET /notifications/{id}/
-    
+
     Users can only access their own notifications.
     """
     model = Notification
@@ -126,9 +126,9 @@ class NotificationDetailView(LoginRequiredMixin, DetailView):
 class NotificationMarkReadView(LoginRequiredMixin, View):
     """
     Mark a specific notification as read.
-    
+
     POST /notifications/{id}/mark-read/
-    
+
     HTMX: Returns updated notification item or unread count
     """
 
@@ -158,9 +158,9 @@ class NotificationMarkReadView(LoginRequiredMixin, View):
 class NotificationUnreadCountView(LoginRequiredMixin, View):
     """
     Get the count of unread notifications for the authenticated user.
-    
+
     GET /notifications/unread-count/
-    
+
     Used for UI badge display with HTMX polling.
     """
 
@@ -189,7 +189,7 @@ class NotificationUnreadCountView(LoginRequiredMixin, View):
 class SchoolEmailTemplateListView(IsSchoolOwnerOrAdminMixin, ListView):
     """
     List email templates for user's schools.
-    
+
     GET /email-templates/
     """
     model = SchoolEmailTemplate
@@ -232,7 +232,7 @@ class SchoolEmailTemplateListView(IsSchoolOwnerOrAdminMixin, ListView):
 class SchoolEmailTemplateDetailView(IsSchoolOwnerOrAdminMixin, DetailView):
     """
     View email template details.
-    
+
     GET /email-templates/{id}/
     """
     model = SchoolEmailTemplate
@@ -249,7 +249,7 @@ class SchoolEmailTemplateDetailView(IsSchoolOwnerOrAdminMixin, DetailView):
 class SchoolEmailTemplateCreateView(IsSchoolOwnerOrAdminMixin, TemplateView):
     """
     Create new email template.
-    
+
     GET /email-templates/create/ - Show form
     POST /email-templates/create/ - Create template
     """
@@ -321,7 +321,7 @@ class SchoolEmailTemplateCreateView(IsSchoolOwnerOrAdminMixin, TemplateView):
 class SchoolEmailTemplateEditView(IsSchoolOwnerOrAdminMixin, DetailView):
     """
     Edit email template.
-    
+
     GET /email-templates/{id}/edit/ - Show edit form
     POST /email-templates/{id}/edit/ - Update template
     """
@@ -388,7 +388,7 @@ class SchoolEmailTemplateEditView(IsSchoolOwnerOrAdminMixin, DetailView):
 class SchoolEmailTemplatePreviewView(IsSchoolOwnerOrAdminMixin, DetailView):
     """
     Preview email template with variables.
-    
+
     POST /email-templates/{id}/preview/
     """
     model = SchoolEmailTemplate
@@ -440,7 +440,7 @@ class SchoolEmailTemplatePreviewView(IsSchoolOwnerOrAdminMixin, DetailView):
 class EmailCommunicationListView(IsSchoolOwnerOrAdminMixin, ListView):
     """
     List email communications with filtering.
-    
+
     GET /communications/
     """
     model = EmailCommunication
@@ -501,7 +501,7 @@ class EmailCommunicationListView(IsSchoolOwnerOrAdminMixin, ListView):
 class EmailAnalyticsView(IsSchoolOwnerOrAdminMixin, TemplateView):
     """
     Display email analytics dashboard.
-    
+
     GET /communications/analytics/
     """
     template_name = 'messaging/communications/analytics.html'
