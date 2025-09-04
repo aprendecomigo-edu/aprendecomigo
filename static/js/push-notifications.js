@@ -3,6 +3,12 @@
  * Handles subscription management and notification display
  */
 
+// Production logging utility
+const DEBUG = false; // Set to false for production
+const log = DEBUG ? console.log.bind(console, '[Push]') : () => {};
+const warn = DEBUG ? console.warn.bind(console, '[Push]') : console.warn.bind(console, '[Push]'); // Keep warnings
+const error = console.error.bind(console, '[Push]'); // Always log errors
+
 class PushNotificationManager {
     constructor() {
         this.isSupported = 'serviceWorker' in navigator && 'PushManager' in window;
@@ -15,7 +21,7 @@ class PushNotificationManager {
 
     async init() {
         if (!this.isSupported) {
-            console.warn('Push notifications are not supported in this browser');
+            warn('Push notifications are not supported in this browser');
             this.hidePushUIElements();
             return;
         }
@@ -34,7 +40,7 @@ class PushNotificationManager {
             this.setupNotificationHandlers();
             
         } catch (error) {
-            console.error('Failed to initialize push notifications:', error);
+            error('Failed to initialize push notifications:', error);
         }
     }
 
@@ -44,12 +50,12 @@ class PushNotificationManager {
             if (response.ok) {
                 const data = await response.json();
                 this.vapidPublicKey = data.public_key;
-                console.log('VAPID public key loaded successfully');
+                log('VAPID public key loaded successfully');
             } else {
                 throw new Error('Failed to get VAPID public key');
             }
         } catch (error) {
-            console.error('Error getting VAPID public key:', error);
+            error('Error getting VAPID public key:', error);
             throw error;
         }
     }
@@ -60,7 +66,7 @@ class PushNotificationManager {
             this.subscription = await registration.pushManager.getSubscription();
             this.isSubscribed = this.subscription !== null;
             
-            console.log('Push subscription status:', this.isSubscribed);
+            log('Push subscription status:', this.isSubscribed);
             
             if (this.isSubscribed) {
                 console.log('User is subscribed to push notifications');
@@ -98,7 +104,7 @@ class PushNotificationManager {
                 applicationServerKey: this.urlBase64ToUint8Array(this.vapidPublicKey)
             });
 
-            console.log('User subscribed to push notifications:', subscription);
+            log('User subscribed to push notifications:', subscription);
 
             // Send subscription to server
             await this.sendSubscriptionToServer(subscription);
@@ -113,7 +119,7 @@ class PushNotificationManager {
             return subscription;
 
         } catch (error) {
-            console.error('Failed to subscribe to push notifications:', error);
+            error('Failed to subscribe to push notifications:', error);
             this.showNotification(`Failed to enable notifications: ${error.message}`, 'error');
             throw error;
         }

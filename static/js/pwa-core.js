@@ -3,6 +3,12 @@
  * Handles service worker registration, offline detection, and PWA features
  */
 
+// Production logging utility
+const DEBUG = false; // Set to false for production
+const log = DEBUG ? console.log.bind(console, '[PWA]') : () => {};
+const warn = DEBUG ? console.warn.bind(console, '[PWA]') : () => {};
+const error = console.error.bind(console, '[PWA]'); // Always log errors
+
 class PWACore {
     constructor() {
         this.isOnline = navigator.onLine;
@@ -17,14 +23,14 @@ class PWACore {
         if ('serviceWorker' in navigator) {
             try {
                 this.serviceWorker = await navigator.serviceWorker.register('/sw.js');
-                console.log('Service Worker registered successfully');
+                log('Service Worker registered successfully');
                 
                 // Listen for service worker updates
                 this.serviceWorker.addEventListener('updatefound', () => {
                     this.handleServiceWorkerUpdate();
                 });
             } catch (error) {
-                console.error('Service Worker registration failed:', error);
+                error('Service Worker registration failed:', error);
             }
         }
 
@@ -94,7 +100,7 @@ class PWACore {
             const result = await this.installPrompt.userChoice;
             
             if (result.outcome === 'accepted') {
-                console.log('PWA installation accepted');
+                log('PWA installation accepted');
             }
             
             this.installPrompt = null;
@@ -127,7 +133,7 @@ class PWACore {
             }
             
         } catch (error) {
-            console.error('Data sync failed:', error);
+            error('Data sync failed:', error);
         }
     }
 
@@ -162,7 +168,7 @@ class PWACore {
                 this.showNotification('Data synced successfully', 'success');
             }
         } catch (error) {
-            console.error('Failed to submit cached form:', error);
+            error('Failed to submit cached form:', error);
         }
     }
 

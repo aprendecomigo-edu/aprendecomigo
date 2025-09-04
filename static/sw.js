@@ -3,6 +3,12 @@
  * Implements advanced caching strategies and offline functionality
  */
 
+// Production logging utility
+const DEBUG = false; // Set to false for production
+const log = DEBUG ? console.log.bind(console, '[SW]') : () => {};
+const warn = DEBUG ? console.warn.bind(console, '[SW]') : () => {};
+const error = console.error.bind(console, '[SW]'); // Always log errors
+
 const CACHE_VERSION = 'v1.0.0';
 const STATIC_CACHE = `aprende-comigo-static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `aprende-comigo-dynamic-${CACHE_VERSION}`;
@@ -52,26 +58,26 @@ const CACHE_FIRST = [
 ];
 
 self.addEventListener('install', (event) => {
-    console.log('Service Worker installing...');
+    log('Service Worker installing...');
     
     event.waitUntil(
         caches.open(STATIC_CACHE)
             .then(cache => {
-                console.log('Caching static assets...');
+                log('Caching static assets...');
                 return cache.addAll(STATIC_ASSETS);
             })
             .then(() => {
-                console.log('Static assets cached successfully');
+                log('Static assets cached successfully');
                 return self.skipWaiting();
             })
             .catch(error => {
-                console.error('Failed to cache static assets:', error);
+                error('Failed to cache static assets:', error);
             })
     );
 });
 
 self.addEventListener('activate', (event) => {
-    console.log('Service Worker activating...');
+    log('Service Worker activating...');
     
     event.waitUntil(
         Promise.all([
@@ -84,7 +90,7 @@ self.addEventListener('activate', (event) => {
                                    !cacheName.includes(CACHE_VERSION);
                         })
                         .map(cacheName => {
-                            console.log('Deleting old cache:', cacheName);
+                            log('Deleting old cache:', cacheName);
                             return caches.delete(cacheName);
                         })
                 );
@@ -166,7 +172,7 @@ async function cacheFirstStrategy(request) {
         
         return networkResponse;
     } catch (error) {
-        console.error('Cache-first strategy failed:', error);
+        error('Cache-first strategy failed:', error);
         throw error;
     }
 }
@@ -184,7 +190,7 @@ async function staleWhileRevalidateStrategy(request) {
             return response;
         })
         .catch(error => {
-            console.error('Network fetch failed:', error);
+            error('Network fetch failed:', error);
             return null;
         });
     
@@ -239,7 +245,7 @@ function isAPIRequest(request) {
 
 // Background Sync
 self.addEventListener('sync', (event) => {
-    console.log('Background sync triggered:', event.tag);
+    log('Background sync triggered:', event.tag);
     
     if (event.tag === 'background-sync-forms') {
         event.waitUntil(syncFormSubmissions());
@@ -268,7 +274,7 @@ async function syncFormSubmissions() {
                 if (submitResponse.ok) {
                     // Remove from cache on success
                     await cache.delete(request);
-                    console.log('Form submission synced successfully');
+                    log('Form submission synced successfully');
                     
                     // Notify clients
                     self.clients.matchAll().then(clients => {
@@ -281,22 +287,22 @@ async function syncFormSubmissions() {
                     });
                 }
             } catch (error) {
-                console.error('Failed to sync form submission:', error);
+                error('Failed to sync form submission:', error);
             }
         }
     } catch (error) {
-        console.error('Background sync failed:', error);
+        error('Background sync failed:', error);
     }
 }
 
 async function syncEnrollments() {
     // Implementation for enrollment-specific background sync
-    console.log('Syncing enrollments...');
+    log('Syncing enrollments...');
 }
 
 // Push Notifications
 self.addEventListener('push', (event) => {
-    console.log('Push notification received:', event);
+    log('Push notification received:', event);
     
     const options = {
         body: 'You have new updates in Aprende Comigo',
@@ -333,7 +339,7 @@ self.addEventListener('push', (event) => {
 });
 
 self.addEventListener('notificationclick', (event) => {
-    console.log('Notification clicked:', event);
+    log('Notification clicked:', event);
     event.notification.close();
     
     if (event.action === 'explore') {
@@ -353,11 +359,11 @@ self.addEventListener('notificationclick', (event) => {
 
 // Message Handler for communication with main thread
 self.addEventListener('message', (event) => {
-    console.log('Service Worker received message:', event.data);
+    log('Service Worker received message:', event.data);
     
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
     }
 });
 
-console.log('Service Worker loaded successfully');
+log('Service Worker loaded successfully');

@@ -3,6 +3,12 @@
  * Milestone 0 - Basic prototype for offline capability testing
  */
 
+// Production logging utility
+const DEBUG = false; // Set to false for production
+const log = DEBUG ? console.log.bind(console, '[SW]') : () => {};
+const warn = DEBUG ? console.warn.bind(console, '[SW]') : () => {};
+const error = console.error.bind(console, '[SW]'); // Always log errors
+
 const CACHE_NAME = 'aprende-comigo-v1';
 const OFFLINE_URL = '/offline/';
 
@@ -17,15 +23,15 @@ const CACHE_ASSETS = [
 
 // Install event - cache assets
 self.addEventListener('install', (event) => {
-  console.log('Service Worker: Installing...');
+  log('Service Worker: Installing...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('Service Worker: Caching assets');
+        log('Service Worker: Caching assets');
         return cache.addAll(CACHE_ASSETS);
       })
       .catch((error) => {
-        console.error('Service Worker: Cache failed', error);
+        error('Service Worker: Cache failed', error);
       })
   );
   self.skipWaiting();
@@ -33,13 +39,13 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker: Activating...');
+  log('Service Worker: Activating...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            console.log('Service Worker: Deleting old cache', cacheName);
+            log('Service Worker: Deleting old cache', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -110,7 +116,7 @@ self.addEventListener('fetch', (event) => {
 
 // Background sync for offline actions
 self.addEventListener('sync', (event) => {
-  console.log('Service Worker: Background sync', event.tag);
+  log('Service Worker: Background sync', event.tag);
   
   if (event.tag === 'chat-message-sync') {
     // Handle offline chat message queue
@@ -125,7 +131,7 @@ self.addEventListener('sync', (event) => {
 
 // Push notification handling
 self.addEventListener('push', (event) => {
-  console.log('Service Worker: Push notification received');
+  log('Service Worker: Push notification received');
   
   const options = {
     body: event.data ? event.data.text() : 'New notification from Aprende Comigo',
@@ -155,7 +161,7 @@ self.addEventListener('push', (event) => {
 
 // Notification click handling
 self.addEventListener('notificationclick', (event) => {
-  console.log('Service Worker: Notification clicked', event.action);
+  log('Service Worker: Notification clicked', event.action);
   
   event.notification.close();
   
@@ -182,7 +188,7 @@ async function syncOfflineMessages() {
       }
     }
   } catch (error) {
-    console.error('Failed to sync offline messages:', error);
+    error('Failed to sync offline messages:', error);
   }
 }
 
@@ -202,6 +208,6 @@ async function syncOfflineUploads() {
       }
     }
   } catch (error) {
-    console.error('Failed to sync offline uploads:', error);
+    error('Failed to sync offline uploads:', error);
   }
 }
