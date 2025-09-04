@@ -17,12 +17,7 @@ SECRET_KEY = str(secret_key)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "True") == "True"  # Railway docs recommend DEBUG=True for staging
-
-# Define allowed hosts
-allowed_hosts = os.getenv("ALLOWED_HOSTS", "")
-if not allowed_hosts:
-    raise ValueError("ALLOWED_HOSTS environment variable is not set")
-ALLOWED_HOSTS = allowed_hosts.split(",")
+ALLOWED_HOSTS = ["*"] # railway settings
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 # Use PostgreSQL in production
@@ -94,7 +89,10 @@ if not os.getenv("AWS_ACCESS_KEY_ID") and not os.getenv("AWS_PROFILE"):
 
 # CORS settings - more restrictive for staging
 CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
+# CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
+
+CSRF_TRUSTED_ORIGINS = os.getenv("RAILWAY_PUBLIC_DOMAIN")
+
 
 # Security settings for cookies
 SESSION_COOKIE_SECURE = True
