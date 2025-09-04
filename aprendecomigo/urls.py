@@ -40,10 +40,10 @@ urlpatterns = [
     path("", include("pwa.urls")),
 
     # Authentication and dashboard routes (HTML interface)
-    path("", include("accounts.urls")),
+    path("", include("accounts.urls", namespace="accounts")),
 
     # Clean dashboard routes at root level
-    path("dashboard/", include("dashboard.urls")),
+    path("dashboard/", include("dashboard.urls", namespace="dashboard")),
     path("calendar/", CalendarView.as_view(), name="calendar"),  # Calendar is now handled by scheduler
     path("teachers/", TeachersView.as_view(), name="teachers"),
     path("students/", StudentsView.as_view(), name="students"),

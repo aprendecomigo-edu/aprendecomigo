@@ -113,7 +113,7 @@ class SignInView(View):
     def get(self, request) -> HttpResponse:
         """Render sign-in page for unauthenticated users."""
         if request.user.is_authenticated:
-            return redirect("dashboard:dashboard")
+            return redirect(reverse("dashboard:dashboard"))
 
         return render(
             request,
@@ -247,7 +247,7 @@ class SignUpView(View):
     def get(self, request) -> HttpResponse:
         """Render sign-up page for unauthenticated users."""
         if request.user.is_authenticated:
-            return redirect("dashboard:dashboard")
+            return redirect(reverse("dashboard:dashboard"))
 
         return render(
             request,
@@ -409,7 +409,7 @@ class VerifyOTPView(View):
         is_signin = request.session.get("is_signin", False)
 
         if not all([user_id, expected_otp, phone]):
-            return redirect("accounts:signin")
+            return redirect(reverse("accounts:signin"))
 
         return render(
             request,
@@ -853,7 +853,7 @@ class AcceptTeacherInvitationView(View):
                 # If user is logged in and it's the correct user, redirect to dashboard
                 if request.user.is_authenticated and request.user.email == invitation.email:
                     messages.success(request, f"Welcome to {invitation.school.name}! You are now a {invitation.get_role_display()}.")
-                    return redirect('dashboard:dashboard')
+                    return redirect(reverse('dashboard:dashboard'))
 
                 # Otherwise, show success page with login instructions
                 return render(request, 'accounts/invitations/invitation_accepted.html', {
@@ -875,7 +875,7 @@ class AcceptTeacherInvitationView(View):
                 'invitation': invitation
             })
 
-        return redirect('accounts:accept_invitation', token=token)
+        return redirect(reverse('accounts:accept_invitation', kwargs={'token': token}))
 
 
 @login_required
@@ -1253,6 +1253,6 @@ def root_redirect(request):
     - Anonymous users → /accounts/signin/
     """
     if request.user.is_authenticated:
-        return HttpResponseRedirect(reverse('dashboard:general'))
+        return HttpResponseRedirect(reverse('dashboard:dashboard'))
     else:
         return HttpResponseRedirect(reverse('accounts:signin'))
