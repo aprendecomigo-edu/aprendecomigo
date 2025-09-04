@@ -172,24 +172,28 @@ STATICFILES_DIRS = [
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
-# Cache configuration with fallback for development
-try:
-    import redis
-    redis_client = redis.Redis.from_url(os.getenv('REDIS_URL', 'redis://127.0.0.1:6379'))
-    redis_client.ping()
+# Cache configuration with improved Railway Redis support
+redis_url = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379')
 
-    # Redis is available - use Redis cache
+# Use Redis with improved connection settings for Railway
+if redis_url.startswith('redis://') and 'railway.internal' in redis_url:
+    # Railway Redis configuration with enhanced reliability
     CACHES = {
         'default': {
             'BACKEND': 'django_redis.cache.RedisCache',
-            'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/1'),
+            'LOCATION': redis_url + '/1',
             'OPTIONS': {
                 'CLIENT_CLASS': 'django_redis.client.DefaultClient',
                 'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
                 'CONNECTION_POOL_KWARGS': {
-                    'max_connections': 50,
+                    'max_connections': 20,  # Reduced for Railway
                     'retry_on_timeout': True,
+                    'retry_on_error': [ConnectionError, TimeoutError],
+                    'socket_connect_timeout': 30,
+                    'socket_timeout': 30,
+                    'health_check_interval': 30,
                 },
+                'IGNORE_EXCEPTIONS': True,  # Graceful degradation for non-critical operations
             },
             'KEY_PREFIX': 'aprendecomigo',
             'VERSION': 1,
@@ -197,54 +201,126 @@ try:
         },
         'sessions': {
             'BACKEND': 'django_redis.cache.RedisCache',
-            'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/2'),
+            'LOCATION': redis_url + '/2',
             'OPTIONS': {
                 'CLIENT_CLASS': 'django_redis.client.DefaultClient',
                 'CONNECTION_POOL_KWARGS': {
-                    'max_connections': 50,
+                    'max_connections': 20,  # Reduced for Railway
                     'retry_on_timeout': True,
+                    'retry_on_error': [ConnectionError, TimeoutError],
+                    'socket_connect_timeout': 30,
+                    'socket_timeout': 30,
+                    'health_check_interval': 30,
                 },
+                # Do NOT ignore exceptions for sessions - they're critical
             },
             'KEY_PREFIX': 'sessions',
             'TIMEOUT': 60 * 60 * 24,  # 24 hours for sessions
         },
         'template_fragments': {
             'BACKEND': 'django_redis.cache.RedisCache',
-            'LOCATION': os.getenv('REDIS_URL', 'redis://127.0.0.1:6379/3'),
+            'LOCATION': redis_url + '/3',
             'OPTIONS': {
                 'CLIENT_CLASS': 'django_redis.client.DefaultClient',
                 'CONNECTION_POOL_KWARGS': {
-                    'max_connections': 50,
+                    'max_connections': 20,  # Reduced for Railway
                     'retry_on_timeout': True,
+                    'retry_on_error': [ConnectionError, TimeoutError],
+                    'socket_connect_timeout': 30,
+                    'socket_timeout': 30,
+                    'health_check_interval': 30,
                 },
+                'IGNORE_EXCEPTIONS': True,  # Template fragments can degrade gracefully
             },
             'KEY_PREFIX': 'templates',
             'TIMEOUT': 60 * 30,  # 30 minutes for template fragments
         }
     }
-except (ImportError, redis.ConnectionError, redis.RedisError):
-    # Redis not available - use local memory cache for development
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            'LOCATION': 'default-cache',
-            'TIMEOUT': 60 * 15,
-        },
-        'sessions': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            'LOCATION': 'sessions-cache',
-            'TIMEOUT': 60 * 60 * 24,
-        },
-        'template_fragments': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            'LOCATION': 'templates-cache',
-            'TIMEOUT': 60 * 30,
+else:
+    # Local development or non-Railway Redis
+    try:
+        import redis
+        redis_client = redis.Redis.from_url(redis_url, socket_connect_timeout=5)
+        redis_client.ping()
+        
+        # Redis is available - use Redis cache
+        CACHES = {
+            'default': {
+                'BACKEND': 'django_redis.cache.RedisCache',
+                'LOCATION': redis_url + '/1',
+                'OPTIONS': {
+                    'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                    'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+                    'CONNECTION_POOL_KWARGS': {
+                        'max_connections': 50,
+                        'retry_on_timeout': True,
+                    },
+                },
+                'KEY_PREFIX': 'aprendecomigo',
+                'VERSION': 1,
+                'TIMEOUT': 60 * 15,
+            },
+            'sessions': {
+                'BACKEND': 'django_redis.cache.RedisCache',
+                'LOCATION': redis_url + '/2',
+                'OPTIONS': {
+                    'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                    'CONNECTION_POOL_KWARGS': {
+                        'max_connections': 50,
+                        'retry_on_timeout': True,
+                    },
+                },
+                'KEY_PREFIX': 'sessions',
+                'TIMEOUT': 60 * 60 * 24,
+            },
+            'template_fragments': {
+                'BACKEND': 'django_redis.cache.RedisCache',
+                'LOCATION': redis_url + '/3',
+                'OPTIONS': {
+                    'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                    'CONNECTION_POOL_KWARGS': {
+                        'max_connections': 50,
+                        'retry_on_timeout': True,
+                    },
+                },
+                'KEY_PREFIX': 'templates',
+                'TIMEOUT': 60 * 30,
+            }
         }
-    }
+    except (ImportError, redis.ConnectionError, redis.RedisError):
+        # Redis not available - use local memory cache for development
+        CACHES = {
+            'default': {
+                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                'LOCATION': 'default-cache',
+                'TIMEOUT': 60 * 15,
+            },
+            'sessions': {
+                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                'LOCATION': 'sessions-cache',
+                'TIMEOUT': 60 * 60 * 24,
+            },
+            'template_fragments': {
+                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                'LOCATION': 'templates-cache',
+                'TIMEOUT': 60 * 30,
+            }
+        }
 
-# Use Redis for sessions
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-SESSION_CACHE_ALIAS = 'sessions'
+# Session configuration with Redis fallback
+if 'railway.internal' in redis_url:
+    # For Railway, use cached_db backend as it provides better reliability
+    # Falls back to database if Redis cache is unavailable
+    SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
+    SESSION_CACHE_ALIAS = 'sessions'
+    # Session security settings for Railway
+    SESSION_COOKIE_AGE = 60 * 60 * 24  # 24 hours
+    SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+    SESSION_SAVE_EVERY_REQUEST = True  # Ensure session data is preserved
+else:
+    # For local development, use Redis-only sessions
+    SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+    SESSION_CACHE_ALIAS = 'sessions'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -312,18 +388,55 @@ STRIPE_PUBLIC_KEY = os.getenv("STRIPE_PUBLIC_KEY", "")
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 
 # Channel Layers Configuration
-# Parse Redis URL for Channels configuration
-redis_url = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379')
-redis_parsed = redis.Redis.from_url(redis_url).connection_pool.connection_kwargs
+# Parse Redis URL safely without creating Redis connections at import time
+from urllib.parse import urlparse
 
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [(redis_parsed.get('host', '127.0.0.1'), redis_parsed.get('port', 6379))],
+redis_url = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379')
+parsed_redis_url = urlparse(redis_url)
+
+# Extract connection details safely
+redis_host = parsed_redis_url.hostname or '127.0.0.1'
+redis_port = parsed_redis_url.port or 6379
+redis_password = parsed_redis_url.password
+
+# Configure Channel Layers with improved Railway support
+if 'railway.internal' in redis_url:
+    # Railway-specific configuration with enhanced reliability
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [
+                    {
+                        "address": (redis_host, redis_port),
+                        "password": redis_password,
+                        "db": 0,  # Use database 0 for channels to avoid conflicts
+                        # Connection settings optimized for Railway
+                        "connection_pool_kwargs": {
+                            "max_connections": 20,
+                            "retry_on_timeout": True,
+                            "socket_connect_timeout": 30,
+                            "socket_timeout": 30,
+                            "health_check_interval": 30,
+                        },
+                    }
+                ],
+                "prefix": "aprendecomigo:channels:",
+                "expiry": 60,  # Message expiry in seconds
+            },
         },
-    },
-}
+    }
+else:
+    # Standard configuration for local development
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [(redis_host, redis_port)],
+                "prefix": "aprendecomigo:channels:",
+            },
+        },
+    }
 
 # Logging Configuration
 # Comprehensive logging setup for multi-tenant tutoring platform
