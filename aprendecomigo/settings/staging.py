@@ -91,7 +91,13 @@ if not os.getenv("AWS_ACCESS_KEY_ID") and not os.getenv("AWS_PROFILE"):
 CORS_ALLOW_ALL_ORIGINS = False
 # CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
 
-CSRF_TRUSTED_ORIGINS = [f"https://{os.getenv('RAILWAY_PUBLIC_DOMAIN')}"]
+# CSRF trusted origins for Railway deployment
+railway_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN')
+if railway_domain:
+    CSRF_TRUSTED_ORIGINS = [f"https://{railway_domain}"]
+else:
+    # Fallback if not set
+    CSRF_TRUSTED_ORIGINS = ["https://aprendecomigo-staging.up.railway.app"]
 
 
 # Security settings for cookies
@@ -105,7 +111,9 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
 # Other security settings
-SECURE_SSL_REDIRECT = True
+# Railway handles SSL termination, so we don't need to redirect
+SECURE_SSL_REDIRECT = False  # Railway handles SSL, avoid redirect loops
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # Trust Railway's proxy
 SECURE_REFERRER_POLICY = "same-origin"
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
