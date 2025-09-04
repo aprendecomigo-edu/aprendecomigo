@@ -5,16 +5,10 @@
     "nixpacksPlan": {
       "providers": ["python", "node"],
       "phases": {
-        "install": {
-          "cmds": [
-            "pip install --upgrade pip",
-            "pip install -r requirements.txt"
-          ]
-        },
         "build": {
           "cmds": [
-            "cd theme/static_src && npm ci && npm run build",
-            "python manage.py collectstatic --noinput --clear"
+            "cd theme/static_src && npm ci",
+            "cd theme/static_src && npm run build"
           ]
         }
       }
@@ -30,7 +24,7 @@
     ]
   },
   "deploy": {
-    "startCommand": "python manage.py migrate --noinput && gunicorn aprendecomigo.asgi:application --bind 0.0.0.0:$PORT --workers 3 --worker-class uvicorn.workers.UvicornWorker --timeout 120 --access-logfile - --error-logfile -",
+    "startCommand": "python manage.py migrate --noinput && python manage.py collectstatic --noinput --clear && gunicorn aprendecomigo.asgi:application --bind 0.0.0.0:$PORT --workers 3 --worker-class uvicorn.workers.UvicornWorker --timeout 120 --access-logfile - --error-logfile -",
     "healthcheckPath": "/health/",
     "healthcheckTimeout": 30,
     "restartPolicyType": "ON_FAILURE",
@@ -39,7 +33,7 @@
   "environments": {
     "staging": {
       "deploy": {
-        "startCommand": "python manage.py migrate --noinput && gunicorn aprendecomigo.asgi:application --bind 0.0.0.0:$PORT --workers 3 --worker-class uvicorn.workers.UvicornWorker --timeout 120 --log-level info --access-logfile - --error-logfile -",
+        "startCommand": "python manage.py migrate --noinput && python manage.py collectstatic --noinput --clear && gunicorn aprendecomigo.asgi:application --bind 0.0.0.0:$PORT --workers 3 --worker-class uvicorn.workers.UvicornWorker --timeout 120 --log-level info --access-logfile - --error-logfile -",
         "healthcheckPath": "/health/",
         "healthcheckTimeout": 30,
         "restartPolicyMaxRetries": 2
@@ -47,7 +41,7 @@
     },
     "production": {
       "deploy": {
-        "startCommand": "python manage.py migrate --noinput && python manage.py check --deploy && gunicorn aprendecomigo.asgi:application --bind 0.0.0.0:$PORT --workers 3 --worker-class uvicorn.workers.UvicornWorker --timeout 120 --log-level warning --access-logfile - --error-logfile -",
+        "startCommand": "python manage.py migrate --noinput && python manage.py collectstatic --noinput --clear && python manage.py check --deploy && gunicorn aprendecomigo.asgi:application --bind 0.0.0.0:$PORT --workers 3 --worker-class uvicorn.workers.UvicornWorker --timeout 120 --log-level warning --access-logfile - --error-logfile -",
         "restartPolicyMaxRetries": 5
       }
     }
