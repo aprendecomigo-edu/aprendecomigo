@@ -91,7 +91,7 @@ if not os.getenv("AWS_ACCESS_KEY_ID") and not os.getenv("AWS_PROFILE"):
 CORS_ALLOW_ALL_ORIGINS = False
 # CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
 
-CSRF_TRUSTED_ORIGINS = os.getenv("RAILWAY_PUBLIC_DOMAIN")
+CSRF_TRUSTED_ORIGINS = [f"https://{os.getenv('RAILWAY_PUBLIC_DOMAIN')}"]
 
 
 # Security settings for cookies
