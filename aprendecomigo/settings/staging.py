@@ -3,6 +3,8 @@ Django staging settings for aprendecomigo project.
 """
 
 import os
+import socket
+from urllib.parse import urlparse
 
 import dj_database_url
 
@@ -117,5 +119,72 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # Trust Railway's
 SECURE_REFERRER_POLICY = "same-origin"
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# Redis configuration for Railway staging
+# Railway's internal network is IPv6-only
+redis_url = os.getenv('REDIS_URL', '')
+
+if not redis_url:
+    raise ValueError("REDIS_URL environment variable is not set")
+
+print(f"Using Redis URL for staging: {redis_url}")
+
+# Connection pool configuration (passed through custom connection factory)
+RAILWAY_REDIS_CONNECTION_KWARGS = {
+    'max_connections': 50,  # Finite pool size
+    'retry_on_timeout': True,  # Retry commands on TimeoutError
+}
+
+# django-redis cache configuration with IPv6 support for Railway
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': redis_url,  # Database 0 (default)
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'CONNECTION_FACTORY': 'aprendecomigo.redis_ipv6.RailwayIPv6ConnectionFactory',
+            'CONNECTION_POOL_KWARGS': RAILWAY_REDIS_CONNECTION_KWARGS,
+            'PICKLE_VERSION': -1,  # Use latest pickle protocol
+            'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',  # Compress large values
+            'IGNORE_EXCEPTIONS': True,  # Graceful degradation for cache
+        },
+        'KEY_PREFIX': 'aprendecomigo',
+        'VERSION': 1,
+        'TIMEOUT': 300,  # 5 minutes default timeout
+    },
+    'sessions': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': f"{redis_url}/1",  # Database 1 for sessions
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'CONNECTION_FACTORY': 'aprendecomigo.redis_ipv6.RailwayIPv6ConnectionFactory',
+            'CONNECTION_POOL_KWARGS': RAILWAY_REDIS_CONNECTION_KWARGS,
+            'PICKLE_VERSION': -1,
+            'IGNORE_EXCEPTIONS': False,  # Sessions are critical - fail if Redis is down
+        },
+        'KEY_PREFIX': 'sessions',
+        'TIMEOUT': 86400,  # 24 hours for sessions
+    },
+    'template_fragments': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': f"{redis_url}/2",  # Database 2 for template fragments
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'CONNECTION_FACTORY': 'aprendecomigo.redis_ipv6.RailwayIPv6ConnectionFactory',
+            'CONNECTION_POOL_KWARGS': RAILWAY_REDIS_CONNECTION_KWARGS,
+            'PICKLE_VERSION': -1,
+            'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+            'IGNORE_EXCEPTIONS': True,  # Template cache can degrade gracefully
+        },
+        'KEY_PREFIX': 'templates',
+        'TIMEOUT': 3600,  # 1 hour for template fragments
+    }
+}
+
+# Use Redis for sessions with database fallback for resilience
+# This provides the best of both worlds: Redis performance with database reliability
+SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
+SESSION_CACHE_ALIAS = 'sessions'
+SESSION_COOKIE_AGE = 86400  # 24 hours
 
 
