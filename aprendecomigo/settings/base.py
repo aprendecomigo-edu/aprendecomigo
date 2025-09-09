@@ -81,6 +81,8 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "sesame.middleware.AuthenticationMiddleware",  # Magic link authentication - must come after AuthenticationMiddleware
+    "accounts.middleware.ProgressiveVerificationMiddleware",  # Progressive verification - must come after auth
+    "accounts.middleware.VerificationCompletionMiddleware",  # Handle verification completion
     "django_htmx.middleware.HtmxMiddleware",  # HTMX request detection
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",

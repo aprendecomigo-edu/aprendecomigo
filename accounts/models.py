@@ -145,6 +145,14 @@ class CustomUser(AbstractUser):
     )
     email_verified: models.BooleanField = models.BooleanField(_("email verified"), default=False)
     phone_verified: models.BooleanField = models.BooleanField(_("phone verified"), default=False)
+    
+    # Progressive verification tracking
+    verification_required_after: models.DateTimeField = models.DateTimeField(
+        _("verification required after"),
+        null=True,
+        blank=True,
+        help_text=_("After this time, user must verify email/phone to continue accessing the platform")
+    )
 
     # Tutorial and onboarding fields
     first_login_completed: models.BooleanField = models.BooleanField(_("first login completed"), default=False)

@@ -1,0 +1,333 @@
+{% extends "base_with_navs.html" %}
+{% load static %}
+
+{% block title %}My Profile - Aprende Comigo{% endblock %}
+
+{% block dashboard_content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">My Profile</h1>
+        <p class="text-gray-600 mt-2">Manage your account information and verification status</p>
+    </div>
+
+    <!-- Verification Alert (if unverified) -->
+    {% if not user.email_verified or not user.phone_verified %}
+    <div class="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i data-lucide="alert-circle" class="h-5 w-5 text-amber-400"></i>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-amber-800">Complete Your Verification</h3>
+                <div class="mt-2 text-sm text-amber-700">
+                    {% if user.verification_required_after %}
+                        <p>You have until {{ user.verification_required_after|date:"F j, Y g:i A" }} to verify your contact information.</p>
+                    {% else %}
+                        <p>Please verify your contact information to ensure uninterrupted access to your account.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Main Content Column -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Personal Information Card -->
+            <div class="bg-white shadow-sm rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-lg font-medium text-gray-900">Personal Information</h2>
+                        <a href="{% url 'accounts:profile_edit' %}" 
+                           class="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                            Edit
+                        </a>
+                    </div>
+                </div>
+                <div class="px-6 py-4">
+                    <dl class="grid grid-cols-1 gap-4">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Full Name</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ user.get_full_name|default:"Not provided" }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Email Address</dt>
+                            <dd class="mt-1 flex items-center gap-2">
+                                <span class="text-sm text-gray-900">{{ user.email }}</span>
+                                {% if user.email_verified %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <i data-lucide="check-circle" class="h-3 w-3 mr-1"></i>
+                                        Verified
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                        <i data-lucide="alert-circle" class="h-3 w-3 mr-1"></i>
+                                        Unverified
+                                    </span>
+                                {% endif %}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Phone Number</dt>
+                            <dd class="mt-1 flex items-center gap-2">
+                                <span class="text-sm text-gray-900">{{ user.phone_number|default:"Not provided" }}</span>
+                                {% if user.phone_number %}
+                                    {% if user.phone_verified %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <i data-lucide="check-circle" class="h-3 w-3 mr-1"></i>
+                                            Verified
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                            <i data-lucide="alert-circle" class="h-3 w-3 mr-1"></i>
+                                            Unverified
+                                        </span>
+                                    {% endif %}
+                                {% endif %}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-500">Member Since</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ user.date_joined|date:"F j, Y" }}</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Verification Status Card -->
+            <div class="bg-white shadow-sm rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-medium text-gray-900">Verification Status</h2>
+                </div>
+                <div class="px-6 py-4 space-y-4">
+                    <!-- Email Verification -->
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                {% if user.email_verified %}
+                                    <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                                        <i data-lucide="mail-check" class="h-5 w-5 text-green-600"></i>
+                                    </div>
+                                {% else %}
+                                    <div class="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center">
+                                        <i data-lucide="mail" class="h-5 w-5 text-amber-600"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-900">Email Verification</p>
+                                <p class="text-sm text-gray-500">
+                                    {% if user.email_verified %}
+                                        Your email is verified
+                                    {% else %}
+                                        Verify to secure your account
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <div>
+                            {% if not user.email_verified %}
+                                <button hx-post="{% url 'accounts:send_verification_email' %}"
+                                        hx-target="#email-verification-message"
+                                        hx-swap="innerHTML"
+                                        class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
+                                    Send Verification Email
+                                </button>
+                                <div id="email-verification-message" class="mt-2"></div>
+                            {% else %}
+                                <span class="text-sm text-green-600 font-medium">
+                                    <i data-lucide="check-circle" class="inline h-4 w-4"></i>
+                                    Verified
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Phone Verification -->
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                {% if user.phone_verified %}
+                                    <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                                        <i data-lucide="phone-check" class="h-5 w-5 text-green-600"></i>
+                                    </div>
+                                {% else %}
+                                    <div class="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center">
+                                        <i data-lucide="phone" class="h-5 w-5 text-amber-600"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm font-medium text-gray-900">Phone Verification</p>
+                                <p class="text-sm text-gray-500">
+                                    {% if user.phone_verified %}
+                                        Your phone is verified
+                                    {% elif user.phone_number %}
+                                        Verify to receive SMS notifications
+                                    {% else %}
+                                        Add a phone number to verify
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <div>
+                            {% if user.phone_number and not user.phone_verified %}
+                                <button hx-post="{% url 'accounts:send_verification_sms' %}"
+                                        hx-target="#phone-verification-message"
+                                        hx-swap="innerHTML"
+                                        class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
+                                    Send Verification SMS
+                                </button>
+                                <div id="phone-verification-message" class="mt-2"></div>
+                            {% elif user.phone_verified %}
+                                <span class="text-sm text-green-600 font-medium">
+                                    <i data-lucide="check-circle" class="inline h-4 w-4"></i>
+                                    Verified
+                                </span>
+                            {% else %}
+                                <a href="{% url 'accounts:profile_edit' %}" 
+                                   class="px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors">
+                                    Add Phone Number
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- School Memberships -->
+            {% if memberships %}
+            <div class="bg-white shadow-sm rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-medium text-gray-900">School Memberships</h2>
+                </div>
+                <div class="divide-y divide-gray-200">
+                    {% for membership in memberships %}
+                    <div class="px-6 py-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0">
+                                    {% if membership.school.logo %}
+                                        <img class="h-10 w-10 rounded-full object-cover" 
+                                             src="{{ membership.school.logo.url }}" 
+                                             alt="{{ membership.school.name }}">
+                                    {% else %}
+                                        <div class="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                                            <i data-lucide="school" class="h-5 w-5 text-white"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-900">{{ membership.school.name }}</p>
+                                    <p class="text-sm text-gray-500">
+                                        {{ membership.get_role_display }} • Joined {{ membership.joined_at|date:"M Y" }}
+                                    </p>
+                                </div>
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                Active
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar Column -->
+        <div class="space-y-6">
+            <!-- Quick Stats -->
+            <div class="bg-white shadow-sm rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-medium text-gray-900">Account Overview</h2>
+                </div>
+                <div class="px-6 py-4 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-500">Verification Status</span>
+                        {% if user.email_verified and user.phone_verified %}
+                            <span class="text-sm font-medium text-green-600">Fully Verified</span>
+                        {% elif user.email_verified or user.phone_verified %}
+                            <span class="text-sm font-medium text-amber-600">Partially Verified</span>
+                        {% else %}
+                            <span class="text-sm font-medium text-red-600">Not Verified</span>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-500">School Memberships</span>
+                        <span class="text-sm font-medium text-gray-900">{{ memberships|length|default:"0" }}</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-500">Account Type</span>
+                        <span class="text-sm font-medium text-gray-900">
+                            {% if user.is_superuser %}
+                                Administrator
+                            {% else %}
+                                Standard
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="bg-white shadow-sm rounded-lg">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-lg font-medium text-gray-900">Quick Actions</h2>
+                </div>
+                <div class="px-6 py-4 space-y-3">
+                    <a href="{% url 'accounts:profile_edit' %}" 
+                       class="flex items-center text-sm text-blue-600 hover:text-blue-700">
+                        <i data-lucide="edit" class="h-4 w-4 mr-2"></i>
+                        Edit Profile
+                    </a>
+                    
+                    {% if not user.email_verified %}
+                    <a href="#email-verification" 
+                       class="flex items-center text-sm text-amber-600 hover:text-amber-700">
+                        <i data-lucide="mail" class="h-4 w-4 mr-2"></i>
+                        Verify Email
+                    </a>
+                    {% endif %}
+                    
+                    {% if user.phone_number and not user.phone_verified %}
+                    <a href="#phone-verification" 
+                       class="flex items-center text-sm text-amber-600 hover:text-amber-700">
+                        <i data-lucide="phone" class="h-4 w-4 mr-2"></i>
+                        Verify Phone
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'dashboard:dashboard' %}" 
+                       class="flex items-center text-sm text-gray-600 hover:text-gray-700">
+                        <i data-lucide="home" class="h-4 w-4 mr-2"></i>
+                        Back to Dashboard
+                    </a>
+                    
+                    <hr class="my-3">
+                    
+                    <a href="{% url 'accounts:logout' %}" 
+                       class="flex items-center text-sm text-red-600 hover:text-red-700">
+                        <i data-lucide="log-out" class="h-4 w-4 mr-2"></i>
+                        Sign Out
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- HTMX for verification actions -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Re-initialize icons after HTMX updates
+    document.body.addEventListener('htmx:afterSwap', function(event) {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    });
+});
+</script>
+{% endblock %}

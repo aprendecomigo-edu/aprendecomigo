@@ -183,6 +183,20 @@ def get_sms_service() -> SMSService:
 # Convenience functions for easy usage
 def send_sms(to: str, message: str, from_number: str | None = None) -> dict:
     """Send a single SMS message."""
+    # In development without boto3, log the SMS to console
+    if settings.DEBUG and boto3 is None:
+        logger.info(f"[SMS DEBUG MODE - NO BOTO3]")
+        logger.info(f"To: {to}")
+        logger.info(f"Message: {message}")
+        logger.info("-" * 50)
+        return {
+            'success': True,
+            'message_id': 'debug-mode',
+            'provider': 'console',
+            'to': to,
+            'debug': True
+        }
+    
     return get_sms_service().send(to, message, from_number)
 
 

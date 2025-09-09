@@ -36,6 +36,7 @@ from django.views.generic import CreateView, DetailView, FormView, ListView, Upd
 from sesame.utils import get_query_string
 
 from messaging.services import send_magic_link_email, send_sms_otp
+from sesame.utils import get_query_string as sesame_get_query_string
 
 from .db_queries import create_user_school_and_membership, get_user_by_email, user_exists
 from .models import School, SchoolMembership, SchoolSettings, TeacherInvitation
@@ -345,13 +346,52 @@ class SignUpView(View):
                     first_name=first_name,
                     last_name=" ".join(full_name.split()[1:]) if len(full_name.split()) > 1 else "",
                 )
+                
+                # Set user as unverified but allow access
+                user.email_verified = False
+                user.phone_verified = False
+                # Store when verification becomes mandatory (24 hours from now)
+                user.verification_required_after = timezone.now() + timedelta(hours=24)
+                user.save()
 
                 # Create school and membership immediately
                 create_user_school_and_membership(user, organization_name)
 
-                # Log in the user immediately
+                # Log in the user immediately (progressive verification)
                 login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-                logger.info(f"User signup completed for: {email}")
+                
+                # Mark this as an unverified session (expires in 24h)
+                request.session['is_unverified_user'] = True
+                request.session['unverified_until'] = (timezone.now() + timedelta(hours=24)).timestamp()
+                request.session.set_expiry(24 * 60 * 60)  # 24 hours
+                
+                logger.info(f"User signup completed for: {email} (unverified, 24h grace period)")
+                
+                # Send verification emails/SMS asynchronously (non-blocking)
+                try:
+                    # Generate magic link for email verification
+                    login_url = reverse("accounts:verify_email")
+                    from sesame.utils import get_query_string
+                    magic_link = request.build_absolute_uri(login_url) + get_query_string(user)
+                    
+                    # Send email verification (non-blocking)
+                    send_magic_link_email(email, magic_link, first_name, is_verification=True)
+                    logger.info(f"Verification email sent to: {email}")
+                    
+                    # Generate and send SMS OTP if phone provided
+                    if phone_number:
+                        otp_code = str(secrets.randbelow(900000) + 100000)
+                        request.session[f'verify_otp_{user.id}'] = otp_code
+                        request.session[f'verify_otp_expires_{user.id}'] = (timezone.now() + timedelta(minutes=30)).timestamp()
+                        send_sms_otp(phone_number, otp_code, first_name, is_verification=True)
+                        logger.info(f"Verification SMS sent to: {phone_number}")
+                except Exception as e:
+                    # Don't block signup if verification sending fails
+                    logger.error(f"Failed to send verifications for {email}: {e}")
+                
+                # Create verification tasks using the task service
+                from tasks.services import TaskService
+                TaskService.create_verification_tasks(user, email, phone_number)
 
             # Return success with redirect to dashboard
             return render(
@@ -1009,11 +1049,11 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
 
 
 class ProfileView(LoginRequiredMixin, DetailView):
-    """View user profile"""
+    """View user profile with verification status"""
 
     model = User
-    template_name = "accounts/profile/profile_detail.html"
-    context_object_name = "profile_user"
+    template_name = "accounts/profile/profile_with_verification.html"
+    context_object_name = "user"
 
     def get_object(self):
         return self.request.user
@@ -1028,6 +1068,13 @@ class ProfileView(LoginRequiredMixin, DetailView):
         ).select_related('school').order_by('joined_at')
 
         context['memberships'] = memberships
+        
+        # Add dashboard context for base_with_navs template
+        context['active_section'] = 'profile'
+        context['school_name'] = memberships.first().school.name if memberships.exists() else "No School"
+        context['user_first_name'] = self.request.user.first_name
+        context['user_role'] = memberships.first().get_role_display() if memberships.exists() else "User"
+        
         return context
 
 
@@ -1157,6 +1204,88 @@ class ComprehensiveSchoolSettingsForm(forms.Form):
             self.school_settings.save()
 
         return self.school
+
+@login_required
+def send_verification_email(request):
+    """Send verification email to the current user (HTMX endpoint)."""
+    user = request.user
+    
+    # Check if already verified
+    if user.email_verified:
+        return HttpResponse(
+            '<div class="text-green-600 text-sm">Your email is already verified!</div>'
+        )
+    
+    try:
+        # Generate magic link for email verification
+        login_url = reverse("accounts:verify_email")
+        magic_link = request.build_absolute_uri(login_url) + sesame_get_query_string(user)
+        
+        # Send verification email
+        result = send_magic_link_email(user.email, magic_link, user.first_name, is_verification=True)
+        
+        if result.get("success"):
+            logger.info(f"Verification email sent to: {user.email}")
+            return HttpResponse(
+                '<div class="text-green-600 text-sm">Verification email sent! Check your inbox.</div>'
+            )
+        else:
+            logger.error(f"Failed to send verification email to {user.email}")
+            return HttpResponse(
+                '<div class="text-red-600 text-sm">Failed to send email. Please try again later.</div>'
+            )
+    except Exception as e:
+        logger.error(f"Error sending verification email to {user.email}: {e}")
+        return HttpResponse(
+            '<div class="text-red-600 text-sm">An error occurred. Please try again later.</div>'
+        )
+
+
+@login_required
+def send_verification_sms(request):
+    """Send verification SMS to the current user (HTMX endpoint)."""
+    user = request.user
+    
+    # Check if phone number exists
+    if not user.phone_number:
+        return HttpResponse(
+            '<div class="text-red-600 text-sm">No phone number on file. Please add one first.</div>'
+        )
+    
+    # Check if already verified
+    if user.phone_verified:
+        return HttpResponse(
+            '<div class="text-green-600 text-sm">Your phone is already verified!</div>'
+        )
+    
+    try:
+        # Generate OTP code
+        otp_code = str(secrets.randbelow(900000) + 100000)
+        
+        # Store in session
+        request.session[f'verify_otp_{user.id}'] = otp_code
+        request.session[f'verify_otp_expires_{user.id}'] = (timezone.now() + timedelta(minutes=30)).timestamp()
+        
+        # Send SMS
+        result = send_sms_otp(user.phone_number, otp_code, user.first_name, is_verification=True)
+        
+        if result.get("success"):
+            logger.info(f"Verification SMS sent to: {user.phone_number}")
+            return HttpResponse(
+                f'<div class="text-green-600 text-sm">Verification code sent to {user.phone_number}!</div>'
+                f'<a href="{reverse("accounts:verify_otp")}" class="text-blue-600 text-sm underline mt-2 inline-block">Enter code</a>'
+            )
+        else:
+            logger.error(f"Failed to send verification SMS to {user.phone_number}")
+            return HttpResponse(
+                '<div class="text-red-600 text-sm">Failed to send SMS. Please try again later.</div>'
+            )
+    except Exception as e:
+        logger.error(f"Error sending verification SMS to {user.phone_number}: {e}")
+        return HttpResponse(
+            '<div class="text-red-600 text-sm">An error occurred. Please try again later.</div>'
+        )
+
 
 class SchoolSettingsView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin, FormView):
     """Edit comprehensive school settings including School and SchoolSettings"""
