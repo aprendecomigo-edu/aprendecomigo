@@ -20,9 +20,9 @@ from .enums import (
     EducationalSystemType,
     EmailDeliveryStatus,
     EmailIntegrationChoices,
+    FinancialResponsibility,
     InvitationStatus,
     LanguageChoices,
-    RelationshipType,
     SchoolRole,
     TrialCostAbsorption,
 )
@@ -37,8 +37,8 @@ from .invitations import (
 
 # Import profile models
 from .profiles import (
-    ParentChildRelationship,
-    ParentProfile,
+    GuardianStudentRelationship,
+    GuardianProfile,
     StudentProfile,
     TeacherProfile,
 )
@@ -76,12 +76,12 @@ __all__ = [
     "EducationalSystemType",
     "EmailDeliveryStatus",
     "EmailIntegrationChoices",
+    "FinancialResponsibility",
     "InvitationStatus",
     "LanguageChoices",
     # Profiles
-    "ParentChildRelationship",
-    "ParentProfile",
-    "RelationshipType",
+    "GuardianStudentRelationship",
+    "GuardianProfile",
     # Schools
     "School",
     "SchoolActivity",

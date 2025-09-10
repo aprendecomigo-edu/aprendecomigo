@@ -234,8 +234,15 @@ class SignupIntegrationTestCase(BaseTestCase):
 
     def test_authenticated_user_cannot_access_signup(self):
         """Test that already authenticated users are redirected from signup"""
-        # Arrange: Create and login user
+        # Arrange: Create user with proper school membership
         user = User.objects.create_user(email='existing@example.com', name='Existing User')
+        school = School.objects.create(name='Test School')
+        SchoolMembership.objects.create(
+            user=user, 
+            school=school, 
+            role=SchoolRole.SCHOOL_OWNER,
+            is_active=True
+        )
         self.client.force_login(user)
 
         # Act: Try to access signup page

@@ -24,7 +24,7 @@ class SchoolRole(models.TextChoices):
         _("School Staff"),
     )  # Limited access for administrative tasks
     STUDENT = "student", _("Student")  # Access to assigned classes
-    PARENT = "parent", _("Parent")  # Can manage child accounts and approve purchases
+    GUARDIAN = "guardian", _("Guardian")  # Can manage student accounts and approve purchases
 
 
 # Educational System Enumerations
@@ -179,10 +179,9 @@ class InvitationStatus(models.TextChoices):
 
 
 
+class FinancialResponsibility(models.TextChoices):
+    """Financial responsibility options for student accounts."""
 
-class RelationshipType(models.TextChoices):
-    """Types of parent-child relationships."""
-
-    PARENT = "parent", _("Parent")
-    GUARDIAN = "guardian", _("Guardian")
-    OTHER = "other", _("Other")
+    GUARDIAN = "guardian", _("Guardian Responsible")
+    SELF = "self", _("Self Responsible")
+    SHARED = "shared", _("Shared Responsibility")

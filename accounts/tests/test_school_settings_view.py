@@ -73,7 +73,7 @@ class SchoolSettingsViewTest(BaseTestCase):
 
         # Should redirect to login page (302)
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/accounts/signin/', response.url)
+        self.assertIn('/signin/', response.url)
 
     def test_school_owner_can_access_settings(self):
         """Test that school owner can access school settings"""

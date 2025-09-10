@@ -53,7 +53,7 @@ class FinancesConfig(AppConfig):
             ("accounts", "School"),
             ("accounts", "TeacherProfile"),
             ("accounts", "SchoolMembership"),
-            ("accounts", "ParentChildRelationship"),
+            ("accounts", "GuardianStudentRelationship"),
             ("accounts", "TeacherCourse"),
         ]
 

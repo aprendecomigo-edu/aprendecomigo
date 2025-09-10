@@ -34,6 +34,7 @@ from django.views import View
 from django.views.decorators.csrf import csrf_protect
 from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView
 from sesame.utils import get_query_string
+from sesame.views import LoginView as SesameLoginView
 
 from messaging.services import send_magic_link_email, send_sms_otp
 from sesame.utils import get_query_string as sesame_get_query_string
@@ -161,6 +162,7 @@ class SignInView(View):
             # Generate magic link for email verification
             login_url = reverse("accounts:magic_login")
             magic_link = request.build_absolute_uri(login_url) + get_query_string(user)
+            logger.info(f"Generated magic link for {email}: {login_url} (token length: {len(get_query_string(user))})")
 
             # Generate secure 6-digit OTP code for SMS verification
             otp_code = str(secrets.randbelow(900000) + 100000)
@@ -624,6 +626,7 @@ def resend_code(request: HttpRequest) -> HttpResponse:
         user = get_user_by_email(email)
         login_url = reverse("accounts:magic_login")
         magic_link = request.build_absolute_uri(login_url) + get_query_string(user)
+        logger.info(f"Regenerated magic link for {email}: {login_url} (token length: {len(get_query_string(user))})")
 
         try:
             send_magic_link_email(email, magic_link, user.name or user.first_name)
@@ -684,14 +687,16 @@ class LogoutView(View):
         if request.user.is_authenticated:
             logger.info(f"User logged out: {request.user.email}")
 
-        # Perform logout
+        # Perform logout (this handles session cleanup properly)
         logout(request)
 
-        # Clear any session data
-        request.session.flush()
+        # Note: Django's logout() function properly manages session data
+        # No need to call session.flush() which removes CSRF tokens
+        # The logout() function clears authentication data while preserving
+        # necessary session infrastructure like CSRF tokens
 
-        # Redirect to home or signin page
-        return redirect("/accounts/signin/")
+        # Redirect to signin page using correct URL
+        return redirect(reverse("accounts:signin"))
 
 # =============================================================================
 # INVITATION MANAGEMENT VIEWS
@@ -916,6 +921,52 @@ class AcceptTeacherInvitationView(View):
             })
 
         return redirect(reverse('accounts:accept_invitation', kwargs={'token': token}))
+
+
+class CustomMagicLoginView(SesameLoginView):
+    """
+    Custom magic link login view with enhanced error handling and logging.
+    
+    Extends sesame's LoginView to provide better user feedback and debugging
+    information for magic link authentication failures.
+    """
+    
+    def dispatch(self, request, *args, **kwargs):
+        """Override dispatch to add custom error handling."""
+        try:
+            logger.info(f"Magic link login attempt from IP: {request.META.get('REMOTE_ADDR')}")
+            logger.info(f"Magic link URL: {request.get_full_path()}")
+            logger.info(f"User-Agent: {request.META.get('HTTP_USER_AGENT', 'Unknown')}")
+            
+            response = super().dispatch(request, *args, **kwargs)
+            
+            # Log successful authentication
+            if hasattr(request, 'user') and request.user.is_authenticated:
+                logger.info(f"Magic link authentication successful for user: {request.user.email}")
+            
+            return response
+            
+        except PermissionDenied as e:
+            logger.warning(f"Magic link authentication failed: {e}")
+            logger.warning(f"Request details - Path: {request.get_full_path()}, IP: {request.META.get('REMOTE_ADDR')}")
+            
+            # Provide user-friendly error message
+            messages.error(
+                request,
+                "This login link has expired or is invalid. Please request a new one."
+            )
+            return redirect(reverse('accounts:signin'))
+            
+        except Exception as e:
+            logger.error(f"Unexpected error in magic link authentication: {e}")
+            logger.error(f"Request details - Path: {request.get_full_path()}, IP: {request.META.get('REMOTE_ADDR')}")
+            
+            # Provide generic error message
+            messages.error(
+                request,
+                "There was an issue with your login link. Please try signing in again."
+            )
+            return redirect(reverse('accounts:signin'))
 
 
 @login_required

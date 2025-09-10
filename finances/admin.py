@@ -990,8 +990,8 @@ class FamilyBudgetControlAdmin(admin.ModelAdmin):
     """Admin interface for family budget controls."""
 
     list_display = [
-        "parent_name",
-        "child_name",
+        "guardian_name",
+        "student_name",
         "school_name",
         "monthly_limit_display",
         "weekly_limit_display",
@@ -1005,21 +1005,21 @@ class FamilyBudgetControlAdmin(admin.ModelAdmin):
         "require_approval_for_sessions",
         "require_approval_for_packages",
         "is_active",
-        "parent_child_relationship__school",
+        "guardian_student_relationship__school",
         "created_at",
         "updated_at",
     ]
     search_fields = [
-        "parent_child_relationship__parent__name",
-        "parent_child_relationship__parent__email",
-        "parent_child_relationship__child__name",
-        "parent_child_relationship__child__email",
-        "parent_child_relationship__school__name",
+        "guardian_student_relationship__guardian__name",
+        "guardian_student_relationship__guardian__email",
+        "guardian_student_relationship__student__name",
+        "guardian_student_relationship__student__email",
+        "guardian_student_relationship__school__name",
     ]
     readonly_fields = ["current_monthly_spending", "current_weekly_spending", "created_at", "updated_at"]
 
     fieldsets = (
-        ("Relationship Information", {"fields": ("parent_child_relationship",)}),
+        ("Relationship Information", {"fields": ("guardian_student_relationship",)}),
         (
             "Budget Limits",
             {
@@ -1052,28 +1052,28 @@ class FamilyBudgetControlAdmin(admin.ModelAdmin):
     )
 
     @admin.display(
-        description="Parent",
-        ordering="parent_child_relationship__parent__name",
+        description="Guardian",
+        ordering="guardian_student_relationship__guardian__name",
     )
-    def parent_name(self, obj):
-        """Display parent name."""
-        return obj.parent_child_relationship.parent.name
+    def guardian_name(self, obj):
+        """Display guardian name."""
+        return obj.guardian_student_relationship.guardian.name
 
     @admin.display(
-        description="Child",
-        ordering="parent_child_relationship__child__name",
+        description="Student",
+        ordering="guardian_student_relationship__student__name",
     )
-    def child_name(self, obj):
-        """Display child name."""
-        return obj.parent_child_relationship.child.name
+    def student_name(self, obj):
+        """Display student name."""
+        return obj.guardian_student_relationship.student.name
 
     @admin.display(
         description="School",
-        ordering="parent_child_relationship__school__name",
+        ordering="guardian_student_relationship__school__name",
     )
     def school_name(self, obj):
         """Display school name."""
-        return obj.parent_child_relationship.school.name
+        return obj.guardian_student_relationship.school.name
 
     @admin.display(description="Monthly Limit")
     def monthly_limit_display(self, obj):
@@ -1112,9 +1112,9 @@ class FamilyBudgetControlAdmin(admin.ModelAdmin):
             super()
             .get_queryset(request)
             .select_related(
-                "parent_child_relationship__parent",
-                "parent_child_relationship__child",
-                "parent_child_relationship__school",
+                "guardian_student_relationship__parent",
+                "guardian_student_relationship__child",
+                "guardian_student_relationship__school",
             )
         )
 
@@ -1126,7 +1126,7 @@ class PurchaseApprovalRequestAdmin(admin.ModelAdmin):
     list_display = [
         "request_id",
         "student_name",
-        "parent_name",
+        "guardian_name",
         "amount_display",
         "request_type_display",
         "status_display",
@@ -1139,13 +1139,13 @@ class PurchaseApprovalRequestAdmin(admin.ModelAdmin):
         "request_type",
         "requested_at",
         "expires_at",
-        "parent_child_relationship__school",
+        "guardian_student_relationship__school",
     ]
     search_fields = [
         "student__name",
         "student__email",
-        "parent__name",
-        "parent__email",
+        "guardian__name",
+        "guardian__email",
         "description",
     ]
     readonly_fields = [
@@ -1165,8 +1165,8 @@ class PurchaseApprovalRequestAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "student",
-                    "parent",
-                    "parent_child_relationship",
+                    "guardian",
+                    "guardian_student_relationship",
                     "amount",
                     "description",
                     "request_type",
@@ -1189,7 +1189,7 @@ class PurchaseApprovalRequestAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "status",
-                    "parent_notes",
+                    "guardian_notes",
                     "responded_at",
                 )
             },
@@ -1233,12 +1233,12 @@ class PurchaseApprovalRequestAdmin(admin.ModelAdmin):
         return obj.student.name
 
     @admin.display(
-        description="Parent",
+        description="Guardian",
         ordering="parent__name",
     )
-    def parent_name(self, obj):
-        """Display parent name."""
-        return obj.parent.name
+    def guardian_name(self, obj):
+        """Display guardian name."""
+        return obj.guardian.name
 
     @admin.display(description="Amount")
     def amount_display(self, obj):
@@ -1346,7 +1346,7 @@ class PurchaseApprovalRequestAdmin(admin.ModelAdmin):
         return (
             super()
             .get_queryset(request)
-            .select_related("student", "parent", "parent_child_relationship__school", "pricing_plan", "class_session")
+            .select_related("student", "parent", "guardian_student_relationship__school", "pricing_plan", "class_session")
         )
 
 

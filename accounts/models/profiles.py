@@ -2,7 +2,7 @@
 User profile models for the accounts app.
 
 This module contains specialized profile models for different user types:
-teachers, students, and parents. Each profile provides additional information
+teachers, students, and guardians. Each profile provides additional information
 and functionality specific to their role.
 """
 
@@ -12,7 +12,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from .enums import RelationshipType, SchoolRole
+from .enums import FinancialResponsibility, SchoolRole
 
 logger = logging.getLogger(__name__)
 
@@ -178,19 +178,30 @@ class StudentProfile(models.Model):
         _("school year"), max_length=50, help_text=_("School year within the educational system")
     )
     birth_date: models.DateField = models.DateField(_("birth date"))
-    # Sensitive personal data fields
-    address: models.TextField = models.TextField(
-        _("address"), blank=True, help_text=_("Street, number, postal code and location")
-    )
-    cc_number: models.CharField = models.CharField(_("CC number"), max_length=20, blank=True)
-    cc_photo: models.ImageField = models.ImageField(
-        _("CC photo"),
-        upload_to="cc_photos/",
-        blank=True,
+    guardian: models.ForeignKey = models.ForeignKey(
+        "GuardianProfile",
+        on_delete=models.SET_NULL,  # Don't delete student if guardian is removed
+        related_name="students",
         null=True,
-        help_text=_("Photo of CC front and back (only for in-person students)"),
+        blank=True,  # Allow adult students to have no separate guardian
+        help_text=_("Guardian of the student (null for adult students who are self-responsible)"),
     )
-    calendar_iframe: models.TextField = models.TextField(_("calendar iframe"), blank=True)
+    
+    # Financial and legal responsibility tracking
+    financial_responsibility: models.CharField = models.CharField(
+        _("financial responsibility"),
+        max_length=20,
+        choices=FinancialResponsibility.choices,
+        default=FinancialResponsibility.GUARDIAN,
+        help_text=_("Who is financially responsible for this student's account"),
+    )
+    notes: models.TextField = models.TextField(
+        _("notes"), blank=True, help_text=_("Additional notes about the student, special needs, etc.")
+    )
+
+    # Audit timestamps  
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["user__name", "birth_date"]
@@ -203,10 +214,31 @@ class StudentProfile(models.Model):
     def __str__(self) -> str:
         user_name = self.user.name if hasattr(self.user, "name") else str(self.user)
         return f"Student Profile: {user_name}"
-
+    
+    @property
+    def effective_guardian(self):
+        """Get the effective guardian based on financial responsibility setting."""
+        if self.financial_responsibility == FinancialResponsibility.SELF:
+            # Student manages their own account
+            return self.user.guardian_profile if hasattr(self.user, 'guardian_profile') else None
+        return self.guardian
+    
+    def get_financial_responsible_user(self):
+        """Get the user responsible for financial decisions based on explicit responsibility setting."""
+        if self.financial_responsibility == FinancialResponsibility.SELF:
+            return self.user
+        elif self.financial_responsibility == FinancialResponsibility.GUARDIAN and self.guardian:
+            return self.guardian.user
+        elif self.financial_responsibility == FinancialResponsibility.SHARED:
+            # For shared responsibility, return both users or implement approval logic elsewhere
+            return self.user  # Primary is student, but guardian should also have permissions
+        return self.user  # Fallback to self
+    
     def clean(self):
         """Validate that school_year is valid for the selected educational system"""
         super().clean()
+        
+        # Validate school year
         if (
             self.educational_system
             and self.school_year
@@ -222,41 +254,81 @@ class StudentProfile(models.Model):
                     f"Valid options: {list(valid_years.keys())}"
                 }
             )
+        # Validate guardian requirements based on financial responsibility setting
+        if self.financial_responsibility == FinancialResponsibility.GUARDIAN and not self.guardian:
+            from django.core.exceptions import ValidationError
+            raise ValidationError({
+                'guardian': _('Students with guardian financial responsibility must have a guardian assigned.')
+            })
+
+    def can_make_purchases(self, user):
+        """Check if a user can make purchases for this student."""
+        if self.financial_responsibility == FinancialResponsibility.SELF:
+            return user == self.user
+        elif self.financial_responsibility == FinancialResponsibility.GUARDIAN:
+            return user == self.guardian.user if self.guardian else False
+        elif self.financial_responsibility == FinancialResponsibility.SHARED:
+            return user in [self.user, self.guardian.user if self.guardian else None]
+        return False
+    def can_book_sessions(self, user):
+        """Check if a user can book sessions for this student."""
+        # For session booking, might have more flexible rules than purchases
+        if self.financial_responsibility == FinancialResponsibility.SELF:
+            return user == self.user
+        elif self.financial_responsibility == FinancialResponsibility.GUARDIAN:
+            return user == self.guardian.user if self.guardian else False
+        elif self.financial_responsibility == FinancialResponsibility.SHARED:
+            return user in [self.user, self.guardian.user if self.guardian else None]
+        return False
+    def get_authorized_users(self):
+        """Get all users who can act on behalf of this student."""
+        authorized = [self.user]
+        if self.guardian and self.financial_responsibility in [FinancialResponsibility.GUARDIAN, FinancialResponsibility.SHARED]:
+            authorized.append(self.guardian.user)
+        return authorized
 
 
-class ParentProfile(models.Model):
+class GuardianProfile(models.Model):
     """
-    Parent profile with additional information for managing child accounts.
-    A user can have this profile regardless of which schools they belong to as a parent.
+    Guardian profile with additional information for managing student accounts.
+    A user can have this profile regardless of which schools they belong to as a guardian.
     """
 
     user: models.OneToOneField = models.OneToOneField(
-        "CustomUser", on_delete=models.CASCADE, related_name="parent_profile"
+        "CustomUser", on_delete=models.CASCADE, related_name="guardian_profile"
     )
 
-    # Notification preferences for parent communications
+    # Notification preferences for guardian communications
     notification_preferences: models.JSONField = models.JSONField(
         _("notification preferences"),
         default=dict,
         blank=True,
-        help_text=_("Parent notification preferences (email, SMS, in-app)"),
+        help_text=_("Guardian notification preferences (email, SMS, in-app)"),
     )
 
-    # Default approval settings for all children
+    # Default approval settings for all studentren
     default_approval_settings: models.JSONField = models.JSONField(
         _("default approval settings"),
         default=dict,
         blank=True,
-        help_text=_("Default purchase approval settings for all children"),
+        help_text=_("Default purchase approval settings for all studentren"),
     )
 
     # Communication preferences
     email_notifications_enabled: models.BooleanField = models.BooleanField(
-        _("email notifications enabled"), default=True, help_text=_("Enable email notifications for parent alerts")
+        _("email notifications enabled"), default=True, help_text=_("Enable email notifications for guardian alerts")
     )
 
     sms_notifications_enabled: models.BooleanField = models.BooleanField(
-        _("SMS notifications enabled"), default=False, help_text=_("Enable SMS notifications for parent alerts")
+        _("SMS notifications enabled"), default=False, help_text=_("Enable SMS notifications for guardian alerts")
+    )
+        # Sensitive personal data fields
+    address: models.TextField = models.TextField(
+        _("address"), blank=True, help_text=_("Street, number, postal code and location")
+    )
+    tax_nr: models.CharField = models.CharField(_("tax number"), max_length=20, blank=True)
+    invoice: models.BooleanField = models.BooleanField(
+        _("invoice"), default=False, help_text=_("Whether to issue invoices for this guardian")
     )
 
     # Audit timestamps
@@ -264,8 +336,8 @@ class ParentProfile(models.Model):
     updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = _("Parent Profile")
-        verbose_name_plural = _("Parent Profiles")
+        verbose_name = _("guardian Profile")
+        verbose_name_plural = _("guardian Profiles")
         indexes = [
             models.Index(fields=["created_at"]),
             models.Index(fields=["email_notifications_enabled"]),
@@ -273,37 +345,29 @@ class ParentProfile(models.Model):
 
     def __str__(self) -> str:
         user_name = self.user.name if hasattr(self.user, "name") else str(self.user)
-        return f"Parent Profile: {user_name}"
+        return f"guardian Profile: {user_name}"
 
 
-class ParentChildRelationship(models.Model):
+class GuardianStudentRelationship(models.Model):
     """
-    Model to represent parent-child relationships within the school system.
-    Allows parents to manage their children's accounts with appropriate permissions.
+    Model to represent guardian-student relationships within the school system.
+    Allows guardians to manage their studentren's accounts with appropriate permissions.
     """
 
-    parent: models.ForeignKey = models.ForeignKey(
+    guardian: models.ForeignKey = models.ForeignKey(
         "CustomUser",
         on_delete=models.CASCADE,
-        related_name="children_relationships",
-        verbose_name=_("parent"),
-        help_text=_("Parent user who manages the child account"),
+        related_name="studentren_relationships",
+        verbose_name=_("guardian"),
+        help_text=_("Guardian user who manages the student account"),
     )
 
-    child: models.ForeignKey = models.ForeignKey(
+    student: models.ForeignKey = models.ForeignKey(
         "CustomUser",
         on_delete=models.CASCADE,
-        related_name="parent_relationships",
-        verbose_name=_("child"),
-        help_text=_("Child user whose account is managed by the parent"),
-    )
-
-    relationship_type: models.CharField = models.CharField(
-        _("relationship type"),
-        max_length=20,
-        choices=RelationshipType.choices,
-        default=RelationshipType.PARENT,
-        help_text=_("Type of relationship (parent, guardian, etc.)"),
+        related_name="guardian_relationships",
+        verbose_name=_("student"),
+        help_text=_("Student user whose account is managed by the guardian"),
     )
 
     school: models.ForeignKey = models.ForeignKey(
@@ -317,15 +381,15 @@ class ParentChildRelationship(models.Model):
         _("is active"), default=True, help_text=_("Whether this relationship is currently active")
     )
 
-    # Approval settings specific to this parent-child relationship
+    # Approval settings specific to this guardian-student relationship
     requires_purchase_approval: models.BooleanField = models.BooleanField(
-        _("requires purchase approval"), default=True, help_text=_("Whether parent approval is required for purchases")
+        _("requires purchase approval"), default=True, help_text=_("Whether guardian approval is required for purchases")
     )
 
     requires_session_approval: models.BooleanField = models.BooleanField(
         _("requires session approval"),
         default=True,
-        help_text=_("Whether parent approval is required for booking sessions"),
+        help_text=_("Whether guardian approval is required for booking sessions"),
     )
 
     # Audit timestamps
@@ -333,35 +397,34 @@ class ParentChildRelationship(models.Model):
     updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = _("Parent-Child Relationship")
-        verbose_name_plural = _("Parent-Child Relationships")
-        unique_together = [["parent", "child", "school"]]
+        verbose_name = _("guardian-student Relationship")
+        verbose_name_plural = _("guardian-student Relationships")
+        unique_together = [["guardian", "student", "school"]]
         indexes = [
-            models.Index(fields=["parent", "is_active"]),
-            models.Index(fields=["child", "is_active"]),
+            models.Index(fields=["guardian", "is_active"]),
+            models.Index(fields=["student", "is_active"]),
             models.Index(fields=["school", "is_active"]),
-            models.Index(fields=["relationship_type"]),
         ]
-        constraints = [models.CheckConstraint(check=~models.Q(parent=models.F("child")), name="parent_cannot_be_child")]
+        constraints = [models.CheckConstraint(check=~models.Q(guardian=models.F("student")), name="guardian_cannot_be_student")]
 
     def __str__(self) -> str:
-        parent_name = self.parent.name if hasattr(self.parent, "name") else str(self.parent)
-        child_name = self.child.name if hasattr(self.child, "name") else str(self.child)
-        return f"{parent_name} -> {child_name} ({self.school.name})"
+        guardian_name = self.guardian.name if hasattr(self.guardian, "name") else str(self.guardian)
+        student_name = self.student.name if hasattr(self.student, "name") else str(self.student)
+        return f"{guardian_name} -> {student_name} ({self.school.name})"
 
     def clean(self):
         """Validate the relationship data."""
         super().clean()
 
-        # Ensure parent and child are different users
-        if self.parent == self.child:
-            raise ValidationError(_("Parent and child cannot be the same user"))
+        # Ensure guardian and student are different users
+        if self.guardian == self.student:
+            raise ValidationError(_("guardian and student cannot be the same user"))
 
-        # Ensure both parent and child have memberships at the school
+        # Ensure both guardian and student have memberships at the school
         from .schools import SchoolMembership  # Avoid circular import
 
-        if not SchoolMembership.objects.filter(user=self.parent, school=self.school, is_active=True).exists():
-            raise ValidationError(_("Parent must be a member of the school"))
+        if not SchoolMembership.objects.filter(user=self.guardian, school=self.school, is_active=True).exists():
+            raise ValidationError(_("guardian must be a member of the school"))
 
-        if not SchoolMembership.objects.filter(user=self.child, school=self.school, is_active=True).exists():
-            raise ValidationError(_("Child must be a member of the school"))
+        if not SchoolMembership.objects.filter(user=self.student, school=self.school, is_active=True).exists():
+            raise ValidationError(_("student must be a member of the school"))

@@ -741,8 +741,8 @@ PWA_APP_ICONS = [
 PWA_SERVICE_WORKER_PATH = os.path.join(BASE_DIR, 'static', 'js', 'service-worker.js')
 
 # Sesame Configuration (Magic Links)
-SESAME_MAX_AGE = 300  # 5 minutes for secure links
-SESAME_ONE_TIME = False  # Allow multiple uses for testing
+SESAME_MAX_AGE = 900  # 15 minutes for better user experience
+SESAME_ONE_TIME = False  # Allow multiple uses for testing/troubleshooting
 SESAME_INVALIDATE_ON_PASSWORD_CHANGE = True  # Invalidate on password change
 
 # Web Push Configuration (VAPID keys will be generated during setup)

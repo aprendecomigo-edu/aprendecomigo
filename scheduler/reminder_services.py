@@ -166,7 +166,7 @@ class CommunicationPayloadService:
                 if membership:
                     role_map = {
                         SchoolRole.STUDENT: "student",
-                        SchoolRole.PARENT: "parent",
+                        SchoolRole.GUARDIAN: "guardian",
                         SchoolRole.SCHOOL_ADMIN: "admin",
                         SchoolRole.TEACHER: "teacher",
                     }

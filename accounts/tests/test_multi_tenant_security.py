@@ -10,17 +10,19 @@ from django.test import TestCase
 
 from accounts.models import (
     CustomUser,
+    EducationalSystem,
     School,
     SchoolMembership,
     SchoolRole,
     StudentProfile,
     TeacherProfile,
 )
+from accounts.tests.test_base import BaseTestCase
 
 User = get_user_model()
 
 
-class QuerysetIsolationTestCase(TestCase):
+class QuerysetIsolationTestCase(BaseTestCase):
     """
     Test that queryset-level filtering properly isolates data by school.
 
@@ -84,8 +86,18 @@ class QuerysetIsolationTestCase(TestCase):
         SchoolMembership.objects.create(user=student1, school=self.school1, role=SchoolRole.STUDENT)
         SchoolMembership.objects.create(user=student2, school=self.school2, role=SchoolRole.STUDENT)
 
-        profile1 = StudentProfile.objects.create(user=student1, birth_date="2010-01-01", school_year="5th")
-        profile2 = StudentProfile.objects.create(user=student2, birth_date="2011-01-01", school_year="4th")
+        profile1 = StudentProfile.objects.create(
+            user=student1, 
+            educational_system=self.default_educational_system, 
+            birth_date="2010-01-01", 
+            school_year="5th"
+        )
+        profile2 = StudentProfile.objects.create(
+            user=student2, 
+            educational_system=self.default_educational_system, 
+            birth_date="2011-01-01", 
+            school_year="4th"
+        )
 
         # Get students from school1 only
         school1_student_ids = SchoolMembership.objects.filter(

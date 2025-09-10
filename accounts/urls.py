@@ -6,6 +6,7 @@ from .views import (
     # Invitation management views
     AcceptTeacherInvitationView,
     # Authentication views
+    CustomMagicLoginView,
     LogoutView,
     # Profile management views
     ProfileEditView,
@@ -39,10 +40,10 @@ urlpatterns = [
     path("logout/", LogoutView.as_view(), name="logout"),
     path("verify-otp/", VerifyOTPView.as_view(), name="verify_otp"),
     path("resend-code/", resend_code, name="resend_code"),
-    # Magic link authentication using django-sesame's built-in LoginView
-    path("magic-login/", LoginView.as_view(), name="magic_login"),
+    # Magic link authentication using custom view with better error handling
+    path("magic-login/", CustomMagicLoginView.as_view(), name="magic_login"),
     # Email verification using magic link (progressive verification)
-    path("verify-email/", LoginView.as_view(), name="verify_email"),
+    path("verify-email/", CustomMagicLoginView.as_view(), name="verify_email"),
     # Verification actions from profile page
     path("send-verification-email/", send_verification_email, name="send_verification_email"),
     path("send-verification-sms/", send_verification_sms, name="send_verification_sms"),

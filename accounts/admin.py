@@ -4,8 +4,8 @@ from django.contrib.auth.admin import UserAdmin
 from .models import (
     Course,
     CustomUser,
-    ParentChildRelationship,
-    ParentProfile,
+    GuardianStudentRelationship,
+    GuardianProfile,
     School,
     SchoolMembership,
     StudentProfile,
@@ -239,9 +239,9 @@ class TeacherCourseAdmin(admin.ModelAdmin):
         return f"{obj.course.name} ({obj.course.code})"
 
 
-@admin.register(ParentProfile)
-class ParentProfileAdmin(admin.ModelAdmin):
-    """Admin interface for ParentProfile model."""
+@admin.register(GuardianProfile)
+class GuardianProfileAdmin(admin.ModelAdmin):
+    """Admin interface for GuardianProfile model."""
 
     list_display = (
         "get_name",
@@ -288,53 +288,51 @@ class ParentProfileAdmin(admin.ModelAdmin):
         return obj.user.email
 
 
-@admin.register(ParentChildRelationship)
-class ParentChildRelationshipAdmin(admin.ModelAdmin):
-    """Admin interface for ParentChildRelationship model."""
+@admin.register(GuardianStudentRelationship)
+class GuardianStudentRelationshipAdmin(admin.ModelAdmin):
+    """Admin interface for GuardianStudentRelationship model."""
 
     list_display = (
-        "get_parent_name",
-        "get_child_name",
-        "relationship_type",
+        "get_guardian_name",
+        "get_student_name",
         "school",
         "is_active",
         "requires_purchase_approval",
         "created_at",
     )
     list_filter = (
-        "relationship_type",
         "is_active",
         "requires_purchase_approval",
         "requires_session_approval",
         "school",
         "created_at",
     )
-    search_fields = ("parent__name", "parent__email", "child__name", "child__email", "school__name")
+    search_fields = ("guardian__name", "guardian__email", "student__name", "student__email", "school__name")
     readonly_fields = ("created_at", "updated_at")
 
     fieldsets = (
-        ("Relationship Details", {"fields": ("parent", "child", "relationship_type", "school", "is_active")}),
+        ("Relationship Details", {"fields": ("guardian", "student", "school", "is_active")}),
         (
             "Permissions & Approval Settings",
-            {"fields": ("requires_purchase_approval", "requires_session_approval", "permissions")},
+            {"fields": ("requires_purchase_approval", "requires_session_approval")},
         ),
         ("Timestamps", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
     )
 
     # Filters for easier navigation
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related("parent", "child", "school")
+        return super().get_queryset(request).select_related("guardian", "student", "school")
 
     @admin.display(
-        description="Parent",
-        ordering="parent__name",
+        description="Guardian",
+        ordering="guardian__name",
     )
-    def get_parent_name(self, obj):
-        return f"{obj.parent.name} ({obj.parent.email})"
+    def get_guardian_name(self, obj):
+        return f"{obj.guardian.name} ({obj.guardian.email})"
 
     @admin.display(
-        description="Child",
-        ordering="child__name",
+        description="Student",
+        ordering="student__name",
     )
-    def get_child_name(self, obj):
-        return f"{obj.child.name} ({obj.child.email})"
+    def get_student_name(self, obj):
+        return f"{obj.student.name} ({obj.student.email})"

@@ -6,7 +6,7 @@ proper relationships and database constraints for all finance-related models.
 
 The fixtures resolve the following issues identified in #181:
 - StudentProfile missing school associations (lines 142-148)
-- ParentChildRelationship incomplete setup (lines 155-162)
+- GuardianStudentRelationship incomplete setup (lines 155-162)
 - SchoolMembership not created for test users (lines 109-132)
 - PricingPlan missing required fields (lines 179-189)
 - StudentAccountBalance missing student relationships (lines 191-197)
@@ -35,8 +35,8 @@ from accounts.models import (
     Course,
     EducationalSystem,
     EducationalSystemType,
-    ParentChildRelationship,
-    ParentProfile,
+    GuardianStudentRelationship,
+    GuardianProfile,
     RelationshipType,
     School,
     SchoolMembership,
@@ -94,8 +94,8 @@ class FinanceTestFixtures:
             dict: Dictionary with all created fixtures indexed by meaningful keys:
                 - Infrastructure: educational_system, school, billing_settings
                 - Users: teacher_user, student_user, parent_user, admin_user
-                - Profiles: teacher_profile, student_profile, parent_profile
-                - Relationships: parent_child_relationship, teacher_course
+                - Profiles: teacher_profile, student_profile, guardian_profile
+                - Relationships: guardian_student_relationship, teacher_course
                 - Financial: pricing_plan, student_account_balance, purchase_transaction
 
         Raises:
@@ -142,7 +142,7 @@ class FinanceTestFixtures:
 
         student_membership = SchoolMembership.objects.create(user=student_user, school=school, role=SchoolRole.STUDENT)
 
-        parent_membership = SchoolMembership.objects.create(user=parent_user, school=school, role=SchoolRole.PARENT)
+        parent_membership = SchoolMembership.objects.create(user=parent_user, school=school, role=SchoolRole.GUARDIAN)
 
         admin_membership = SchoolMembership.objects.create(user=admin_user, school=school, role=SchoolRole.SCHOOL_OWNER)
 
@@ -158,12 +158,12 @@ class FinanceTestFixtures:
             birth_date=date(2008, 5, 15),
         )
 
-        parent_profile = ParentProfile.objects.create(user=parent_user)
+        guardian_profile = GuardianProfile.objects.create(user=parent_user)
 
-        # Create Parent-Child Relationship
-        parent_child_relationship = ParentChildRelationship.objects.create(
-            parent=parent_user,
-            child=student_user,
+        # Create Guardian-Student Relationship
+        guardian_student_relationship = GuardianStudentRelationship.objects.create(
+            guardian=parent_user,
+            student=student_user,
             school=school,
             relationship_type=RelationshipType.PARENT,
         )
@@ -240,7 +240,7 @@ class FinanceTestFixtures:
 
         # Create Family Budget Control
         family_budget_control = FamilyBudgetControl.objects.create(
-            parent_child_relationship=parent_child_relationship,
+            guardian_student_relationship=guardian_student_relationship,
             monthly_budget_limit=Decimal("200.00"),
             weekly_budget_limit=Decimal("50.00"),
             auto_approval_threshold=Decimal("25.00"),
@@ -252,8 +252,8 @@ class FinanceTestFixtures:
         # Create Purchase Approval Request
         approval_request = PurchaseApprovalRequest.objects.create(
             student=student_user,
-            parent=parent_user,
-            parent_child_relationship=parent_child_relationship,
+            guardian=parent_user,
+            guardian_student_relationship=guardian_student_relationship,
             amount=Decimal("50.00"),
             description="Test approval request",
             request_type=PurchaseRequestType.HOURS,
@@ -302,7 +302,7 @@ class FinanceTestFixtures:
             "admin_membership": admin_membership,
             "teacher_profile": teacher_profile,
             "student_profile": student_profile,
-            "parent_profile": parent_profile,
+            "guardian_profile": guardian_profile,
             "parent_child_relationship": parent_child_relationship,
             "course": course,
             "teacher_course": teacher_course,
@@ -482,19 +482,19 @@ class FinanceTestFixtures:
             name="Child User",
         )
 
-        parent_membership = SchoolMembership.objects.create(user=parent_user, school=school, role=SchoolRole.PARENT)
+        parent_membership = SchoolMembership.objects.create(user=parent_user, school=school, role=SchoolRole.GUARDIAN)
 
         child_membership = SchoolMembership.objects.create(user=child_user, school=school, role=SchoolRole.STUDENT)
 
-        parent_profile = ParentProfile.objects.create(user=parent_user)
+        guardian_profile = GuardianProfile.objects.create(user=parent_user)
 
-        child_profile = StudentProfile.objects.create(
+        student_profile = StudentProfile.objects.create(
             user=child_user, educational_system=educational_system, school_year="7", birth_date=date(2008, 5, 15)
         )
 
-        parent_child_relationship = ParentChildRelationship.objects.create(
-            parent=parent_user,
-            child=child_user,
+        guardian_student_relationship = GuardianStudentRelationship.objects.create(
+            guardian=parent_user,
+            student=child_user,
             school=school,
             relationship_type=RelationshipType.PARENT,
         )
@@ -506,8 +506,8 @@ class FinanceTestFixtures:
             "child_user": child_user,
             "parent_membership": parent_membership,
             "child_membership": child_membership,
-            "parent_profile": parent_profile,
-            "child_profile": child_profile,
+            "guardian_profile": guardian_profile,
+            "student_profile": student_profile,
             "parent_child_relationship": parent_child_relationship,
         }
 

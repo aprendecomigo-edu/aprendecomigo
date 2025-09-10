@@ -93,8 +93,8 @@ class ProgressiveVerificationMiddleware:
                     f"but verification is required (deadline: {user.verification_required_after})"
                 )
                 
-                # Clear the session to force re-authentication
-                request.session.flush()
+                # Clear authentication data while preserving CSRF tokens
+                self._clear_auth_session_data(request)
                 
                 # Add message explaining the requirement
                 messages.warning(
@@ -115,7 +115,7 @@ class ProgressiveVerificationMiddleware:
                 # If session has expired, require re-authentication
                 if timezone.now() > session_expiry:
                     logger.info(f"Session expired for unverified user {user.email}")
-                    request.session.flush()
+                    self._clear_auth_session_data(request)
                     messages.info(
                         request,
                         "Your session has expired. Please sign in again. "
@@ -135,6 +135,28 @@ class ProgressiveVerificationMiddleware:
                         request.session['verification_reminder_shown'] = True
         
         return None
+    
+    def _clear_auth_session_data(self, request):
+        """
+        Clear authentication-related session data while preserving CSRF tokens
+        and other necessary session infrastructure.
+        """
+        from django.contrib.auth import logout
+        
+        # Use Django's logout which properly handles session management
+        # This clears authentication data while preserving CSRF tokens
+        logout(request)
+        
+        # Clear any custom verification session data
+        verification_keys = [
+            'verification_email', 'verification_phone', 'verification_user_id',
+            'verification_otp_code', 'verification_otp_expires', 'is_signup',
+            'is_signin', 'signup_school_name', 'is_unverified_user',
+            'unverified_until', 'verification_reminder_shown'
+        ]
+        
+        for key in verification_keys:
+            request.session.pop(key, None)
 
 
 class VerificationCompletionMiddleware:

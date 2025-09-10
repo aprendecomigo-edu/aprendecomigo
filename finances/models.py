@@ -1307,16 +1307,16 @@ class StoredPaymentMethod(models.Model):
 
 class FamilyBudgetControl(models.Model):
     """
-    Budget control settings for parent-child relationships.
+    Budget control settings for guardian-student relationships.
     Defines spending limits and automatic approval thresholds.
     """
 
-    parent_child_relationship: models.OneToOneField = models.OneToOneField(
-        "accounts.ParentChildRelationship",
+    guardian_student_relationship: models.OneToOneField = models.OneToOneField(
+        "accounts.GuardianStudentRelationship",
         on_delete=models.CASCADE,
         related_name="budget_control",
-        verbose_name=_("parent-child relationship"),
-        help_text=_("The parent-child relationship this budget control applies to"),
+        verbose_name=_("guardian-student relationship"),
+        help_text=_("The guardian-student relationship this budget control applies to"),
     )
 
     # Budget limits
@@ -1327,7 +1327,7 @@ class FamilyBudgetControl(models.Model):
         null=True,
         blank=True,
         validators=[MinValueValidator(Decimal("0.00"))],
-        help_text=_("Maximum amount child can spend per month (null for no limit)"),
+        help_text=_("Maximum amount student can spend per month (null for no limit)"),
     )
 
     weekly_budget_limit: models.DecimalField = models.DecimalField(
@@ -1337,7 +1337,7 @@ class FamilyBudgetControl(models.Model):
         null=True,
         blank=True,
         validators=[MinValueValidator(Decimal("0.00"))],
-        help_text=_("Maximum amount child can spend per week (null for no limit)"),
+        help_text=_("Maximum amount student can spend per week (null for no limit)"),
     )
 
     # Automatic approval threshold
@@ -1347,20 +1347,20 @@ class FamilyBudgetControl(models.Model):
         decimal_places=2,
         default=Decimal("0.00"),
         validators=[MinValueValidator(Decimal("0.00"))],
-        help_text=_("Maximum amount that can be automatically approved without parent intervention"),
+        help_text=_("Maximum amount that can be automatically approved without guardian intervention"),
     )
 
     # Session-specific controls
     require_approval_for_sessions: models.BooleanField = models.BooleanField(
         _("require approval for sessions"),
         default=True,
-        help_text=_("Whether parent approval is required for booking individual sessions"),
+        help_text=_("Whether guardian approval is required for booking individual sessions"),
     )
 
     require_approval_for_packages: models.BooleanField = models.BooleanField(
         _("require approval for packages"),
         default=True,
-        help_text=_("Whether parent approval is required for purchasing hour packages"),
+        help_text=_("Whether guardian approval is required for purchasing hour packages"),
     )
 
     # Activity tracking
@@ -1377,20 +1377,20 @@ class FamilyBudgetControl(models.Model):
         verbose_name_plural = _("Family Budget Controls")
         ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["parent_child_relationship", "is_active"]),
+            models.Index(fields=["guardian_student_relationship", "is_active"]),
             models.Index(fields=["auto_approval_threshold"]),
             models.Index(fields=["created_at"]),
             models.Index(fields=["is_active", "-created_at"]),
         ]
 
     def __str__(self) -> str:
-        parent_name = self.parent_child_relationship.parent.name
-        child_name = self.parent_child_relationship.child.name
-        return f"Budget Control: {parent_name} -> {child_name}"
+        guardian_name = self.guardian_student_relationship.guardian.name
+        student_name = self.guardian_student_relationship.student.name
+        return f"Budget Control: {guardian_name} -> {student_name}"
 
     @property
     def current_monthly_spending(self) -> Decimal:
-        """Calculate current month spending for this child."""
+        """Calculate current month spending for this student."""
         from calendar import monthrange
         from datetime import datetime
 
@@ -1403,7 +1403,7 @@ class FamilyBudgetControl(models.Model):
         end_of_month = datetime(now.year, now.month, last_day, 23, 59, 59, 999999, tzinfo=now.tzinfo)
 
         return PurchaseTransaction.objects.filter(
-            student=self.parent_child_relationship.child,
+            student=self.guardian_student_relationship.student,
             payment_status=TransactionPaymentStatus.COMPLETED,
             created_at__gte=start_of_month,
             created_at__lt=end_of_month,
@@ -1424,7 +1424,7 @@ class FamilyBudgetControl(models.Model):
         end_of_week = start_of_week + timedelta(days=6, hours=23, minutes=59, seconds=59)
 
         return PurchaseTransaction.objects.filter(
-            student=self.parent_child_relationship.child,
+            student=self.guardian_student_relationship.student,
             payment_status=TransactionPaymentStatus.COMPLETED,
             created_at__gte=start_of_week,
             created_at__lt=end_of_week,
@@ -1500,20 +1500,20 @@ class PurchaseApprovalRequest(models.Model):
         help_text=_("Student requesting the purchase"),
     )
 
-    parent: models.ForeignKey = models.ForeignKey(
+    guardian: models.ForeignKey = models.ForeignKey(
         "accounts.CustomUser",
         on_delete=models.CASCADE,
         related_name="pending_approvals",
-        verbose_name=_("parent"),
-        help_text=_("Parent who needs to approve the purchase"),
+        verbose_name=_("guardian"),
+        help_text=_("Guardian who needs to approve the purchase"),
     )
 
-    parent_child_relationship: models.ForeignKey = models.ForeignKey(
-        "accounts.ParentChildRelationship",
+    guardian_student_relationship: models.ForeignKey = models.ForeignKey(
+        "accounts.GuardianStudentRelationship",
         on_delete=models.CASCADE,
         related_name="purchase_requests",
-        verbose_name=_("parent-child relationship"),
-        help_text=_("The parent-child relationship this request is under"),
+        verbose_name=_("guardian-student relationship"),
+        help_text=_("The guardian-student relationship this request is under"),
     )
 
     # Purchase details
@@ -1577,16 +1577,16 @@ class PurchaseApprovalRequest(models.Model):
     )
 
     responded_at: models.DateTimeField = models.DateTimeField(
-        _("responded at"), null=True, blank=True, help_text=_("When the parent responded to the request")
+        _("responded at"), null=True, blank=True, help_text=_("When the guardian responded to the request")
     )
 
     expires_at: models.DateTimeField = models.DateTimeField(
         _("expires at"), help_text=_("When this request expires if not responded to")
     )
 
-    # Parent response
-    parent_notes: models.TextField = models.TextField(
-        _("parent notes"), blank=True, help_text=_("Optional notes from the parent about their decision")
+    # Guardian response
+    guardian_notes: models.TextField = models.TextField(
+        _("guardian notes"), blank=True, help_text=_("Optional notes from the guardian about their decision")
     )
 
     # Audit timestamps
@@ -1599,14 +1599,14 @@ class PurchaseApprovalRequest(models.Model):
         ordering = ["-requested_at"]
         indexes = [
             models.Index(fields=["student", "status", "-requested_at"]),
-            models.Index(fields=["parent", "status", "-requested_at"]),
-            models.Index(fields=["parent_child_relationship", "-requested_at"]),
+            models.Index(fields=["guardian", "status", "-requested_at"]),
+            models.Index(fields=["guardian_student_relationship", "-requested_at"]),
             models.Index(fields=["status", "expires_at"]),
             models.Index(fields=["request_type", "status"]),
         ]
 
     def __str__(self) -> str:
-        return f"Purchase Request: {self.student.name} -> {self.parent.name} (€{self.amount})"  # type: ignore[attr-defined]
+        return f"Purchase Request: {self.student.name} -> {self.guardian.name} (€{self.amount})"  # type: ignore[attr-defined]
 
     def save(self, *args, **kwargs):
         """Override save to set expiration time if not provided."""
@@ -1699,15 +1699,15 @@ class PurchaseApprovalRequest(models.Model):
         """Validate the approval request."""
         super().clean()
 
-        # Ensure student and parent are different users
-        if self.student == self.parent:
-            raise ValidationError(_("Student and parent cannot be the same user"))
+        # Ensure student and guardian are different users
+        if self.student == self.guardian:
+            raise ValidationError(_("Student and guardian cannot be the same user"))
 
-        # Ensure the parent-child relationship matches the student and parent
-        if self.parent_child_relationship and (
-            self.parent_child_relationship.parent != self.parent or self.parent_child_relationship.child != self.student
+        # Ensure the guardian-student relationship matches the student and guardian
+        if self.guardian_student_relationship and (
+            self.guardian_student_relationship.guardian != self.guardian or self.guardian_student_relationship.student != self.student
         ):
-            raise ValidationError(_("Parent-child relationship must match the student and parent"))
+            raise ValidationError(_("Guardian-student relationship must match the student and guardian"))
 
 
 class WebhookEventLogManager(models.Manager):

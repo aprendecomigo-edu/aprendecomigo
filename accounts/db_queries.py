@@ -22,42 +22,51 @@ User = get_user_model()
 def create_school_owner(
     email: str, name: str, phone_number: str, primary_contact: str, school_data: dict, is_tutor: bool = False
 ) -> tuple[CustomUser, School]:
-    # Use CustomUser.objects.create_user for type safety
-    # Create the user
-    user = CustomUser.objects.create_user(
-        email=email,
-        password=None,
-        name=name,
-        phone_number=phone_number,
-        primary_contact=primary_contact,
-    )
-
-    school = School.objects.create(
-        name=school_data.get("name"),
-        description=school_data.get("description", ""),
-        address=school_data.get("address", ""),
-        contact_email=school_data.get("contact_email", email),
-        phone_number=school_data.get("phone_number", phone_number),
-        website=school_data.get("website", ""),
-    )
-
-    # Create school owner membership
-    SchoolMembership.objects.create(user=user, school=school, role=SchoolRole.SCHOOL_OWNER, is_active=True)
-
-    # For individual tutors, also create teacher role and profile
-    if is_tutor:
-        # Create teacher membership
-        SchoolMembership.objects.create(user=user, school=school, role=SchoolRole.TEACHER, is_active=True)
-
-        # Create teacher profile
-        TeacherProfile.objects.create(
-            user=user,
-            bio="",  # Empty bio initially
-            specialty="",  # Empty specialty initially
-            # Other fields will use their default values
+    """
+    Create a user with a school in a single atomic transaction.
+    
+    This ensures that a user is never created without a school membership.
+    If any part fails, the entire operation is rolled back.
+    """
+    from django.db import transaction
+    
+    with transaction.atomic():
+        # Use CustomUser.objects.create_user for type safety
+        # Create the user
+        user = CustomUser.objects.create_user(
+            email=email,
+            password=None,
+            name=name,
+            phone_number=phone_number,
+            primary_contact=primary_contact,
         )
 
-    return user, school
+        school = School.objects.create(
+            name=school_data.get("name"),
+            description=school_data.get("description", ""),
+            address=school_data.get("address", ""),
+            contact_email=school_data.get("contact_email", email),
+            phone_number=school_data.get("phone_number", phone_number),
+            website=school_data.get("website", ""),
+        )
+
+        # Create school owner membership
+        SchoolMembership.objects.create(user=user, school=school, role=SchoolRole.SCHOOL_OWNER, is_active=True)
+
+        # For individual tutors, also create teacher role and profile
+        if is_tutor:
+            # Create teacher membership
+            SchoolMembership.objects.create(user=user, school=school, role=SchoolRole.TEACHER, is_active=True)
+
+            # Create teacher profile
+            TeacherProfile.objects.create(
+                user=user,
+                bio="",  # Empty bio initially
+                specialty="",  # Empty specialty initially
+                # Other fields will use their default values
+            )
+
+        return user, school
 
 
 def list_users_by_request_permissions(user) -> QuerySet:
@@ -143,19 +152,22 @@ def create_user_school_and_membership(user: CustomUser, school_name: str) -> Sch
         Exception: If school or membership creation fails (by design for transaction rollback)
     """
     import logging
+    from django.db import transaction
 
     logger = logging.getLogger(__name__)
 
-    # Create a school for the user (no try/catch - let exceptions bubble up)
-    school = School.objects.create(
-        name=school_name,
-        description=f"Personal tutoring school for {user.first_name or user.email}",
-        contact_email=user.email,
-    )
+    # Ensure we're in a transaction for atomicity
+    with transaction.atomic():
+        # Create a school for the user (no try/catch - let exceptions bubble up)
+        school = School.objects.create(
+            name=school_name,
+            description=f"Personal tutoring school for {user.first_name or user.email}",
+            contact_email=user.email,
+        )
 
-    # Create school membership as owner (no try/catch - let exceptions bubble up)
-    SchoolMembership.objects.create(
-        user=user,
+        # Create school membership as owner (no try/catch - let exceptions bubble up)
+        SchoolMembership.objects.create(
+            user=user,
         school=school,
         role=SchoolRole.SCHOOL_OWNER,
         is_active=True,

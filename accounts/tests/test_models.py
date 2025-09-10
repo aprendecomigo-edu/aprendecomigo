@@ -6,6 +6,7 @@ from django.test import TestCase
 from django.utils import timezone
 
 from accounts.models import (
+    EducationalSystem,
     School,
     SchoolMembership,
     SchoolRole,
@@ -105,12 +106,19 @@ class StudentProfileTests(TestCase):
             email="student@example.com",
             name="Student User",
         )
+        # Create required EducationalSystem
+        self.educational_system = EducationalSystem.objects.create(
+            name="Test System",
+            code="pt",
+            description="Test educational system"
+        )
 
     def test_student_profile_creation_with_required_fields(self):
         """Test student profile creation with required fields."""
         # Create profile with required fields
         profile = StudentProfile.objects.create(
             user=self.user,
+            educational_system=self.educational_system,
             birth_date=datetime.date(2008, 1, 1),
             school_year="10",
         )
@@ -121,18 +129,17 @@ class StudentProfileTests(TestCase):
         self.assertEqual(profile.school_year, "10")
 
         # Add more data
-        profile.address = "123 Test St, Test City, 12345"
-        profile.cc_number = "123456789"
+        profile.notes = "Test notes for the student"
         profile.save()
 
         # Should save successfully
-        self.assertEqual(profile.address, "123 Test St, Test City, 12345")
-        self.assertEqual(profile.cc_number, "123456789")
+        self.assertEqual(profile.notes, "Test notes for the student")
 
     def test_student_profile_string_representation(self):
         """Test that student profile has proper string representation."""
         profile = StudentProfile.objects.create(
             user=self.user,
+            educational_system=self.educational_system,
             birth_date=datetime.date(2008, 1, 1),
             school_year="10",
         )
@@ -178,11 +185,9 @@ class TeacherProfileTests(TestCase):
         self.assertEqual(teacher_memberships.count(), 1)
         self.assertEqual(teacher_memberships.first(), active_teacher)
 
-    def test_completion_score_updates_automatically_on_save(self):
-        """Test that profile completion score is calculated on updates."""
+    def test_teacher_profile_fields_update_correctly(self):
+        """Test that teacher profile fields can be updated correctly."""
         teacher_profile = TeacherProfile.objects.create(user=self.user, bio="Short bio")
-
-        initial_score = teacher_profile.profile_completion_score
 
         # Add more profile data
         teacher_profile.specialty = "Mathematics and Physics"
@@ -190,9 +195,11 @@ class TeacherProfileTests(TestCase):
         teacher_profile.hourly_rate = Decimal("35.00")
         teacher_profile.save()
 
-        # Score should improve
+        # Data should be saved correctly
         teacher_profile.refresh_from_db()
-        self.assertGreater(teacher_profile.profile_completion_score, initial_score)
+        self.assertEqual(teacher_profile.specialty, "Mathematics and Physics")
+        self.assertEqual(teacher_profile.education, "Master's Degree in Mathematics")
+        self.assertEqual(teacher_profile.hourly_rate, Decimal("35.00"))
 
     def test_mark_activity_updates_timestamp(self):
         """Test that mark_activity updates last_activity field."""

@@ -44,8 +44,8 @@ class DashboardView(LoginRequiredMixin, View):
                 return self._render_teacher_dashboard(request)
             elif role == SchoolRole.STUDENT.value:
                 return self._render_student_dashboard(request)
-            elif role == SchoolRole.PARENT.value:
-                return self._render_parent_dashboard(request)
+            elif role == SchoolRole.GUARDIAN.value:
+                return self._render_guardian_dashboard(request)
 
         # TODO: No Fallbacks something is wrong if there's no active membership
         logger.error(f"User {request.user.id} has no active school membership.")
@@ -176,10 +176,10 @@ class DashboardView(LoginRequiredMixin, View):
             'active_section': 'dashboard'
         })
 
-    def _render_parent_dashboard(self, request):
-        """Render parent dashboard with child progress monitoring"""
-        return render(request, 'dashboard/parent_dashboard.html', {
-            'title': 'Parent Portal - Aprende Comigo',
+    def _render_guardian_dashboard(self, request):
+        """Render guardian dashboard with student progress monitoring"""
+        return render(request, 'dashboard/guardian_dashboard.html', {
+            'title': 'Guardian Portal - Aprende Comigo',
             'user': request.user,
             'active_section': 'dashboard'
         })
