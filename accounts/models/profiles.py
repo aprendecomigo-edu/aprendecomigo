@@ -156,6 +156,85 @@ class TeacherProfile(models.Model):
 
         self.last_activity = timezone.now()
         self.save(update_fields=["last_activity"])
+    
+    def is_profile_complete(self) -> bool:
+        """
+        Check if teacher profile has all required information for onboarding completion.
+        
+        Based on the Teacher Onboarding workflow requirements:
+        - Basic profile info (bio, specialty)
+        - Teaching subjects
+        - Grade level preferences  
+        - Availability schedule
+        - Profile photo on user
+        
+        Returns:
+            True if profile is complete, False otherwise
+        """
+        # Check required profile fields
+        if not self.bio or not self.specialty:
+            return False
+            
+        # Check teaching subjects
+        if not self.teaching_subjects or len(self.teaching_subjects) == 0:
+            return False
+            
+        # Check grade level preferences
+        if not self.grade_level_preferences or len(self.grade_level_preferences) == 0:
+            return False
+            
+        # Check availability schedule
+        if not self.availability_schedule or len(self.availability_schedule) == 0:
+            return False
+            
+        # Check profile photo
+        if not self.user.profile_photo:
+            return False
+            
+        return True
+    
+    def get_completion_requirements(self) -> dict:
+        """
+        Get detailed completion requirements and their status.
+        
+        Returns:
+            Dictionary with completion status for each requirement
+        """
+        return {
+            "basic_info": {
+                "completed": bool(self.bio and self.specialty),
+                "description": "Biografia e especialidade preenchidas"
+            },
+            "teaching_subjects": {
+                "completed": bool(self.teaching_subjects and len(self.teaching_subjects) > 0),
+                "description": "Disciplinas que leciona definidas"
+            },
+            "grade_levels": {
+                "completed": bool(self.grade_level_preferences and len(self.grade_level_preferences) > 0),
+                "description": "Ciclos/anos de ensino preferidos"
+            },
+            "availability": {
+                "completed": bool(self.availability_schedule and len(self.availability_schedule) > 0),
+                "description": "Horários de disponibilidade definidos"
+            },
+            "profile_photo": {
+                "completed": bool(self.user.profile_photo),
+                "description": "Fotografia de perfil adicionada"
+            }
+        }
+    
+    def has_financial_details(self) -> bool:
+        """
+        Check if teacher has required financial information.
+        This would typically be in a separate FinancialProfile model,
+        but for now we'll check if the user has filled basic financial info.
+        
+        Returns:
+            True if financial details are present, False otherwise
+        """
+        # TODO: Check actual financial profile when available
+        # For now, check if teaching experience or rate structure is filled
+        return bool(self.rate_structure and len(self.rate_structure) > 0)
 
 
 class StudentProfile(models.Model):

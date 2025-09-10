@@ -37,9 +37,10 @@ from sesame.utils import get_query_string
 
 from messaging.services import send_magic_link_email, send_sms_otp
 from sesame.utils import get_query_string as sesame_get_query_string
+from tasks.services import TaskService
 
 from .db_queries import create_user_school_and_membership, get_user_by_email, user_exists
-from .models import School, SchoolMembership, SchoolSettings, TeacherInvitation
+from .models import School, SchoolMembership, SchoolSettings, TeacherInvitation, TeacherProfile
 from .permissions import IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin
 
 User = get_user_model()
@@ -816,19 +817,18 @@ class AcceptTeacherInvitationView(View):
     """
     Handle teacher invitation acceptance via public token URL.
 
-    This is a public view accessible without authentication, allowing invited
-    teachers to accept invitations via email links. Validates invitation token,
-    checks expiration, and processes the acceptance.
-
-    Flow:
-    1. GET: Display invitation acceptance form
-    2. POST: Process acceptance and create user/membership
+    Enhanced to support the complete teacher onboarding workflow:
+    1. Display invitation with registration form
+    2. Create teacher account with profile
+    3. Send OTP for verification
+    4. Create teacher onboarding tasks
+    5. Redirect to dashboard with tasks
 
     Access: Public (token-based authentication)
     """
 
     def get(self, request: HttpRequest, token: str) -> HttpResponse:
-        """Display invitation acceptance form"""
+        """Display invitation acceptance form with teacher registration."""
         invitation = get_object_or_404(TeacherInvitation, token=token)
 
         # Check if invitation is valid
@@ -840,25 +840,28 @@ class AcceptTeacherInvitationView(View):
         # Mark as viewed
         invitation.mark_viewed()
 
-        return render(request, 'accounts/invitations/accept_invitation.html', {
-            'invitation': invitation
-        })
+        # Check if user already exists
+        user_exists = User.objects.filter(email=invitation.email).exists()
+        
+        context = {
+            'invitation': invitation,
+            'user_exists': user_exists
+        }
+        
+        # If user doesn't exist, show registration form
+        if not user_exists:
+            from .forms import TeacherRegistrationForm
+            context['registration_form'] = TeacherRegistrationForm()
+
+        return render(request, 'accounts/invitations/accept_invitation.html', context)
 
     @method_decorator(csrf_protect)
     def post(self, request: HttpRequest, token: str) -> HttpResponse:
         """
-        Process invitation acceptance or decline action.
+        Process invitation acceptance with enhanced teacher onboarding.
 
-        Handles 'accept' or 'decline' actions from the invitation form.
-        For acceptance, creates user membership and redirects appropriately.
-        For decline, marks invitation as declined.
-
-        Args:
-            request: HTTP request containing action parameter
-            token: Invitation token for validation
-
-        Returns:
-            HttpResponse: Success page or redirect based on user state
+        Handles both existing users and new user registration with complete
+        onboarding task creation and OTP verification setup.
         """
         invitation = get_object_or_404(TeacherInvitation, token=token)
 
@@ -871,11 +874,40 @@ class AcceptTeacherInvitationView(View):
         action = request.POST.get('action')
 
         if action == 'accept':
-            # Check if user exists
-            try:
-                user = User.objects.get(email=invitation.email)
+            return self._handle_invitation_acceptance(request, invitation)
+        elif action == 'decline':
+            invitation.decline()
+            return render(request, 'accounts/invitations/invitation_declined.html', {
+                'invitation': invitation
+            })
 
-                # Create school membership
+        # Invalid action
+        messages.error(request, "Ação inválida.")
+        return redirect(reverse('accounts:accept_invitation', args=[token]))
+
+    def _handle_invitation_acceptance(self, request: HttpRequest, invitation: TeacherInvitation) -> HttpResponse:
+        """
+        Handle the acceptance of a teacher invitation.
+        
+        Creates user account if needed, sets up school membership,
+        creates onboarding tasks, and handles OTP verification.
+        """
+        try:
+            with transaction.atomic():
+                # Check if user exists
+                user = None
+                try:
+                    user = User.objects.get(email=invitation.email)
+                    user_was_created = False
+                except User.DoesNotExist:
+                    user_was_created = True
+                    # Create new user with registration form
+                    user = self._create_teacher_from_form(request, invitation)
+                    if user is None:
+                        # Form validation failed, return to form
+                        return self._handle_form_errors(request, invitation)
+
+                # Create or update school membership
                 membership, created = SchoolMembership.objects.get_or_create(
                     user=user,
                     school=invitation.school,
@@ -890,32 +922,75 @@ class AcceptTeacherInvitationView(View):
                 # Mark invitation as accepted
                 invitation.accept()
 
-                # If user is logged in and it's the correct user, redirect to dashboard
+                # Create teacher onboarding tasks if this is a new user
+                if user_was_created:
+                    TaskService.create_teacher_onboarding_tasks(user)
+                    logger.info(f"Created teacher onboarding tasks for new user {user.email}")
+
+                # Send OTP for phone verification if phone number provided
+                if user.phone_number:
+                    try:
+                        send_sms_otp(user.phone_number)
+                        logger.info(f"Sent OTP to {user.phone_number} for user {user.email}")
+                    except Exception as e:
+                        logger.error(f"Failed to send OTP to {user.phone_number}: {e}")
+                        # Don't fail the whole process if OTP fails
+
+                # If user is authenticated and it's the correct user, redirect to dashboard
                 if request.user.is_authenticated and request.user.email == invitation.email:
-                    messages.success(request, f"Welcome to {invitation.school.name}! You are now a {invitation.get_role_display()}.")
+                    messages.success(
+                        request, 
+                        f"Bem-vindo à {invitation.school.name}! "
+                        f"Complete as tarefas no seu dashboard para ativar a sua conta."
+                    )
                     return redirect(reverse('dashboard:dashboard'))
 
-                # Otherwise, show success page with login instructions
+                # Show success page with next steps
                 return render(request, 'accounts/invitations/invitation_accepted.html', {
                     'invitation': invitation,
-                    'user_exists': True
+                    'user': user,
+                    'user_was_created': user_was_created,
+                    'next_steps_url': reverse('accounts:signin') + f'?email={user.email}'
                 })
 
-            except User.DoesNotExist:
-                # User doesn't exist, show signup flow
-                return render(request, 'accounts/invitations/invitation_accepted.html', {
-                    'invitation': invitation,
-                    'user_exists': False,
-                    'signup_url': reverse('accounts:signup') + f'?email={invitation.email}&invitation_token={token}'
-                })
+        except Exception as e:
+            logger.error(f"Error accepting teacher invitation {invitation.id}: {e}")
+            messages.error(request, "Ocorreu um erro ao processar o convite. Tente novamente.")
+            return redirect(reverse('accounts:accept_invitation', args=[invitation.token]))
 
-        elif action == 'decline':
-            invitation.decline()
-            return render(request, 'accounts/invitations/invitation_declined.html', {
-                'invitation': invitation
-            })
+    def _create_teacher_from_form(self, request: HttpRequest, invitation: TeacherInvitation) -> User | None:
+        """
+        Create teacher user from registration form data.
+        
+        Returns:
+            Created User instance, or None if form validation failed
+        """
+        from .forms import TeacherRegistrationForm
+        
+        form = TeacherRegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save(email=invitation.email, school=invitation.school)
+            logger.info(f"Created new teacher user {user.email} from invitation acceptance")
+            return user
+        else:
+            # Store form errors in session for display
+            request.session['form_errors'] = form.errors
+            return None
 
-        return redirect(reverse('accounts:accept_invitation', kwargs={'token': token}))
+    def _handle_form_errors(self, request: HttpRequest, invitation: TeacherInvitation) -> HttpResponse:
+        """Handle form validation errors during teacher registration."""
+        from .forms import TeacherRegistrationForm
+        
+        form = TeacherRegistrationForm(request.POST)
+        form.is_valid()  # Populate form.errors
+        
+        messages.error(request, "Por favor corrija os erros no formulário.")
+        
+        return render(request, 'accounts/invitations/accept_invitation.html', {
+            'invitation': invitation,
+            'user_exists': False,
+            'registration_form': form
+        })
 
 
 @login_required
