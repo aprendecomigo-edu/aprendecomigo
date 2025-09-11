@@ -179,9 +179,3 @@ class InvitationStatus(models.TextChoices):
 
 
 
-class FinancialResponsibility(models.TextChoices):
-    """Financial responsibility options for student accounts."""
-
-    GUARDIAN = "guardian", _("Guardian Responsible")
-    SELF = "self", _("Self Responsible")
-    SHARED = "shared", _("Shared Responsibility")

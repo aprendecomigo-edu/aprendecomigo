@@ -7,7 +7,6 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from .enums import FinancialResponsibility
 
 
 class StudentPermission(models.Model):
@@ -25,7 +24,6 @@ class StudentPermission(models.Model):
         on_delete=models.CASCADE, 
         related_name='student_permissions'
     )
-    
     # Core permissions - simple boolean flags
     can_view_profile = models.BooleanField(default=False)
     can_view_grades = models.BooleanField(default=False)

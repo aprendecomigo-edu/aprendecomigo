@@ -20,7 +20,6 @@ from .enums import (
     EducationalSystemType,
     EmailDeliveryStatus,
     EmailIntegrationChoices,
-    FinancialResponsibility,
     InvitationStatus,
     LanguageChoices,
     SchoolRole,
@@ -79,7 +78,6 @@ __all__ = [
     "EducationalSystemType",
     "EmailDeliveryStatus",
     "EmailIntegrationChoices",
-    "FinancialResponsibility",
     "InvitationStatus",
     "LanguageChoices",
     # Profiles
