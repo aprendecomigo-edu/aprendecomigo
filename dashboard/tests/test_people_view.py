@@ -280,7 +280,7 @@ class PeopleViewStudentGuardianTests(PeopleViewTestCase):
         )
         
         self.assertEqual(student_membership.role, SchoolRole.STUDENT.value)
-        self.assertEqual(guardian_membership.role, SchoolRole.PARENT.value)
+        self.assertEqual(guardian_membership.role, SchoolRole.GUARDIAN.value)
         self.assertTrue(student_membership.is_active)
         self.assertTrue(guardian_membership.is_active)
         
@@ -487,7 +487,7 @@ class PeopleViewGuardianOnlyTests(PeopleViewTestCase):
         guardian_membership = SchoolMembership.objects.get(
             user=guardian_user, school=self.school
         )
-        self.assertEqual(guardian_membership.role, SchoolRole.PARENT.value)
+        self.assertEqual(guardian_membership.role, SchoolRole.GUARDIAN.value)
         self.assertTrue(guardian_membership.is_active)
         
         # Student should not have any membership since they have no user account
@@ -818,7 +818,7 @@ class PeopleViewIntegrationTests(PeopleViewTestCase):
             user=student_user, school=self.school, role=SchoolRole.STUDENT.value
         ).exists())
         self.assertTrue(SchoolMembership.objects.filter(
-            user=guardian_user, school=self.school, role=SchoolRole.PARENT.value
+            user=guardian_user, school=self.school, role=SchoolRole.GUARDIAN.value
         ).exists())
         
         # Test permission setup was called
