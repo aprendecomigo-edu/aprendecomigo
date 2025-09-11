@@ -12,7 +12,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from .enums import FinancialResponsibility, SchoolRole
+from .enums import SchoolRole
 
 logger = logging.getLogger(__name__)
 
@@ -165,7 +165,12 @@ class StudentProfile(models.Model):
     """
 
     user: models.OneToOneField = models.OneToOneField(
-        "CustomUser", on_delete=models.CASCADE, related_name="student_profile"
+        "CustomUser", 
+        on_delete=models.CASCADE, 
+        related_name="student_profile",
+        null=True, 
+        blank=True,
+        help_text=_("User account for this student (null if guardian-only management)")
     )
     educational_system: models.ForeignKey = models.ForeignKey(
         "EducationalSystem",
@@ -178,25 +183,49 @@ class StudentProfile(models.Model):
         _("school year"), max_length=50, help_text=_("School year within the educational system")
     )
     birth_date: models.DateField = models.DateField(_("birth date"))
+    # Account configuration - defines the 3 use cases clearly
+    account_type = models.CharField(
+        _("account type"),
+        max_length=20,
+        choices=[
+            ('STUDENT_GUARDIAN', 'Student + Guardian Accounts'),  # Both have accounts
+            ('ADULT_STUDENT', 'Adult Student Only'),               # Student self-manages
+            ('GUARDIAN_ONLY', 'Guardian Manages Student Data'),    # No student account
+        ],
+        default='STUDENT_GUARDIAN',
+        help_text=_("Defines who has accounts and manages this student")
+    )
+
     guardian: models.ForeignKey = models.ForeignKey(
         "GuardianProfile",
-        on_delete=models.SET_NULL,  # Don't delete student if guardian is removed
+        on_delete=models.SET_NULL,
         related_name="students",
         null=True,
-        blank=True,  # Allow adult students to have no separate guardian
-        help_text=_("Guardian of the student (null for adult students who are self-responsible)"),
+        blank=True,
+        help_text=_("Guardian of the student (required for guardian-managed accounts)"),
     )
-    
-    # Financial and legal responsibility tracking
-    financial_responsibility: models.CharField = models.CharField(
-        _("financial responsibility"),
-        max_length=20,
-        choices=FinancialResponsibility.choices,
-        default=FinancialResponsibility.GUARDIAN,
-        help_text=_("Who is financially responsible for this student's account"),
-    )
+
     notes: models.TextField = models.TextField(
         _("notes"), blank=True, help_text=_("Additional notes about the student, special needs, etc.")
+    )
+
+        # Communication preferences
+    email_notifications_enabled: models.BooleanField = models.BooleanField(
+        _("email notifications enabled"), default=True, help_text=_("Enable email notifications for student alerts")
+    )
+
+    sms_notifications_enabled: models.BooleanField = models.BooleanField(
+        _("SMS notifications enabled"), default=False, help_text=_("Enable SMS notifications for student alerts")
+    )
+    # Financial fields (only relevant for ADULT_STUDENT type)
+    address: models.TextField = models.TextField(
+        _("address"), blank=True, help_text=_("Student address (only for adult students)")
+    )
+    tax_nr: models.CharField = models.CharField(
+        _("tax number"), max_length=20, blank=True, help_text=_("Tax number (only for adult students)")
+    )
+    invoice: models.BooleanField = models.BooleanField(
+        _("invoice"), default=False, help_text=_("Whether to issue invoices (only for adult students)")
     )
 
     # Audit timestamps  
@@ -214,30 +243,12 @@ class StudentProfile(models.Model):
     def __str__(self) -> str:
         user_name = self.user.name if hasattr(self.user, "name") else str(self.user)
         return f"Student Profile: {user_name}"
-    
-    @property
-    def effective_guardian(self):
-        """Get the effective guardian based on financial responsibility setting."""
-        if self.financial_responsibility == FinancialResponsibility.SELF:
-            # Student manages their own account
-            return self.user.guardian_profile if hasattr(self.user, 'guardian_profile') else None
-        return self.guardian
-    
-    def get_financial_responsible_user(self):
-        """Get the user responsible for financial decisions based on explicit responsibility setting."""
-        if self.financial_responsibility == FinancialResponsibility.SELF:
-            return self.user
-        elif self.financial_responsibility == FinancialResponsibility.GUARDIAN and self.guardian:
-            return self.guardian.user
-        elif self.financial_responsibility == FinancialResponsibility.SHARED:
-            # For shared responsibility, return both users or implement approval logic elsewhere
-            return self.user  # Primary is student, but guardian should also have permissions
-        return self.user  # Fallback to self
-    
+
+
     def clean(self):
         """Validate that school_year is valid for the selected educational system"""
         super().clean()
-        
+
         # Validate school year
         if (
             self.educational_system
@@ -254,38 +265,38 @@ class StudentProfile(models.Model):
                     f"Valid options: {list(valid_years.keys())}"
                 }
             )
-        # Validate guardian requirements based on financial responsibility setting
-        if self.financial_responsibility == FinancialResponsibility.GUARDIAN and not self.guardian:
-            from django.core.exceptions import ValidationError
-            raise ValidationError({
-                'guardian': _('Students with guardian financial responsibility must have a guardian assigned.')
-            })
+        # Validate account type consistency
+        from django.core.exceptions import ValidationError
 
-    def can_make_purchases(self, user):
-        """Check if a user can make purchases for this student."""
-        if self.financial_responsibility == FinancialResponsibility.SELF:
-            return user == self.user
-        elif self.financial_responsibility == FinancialResponsibility.GUARDIAN:
-            return user == self.guardian.user if self.guardian else False
-        elif self.financial_responsibility == FinancialResponsibility.SHARED:
-            return user in [self.user, self.guardian.user if self.guardian else None]
-        return False
-    def can_book_sessions(self, user):
-        """Check if a user can book sessions for this student."""
-        # For session booking, might have more flexible rules than purchases
-        if self.financial_responsibility == FinancialResponsibility.SELF:
-            return user == self.user
-        elif self.financial_responsibility == FinancialResponsibility.GUARDIAN:
-            return user == self.guardian.user if self.guardian else False
-        elif self.financial_responsibility == FinancialResponsibility.SHARED:
-            return user in [self.user, self.guardian.user if self.guardian else None]
-        return False
-    def get_authorized_users(self):
-        """Get all users who can act on behalf of this student."""
-        authorized = [self.user]
-        if self.guardian and self.financial_responsibility in [FinancialResponsibility.GUARDIAN, FinancialResponsibility.SHARED]:
-            authorized.append(self.guardian.user)
-        return authorized
+        if self.account_type == 'ADULT_STUDENT':
+            if not self.user:
+                raise ValidationError({
+                    'user': _('Adult students must have a user account.')
+                })
+            if self.guardian:
+                raise ValidationError({
+                    'guardian': _('Adult students should not have a guardian assigned.')
+                })
+        elif self.account_type == 'GUARDIAN_ONLY':
+            if self.user:
+                raise ValidationError({
+                    'user': _('Guardian-only students should not have a user account.')
+                })
+            if not self.guardian:
+                raise ValidationError({
+                    'guardian': _('Guardian-only students must have a guardian assigned.')
+                })
+        elif self.account_type == 'STUDENT_GUARDIAN':
+            if not self.user:
+                raise ValidationError({
+                    'user': _('Student+Guardian accounts require the student to have a user account.')
+                })
+            if not self.guardian:
+                raise ValidationError({
+                    'guardian': _('Student+Guardian accounts require a guardian to be assigned.')
+                })
+
+
 
 
 class GuardianProfile(models.Model):
@@ -405,7 +416,7 @@ class GuardianStudentRelationship(models.Model):
             models.Index(fields=["student", "is_active"]),
             models.Index(fields=["school", "is_active"]),
         ]
-        constraints = [models.CheckConstraint(check=~models.Q(guardian=models.F("student")), name="guardian_cannot_be_student")]
+        constraints = [models.CheckConstraint(condition=~models.Q(guardian=models.F("student")), name="guardian_cannot_be_student")]
 
     def __str__(self) -> str:
         guardian_name = self.guardian.name if hasattr(self.guardian, "name") else str(self.guardian)

@@ -30,6 +30,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
+from django.utils.translation import gettext as _
 from django.views import View
 from django.views.decorators.csrf import csrf_protect
 from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView
@@ -777,7 +778,7 @@ class TeacherInvitationCreateView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMix
         # Check if user has permission to invite to this school
         school = form.instance.school
         if not self.has_school_permission(school, ['school_owner', 'school_admin']):
-            messages.error(self.request, "You don't have permission to invite teachers to this school.")
+            messages.error(self.request, _("You don't have permission to invite teachers to this school."))
             return self.form_invalid(form)
 
         try:
@@ -787,7 +788,7 @@ class TeacherInvitationCreateView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMix
                 # Send invitation email (implement this based on your email system)
                 # send_teacher_invitation_email(form.instance)
 
-                messages.success(self.request, f"Teacher invitation sent to {form.instance.email}")
+                messages.success(self.request, _("Teacher invitation sent to %(email)s") % {'email': form.instance.email})
                 return response
 
         except ValidationError as e:
@@ -897,7 +898,10 @@ class AcceptTeacherInvitationView(View):
 
                 # If user is logged in and it's the correct user, redirect to dashboard
                 if request.user.is_authenticated and request.user.email == invitation.email:
-                    messages.success(request, f"Welcome to {invitation.school.name}! You are now a {invitation.get_role_display()}.")
+                    messages.success(request, _("Welcome to %(school)s! You are now a %(role)s.") % {
+                        'school': invitation.school.name,
+                        'role': invitation.get_role_display()
+                    })
                     return redirect(reverse('dashboard:dashboard'))
 
                 # Otherwise, show success page with login instructions
@@ -1087,7 +1091,7 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
         return self.request.user
 
     def form_valid(self, form):
-        messages.success(self.request, "Your profile has been updated successfully.")
+        messages.success(self.request, _("Your profile has been updated successfully."))
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
@@ -1386,7 +1390,7 @@ class SchoolSettingsView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin, FormV
 
     def form_valid(self, form):
         form.save()
-        messages.success(self.request, f"Settings for {self.school.name} have been updated successfully.")
+        messages.success(self.request, _("Settings for %(school)s have been updated successfully.") % {'school': self.school.name})
         return super().form_valid(form)
 
     def get_success_url(self):

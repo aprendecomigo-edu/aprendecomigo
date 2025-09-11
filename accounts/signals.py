@@ -11,6 +11,8 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from accounts.models import ActivityType, School, SchoolActivity, SchoolInvitation, SchoolMembership, SchoolRole
+from accounts.models.profiles import StudentProfile
+from accounts.permissions import PermissionService
 from finances.models import ClassSession
 
 User = get_user_model()
@@ -224,3 +226,16 @@ def create_class_session_activity(sender, instance, created, **kwargs):
                         "date": instance.date.isoformat() if instance.date else None,
                     },
                 )
+
+
+@receiver(post_save, sender=StudentProfile)
+def setup_student_permissions(sender, instance, created, **kwargs):
+    """Auto-create permissions when student profile is created or updated"""
+    if kwargs.get('raw', False):
+        return
+    
+    try:
+        PermissionService.setup_permissions_for_student(instance)
+        logger.info(f"Set up permissions for student {instance}")
+    except Exception as e:
+        logger.error(f"Failed to setup permissions for student {instance}: {e}")

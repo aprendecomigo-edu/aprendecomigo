@@ -36,6 +36,9 @@ from .invitations import (
 )
 
 # Import profile models
+from .permissions import (
+    StudentPermission,
+)
 from .profiles import (
     GuardianStudentRelationship,
     GuardianProfile,
@@ -91,6 +94,7 @@ __all__ = [
     "SchoolMembership",
     "SchoolRole",
     "SchoolSettings",
+    "StudentPermission",
     "StudentProfile",
     "TeacherCourse",
     "TeacherInvitation",
