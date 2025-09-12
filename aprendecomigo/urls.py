@@ -26,13 +26,11 @@ from dashboard.views import InvitationsView, PeopleView, StudentsView, TeachersV
 # Scheduler views
 from scheduler.views import CalendarView
 
-
-# Health check for Railway deployment
-def health_check(request):
-    return JsonResponse({"status": "ok"})
+# Health check views
+from healthcheck import health_check
 
 urlpatterns = [
-    # Railway health check
+    # Railway health check - verifies database and Redis connectivity
     path("health/", health_check, name="health_check"),
 
     # Admin route

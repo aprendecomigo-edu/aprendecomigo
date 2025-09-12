@@ -1,0 +1,83 @@
+# Documentation
+*.md
+docs/
+CLAUDE_COMMAND_CHAINING_GUIDE.md
+CLAUDE.md
+SERVICES.md
+
+# Tests
+tests/
+test_*.py
+**/test_*.py
+**/*test*.py
+*_test.py
+
+# Development files
+.env
+.env.local
+.env.*.local
+env.example
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore
+.githooks/
+.github/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.coverage
+.pytest_cache/
+venv/
+env/
+
+# Node.js (keep only built files)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# SQLite (development database)
+*.sqlite3
+db.sqlite3
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# IDE files
+*.swp
+*.swo
+*~
+
+# Railway
+.railway/
+
+# Claude CLI
+cookies.txt
+claude-cli_accessKeys.csv
+
+# Issues tracking
+issues/
+
+# Script debugging files
+debug_*.py
+
+# Local development files
+Procfile.tailwind

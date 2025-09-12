@@ -68,7 +68,11 @@
       "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_6xZzpB/**)",
       "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_lVgHGg/**)",
       "WebFetch(domain:stackoverflow.com)",
-      "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_240tFR/**)"
+      "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_240tFR/**)",
+      "WebFetch(domain:redis-py.readthedocs.io)",
+      "WebFetch(domain:redis.readthedocs.io)",
+      "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_xewBzH/**)",
+      "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_LFGzNK/**)"
     ],
     "deny": [],
     "ask": []
