@@ -144,7 +144,7 @@ CACHES = {
             'CONNECTION_POOL_KWARGS': RAILWAY_REDIS_CONNECTION_KWARGS,
             'PICKLE_VERSION': -1,  # Use latest pickle protocol
             'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',  # Compress large values
-            'IGNORE_EXCEPTIONS': True,  # Graceful degradation for cache
+            'IGNORE_EXCEPTIONS': True,  # Graceful degradation during deployment and Redis issues
         },
         'KEY_PREFIX': 'aprendecomigo',
         'VERSION': 1,
@@ -163,20 +163,6 @@ CACHES = {
         'KEY_PREFIX': 'aprendecomigo_session',  # Match SESSION_KEY_PREFIX
         'TIMEOUT': 86400,  # 24 hours for sessions
     },
-    'template_fragments': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': f"{redis_url}/2",  # Database 2 for template fragments
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'CONNECTION_FACTORY': 'aprendecomigo.redis_ipv6.RailwayIPv6ConnectionFactory',
-            'CONNECTION_POOL_KWARGS': RAILWAY_REDIS_CONNECTION_KWARGS,
-            'PICKLE_VERSION': -1,
-            'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
-            'IGNORE_EXCEPTIONS': True,  # Template cache can degrade gracefully
-        },
-        'KEY_PREFIX': 'templates',
-        'TIMEOUT': 3600,  # 1 hour for template fragments
-    }
 }
 
 # Use Redis-only for sessions (no database fallback to avoid django_session table requirement)

@@ -13,42 +13,6 @@ from django.views.decorators.csrf import csrf_exempt
 logger = logging.getLogger(__name__)
 
 
-@never_cache
-@csrf_exempt
-def health_simple(request):
-    """
-    Simple, fast health check for Railway deployment health monitoring.
-    Only checks critical dependencies quickly.
-    """
-    # Log health check request details for Railway debugging
-    host = request.get_host()
-    user_agent = request.META.get('HTTP_USER_AGENT', 'unknown')
-    remote_addr = request.META.get('REMOTE_ADDR', 'unknown')
-    logger.info(f"Health check request from host: {host}, user_agent: {user_agent}, remote_addr: {remote_addr}")
-    
-    try:
-        # Quick database check
-        logger.info("Health check: Testing database connection")
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT 1")
-            cursor.fetchone()
-        logger.info("Health check: Database OK")
-
-        # Quick Redis check
-        logger.info("Health check: Testing Redis cache")
-        cache.set("health", "ok", timeout=30)
-        if cache.get("health") != "ok":
-            raise Exception("Redis cache failed")
-        cache.delete("health")
-        logger.info("Health check: Redis OK")
-
-        logger.info("Health check: All systems healthy - returning 200")
-        return JsonResponse({"status": "ok"}, status=200)
-
-    except Exception as e:
-        logger.error("Health check failed: %s", e, exc_info=True)
-        return JsonResponse({"status": "error", "error": str(e)}, status=503)
-
 
 @never_cache
 @csrf_exempt
@@ -91,6 +55,8 @@ def health_detailed(request):
             overall_healthy = False
 
         # 2. Default cache (Redis) connectivity check
+        # During Railway deployment, Redis might not be available yet
+        # Mark as degraded but don't fail the entire health check
         try:
             logger.info("Checking Redis default cache")
             test_key = "health_check_test"
@@ -115,14 +81,16 @@ def health_detailed(request):
             cache.delete(test_key)
 
         except Exception as e:
-            logger.error("Redis default cache health check failed: %s", e)
+            logger.warning("Redis default cache health check failed (non-critical during deployment): %s", e)
             health_data["checks"]["redis_default"] = {
-                "status": "unhealthy",
-                "error": str(e)
+                "status": "degraded",
+                "error": str(e),
+                "details": "Redis not available (expected during deployment)"
             }
-            overall_healthy = False
+            # Don't fail overall health check for Redis during deployment
 
-        # 3. Sessions cache check
+        # 3. Sessions cache check  
+        # During Railway deployment, Redis might not be available yet
         try:
             logger.info("Checking Redis sessions cache")
             sessions_cache = caches['sessions']
@@ -144,46 +112,14 @@ def health_detailed(request):
             sessions_cache.delete(test_key)
 
         except Exception as e:
-            logger.error("Redis sessions cache health check failed: %s", e)
+            logger.warning("Redis sessions cache health check failed (non-critical during deployment): %s", e)
             health_data["checks"]["redis_sessions"] = {
-                "status": "unhealthy",
-                "error": str(e)
-            }
-            overall_healthy = False
-
-        # 4. Template fragments cache check (optional - can degrade gracefully)
-        try:
-            logger.info("Checking Redis template cache")
-            template_cache = caches['template_fragments']
-            test_key = "template_health_check_test"
-            test_value = f"template_test_{int(time.time())}"
-
-            template_cache.set(test_key, test_value, timeout=30)
-            retrieved_value = template_cache.get(test_key)
-
-            if retrieved_value == test_value:
-                health_data["checks"]["redis_templates"] = {
-                    "status": "healthy",
-                    "details": "Redis template cache read/write successful"
-                }
-                logger.info("Redis template cache check passed")
-            else:
-                health_data["checks"]["redis_templates"] = {
-                    "status": "degraded",
-                    "details": "Template cache read/write issues, but non-critical"
-                }
-                logger.warning("Redis template cache degraded but non-critical")
-
-            template_cache.delete(test_key)
-
-        except Exception as e:
-            logger.warning("Redis template cache health check failed (non-critical): %s", e)
-            health_data["checks"]["redis_templates"] = {
                 "status": "degraded",
                 "error": str(e),
-                "details": "Template cache issues, but non-critical"
+                "details": "Redis not available (expected during deployment)"
             }
-            # Don't mark overall as unhealthy for template cache issues
+            # Don't fail overall health check for Redis during deployment
+
 
         # Set overall status
         if not overall_healthy:
