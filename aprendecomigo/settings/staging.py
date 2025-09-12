@@ -160,7 +160,7 @@ CACHES = {
             'PICKLE_VERSION': -1,
             'IGNORE_EXCEPTIONS': False,  # Sessions are critical - fail if Redis is down
         },
-        'KEY_PREFIX': 'sessions',
+        'KEY_PREFIX': 'aprendecomigo_session',  # Match SESSION_KEY_PREFIX
         'TIMEOUT': 86400,  # 24 hours for sessions
     },
     'template_fragments': {
@@ -179,10 +179,16 @@ CACHES = {
     }
 }
 
-# Use Redis for sessions with database fallback for resilience
-# This provides the best of both worlds: Redis performance with database reliability
-SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
+# Use Redis-only for sessions (no database fallback to avoid django_session table requirement)
+# If Redis is down, sessions will fail fast rather than falling back to non-existent DB table
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 SESSION_CACHE_ALIAS = 'sessions'
 SESSION_COOKIE_AGE = 86400  # 24 hours
+
+# Session key prefix to avoid collisions
+SESSION_KEY_PREFIX = 'aprendecomigo_session'
+
+# Fail fast if Redis is unavailable (don't ignore session cache exceptions)
+# This ensures we know immediately if sessions are broken
 
 

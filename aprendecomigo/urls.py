@@ -26,14 +26,12 @@ from dashboard.views import InvitationsView, PeopleView, StudentsView, TeachersV
 # Scheduler views
 from scheduler.views import CalendarView
 
-
-# Health check for Railway deployment
-def health_check(request):
-    return JsonResponse({"status": "ok"})
+# Health check views
+from healthcheck import health_detailed
 
 urlpatterns = [
     # Railway health check
-    path("health/", health_check, name="health_check"),
+    path("health/", health_detailed, name="health_check"),  # Detailed health check
 
     # Admin route
     path("admin/", admin.site.urls),
