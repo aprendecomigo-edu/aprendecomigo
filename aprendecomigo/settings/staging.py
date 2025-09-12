@@ -179,4 +179,10 @@ SESSION_KEY_PREFIX = 'aprendecomigo_session'
 # Fail fast if Redis is unavailable (don't ignore session cache exceptions)
 # This ensures we know immediately if sessions are broken
 
+# Static Files Configuration - WhiteNoise (can be overridden in production)
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+
+REMINDER_MOCK_MODE = True
+COMMUNICATION_SERVICE_ENABLED = True
+
 

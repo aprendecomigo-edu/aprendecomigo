@@ -121,7 +121,14 @@ ASGI_APPLICATION = "aprendecomigo.asgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "NAME": (
+            "file:memorydb_default?mode=memory&cache=shared" 
+            if os.getenv("DJANGO_TESTING") 
+            else BASE_DIR / "db.sqlite3"
+        ),
+        "OPTIONS": {
+            "timeout": 60,
+        } if os.getenv("DJANGO_TESTING") else {},
     }
 }
 

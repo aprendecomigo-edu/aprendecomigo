@@ -31,8 +31,8 @@ jobs:
         python-version: ["3.13"]
 
     env:
-      DJANGO_ENV: testing
-      DJANGO_SETTINGS_MODULE: aprendecomigo.settings.testing
+      DJANGO_TESTING: true
+      DJANGO_SETTINGS_MODULE: aprendecomigo.settings.development
 
     steps:
     - name: Checkout code
@@ -51,11 +51,11 @@ jobs:
 
     - name: Check Django configuration
       run: |
-        python manage.py check --settings=aprendecomigo.settings.testing
+        python manage.py check --settings=aprendecomigo.settings.development
 
     - name: Run database migrations
       run: |
-        python manage.py migrate --settings=aprendecomigo.settings.testing
+        python manage.py migrate --settings=aprendecomigo.settings.development
 
     - name: Lint with ruff
       run: |
@@ -63,5 +63,5 @@ jobs:
 
     - name: Run Django tests
       run: |
-        python manage.py test --settings=aprendecomigo.settings.testing --verbosity=2
+        python manage.py test --settings=aprendecomigo.settings.development --verbosity=2
 
