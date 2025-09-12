@@ -32,9 +32,8 @@ def get_optimized_database_config():
             'CONN_MAX_AGE': 600,
             'OPTIONS': {
                 'connect_timeout': 10,
-                'MAX_CONNS': 20,
-                # IPv6 support for Railway's private network
-                'OPTIONS': '-c default_transaction_isolation=read-committed',
+                # PostgreSQL specific options (not MAX_CONNS which is invalid)
+                'options': '-c default_transaction_isolation=read-committed',
                 'application_name': 'aprendecomigo_staging',
             }
         }

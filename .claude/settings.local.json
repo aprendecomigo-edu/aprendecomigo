@@ -66,7 +66,8 @@
       "mcp__Railway__deploy",
       "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_gOieo0/**)",
       "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_6xZzpB/**)",
-      "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_lVgHGg/**)"
+      "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_lVgHGg/**)",
+      "WebFetch(domain:stackoverflow.com)"
     ],
     "deny": [],
     "ask": []
