@@ -20,22 +20,33 @@ def health_simple(request):
     Simple, fast health check for Railway deployment health monitoring.
     Only checks critical dependencies quickly.
     """
+    # Log health check request details for Railway debugging
+    host = request.get_host()
+    user_agent = request.META.get('HTTP_USER_AGENT', 'unknown')
+    remote_addr = request.META.get('REMOTE_ADDR', 'unknown')
+    logger.info(f"Health check request from host: {host}, user_agent: {user_agent}, remote_addr: {remote_addr}")
+    
     try:
         # Quick database check
+        logger.info("Health check: Testing database connection")
         with connection.cursor() as cursor:
             cursor.execute("SELECT 1")
             cursor.fetchone()
+        logger.info("Health check: Database OK")
 
         # Quick Redis check
+        logger.info("Health check: Testing Redis cache")
         cache.set("health", "ok", timeout=30)
         if cache.get("health") != "ok":
             raise Exception("Redis cache failed")
         cache.delete("health")
+        logger.info("Health check: Redis OK")
 
+        logger.info("Health check: All systems healthy - returning 200")
         return JsonResponse({"status": "ok"}, status=200)
 
     except Exception as e:
-        logger.error("Health check failed: %s", e)
+        logger.error("Health check failed: %s", e, exc_info=True)
         return JsonResponse({"status": "error", "error": str(e)}, status=503)
 
 
