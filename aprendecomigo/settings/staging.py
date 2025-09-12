@@ -11,9 +11,6 @@ import dj_database_url
 # Import all settings from base.py
 from .base import *
 
-# Import Railway networking optimizations
-from .railway_networking import get_optimized_database_config, get_optimized_redis_config, print_networking_summary
-
 # SECURITY WARNING: keep the secret key used in production secret!
 secret_key = os.getenv("SECRET_KEY")
 if not secret_key:
@@ -23,17 +20,33 @@ SECRET_KEY = str(secret_key)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "True") == "True"  # Railway docs recommend DEBUG=True for staging
 ALLOWED_HOSTS = ["*"] # railway settings
-# Database - Railway Private Networking Optimized
+# Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-# Use optimized private networking to avoid egress fees
-
-# Print networking configuration summary for debugging
-if os.getenv('DEBUG', 'False') == 'True':
-    print_networking_summary()
-
-DATABASES = {
-    'default': get_optimized_database_config()
-}
+# Use PostgreSQL in production
+# Railway provides DATABASE_URL automatically when PostgreSQL is provisioned
+if os.environ.get("DATABASE_URL"):
+    DATABASES = {
+        'default': dj_database_url.parse(
+            os.environ["DATABASE_URL"],
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ["PGDATABASE"],
+            'USER': os.environ["PGUSER"],
+            'PASSWORD': os.environ["PGPASSWORD"],
+            'HOST': os.environ["PGHOST"],
+            'PORT': os.environ.get("PGPORT", "5432"),
+            'CONN_MAX_AGE': 600,
+            'OPTIONS': {
+                'connect_timeout': 10,
+            }
+        }
+    }
 
 # Email configuration - Amazon SES via django-anymail
 EMAIL_BACKEND = "anymail.backends.amazon_ses.EmailBackend"
@@ -105,9 +118,14 @@ SECURE_REFERRER_POLICY = "same-origin"
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
-# Redis configuration for Railway staging - Private Networking Optimized
+# Redis configuration for Railway staging
 # Railway's internal network is IPv6-only
-redis_url = get_optimized_redis_config()
+redis_url = os.getenv('REDIS_URL', '')
+
+if not redis_url:
+    raise ValueError("REDIS_URL environment variable is not set")
+
+print(f"Using Redis URL for staging: {redis_url}")
 
 # Connection pool configuration (passed through custom connection factory)
 RAILWAY_REDIS_CONNECTION_KWARGS = {
