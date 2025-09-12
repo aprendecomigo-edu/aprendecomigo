@@ -128,7 +128,15 @@ DATABASES = {
         ),
         "OPTIONS": {
             "timeout": 60,
+            "init_command": "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA cache_size=10000; PRAGMA temp_store=MEMORY;",
         } if os.getenv("DJANGO_TESTING") else {},
+        "TEST": {
+            "NAME": "file:memorydb_default?mode=memory&cache=shared",
+            "OPTIONS": {
+                "timeout": 60,
+                "init_command": "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA cache_size=10000; PRAGMA temp_store=MEMORY;",
+            },
+        },
     }
 }
 
@@ -194,8 +202,27 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 # Cache configuration with improved Railway Redis support
 redis_url = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379')
 
+# Use in-memory cache for tests
+if os.getenv("DJANGO_TESTING"):
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'default-cache',
+            'TIMEOUT': 60 * 15,
+        },
+        'sessions': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'sessions-cache',
+            'TIMEOUT': 60 * 60 * 24,
+        },
+        'template_fragments': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'templates-cache',
+            'TIMEOUT': 60 * 30,
+        }
+    }
 # Use Redis with improved connection settings for Railway
-if redis_url.startswith('redis://') and 'railway.internal' in redis_url:
+elif redis_url.startswith('redis://') and 'railway.internal' in redis_url:
     # Railway Redis configuration with enhanced reliability
     CACHES = {
         'default': {
@@ -327,7 +354,10 @@ else:
         }
 
 # Session configuration with Redis fallback
-if 'railway.internal' in redis_url:
+if os.getenv("DJANGO_TESTING"):
+    # Use database sessions for tests to avoid cache complications
+    SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+elif 'railway.internal' in redis_url:
     # For Railway, use cached_db backend as it provides better reliability
     # Falls back to database if Redis cache is unavailable
     SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
@@ -419,7 +449,14 @@ redis_port = parsed_redis_url.port or 6379
 redis_password = parsed_redis_url.password
 
 # Configure Channel Layers with improved Railway support
-if 'railway.internal' in redis_url:
+if os.getenv("DJANGO_TESTING"):
+    # Use in-memory channel layer for tests
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+        },
+    }
+elif 'railway.internal' in redis_url:
     # Railway-specific configuration with enhanced reliability
     CHANNEL_LAYERS = {
         "default": {

@@ -19,6 +19,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
+from waffle.testutils import override_switch
 
 from accounts.models import School, SchoolMembership
 from classroom.models import Channel, Message, Reaction
@@ -91,6 +92,7 @@ class BaseViewTest(TestCase):
                 self.assertIn(key, data)
 
 
+@override_switch('chat_feature', active=True)
 class ChatViewTest(BaseViewTest):
     """Test the main ChatView (HTMX-enabled chat interface)."""
 
@@ -184,6 +186,7 @@ class ChatViewTest(BaseViewTest):
         self.assertIn('error', data)
 
 
+@override_switch('chat_feature', active=True)
 class ChatChannelsViewTest(BaseViewTest):
     """Test ChatChannelsView for listing and creating channels."""
 
@@ -309,6 +312,7 @@ class ChatChannelsViewTest(BaseViewTest):
         self.assertIn('Invalid JSON', data['error'])
 
 
+@override_switch('chat_feature', active=True)
 class ChatMessagesViewTest(BaseViewTest):
     """Test ChatMessagesView for retrieving and sending messages."""
 
@@ -463,6 +467,7 @@ class ChatMessagesViewTest(BaseViewTest):
         self.assertEqual(response.status_code, 404)
 
 
+@override_switch('chat_feature', active=True)
 class ChatUserSearchViewTest(BaseViewTest):
     """Test ChatUserSearchView for searching users within same schools."""
 
@@ -555,6 +560,7 @@ class ChatUserSearchViewTest(BaseViewTest):
         self.assertNotIn('inactive', usernames)
 
 
+@override_switch('chat_feature', active=True)
 class MessageReactionsViewTest(BaseViewTest):
     """Test MessageReactionsView for managing message reactions."""
 
@@ -662,6 +668,7 @@ class MessageReactionsViewTest(BaseViewTest):
         self.assertIn('not found', data['error'])
 
 
+@override_switch('chat_feature', active=True)
 class ChatSchoolUsersViewTest(BaseViewTest):
     """Test chat_school_users function-based view."""
 

@@ -17,7 +17,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 
 from classroom.consumers import ChatConsumer
-from classroom.models import Channel
+from classroom.models import Channel, Message
 
 User = get_user_model()
 
@@ -180,7 +180,7 @@ class ChatConsumerSecurityTest(TestCase):
 
     async def test_user_without_channel_access_rejected(self):
         """Test that users without channel access are rejected."""
-        unauthorized_user = User.objects.create_user(
+        unauthorized_user = await database_sync_to_async(User.objects.create_user)(
             email="unauthorized@example.com",
             username="unauthorized",
             password="testpass123"
@@ -236,7 +236,7 @@ class ChatConsumerSecurityTest(TestCase):
         await communicator.receive_json_from()
 
         # Send invalid JSON (this will be handled by the consumer)
-        await communicator.send_text_to("invalid json")
+        await communicator.send_to(text_data="invalid json")
 
         # Connection should remain open (no disconnection)
         # The consumer should silently ignore invalid JSON
@@ -246,7 +246,7 @@ class ChatConsumerSecurityTest(TestCase):
     async def test_reaction_functionality(self):
         """Test adding reactions via WebSocket."""
         # Create a message first
-        message = Message.objects.create(
+        message = await database_sync_to_async(Message.objects.create)(
             channel=self.channel,
             sender=self.user,
             content="Test message for reaction"
@@ -372,8 +372,8 @@ class ChatConsumerSecurityTest(TestCase):
     async def test_multiple_channels_isolation(self):
         """Test that messages in different channels are properly isolated."""
         # Create second channel
-        channel2 = Channel.objects.create(name="test-channel-2", is_direct=False)
-        channel2.participants.add(self.user)
+        channel2 = await database_sync_to_async(Channel.objects.create)(name="test-channel-2", is_direct=False)
+        await database_sync_to_async(channel2.participants.add)(self.user)
 
         # Connect to both channels
         comm1 = self.create_test_communicator("test-channel", self.user)

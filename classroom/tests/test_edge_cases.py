@@ -14,6 +14,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError, transaction
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from waffle.testutils import override_switch
 
 from accounts.models import School, SchoolMembership
 from classroom.models import Attachment, Channel, Message, Reaction
@@ -168,6 +169,7 @@ class ModelEdgeCasesTest(SchoolBasedTestMixin, TestCase):
             )
 
 
+@override_switch('chat_feature', active=True)
 class ViewEdgeCasesTest(SchoolBasedTestMixin, TestCase):
     """Test edge cases in view behavior."""
 
@@ -578,6 +580,7 @@ class ConcurrencyEdgeCasesTest(SchoolBasedTestMixin, TestCase):
 
 
 @override_settings(DEBUG=True)  # Enable query logging for debugging
+@override_switch('chat_feature', active=True)
 class PerformanceEdgeCasesTest(SchoolBasedTestMixin, TestCase):
     """Test performance-related edge cases."""
 

@@ -39,7 +39,9 @@ class ChatConsumer(WebsocketConsumer):
 
         # Security Check 2: Rate limiting
         # Skip rate limiting in test environment
-        if not getattr(settings, "TESTING", False) and not self.check_rate_limit():
+        import os
+        is_testing = getattr(settings, "TESTING", False) or os.getenv("DJANGO_TESTING") == "true"
+        if not is_testing and not self.check_rate_limit():
             logger.warning(
                 "Rate limit exceeded for user %s attempting connection to channel: %s",
                 self.user.username,
@@ -67,7 +69,7 @@ class ChatConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_add)(self.group_name, self.channel_name)
 
         # Mark user as online in the channel
-        self.mark_user_online()
+        async_to_sync(self.mark_user_online)()
 
         # Notify others about the new online user
         async_to_sync(self.channel_layer.group_send)(
@@ -85,7 +87,7 @@ class ChatConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_discard)(self.group_name, self.channel_name)
 
         # Mark user as offline
-        self.mark_user_offline()
+        async_to_sync(self.mark_user_offline)()
 
         # Notify others about the offline user
         async_to_sync(self.channel_layer.group_send)(
@@ -137,8 +139,17 @@ class ChatConsumer(WebsocketConsumer):
         message_type = data.get("type")
 
         if message_type == "message":
+            # Validate message data
+            if "message" not in data:
+                logger.warning(
+                    "Missing 'message' field from user %s in channel: %s", 
+                    self.user.username, 
+                    self.channel_name_param
+                )
+                return
+            
             # Save message to database
-            message = self.save_message(data["message"])
+            message = async_to_sync(self.save_message)(data["message"])
 
             # Broadcast to group
             async_to_sync(self.channel_layer.group_send)(
@@ -157,22 +168,24 @@ class ChatConsumer(WebsocketConsumer):
 
         elif message_type == "reaction":
             # Save reaction to database
-            reaction = self.save_reaction(data["message_id"], data["emoji"])
-
-            # Broadcast to group
-            async_to_sync(self.channel_layer.group_send)(
-                self.group_name,
-                {
-                    "type": "reaction_added",
-                    "reaction": {
-                        "id": reaction.id,
-                        "emoji": reaction.emoji,
-                        "user": reaction.user.username,
-                        "message_id": reaction.message.id,
-                        "created_at": reaction.created_at.isoformat(),
+            reaction = async_to_sync(self.save_reaction)(data["message_id"], data["emoji"])
+            
+            # Only broadcast if reaction was successfully saved
+            if reaction:
+                # Broadcast to group
+                async_to_sync(self.channel_layer.group_send)(
+                    self.group_name,
+                    {
+                        "type": "reaction_added",
+                        "reaction": {
+                            "id": reaction.id,
+                            "emoji": reaction.emoji,
+                            "user": reaction.user.username,
+                            "message_id": reaction.message.id,
+                            "created_at": reaction.created_at.isoformat(),
+                        },
                     },
-                },
-            )
+                )
 
     def chat_message(self, event):
         """Send chat message to WebSocket."""
@@ -186,6 +199,7 @@ class ChatConsumer(WebsocketConsumer):
         """Send user status update to WebSocket."""
         self.send(text_data=json.dumps(event))
 
+    @database_sync_to_async
     def mark_user_online(self):
         """Mark user as online in the channel."""
         try:
@@ -202,6 +216,7 @@ class ChatConsumer(WebsocketConsumer):
         except Exception:
             pass  # Silently handle other errors for this non-critical operation
 
+    @database_sync_to_async
     def mark_user_offline(self):
         """Mark user as offline in the channel."""
         try:
@@ -218,6 +233,7 @@ class ChatConsumer(WebsocketConsumer):
         except Exception:
             pass  # Silently handle other errors for this non-critical operation
 
+    @database_sync_to_async
     def save_message(self, content):
         """Save message to database."""
         try:
@@ -297,11 +313,20 @@ class ChatConsumer(WebsocketConsumer):
             # In case of cache error, allow the request but log it
             return True
 
+    @database_sync_to_async
     def save_reaction(self, message_id, emoji):
         """Save reaction to database."""
-        message = Message.objects.get(id=message_id)
-        return Reaction.objects.create(
-            message=message,
-            user=self.user,
-            emoji=emoji,
-        )
+        try:
+            message = Message.objects.get(id=message_id)
+            return Reaction.objects.create(
+                message=message,
+                user=self.user,
+                emoji=emoji,
+            )
+        except Message.DoesNotExist:
+            # Log and return None if message doesn't exist
+            logger.warning(
+                "User %s attempted to react to nonexistent message: %s",
+                self.user.username, message_id
+            )
+            return None
