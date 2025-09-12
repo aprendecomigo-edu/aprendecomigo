@@ -119,32 +119,29 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
 # Redis configuration for Railway staging
-# Railway's internal network is IPv6-only and requires family=0 parameter
+# Railway's internal network is IPv6-only
 redis_url = os.getenv('REDIS_URL', '')
 
 if not redis_url:
     raise ValueError("REDIS_URL environment variable is not set")
 
-# Add family=0 parameter for Railway IPv6 support
-# This enables dual-stack (IPv4 and IPv6) connectivity required by Railway
-redis_url_ipv6 = f"{redis_url}?family=0" if "?family=0" not in redis_url else redis_url
-
 print(f"Using Redis URL for staging: {redis_url}")
-print(f"Using IPv6-enabled Redis URL: {redis_url_ipv6}")
 
-# Connection pool configuration
+# Connection pool configuration for Railway IPv6 network
+# Railways uses IPv6-only internal networking, so we configure socket family accordingly
 RAILWAY_REDIS_CONNECTION_KWARGS = {
     'max_connections': 50,  # Finite pool size
     'retry_on_timeout': True,  # Retry commands on TimeoutError
     'socket_connect_timeout': 10,  # Connect timeout for Railway network
     'socket_timeout': 10,  # Socket timeout
+    'socket_type': socket.AF_UNSPEC,  # Allow both IPv4 and IPv6 (dual-stack)
 }
 
 # django-redis cache configuration with IPv6 support for Railway
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': redis_url_ipv6,  # Database 0 with IPv6 family=0 parameter
+        'LOCATION': redis_url,  # Database 0 (default)
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
             'CONNECTION_POOL_KWARGS': RAILWAY_REDIS_CONNECTION_KWARGS,
@@ -158,7 +155,7 @@ CACHES = {
     },
     'sessions': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': f"{redis_url_ipv6}/1",  # Database 1 with IPv6 family=0 parameter
+        'LOCATION': f"{redis_url}/1",  # Database 1 for sessions
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
             'CONNECTION_POOL_KWARGS': RAILWAY_REDIS_CONNECTION_KWARGS,
