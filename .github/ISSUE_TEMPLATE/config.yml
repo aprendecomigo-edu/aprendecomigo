@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📚 Documentação
+    url: https://github.com/aprendecomigo-edu/aprendecomigo/wiki
+    about: Consultar documentação e guias
+  - name: 💬 Discussões
+    url: https://github.com/aprendecomigo-edu/aprendecomigo/discussions
+    about: Discussões sobre funcionalidades e ideias

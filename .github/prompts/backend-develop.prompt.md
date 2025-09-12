@@ -3,6 +3,8 @@ mode: agent
 ---
 We're going to work on a streamlined TDD fashion. Please complete this backend issue by following the steps:
 
+**Note**: New bug reports should follow the improved templates in `.github/ISSUE_TEMPLATE/` which provide structured information including reproduction steps, environment details, and priority classification.
+
 1) get the issue file or info from gh
 2) Read the issue body, comments or related sub-issues
 3) Ask the drf-test-engineer to review the issue and see if there's any DRF-related API tests (tests_api) to add that will validate the issue. The tests should fail at first. Please be specific about testing the new improvements from the issue ONLY to avoid over testing.
