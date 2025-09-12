@@ -119,32 +119,38 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
 # Redis configuration for Railway staging
-# Railway's internal network is IPv6-only
+# Railway's internal network is IPv6-only and requires family=0 parameter
 redis_url = os.getenv('REDIS_URL', '')
 
 if not redis_url:
     raise ValueError("REDIS_URL environment variable is not set")
 
-print(f"Using Redis URL for staging: {redis_url}")
+# Add family=0 parameter for Railway IPv6 support
+# This enables dual-stack (IPv4 and IPv6) connectivity required by Railway
+redis_url_ipv6 = f"{redis_url}?family=0" if "?family=0" not in redis_url else redis_url
 
-# Connection pool configuration (passed through custom connection factory)
+print(f"Using Redis URL for staging: {redis_url}")
+print(f"Using IPv6-enabled Redis URL: {redis_url_ipv6}")
+
+# Connection pool configuration
 RAILWAY_REDIS_CONNECTION_KWARGS = {
     'max_connections': 50,  # Finite pool size
     'retry_on_timeout': True,  # Retry commands on TimeoutError
+    'socket_connect_timeout': 10,  # Connect timeout for Railway network
+    'socket_timeout': 10,  # Socket timeout
 }
 
 # django-redis cache configuration with IPv6 support for Railway
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': redis_url,  # Database 0 (default)
+        'LOCATION': redis_url_ipv6,  # Database 0 with IPv6 family=0 parameter
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'CONNECTION_FACTORY': 'aprendecomigo.redis_ipv6.RailwayIPv6ConnectionFactory',
             'CONNECTION_POOL_KWARGS': RAILWAY_REDIS_CONNECTION_KWARGS,
             'PICKLE_VERSION': -1,  # Use latest pickle protocol
             'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',  # Compress large values
-            'IGNORE_EXCEPTIONS': False,  # Graceful degradation during deployment and Redis issues
+            'IGNORE_EXCEPTIONS': False,  # Fail fast if Redis is down
         },
         'KEY_PREFIX': 'aprendecomigo',
         'VERSION': 1,
@@ -152,10 +158,9 @@ CACHES = {
     },
     'sessions': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': f"{redis_url}/1",  # Database 1 for sessions
+        'LOCATION': f"{redis_url_ipv6}/1",  # Database 1 with IPv6 family=0 parameter
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'CONNECTION_FACTORY': 'aprendecomigo.redis_ipv6.RailwayIPv6ConnectionFactory',
             'CONNECTION_POOL_KWARGS': RAILWAY_REDIS_CONNECTION_KWARGS,
             'PICKLE_VERSION': -1,
             'IGNORE_EXCEPTIONS': False,  # Sessions are critical - fail if Redis is down
