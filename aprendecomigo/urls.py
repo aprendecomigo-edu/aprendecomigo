@@ -27,11 +27,12 @@ from dashboard.views import InvitationsView, PeopleView, StudentsView, TeachersV
 from scheduler.views import CalendarView
 
 # Health check views
-from healthcheck import health_detailed
+from healthcheck import health_simple, health_detailed
 
 urlpatterns = [
-    # Railway health check
-    path("health/", health_detailed, name="health_check"),
+    # Railway health check - simple for startup, detailed for monitoring
+    path("health/", health_simple, name="health_check_startup"),
+    path("health/detailed/", health_detailed, name="health_check_detailed"),
 
     # Admin route
     path("admin/", admin.site.urls),
