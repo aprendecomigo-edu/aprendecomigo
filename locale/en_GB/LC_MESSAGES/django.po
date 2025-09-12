@@ -1,0 +1,2951 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-10 14:17+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Accounts and User Management"
+msgstr ""
+
+msgid ""
+"Your 24-hour grace period has expired. Please verify your email or phone "
+"number to continue using Aprende Comigo."
+msgstr ""
+
+msgid "Your email has been successfully verified!"
+msgstr ""
+
+msgid "1º ano"
+msgstr ""
+
+msgid "2º ano"
+msgstr ""
+
+msgid "3º ano"
+msgstr ""
+
+msgid "4º ano"
+msgstr ""
+
+msgid "5º ano"
+msgstr ""
+
+msgid "6º ano"
+msgstr ""
+
+msgid "7º ano"
+msgstr ""
+
+msgid "8º ano"
+msgstr ""
+
+msgid "9º ano"
+msgstr ""
+
+msgid "10º ano"
+msgstr ""
+
+msgid "11º ano"
+msgstr ""
+
+msgid "12º ano"
+msgstr ""
+
+msgid "Ensino Básico 1º Ciclo"
+msgstr ""
+
+msgid "Ensino Básico 2º Ciclo"
+msgstr ""
+
+msgid "Ensino Básico 3º Ciclo"
+msgstr ""
+
+msgid "Ensino Secundário"
+msgstr ""
+
+msgid "Grade 1"
+msgstr ""
+
+msgid "Grade 2"
+msgstr ""
+
+msgid "Grade 3"
+msgstr ""
+
+msgid "Grade 4"
+msgstr ""
+
+msgid "Grade 5"
+msgstr ""
+
+msgid "Grade 6"
+msgstr ""
+
+msgid "Grade 7"
+msgstr ""
+
+msgid "Grade 8"
+msgstr ""
+
+msgid "Grade 9"
+msgstr ""
+
+msgid "Grade 10"
+msgstr ""
+
+msgid "Grade 11"
+msgstr ""
+
+msgid "Grade 12"
+msgstr ""
+
+msgid "Elementary"
+msgstr ""
+
+msgid "Middle School"
+msgstr ""
+
+msgid "High School"
+msgstr ""
+
+msgid "Portugal"
+msgstr ""
+
+msgid "Custom"
+msgstr ""
+
+msgid "system name"
+msgstr ""
+
+msgid "Name of the educational system (e.g., 'Portugal')"
+msgstr ""
+
+msgid "system code"
+msgstr ""
+
+msgid "Unique code for the system (e.g., 'pt')"
+msgstr ""
+
+msgid "description"
+msgstr ""
+
+msgid "Description of the educational system"
+msgstr ""
+
+msgid "is active"
+msgstr ""
+
+msgid "Educational System"
+msgstr ""
+
+msgid "Educational Systems"
+msgstr ""
+
+msgid "course name"
+msgstr ""
+
+msgid "course code"
+msgstr ""
+
+msgid "Alphanumeric code for the course (e.g., educational system codes)"
+msgstr ""
+
+msgid "Educational system this course belongs to"
+msgstr ""
+
+msgid "education level"
+msgstr ""
+
+msgid "Education level within the educational system"
+msgstr ""
+
+msgid "course description"
+msgstr ""
+
+msgid "Detailed description of the course content and objectives"
+msgstr ""
+
+msgid "hourly rate for this course"
+msgstr ""
+
+msgid "Specific hourly rate for this course (overrides teacher's default rate)"
+msgstr ""
+
+msgid "is actively teaching"
+msgstr ""
+
+msgid "started teaching date"
+msgstr ""
+
+msgid "School Owner"
+msgstr ""
+
+msgid "School Administrator"
+msgstr ""
+
+msgid "Teacher"
+msgstr ""
+
+msgid "School Staff"
+msgstr ""
+
+msgid "Student"
+msgstr ""
+
+msgid "Guardian"
+msgstr ""
+
+msgid "Invitation Sent"
+msgstr ""
+
+msgid "Invitation Accepted"
+msgstr ""
+
+msgid "Invitation Declined"
+msgstr ""
+
+msgid "Student Joined"
+msgstr ""
+
+msgid "Teacher Joined"
+msgstr ""
+
+msgid "Class Created"
+msgstr ""
+
+msgid "Class Completed"
+msgstr ""
+
+msgid "Class Cancelled"
+msgstr ""
+
+msgid "Settings Updated"
+msgstr ""
+
+msgid "School"
+msgstr ""
+
+msgid "Split"
+msgstr ""
+
+msgid "Euro"
+msgstr ""
+
+msgid "US Dollar"
+msgstr ""
+
+msgid "Brazilian Real"
+msgstr ""
+
+msgid "British Pound"
+msgstr ""
+
+msgid "Portuguese"
+msgstr ""
+
+msgid "English"
+msgstr ""
+
+msgid "Spanish"
+msgstr ""
+
+msgid "French"
+msgstr ""
+
+msgid "Google Calendar"
+msgstr ""
+
+msgid "Microsoft Outlook"
+msgstr ""
+
+msgid "CalDAV"
+msgstr ""
+
+msgid "None"
+msgstr ""
+
+msgid "SMTP"
+msgstr ""
+
+msgid "SendGrid"
+msgstr ""
+
+msgid "Mailgun"
+msgstr ""
+
+msgid "1 Year"
+msgstr ""
+
+msgid "2 Years"
+msgstr ""
+
+msgid "5 Years"
+msgstr ""
+
+msgid "Indefinite"
+msgstr ""
+
+msgid "Not Sent"
+msgstr ""
+
+msgid "Queued"
+msgstr ""
+
+msgid "Sending"
+msgstr ""
+
+msgid "Sent"
+msgstr ""
+
+msgid "Delivered"
+msgstr ""
+
+msgid "Opened"
+msgstr ""
+
+msgid "Clicked"
+msgstr ""
+
+msgid "Failed"
+msgstr ""
+
+msgid "Pending"
+msgstr ""
+
+msgid "Viewed"
+msgstr ""
+
+msgid "Accepted"
+msgstr ""
+
+msgid "Declined"
+msgstr ""
+
+msgid "Expired"
+msgstr ""
+
+msgid "Cancelled"
+msgstr ""
+
+msgid "Guardian Responsible"
+msgstr ""
+
+msgid "Self Responsible"
+msgstr ""
+
+msgid "Shared Responsibility"
+msgstr ""
+
+msgid "email address"
+msgstr ""
+
+msgid "role"
+msgstr ""
+
+msgid "token"
+msgstr ""
+
+msgid "is accepted"
+msgstr ""
+
+msgid "usage count"
+msgstr ""
+
+msgid "max uses"
+msgstr ""
+
+msgid "Leave blank for unlimited uses"
+msgstr ""
+
+msgid "custom message"
+msgstr ""
+
+msgid "Personal message to include in the invitation"
+msgstr ""
+
+msgid "batch ID"
+msgstr ""
+
+msgid "UUID to group related invitations together"
+msgstr ""
+
+msgid "status"
+msgstr ""
+
+msgid "email delivery status"
+msgstr ""
+
+msgid "email sent at"
+msgstr ""
+
+msgid "email delivered at"
+msgstr ""
+
+msgid "email failure reason"
+msgstr ""
+
+msgid "retry count"
+msgstr ""
+
+msgid "max retries"
+msgstr ""
+
+msgid "accepted at"
+msgstr ""
+
+msgid "declined at"
+msgstr ""
+
+msgid "When the invitation was declined"
+msgstr ""
+
+msgid "viewed at"
+msgstr ""
+
+msgid "When the invitation was first viewed"
+msgstr ""
+
+msgid "Teacher Invitation"
+msgstr ""
+
+msgid "Teacher Invitations"
+msgstr ""
+
+msgid "biography"
+msgstr ""
+
+msgid "Teacher's professional biography"
+msgstr ""
+
+msgid "specialty"
+msgstr ""
+
+msgid "education"
+msgstr ""
+
+msgid "Educational background and qualifications"
+msgstr ""
+
+msgid "hourly rate"
+msgstr ""
+
+msgid "availability"
+msgstr ""
+
+msgid "Available days and times for lessons"
+msgstr ""
+
+msgid "address"
+msgstr ""
+
+msgid "Street, number, postal code and location"
+msgstr ""
+
+msgid "teacher phone"
+msgstr ""
+
+msgid "calendar iframe"
+msgstr ""
+
+msgid "education background"
+msgstr ""
+
+msgid ""
+"Structured educational background data (degree, institution, field, year)"
+msgstr ""
+
+msgid "teaching subjects"
+msgstr ""
+
+msgid "List of subjects the teacher specializes in"
+msgstr ""
+
+msgid "rate structure"
+msgstr ""
+
+msgid "Detailed rate structure for different class types"
+msgstr ""
+
+msgid "weekly availability"
+msgstr ""
+
+msgid "Structured weekly availability schedule"
+msgstr ""
+
+msgid "grade level preferences"
+msgstr ""
+
+msgid ""
+"List of preferred grade levels (elementary, middle, high school, university)"
+msgstr ""
+
+msgid "teaching experience"
+msgstr ""
+
+msgid ""
+"Structured teaching experience data (years, institutions, specializations)"
+msgstr ""
+
+msgid "credentials documents"
+msgstr ""
+
+msgid "List of uploaded credential document references"
+msgstr ""
+
+msgid "availability schedule"
+msgstr ""
+
+msgid "Detailed availability schedule with time slots and preferences"
+msgstr ""
+
+msgid "last profile update"
+msgstr ""
+
+msgid "When the profile was last updated"
+msgstr ""
+
+msgid "last activity"
+msgstr ""
+
+msgid "When the teacher was last active in the system"
+msgstr ""
+
+msgid "minimum notice minutes"
+msgstr ""
+
+msgid "Override minimum notice period in minutes (school default if null)"
+msgstr ""
+
+msgid "buffer time minutes"
+msgstr ""
+
+msgid "Buffer time between classes in minutes (school default if null)"
+msgstr ""
+
+msgid "maximum daily bookings"
+msgstr ""
+
+msgid "Maximum classes per day (school default if null)"
+msgstr ""
+
+msgid "maximum weekly bookings"
+msgstr ""
+
+msgid "Maximum classes per week (school default if null)"
+msgstr ""
+
+msgid "Educational system this student belongs to"
+msgstr ""
+
+msgid "school year"
+msgstr ""
+
+msgid "School year within the educational system"
+msgstr ""
+
+msgid "birth date"
+msgstr ""
+
+msgid ""
+"Guardian of the student (null for adult students who are self-responsible)"
+msgstr ""
+
+msgid "financial responsibility"
+msgstr ""
+
+msgid "Who is financially responsible for this student's account"
+msgstr ""
+
+msgid "notes"
+msgstr ""
+
+msgid "Additional notes about the student, special needs, etc."
+msgstr ""
+
+msgid "email notifications enabled"
+msgstr ""
+
+msgid "Enable email notifications for student alerts"
+msgstr ""
+
+msgid "SMS notifications enabled"
+msgstr ""
+
+msgid "Enable SMS notifications for student alerts"
+msgstr ""
+
+msgid "tax number"
+msgstr ""
+
+msgid "invoice"
+msgstr ""
+
+msgid "Whether to issue invoices for this guardian"
+msgstr ""
+
+msgid ""
+"Students with guardian financial responsibility must have a guardian "
+"assigned."
+msgstr ""
+
+msgid "notification preferences"
+msgstr ""
+
+msgid "Guardian notification preferences (email, SMS, in-app)"
+msgstr ""
+
+msgid "default approval settings"
+msgstr ""
+
+msgid "Default purchase approval settings for all studentren"
+msgstr ""
+
+msgid "Enable email notifications for guardian alerts"
+msgstr ""
+
+msgid "Enable SMS notifications for guardian alerts"
+msgstr ""
+
+msgid "guardian Profile"
+msgstr ""
+
+msgid "guardian Profiles"
+msgstr ""
+
+msgid "guardian"
+msgstr ""
+
+msgid "Guardian user who manages the student account"
+msgstr ""
+
+msgid "student"
+msgstr ""
+
+msgid "Student user whose account is managed by the guardian"
+msgstr ""
+
+msgid "school"
+msgstr ""
+
+msgid "School where this relationship is established"
+msgstr ""
+
+msgid "Whether this relationship is currently active"
+msgstr ""
+
+msgid "requires purchase approval"
+msgstr ""
+
+msgid "Whether guardian approval is required for purchases"
+msgstr ""
+
+msgid "requires session approval"
+msgstr ""
+
+msgid "Whether guardian approval is required for booking sessions"
+msgstr ""
+
+msgid "guardian-student Relationship"
+msgstr ""
+
+msgid "guardian-student Relationships"
+msgstr ""
+
+msgid "guardian and student cannot be the same user"
+msgstr ""
+
+msgid "guardian must be a member of the school"
+msgstr ""
+
+msgid "student must be a member of the school"
+msgstr ""
+
+msgid "Parent"
+msgstr ""
+
+msgid "name"
+msgstr ""
+
+msgid "contact email"
+msgstr ""
+
+msgid "phone number"
+msgstr ""
+
+msgid "website"
+msgstr ""
+
+msgid "logo"
+msgstr ""
+
+msgid "School logo image"
+msgstr ""
+
+msgid "primary color"
+msgstr ""
+
+msgid "Primary brand color in hex format"
+msgstr ""
+
+msgid "secondary color"
+msgstr ""
+
+msgid "Secondary brand color in hex format"
+msgstr ""
+
+msgid "email domain"
+msgstr ""
+
+msgid "Official email domain for the school"
+msgstr ""
+
+msgid "Educational system used by this school"
+msgstr ""
+
+msgid "educational system"
+msgstr ""
+
+msgid "grade levels"
+msgstr ""
+
+msgid "List of grade levels offered by this school"
+msgstr ""
+
+msgid "billing contact name"
+msgstr ""
+
+msgid "Name of billing contact person"
+msgstr ""
+
+msgid "billing contact email"
+msgstr ""
+
+msgid "Email for billing-related communications"
+msgstr ""
+
+msgid "billing address"
+msgstr ""
+
+msgid "Billing address for invoices and payments"
+msgstr ""
+
+msgid "tax ID"
+msgstr ""
+
+msgid "Tax identification number for billing"
+msgstr ""
+
+msgid "currency"
+msgstr ""
+
+msgid "Default currency for pricing and billing"
+msgstr ""
+
+msgid "language"
+msgstr ""
+
+msgid "Default language for the school interface"
+msgstr ""
+
+msgid "working hours start"
+msgstr ""
+
+msgid "School working hours start time"
+msgstr ""
+
+msgid "working hours end"
+msgstr ""
+
+msgid "School working hours end time"
+msgstr ""
+
+msgid "working days"
+msgstr ""
+
+msgid "List of working days (0=Monday, 6=Sunday)"
+msgstr ""
+
+msgid "Enable email notifications for school events"
+msgstr ""
+
+msgid "Enable SMS notifications for school events"
+msgstr ""
+
+msgid "allow student self-enrollment"
+msgstr ""
+
+msgid "Allow students to enroll themselves"
+msgstr ""
+
+msgid "require parent approval"
+msgstr ""
+
+msgid "Require parental approval for student actions"
+msgstr ""
+
+msgid "auto assign teachers"
+msgstr ""
+
+msgid "Automatically assign available teachers to classes"
+msgstr ""
+
+msgid "class reminder hours"
+msgstr ""
+
+msgid "Hours before class to send reminder notifications"
+msgstr ""
+
+msgid "enable calendar integration"
+msgstr ""
+
+msgid "Enable integration with external calendar systems"
+msgstr ""
+
+msgid "calendar integration type"
+msgstr ""
+
+msgid "Type of calendar integration"
+msgstr ""
+
+msgid "enable email integration"
+msgstr ""
+
+msgid "Enable integration with external email systems"
+msgstr ""
+
+msgid "email integration provider"
+msgstr ""
+
+msgid "Email integration provider"
+msgstr ""
+
+msgid "data retention policy"
+msgstr ""
+
+msgid "How long to retain student and class data"
+msgstr ""
+
+msgid "GDPR compliance enabled"
+msgstr ""
+
+msgid "Enable GDPR compliance features"
+msgstr ""
+
+msgid "allow data export"
+msgstr ""
+
+msgid "Allow users to export their personal data"
+msgstr ""
+
+msgid "require data processing consent"
+msgstr ""
+
+msgid "Require explicit consent for data processing"
+msgstr ""
+
+msgid "default minimum notice minutes"
+msgstr ""
+
+msgid "Default minimum notice period in minutes (2 hours)"
+msgstr ""
+
+msgid "default buffer time minutes"
+msgstr ""
+
+msgid "Default buffer time between classes in minutes"
+msgstr ""
+
+msgid "default max daily bookings"
+msgstr ""
+
+msgid "Default maximum classes per day for teachers"
+msgstr ""
+
+msgid "default max weekly bookings"
+msgstr ""
+
+msgid "Default maximum classes per week for teachers"
+msgstr ""
+
+msgid "student max daily bookings"
+msgstr ""
+
+msgid "Maximum classes per day for students"
+msgstr ""
+
+msgid "student max weekly bookings"
+msgstr ""
+
+msgid "Maximum classes per week for students"
+msgstr ""
+
+msgid "buffer time for group classes"
+msgstr ""
+
+msgid "Buffer time in minutes for group classes"
+msgstr ""
+
+msgid "buffer time for trial classes"
+msgstr ""
+
+msgid "Buffer time in minutes for trial classes"
+msgstr ""
+
+msgid "School Settings"
+msgstr ""
+
+msgid "Monday"
+msgstr ""
+
+msgid "Tuesday"
+msgstr ""
+
+msgid "Wednesday"
+msgstr ""
+
+msgid "Thursday"
+msgstr ""
+
+msgid "Friday"
+msgstr ""
+
+msgid "Saturday"
+msgstr ""
+
+msgid "Sunday"
+msgstr ""
+
+msgid "The Email must be set"
+msgstr ""
+
+msgid "username"
+msgstr ""
+
+msgid "profile photo"
+msgstr ""
+
+msgid "User profile photo"
+msgstr ""
+
+msgid "primary contact"
+msgstr ""
+
+msgid "Email"
+msgstr ""
+
+msgid "Phone"
+msgstr ""
+
+msgid "email verified"
+msgstr ""
+
+msgid "phone verified"
+msgstr ""
+
+msgid "verification required after"
+msgstr ""
+
+msgid ""
+"After this time, user must verify email/phone to continue accessing the "
+"platform"
+msgstr ""
+
+msgid "first login completed"
+msgstr ""
+
+msgid "onboarding completed"
+msgstr ""
+
+msgid "onboarding progress"
+msgstr ""
+
+msgid "tutorial preferences"
+msgstr ""
+
+msgid "You don't have permission to invite teachers to this school."
+msgstr ""
+
+#, python-format
+msgid "Teacher invitation sent to %(email)s"
+msgstr ""
+
+#, python-format
+msgid "Welcome to %(school)s! You are now a %(role)s."
+msgstr ""
+
+msgid "Your profile has been updated successfully."
+msgstr ""
+
+#, python-format
+msgid "Settings for %(school)s have been updated successfully."
+msgstr ""
+
+msgid "Grade Specific Rate"
+msgstr ""
+
+msgid "Group Class Rate"
+msgstr ""
+
+msgid "Fixed Monthly Salary"
+msgstr ""
+
+msgid "Base Salary Plus Bonus"
+msgstr ""
+
+msgid "Individual Session"
+msgstr ""
+
+msgid "Group Session"
+msgstr ""
+
+msgid "Scheduled"
+msgstr ""
+
+msgid "In Progress"
+msgstr ""
+
+msgid "Completed"
+msgstr ""
+
+msgid "No Show"
+msgstr ""
+
+msgid "Calculated"
+msgstr ""
+
+msgid "Paid"
+msgstr ""
+
+msgid "School Absorbs Cost"
+msgstr ""
+
+msgid "Teacher Absorbs Cost"
+msgstr ""
+
+msgid "Split Cost 50/50"
+msgstr ""
+
+msgid "Weekly"
+msgstr ""
+
+msgid "Bi-weekly"
+msgstr ""
+
+msgid "Monthly"
+msgstr ""
+
+msgid "Received"
+msgstr ""
+
+msgid "Processing"
+msgstr ""
+
+msgid "Processed"
+msgstr ""
+
+msgid "Retrying"
+msgstr ""
+
+msgid "Package"
+msgstr ""
+
+msgid "Subscription"
+msgstr ""
+
+msgid "trial cost absorption"
+msgstr ""
+
+msgid "Who absorbs the cost of trial classes"
+msgstr ""
+
+msgid "teacher payment frequency"
+msgstr ""
+
+msgid "How frequently teachers are paid"
+msgstr ""
+
+msgid "payment day of month"
+msgstr ""
+
+msgid "Day of the month when teachers are paid (1-28)"
+msgstr ""
+
+msgid "School Billing Settings"
+msgstr ""
+
+msgid "Payment day must be between 1 and 28 to ensure it exists in all months"
+msgstr ""
+
+msgid "teacher"
+msgstr ""
+
+msgid "rule type"
+msgstr ""
+
+msgid "grade level"
+msgstr ""
+
+msgid "Grade level for grade-specific rules (e.g., '7', '10')"
+msgstr ""
+
+msgid "rate per hour"
+msgstr ""
+
+msgid "Hourly rate in euros"
+msgstr ""
+
+msgid "fixed amount"
+msgstr ""
+
+msgid "Fixed monthly amount in euros"
+msgstr ""
+
+msgid "conditions"
+msgstr ""
+
+msgid "Additional conditions for this rule (JSON format)"
+msgstr ""
+
+msgid "effective from"
+msgstr ""
+
+msgid "Date from which this rule is effective"
+msgstr ""
+
+msgid "effective until"
+msgstr ""
+
+msgid "Date until which this rule is effective (optional)"
+msgstr ""
+
+msgid "Teacher Compensation Rule"
+msgstr ""
+
+msgid "Teacher Compensation Rules"
+msgstr ""
+
+msgid "Grade level is required for grade-specific rules"
+msgstr ""
+
+msgid "Rate per hour is required for grade-specific rules"
+msgstr ""
+
+msgid "Rate per hour is required for group class rules"
+msgstr ""
+
+msgid "Fixed amount is required for fixed salary rules"
+msgstr ""
+
+msgid "date"
+msgstr ""
+
+msgid "start time"
+msgstr ""
+
+msgid "end time"
+msgstr ""
+
+msgid "session type"
+msgstr ""
+
+msgid "Grade level of the session (e.g., '7', '10', 'mixed')"
+msgstr ""
+
+msgid "student count"
+msgstr ""
+
+msgid "Number of students in this session"
+msgstr ""
+
+msgid "Students who attended this session"
+msgstr ""
+
+msgid "is trial"
+msgstr ""
+
+msgid "Whether this is a trial session"
+msgstr ""
+
+msgid "is makeup"
+msgstr ""
+
+msgid "Whether this is a makeup session"
+msgstr ""
+
+msgid "actual duration hours"
+msgstr ""
+
+msgid "Actual duration in hours when session was completed"
+msgstr ""
+
+msgid "booking confirmed at"
+msgstr ""
+
+msgid "Timestamp when the session booking was confirmed"
+msgstr ""
+
+msgid "cancelled at"
+msgstr ""
+
+msgid "Timestamp when the session was cancelled"
+msgstr ""
+
+msgid "Additional notes about this session"
+msgstr ""
+
+msgid "Class Session"
+msgstr ""
+
+msgid "Class Sessions"
+msgstr ""
+
+msgid "End time must be after start time"
+msgstr ""
+
+msgid "Individual sessions can only have 1 student"
+msgstr ""
+
+msgid "session"
+msgstr ""
+
+msgid "billing period"
+msgstr ""
+
+msgid "Billing period in YYYY-MM format (e.g., '2024-01')"
+msgstr ""
+
+msgid "hours taught"
+msgstr ""
+
+msgid "Number of hours taught in this session"
+msgstr ""
+
+msgid "rate applied"
+msgstr ""
+
+msgid "Hourly rate applied for this session"
+msgstr ""
+
+msgid "amount earned"
+msgstr ""
+
+msgid "Total amount earned for this session"
+msgstr ""
+
+msgid "compensation rule"
+msgstr ""
+
+msgid "The compensation rule used for this calculation"
+msgstr ""
+
+msgid "payment status"
+msgstr ""
+
+msgid "calculation notes"
+msgstr ""
+
+msgid "Notes about how the payment was calculated"
+msgstr ""
+
+msgid "Teacher Payment Entry"
+msgstr ""
+
+msgid "Teacher Payment Entries"
+msgstr ""
+
+msgid "Student who owns this account balance"
+msgstr ""
+
+msgid "hours purchased"
+msgstr ""
+
+msgid "Total hours purchased by the student"
+msgstr ""
+
+msgid "hours consumed"
+msgstr ""
+
+msgid "Total hours consumed by the student"
+msgstr ""
+
+msgid "balance amount"
+msgstr ""
+
+msgid "Current account balance in euros"
+msgstr ""
+
+msgid "created at"
+msgstr ""
+
+msgid "updated at"
+msgstr ""
+
+msgid "Student Account Balance"
+msgstr ""
+
+msgid "Student Account Balances"
+msgstr ""
+
+msgid "Refunded"
+msgstr ""
+
+msgid "Student who made this purchase"
+msgstr ""
+
+msgid "transaction type"
+msgstr ""
+
+msgid "Type of transaction (package or subscription)"
+msgstr ""
+
+msgid "amount"
+msgstr ""
+
+msgid "Transaction amount in euros"
+msgstr ""
+
+msgid "Current payment status"
+msgstr ""
+
+msgid "Stripe payment intent ID"
+msgstr ""
+
+msgid "Stripe PaymentIntent ID for this transaction"
+msgstr ""
+
+msgid "Stripe customer ID"
+msgstr ""
+
+msgid "Stripe Customer ID associated with this transaction"
+msgstr ""
+
+msgid "expires at"
+msgstr ""
+
+msgid "Expiration date for packages (null for subscriptions)"
+msgstr ""
+
+msgid "metadata"
+msgstr ""
+
+msgid "Additional transaction data in JSON format"
+msgstr ""
+
+msgid "approval request"
+msgstr ""
+
+msgid "Approval request that authorized this transaction (if applicable)"
+msgstr ""
+
+msgid "Purchase Transaction"
+msgstr ""
+
+msgid "Purchase Transactions"
+msgstr ""
+
+msgid "Transaction amount cannot be negative"
+msgstr ""
+
+msgid "Subscription transactions should not have an expiration date"
+msgstr ""
+
+msgid "plan name"
+msgstr ""
+
+msgid "Display name for the pricing plan"
+msgstr ""
+
+msgid "Detailed description of what the plan includes"
+msgstr ""
+
+msgid "plan type"
+msgstr ""
+
+msgid "Type of plan: package (expires) or subscription (recurring)"
+msgstr ""
+
+msgid "hours included"
+msgstr ""
+
+msgid "Number of tutoring hours included in this plan"
+msgstr ""
+
+msgid "price (EUR)"
+msgstr ""
+
+msgid "Price of the plan in euros"
+msgstr ""
+
+msgid "validity days"
+msgstr ""
+
+msgid "Number of days the plan is valid (null for subscriptions)"
+msgstr ""
+
+msgid "display order"
+msgstr ""
+
+msgid "Order in which plans should be displayed (lower numbers first)"
+msgstr ""
+
+msgid "is featured"
+msgstr ""
+
+msgid "Whether this plan should be highlighted as featured/recommended"
+msgstr ""
+
+msgid "Whether this plan is currently available for purchase"
+msgstr ""
+
+msgid "Pricing Plan"
+msgstr ""
+
+msgid "Pricing Plans"
+msgstr ""
+
+msgid "Package plans must have validity_days specified"
+msgstr ""
+
+msgid "Subscription plans should not have validity_days"
+msgstr ""
+
+msgid "Price must be greater than 0"
+msgstr ""
+
+msgid "Hours included must be greater than 0"
+msgstr ""
+
+msgid "Validity days must be greater than 0"
+msgstr ""
+
+msgid "student account"
+msgstr ""
+
+msgid "Student account that this consumption is associated with"
+msgstr ""
+
+msgid "class session"
+msgstr ""
+
+msgid "The class session for which hours were consumed"
+msgstr ""
+
+msgid "purchase transaction"
+msgstr ""
+
+msgid "Original purchase transaction from which hours were consumed"
+msgstr ""
+
+msgid "Actual hours consumed during the session"
+msgstr ""
+
+msgid "hours originally reserved"
+msgstr ""
+
+msgid "Hours originally reserved/scheduled for the session"
+msgstr ""
+
+msgid "consumed at"
+msgstr ""
+
+msgid "Timestamp when the consumption was recorded"
+msgstr ""
+
+msgid "is refunded"
+msgstr ""
+
+msgid "Whether this consumption has been refunded"
+msgstr ""
+
+msgid "refund reason"
+msgstr ""
+
+msgid "Reason for the refund (if applicable)"
+msgstr ""
+
+msgid "Hour Consumption"
+msgstr ""
+
+msgid "Hour Consumptions"
+msgstr ""
+
+msgid "Hours consumed cannot be negative"
+msgstr ""
+
+msgid "Hours originally reserved cannot be negative"
+msgstr ""
+
+msgid "Student account must belong to a student in the class session"
+msgstr ""
+
+msgid "Student who received this receipt"
+msgstr ""
+
+msgid "transaction"
+msgstr ""
+
+msgid "Purchase transaction this receipt is for"
+msgstr ""
+
+msgid "receipt number"
+msgstr ""
+
+msgid "Unique receipt identifier"
+msgstr ""
+
+msgid "Receipt amount in euros"
+msgstr ""
+
+msgid "generated at"
+msgstr ""
+
+msgid "When the receipt was generated"
+msgstr ""
+
+msgid "PDF file"
+msgstr ""
+
+msgid "Generated PDF receipt file"
+msgstr ""
+
+msgid "is valid"
+msgstr ""
+
+msgid "Whether this receipt is still valid"
+msgstr ""
+
+msgid "Additional receipt data in JSON format"
+msgstr ""
+
+msgid "Receipt"
+msgstr ""
+
+msgid "Receipts"
+msgstr ""
+
+msgid "Receipt amount must match transaction amount"
+msgstr ""
+
+msgid "Receipt student must match transaction student"
+msgstr ""
+
+msgid "Student who owns this payment method"
+msgstr ""
+
+msgid "Stripe payment method ID"
+msgstr ""
+
+msgid "Stripe PaymentMethod ID for secure storage"
+msgstr ""
+
+msgid "Stripe Customer ID associated with this payment method"
+msgstr ""
+
+msgid "card brand"
+msgstr ""
+
+msgid "Card brand (e.g., visa, mastercard)"
+msgstr ""
+
+msgid "card last 4 digits"
+msgstr ""
+
+msgid "Last 4 digits of the card for display"
+msgstr ""
+
+msgid "card expiration month"
+msgstr ""
+
+msgid "Card expiration month (1-12)"
+msgstr ""
+
+msgid "card expiration year"
+msgstr ""
+
+msgid "Card expiration year"
+msgstr ""
+
+msgid "is default"
+msgstr ""
+
+msgid "Whether this is the default payment method"
+msgstr ""
+
+msgid "Whether this payment method is active"
+msgstr ""
+
+msgid "Stored Payment Method"
+msgstr ""
+
+msgid "Stored Payment Methods"
+msgstr ""
+
+msgid "Card expiration month must be between 1 and 12"
+msgstr ""
+
+msgid "Card last 4 digits format is not PCI compliant."
+msgstr ""
+
+msgid ""
+"Card last 4 digits must be in 4-digit format ('4242') or masked format "
+"('X242')"
+msgstr ""
+
+msgid "guardian-student relationship"
+msgstr ""
+
+msgid "The guardian-student relationship this budget control applies to"
+msgstr ""
+
+msgid "monthly budget limit"
+msgstr ""
+
+msgid "Maximum amount student can spend per month (null for no limit)"
+msgstr ""
+
+msgid "weekly budget limit"
+msgstr ""
+
+msgid "Maximum amount student can spend per week (null for no limit)"
+msgstr ""
+
+msgid "auto approval threshold"
+msgstr ""
+
+msgid ""
+"Maximum amount that can be automatically approved without guardian "
+"intervention"
+msgstr ""
+
+msgid "require approval for sessions"
+msgstr ""
+
+msgid "Whether guardian approval is required for booking individual sessions"
+msgstr ""
+
+msgid "require approval for packages"
+msgstr ""
+
+msgid "Whether guardian approval is required for purchasing hour packages"
+msgstr ""
+
+msgid "Whether budget controls are currently active"
+msgstr ""
+
+msgid "Family Budget Control"
+msgstr ""
+
+msgid "Family Budget Controls"
+msgstr ""
+
+msgid "Auto approval threshold cannot be greater than monthly budget limit"
+msgstr ""
+
+msgid "Auto approval threshold cannot be greater than weekly budget limit"
+msgstr ""
+
+msgid "Hour Package"
+msgstr ""
+
+msgid "Approved"
+msgstr ""
+
+msgid "Denied"
+msgstr ""
+
+msgid "Student requesting the purchase"
+msgstr ""
+
+msgid "Guardian who needs to approve the purchase"
+msgstr ""
+
+msgid "The guardian-student relationship this request is under"
+msgstr ""
+
+msgid "Amount of the purchase request"
+msgstr ""
+
+msgid "Description of what the student wants to purchase"
+msgstr ""
+
+msgid "request type"
+msgstr ""
+
+msgid "Type of purchase being requested"
+msgstr ""
+
+msgid "Current status of the approval request"
+msgstr ""
+
+msgid "pricing plan"
+msgstr ""
+
+msgid "Pricing plan being requested (if applicable)"
+msgstr ""
+
+msgid "Class session being requested (if applicable)"
+msgstr ""
+
+msgid "request metadata"
+msgstr ""
+
+msgid "Additional data about the purchase request"
+msgstr ""
+
+msgid "requested at"
+msgstr ""
+
+msgid "When the request was made"
+msgstr ""
+
+msgid "responded at"
+msgstr ""
+
+msgid "When the guardian responded to the request"
+msgstr ""
+
+msgid "When this request expires if not responded to"
+msgstr ""
+
+msgid "guardian notes"
+msgstr ""
+
+msgid "Optional notes from the guardian about their decision"
+msgstr ""
+
+msgid "Purchase Approval Request"
+msgstr ""
+
+msgid "Purchase Approval Requests"
+msgstr ""
+
+msgid "Only pending requests can be approved"
+msgstr ""
+
+msgid "Cannot approve an expired request"
+msgstr ""
+
+msgid "Only pending requests can be denied"
+msgstr ""
+
+msgid "Only pending requests can be cancelled"
+msgstr ""
+
+msgid "Student and guardian cannot be the same user"
+msgstr ""
+
+msgid "Guardian-student relationship must match the student and guardian"
+msgstr ""
+
+msgid "Stripe event ID"
+msgstr ""
+
+msgid "Unique Stripe event identifier"
+msgstr ""
+
+msgid "event type"
+msgstr ""
+
+msgid "Type of Stripe webhook event (e.g., payment_intent.succeeded)"
+msgstr ""
+
+msgid "Current processing status of the webhook event"
+msgstr ""
+
+msgid "payload"
+msgstr ""
+
+msgid "Complete webhook event payload from Stripe"
+msgstr ""
+
+msgid "processed at"
+msgstr ""
+
+msgid "Timestamp when the event was successfully processed"
+msgstr ""
+
+msgid "error message"
+msgstr ""
+
+msgid "Error message if processing failed"
+msgstr ""
+
+msgid "Number of times processing has been retried"
+msgstr ""
+
+msgid "Webhook Event Log"
+msgstr ""
+
+msgid "Webhook Event Logs"
+msgstr ""
+
+msgid "Warning - Needs Response"
+msgstr ""
+
+msgid "Warning - Under Review"
+msgstr ""
+
+msgid "Warning - Closed"
+msgstr ""
+
+msgid "Needs Response"
+msgstr ""
+
+msgid "Under Review"
+msgstr ""
+
+msgid "Charge Refunded"
+msgstr ""
+
+msgid "Won"
+msgstr ""
+
+msgid "Duplicate"
+msgstr ""
+
+msgid "Fraudulent"
+msgstr ""
+
+msgid "Subscription Canceled"
+msgstr ""
+
+msgid "Product Unacceptable"
+msgstr ""
+
+msgid "Product Not Received"
+msgstr ""
+
+msgid "Unrecognized"
+msgstr ""
+
+msgid "Credit Not Processed"
+msgstr ""
+
+msgid "General"
+msgstr ""
+
+msgid "Refund Created"
+msgstr ""
+
+msgid "Refund Failed"
+msgstr ""
+
+msgid "Dispute Response"
+msgstr ""
+
+msgid "Fraud Alert"
+msgstr ""
+
+msgid "Payment Retry"
+msgstr ""
+
+msgid "User Account Action"
+msgstr ""
+
+msgid "System Override"
+msgstr ""
+
+msgid "Low"
+msgstr ""
+
+msgid "Medium"
+msgstr ""
+
+msgid "High"
+msgstr ""
+
+msgid "Critical"
+msgstr ""
+
+msgid "Active"
+msgstr ""
+
+msgid "Investigating"
+msgstr ""
+
+msgid "Resolved"
+msgstr ""
+
+msgid "False Positive"
+msgstr ""
+
+msgid "Stripe dispute ID"
+msgstr ""
+
+msgid "Unique Stripe dispute identifier"
+msgstr ""
+
+msgid "The purchase transaction being disputed"
+msgstr ""
+
+msgid "dispute amount"
+msgstr ""
+
+msgid "Amount being disputed in euros"
+msgstr ""
+
+msgid "Currency of the disputed amount"
+msgstr ""
+
+msgid "dispute reason"
+msgstr ""
+
+msgid "Reason for the dispute"
+msgstr ""
+
+msgid "Current status of the dispute"
+msgstr ""
+
+msgid "evidence details"
+msgstr ""
+
+msgid "Evidence details and documentation"
+msgstr ""
+
+msgid "evidence due by"
+msgstr ""
+
+msgid "Deadline for submitting evidence"
+msgstr ""
+
+msgid "is responded"
+msgstr ""
+
+msgid "Whether we have responded to this dispute"
+msgstr ""
+
+msgid "response submitted at"
+msgstr ""
+
+msgid "When our response was submitted"
+msgstr ""
+
+msgid "internal notes"
+msgstr ""
+
+msgid "Internal notes about this dispute"
+msgstr ""
+
+msgid "Stripe metadata"
+msgstr ""
+
+msgid "Complete metadata from Stripe dispute object"
+msgstr ""
+
+msgid "Payment Dispute"
+msgstr ""
+
+msgid "Payment Disputes"
+msgstr ""
+
+msgid "action type"
+msgstr ""
+
+msgid "Type of administrative action performed"
+msgstr ""
+
+msgid "action description"
+msgstr ""
+
+msgid "Detailed description of the action performed"
+msgstr ""
+
+msgid "admin user"
+msgstr ""
+
+msgid "Administrator who performed this action"
+msgstr ""
+
+msgid "target user"
+msgstr ""
+
+msgid "User affected by this action (if applicable)"
+msgstr ""
+
+msgid "target transaction"
+msgstr ""
+
+msgid "Transaction affected by this action (if applicable)"
+msgstr ""
+
+msgid "target dispute"
+msgstr ""
+
+msgid "Dispute affected by this action (if applicable)"
+msgstr ""
+
+msgid "success"
+msgstr ""
+
+msgid "Whether the action was successful"
+msgstr ""
+
+msgid "result message"
+msgstr ""
+
+msgid "Result message or error details"
+msgstr ""
+
+msgid "amount impacted"
+msgstr ""
+
+msgid "Financial amount impacted by this action"
+msgstr ""
+
+msgid "action data"
+msgstr ""
+
+msgid "Detailed data about the action performed"
+msgstr ""
+
+msgid "Stripe reference ID"
+msgstr ""
+
+msgid "Related Stripe object ID (if applicable)"
+msgstr ""
+
+msgid "IP address"
+msgstr ""
+
+msgid "IP address from which the action was performed"
+msgstr ""
+
+msgid "user agent"
+msgstr ""
+
+msgid "User agent of the client that performed the action"
+msgstr ""
+
+msgid "two factor verified"
+msgstr ""
+
+msgid "Whether two-factor authentication was verified"
+msgstr ""
+
+msgid "Admin Action"
+msgstr ""
+
+msgid "Admin Actions"
+msgstr ""
+
+msgid "alert ID"
+msgstr ""
+
+msgid "Unique identifier for this fraud alert"
+msgstr ""
+
+msgid "severity"
+msgstr ""
+
+msgid "Severity level of the fraud alert"
+msgstr ""
+
+msgid "Current status of the fraud alert"
+msgstr ""
+
+msgid "alert type"
+msgstr ""
+
+msgid "Type of fraud pattern detected"
+msgstr ""
+
+msgid "Detailed description of the suspicious activity"
+msgstr ""
+
+msgid "User associated with this fraud alert"
+msgstr ""
+
+msgid "related transactions"
+msgstr ""
+
+msgid "Transactions that triggered this alert"
+msgstr ""
+
+msgid "detection data"
+msgstr ""
+
+msgid "Data used to detect this fraud pattern"
+msgstr ""
+
+msgid "risk score"
+msgstr ""
+
+msgid "Risk assessment score (0-100)"
+msgstr ""
+
+msgid "assigned to"
+msgstr ""
+
+msgid "Administrator assigned to investigate this alert"
+msgstr ""
+
+msgid "investigated at"
+msgstr ""
+
+msgid "When the alert was investigated"
+msgstr ""
+
+msgid "resolution notes"
+msgstr ""
+
+msgid "Notes about how this alert was resolved"
+msgstr ""
+
+msgid "actions taken"
+msgstr ""
+
+msgid "List of actions taken in response to this alert"
+msgstr ""
+
+msgid "Fraud Alerts"
+msgstr ""
+
+msgid "Low Balance"
+msgstr ""
+
+msgid "Package Expiring"
+msgstr ""
+
+msgid "Balance Depleted"
+msgstr ""
+
+msgid "user"
+msgstr ""
+
+msgid "User who will receive this notification"
+msgstr ""
+
+msgid "notification type"
+msgstr ""
+
+msgid "Type of notification"
+msgstr ""
+
+msgid "title"
+msgstr ""
+
+msgid "Notification title"
+msgstr ""
+
+msgid "message"
+msgstr ""
+
+msgid "Notification message content"
+msgstr ""
+
+msgid "is read"
+msgstr ""
+
+msgid "Whether the notification has been read"
+msgstr ""
+
+msgid "read at"
+msgstr ""
+
+msgid "Timestamp when notification was read"
+msgstr ""
+
+msgid "related transaction"
+msgstr ""
+
+msgid ""
+"Purchase transaction related to this notification (for package expiration)"
+msgstr ""
+
+msgid "Additional notification data in JSON format"
+msgstr ""
+
+msgid "Notification"
+msgstr ""
+
+msgid "Notifications"
+msgstr ""
+
+msgid "Bounced"
+msgstr ""
+
+msgid "Marked as Spam"
+msgstr ""
+
+msgid "Invitation"
+msgstr ""
+
+msgid "Reminder"
+msgstr ""
+
+msgid "Welcome"
+msgstr ""
+
+msgid "Profile Reminder"
+msgstr ""
+
+msgid "Completion Celebration"
+msgstr ""
+
+msgid "Ongoing Support"
+msgstr ""
+
+msgid "Low Balance Alert"
+msgstr ""
+
+msgid "Package Expiring Alert"
+msgstr ""
+
+msgid "Manual"
+msgstr ""
+
+msgid "Automated"
+msgstr ""
+
+msgid "Sequence"
+msgstr ""
+
+msgid "School this template belongs to"
+msgstr ""
+
+msgid "template type"
+msgstr ""
+
+msgid "Type of email template"
+msgstr ""
+
+msgid "template name"
+msgstr ""
+
+msgid "Human-readable name for the template"
+msgstr ""
+
+msgid "subject template"
+msgstr ""
+
+msgid "Email subject with template variables like {{teacher_name}}"
+msgstr ""
+
+msgid "HTML content"
+msgstr ""
+
+msgid "HTML email content with template variables"
+msgstr ""
+
+msgid "text content"
+msgstr ""
+
+msgid "Plain text email content with template variables"
+msgstr ""
+
+msgid "use school branding"
+msgstr ""
+
+msgid "Apply school colors and logo to template"
+msgstr ""
+
+msgid "custom CSS"
+msgstr ""
+
+msgid "Additional CSS for template customization"
+msgstr ""
+
+msgid "Whether this template is active and can be used"
+msgstr ""
+
+msgid "Whether this is the default template for this type"
+msgstr ""
+
+msgid "User who created this template"
+msgstr ""
+
+msgid "School Email Template"
+msgstr ""
+
+msgid "School Email Templates"
+msgstr ""
+
+msgid "Only one default template per school and type is allowed"
+msgstr ""
+
+#, python-format
+msgid "Template security validation failed: %(error)s"
+msgstr ""
+
+#, python-format
+msgid "Custom CSS contains dangerous pattern: %(pattern)s"
+msgstr ""
+
+msgid "Custom CSS too large. Maximum size is 10KB"
+msgstr ""
+
+msgid "School this sequence belongs to"
+msgstr ""
+
+msgid "sequence name"
+msgstr ""
+
+msgid "Human-readable name for the sequence"
+msgstr ""
+
+msgid "Description of what this sequence does"
+msgstr ""
+
+msgid "trigger event"
+msgstr ""
+
+msgid "Invitation Viewed"
+msgstr ""
+
+msgid "Profile Incomplete"
+msgstr ""
+
+msgid "Profile Completed"
+msgstr ""
+
+msgid "Event that triggers this sequence"
+msgstr ""
+
+msgid "Whether this sequence is active"
+msgstr ""
+
+msgid "maximum emails"
+msgstr ""
+
+msgid "Maximum number of emails to send in this sequence"
+msgstr ""
+
+msgid "Email Sequence"
+msgstr ""
+
+msgid "Email Sequences"
+msgstr ""
+
+msgid "Email sequence this step belongs to"
+msgstr ""
+
+msgid "Email template to use for this step"
+msgstr ""
+
+msgid "step number"
+msgstr ""
+
+msgid "Order of this step in the sequence"
+msgstr ""
+
+msgid "delay hours"
+msgstr ""
+
+msgid "Hours to wait before sending this email"
+msgstr ""
+
+msgid "send condition"
+msgstr ""
+
+msgid "Always Send"
+msgstr ""
+
+msgid "If No Response"
+msgstr ""
+
+msgid "If Not Accepted"
+msgstr ""
+
+msgid "If Profile Incomplete"
+msgstr ""
+
+msgid "Condition that must be met to send this email"
+msgstr ""
+
+msgid "Whether this step is active"
+msgstr ""
+
+msgid "Email Sequence Step"
+msgstr ""
+
+msgid "Email Sequence Steps"
+msgstr ""
+
+msgid "User who received the email (if registered)"
+msgstr ""
+
+msgid "recipient email"
+msgstr ""
+
+msgid "Email address of the recipient"
+msgstr ""
+
+msgid "School that sent the email"
+msgstr ""
+
+msgid "Template used for this email"
+msgstr ""
+
+msgid "Type of email template used"
+msgstr ""
+
+msgid "email subject"
+msgstr ""
+
+msgid "Rendered email subject"
+msgstr ""
+
+msgid "communication type"
+msgstr ""
+
+msgid "Type of communication"
+msgstr ""
+
+msgid "Email sequence this belongs to (if automated)"
+msgstr ""
+
+msgid "Sequence step this email represents"
+msgstr ""
+
+msgid "delivery status"
+msgstr ""
+
+msgid "Current delivery status"
+msgstr ""
+
+msgid "failure reason"
+msgstr ""
+
+msgid "Reason for delivery failure"
+msgstr ""
+
+msgid "Number of delivery attempts"
+msgstr ""
+
+msgid "maximum retries"
+msgstr ""
+
+msgid "Maximum number of retry attempts"
+msgstr ""
+
+msgid "Related teacher invitation (if applicable)"
+msgstr ""
+
+msgid "User who initiated this communication"
+msgstr ""
+
+msgid "Email Communication"
+msgstr ""
+
+msgid "Email Communications"
+msgstr ""
+
+msgid "Individual"
+msgstr ""
+
+msgid "Group"
+msgstr ""
+
+msgid "Trial"
+msgstr ""
+
+msgid "Confirmed"
+msgstr ""
+
+msgid "Rejected"
+msgstr ""
+
+msgid "School context for this availability"
+msgstr ""
+
+msgid "day of week"
+msgstr ""
+
+msgid "End time must be after start time."
+msgstr ""
+
+msgid "School context for this unavailability"
+msgstr ""
+
+msgid "reason"
+msgstr ""
+
+msgid "all day"
+msgstr ""
+
+msgid "Cannot create unavailability for past dates."
+msgstr ""
+
+msgid "Start time and end time are required for partial day unavailability."
+msgstr ""
+
+msgid "Student participating in this class"
+msgstr ""
+
+msgid "class type"
+msgstr ""
+
+msgid "scheduled date"
+msgstr ""
+
+msgid "duration in minutes"
+msgstr ""
+
+msgid "User who booked this class"
+msgstr ""
+
+msgid "booked at"
+msgstr ""
+
+msgid "Additional students for group classes"
+msgstr ""
+
+msgid "User who cancelled this class"
+msgstr ""
+
+msgid "cancellation reason"
+msgstr ""
+
+msgid "completed at"
+msgstr ""
+
+msgid "User who marked this class as completed"
+msgstr ""
+
+msgid "actual duration in minutes"
+msgstr ""
+
+msgid "completion notes"
+msgstr ""
+
+msgid "marked no-show at"
+msgstr ""
+
+msgid "User who marked this class as no-show"
+msgstr ""
+
+msgid "no-show reason"
+msgstr ""
+
+msgid "confirmed at"
+msgstr ""
+
+msgid "User who confirmed this class"
+msgstr ""
+
+msgid "rejected at"
+msgstr ""
+
+msgid "User who rejected this class"
+msgstr ""
+
+msgid "maximum participants"
+msgstr ""
+
+msgid "Maximum number of participants allowed for group classes"
+msgstr ""
+
+msgid "Additional structured metadata for the class"
+msgstr ""
+
+msgid "Recurring schedule that generated this instance"
+msgstr ""
+
+msgid "teacher notes"
+msgstr ""
+
+msgid "student notes"
+msgstr ""
+
+msgid "Cannot schedule classes in the past."
+msgstr ""
+
+msgid "Max participants is required for group classes."
+msgstr ""
+
+msgid "Max participants must be a positive integer."
+msgstr ""
+
+msgid "Student must be a member of the school."
+msgstr ""
+
+msgid "Teacher must be a member of the school."
+msgstr ""
+
+msgid "Biweekly"
+msgstr ""
+
+msgid "Paused"
+msgstr ""
+
+msgid "Confirmation"
+msgstr ""
+
+msgid "24 Hours Before"
+msgstr ""
+
+msgid "1 Hour Before"
+msgstr ""
+
+msgid "15 Minutes Before"
+msgstr ""
+
+msgid "Cancellation"
+msgstr ""
+
+msgid "Schedule Change"
+msgstr ""
+
+msgid "SMS"
+msgstr ""
+
+msgid "Push Notification"
+msgstr ""
+
+msgid "In-App Notification"
+msgstr ""
+
+msgid "Students participating in this recurring class"
+msgstr ""
+
+msgid "frequency type"
+msgstr ""
+
+msgid "Maximum number of participants for group classes"
+msgstr ""
+
+msgid "start date"
+msgstr ""
+
+msgid "end date"
+msgstr ""
+
+msgid "User who cancelled this recurring series"
+msgstr ""
+
+msgid "paused at"
+msgstr ""
+
+msgid "User who paused this recurring series"
+msgstr ""
+
+msgid "End date must be after start date."
+msgstr ""
+
+msgid "Individual classes can only have one student."
+msgstr ""
+
+msgid "School-specific preferences (null for global preferences)"
+msgstr ""
+
+msgid "reminder timing hours"
+msgstr ""
+
+msgid "List of hours before class to send reminders (e.g., [24, 2, 0.5])"
+msgstr ""
+
+msgid "communication channels"
+msgstr ""
+
+msgid "List of preferred communication channels"
+msgstr ""
+
+msgid "timezone preference"
+msgstr ""
+
+msgid "User's preferred timezone (e.g., 'America/New_York')"
+msgstr ""
+
+msgid "Whether reminders are enabled for this user"
+msgstr ""
+
+msgid "is school default"
+msgstr ""
+
+msgid "Whether this is the default preference template for the school"
+msgstr ""
+
+msgid "Must be a list of numbers"
+msgstr ""
+
+msgid "Hours must be numbers between 0 and 168"
+msgstr ""
+
+msgid "Must be a list of channel names"
+msgstr ""
+
+#, python-brace-format
+msgid "Invalid channel. Must be one of: {}"
+msgstr ""
+
+msgid "Invalid timezone"
+msgstr ""
+
+msgid "reminder type"
+msgstr ""
+
+msgid "User who will receive this reminder"
+msgstr ""
+
+msgid "recipient type"
+msgstr ""
+
+msgid "Admin"
+msgstr ""
+
+msgid "Role of the recipient in the class context"
+msgstr ""
+
+msgid "communication channel"
+msgstr ""
+
+msgid "Channel used to send this reminder"
+msgstr ""
+
+msgid "scheduled for"
+msgstr ""
+
+msgid "When this reminder should be sent (UTC)"
+msgstr ""
+
+msgid "sent at"
+msgstr ""
+
+msgid "When this reminder was actually sent"
+msgstr ""
+
+msgid "subject"
+msgstr ""
+
+msgid "Email subject or notification title"
+msgstr ""
+
+msgid "Reminder message content"
+msgstr ""
+
+msgid "Error message if sending failed"
+msgstr ""
+
+msgid "Number of times sending was retried"
+msgstr ""
+
+msgid "external message ID"
+msgstr ""
+
+msgid "ID from external communication service"
+msgstr ""
+
+msgid "Additional data for the reminder"
+msgstr ""
+
+msgid "Scheduled time must be in the future"
+msgstr ""
+
+msgid "Retry count cannot exceed max retries"
+msgstr ""
+
+msgid "Onboarding"
+msgstr ""
+
+msgid "Assignment"
+msgstr ""
+
+msgid "Personal"
+msgstr ""
+
+msgid "System"
+msgstr ""
+
+msgid "Title"
+msgstr ""
+
+msgid "Description"
+msgstr ""
+
+msgid "User"
+msgstr ""
+
+msgid "Status"
+msgstr ""
+
+msgid "Priority"
+msgstr ""
+
+msgid "Task Type"
+msgstr ""
+
+msgid "Due Date"
+msgstr ""
+
+msgid "Completed At"
+msgstr ""
+
+msgid "Created At"
+msgstr ""
+
+msgid "Updated At"
+msgstr ""
+
+msgid "Is Urgent"
+msgstr ""
+
+msgid "Is System Generated"
+msgstr ""
+
+msgid "True if this task was automatically created by the system"
+msgstr ""
+
+msgid "Task"
+msgstr ""
+
+msgid "Tasks"
+msgstr ""
+
+msgid "Comment"
+msgstr ""
+
+msgid "Task Comment"
+msgstr ""
+
+msgid "Task Comments"
+msgstr ""
+
+msgid "Admin Dashboard"
+msgstr ""
+
+#, python-format
+msgid "Hello, %(name)s!"
+msgstr ""
+
+msgid "You need to add"
+msgstr ""
+
+msgid "teachers"
+msgstr ""
+
+msgid "and"
+msgstr ""
+
+msgid "students"
+msgstr ""
+
+msgid "to fully activate your account"
+msgstr ""
+
+msgid "Complete the pending tasks below to get started."
+msgstr ""
+
+msgid "Total Teachers"
+msgstr ""
+
+msgid "Total Students"
+msgstr ""
+
+msgid "Active Sessions"
+msgstr ""
+
+msgid "Monthly Revenue"
+msgstr ""
+
+msgid "Upcoming Classes"
+msgstr ""
+
+#, python-format
+msgid "%(counter)s class scheduled"
+msgid_plural "%(counter)s classes scheduled"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "Change"
+msgstr ""
+
+msgid "Enter task title..."
+msgstr ""
+
+msgid "Enter task description..."
+msgstr ""
+
+msgid "Type"
+msgstr ""
+
+msgid "Mark as urgent"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid "Update Task"
+msgstr ""
+
+msgid "Create Task"
+msgstr ""
+
+msgid "Urgent"
+msgstr ""
+
+msgid "Overdue"
+msgstr ""
+
+msgid "Due Today"
+msgstr ""
+
+msgid "Due Tomorrow"
+msgstr ""
+
+msgid "days left"
+msgstr ""
+
+msgid "Created"
+msgstr ""
+
+msgid "Updated"
+msgstr ""
+
+msgid "No tasks found"
+msgstr ""
+
+msgid "No tasks match the current filter."
+msgstr ""
+
+msgid "Get started by creating your first task."
+msgstr ""
+
+msgid "Total Tasks"
+msgstr ""
+
+msgid "Overdue Tasks"
+msgstr ""
+
+msgid "task"
+msgstr ""
+
+msgid "Urgent Tasks"
+msgstr ""
+
+msgid "Edit Task"
+msgstr ""
+
+msgid "Back to Tasks"
+msgstr ""
+
+msgid "Last updated"
+msgstr ""
+
+msgid "Complete"
+msgstr ""
+
+msgid "Reopen"
+msgstr ""
+
+msgid "Manage your tasks and to-do items"
+msgstr ""
+
+msgid "New Task"
+msgstr ""
+
+msgid "All"
+msgstr ""

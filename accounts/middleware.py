@@ -12,6 +12,7 @@ from django.contrib import messages
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 logger = logging.getLogger(__name__)
 
@@ -99,8 +100,8 @@ class ProgressiveVerificationMiddleware:
                 # Add message explaining the requirement
                 messages.warning(
                     request,
-                    "Your 24-hour grace period has expired. "
-                    "Please verify your email or phone number to continue using Aprende Comigo."
+                    _("Your 24-hour grace period has expired. "
+                      "Please verify your email or phone number to continue using Aprende Comigo.")
                 )
                 
                 # Redirect to sign-in page
@@ -206,7 +207,7 @@ class VerificationCompletionMiddleware:
                 # Reset session expiry to default
                 request.session.set_expiry(0)  # Use default session length
                 
-                messages.success(request, "Your email has been successfully verified!")
+                messages.success(request, _("Your email has been successfully verified!"))
                 logger.info(f"Email verified for user {user.email}")
         
         return response

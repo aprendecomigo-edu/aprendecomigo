@@ -101,6 +101,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "django.template.context_processors.i18n",  # Add i18n context processor
                 "accounts.context_processors.user_context",
             ],
         },
@@ -156,9 +157,16 @@ LOCALE_PATHS = [
     os.path.join(BASE_DIR, "locale"),
 ]
 
+# Language cookie settings for persistence
+LANGUAGE_COOKIE_NAME = 'aprende_language'
+LANGUAGE_COOKIE_AGE = 365 * 24 * 60 * 60  # 1 year
+LANGUAGE_COOKIE_PATH = '/'
+LANGUAGE_COOKIE_SAMESITE = 'Lax'
+
 TIME_ZONE = "UTC"
 
 USE_I18N = True
+USE_L10N = True  # Enable localized formatting
 USE_TZ = True
 
 # Static files - minimal configuration for Swagger/ReDoc UI only

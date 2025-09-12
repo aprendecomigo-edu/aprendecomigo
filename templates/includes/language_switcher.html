@@ -1,0 +1,31 @@
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+{% get_available_languages as LANGUAGES %}
+
+<!-- Language Switcher Component -->
+<form method="post" action="{% url 'accounts:set_language' %}" class="inline-flex items-center">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.path }}">
+    
+    <select name="language" 
+            onchange="this.form.submit()"
+            class="text-sm border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white px-3 py-1.5">
+        {% for lang_code, lang_name in LANGUAGES %}
+        <option value="{{ lang_code }}" {% if lang_code == LANGUAGE_CODE %}selected{% endif %}>
+            {% if lang_code == 'en-gb' %}
+                🇬🇧 {{ lang_name }}
+            {% elif lang_code == 'pt-pt' %}
+                🇵🇹 {{ lang_name }}
+            {% else %}
+                {{ lang_name }}
+            {% endif %}
+        </option>
+        {% endfor %}
+    </select>
+    
+    <noscript>
+        <button type="submit" class="ml-2 text-sm text-blue-600 hover:text-blue-800">
+            {% trans "Change" %}
+        </button>
+    </noscript>
+</form>

@@ -27,6 +27,7 @@ from .views import (
     send_verification_email,
     send_verification_sms,
 )
+from .views_i18n import set_language
 
 app_name = "accounts"
 
@@ -64,4 +65,7 @@ urlpatterns = [
     # School Management
     path("schools/<int:pk>/settings/", SchoolSettingsView.as_view(), name="school_settings"),
     path("schools/<int:school_pk>/members/", SchoolMemberListView.as_view(), name="school_members"),
+    
+    # Internationalization
+    path("set-language/", set_language, name="set_language"),
 ]

@@ -18,6 +18,7 @@ Including another URLconf
 from django.contrib import admin
 from django.http import JsonResponse
 from django.urls import include, path
+from django.conf.urls.i18n import i18n_patterns
 
 # Dashboard views
 from dashboard.views import InvitationsView, PeopleView, StudentsView, TeachersView
