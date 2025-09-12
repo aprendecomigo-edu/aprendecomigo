@@ -47,7 +47,11 @@ def reset_database():
         print("\nDatabase reset complete!")
 
 if __name__ == "__main__":
-    if input("WARNING: This will DELETE ALL DATA in the database. Type 'yes' to continue: ") == 'yes':
+    # For Railway deployment, auto-confirm if RAILWAY_ENVIRONMENT is set
+    if os.environ.get('RAILWAY_ENVIRONMENT'):
+        print("Running in Railway environment - auto-confirming database reset")
+        reset_database()
+    elif input("WARNING: This will DELETE ALL DATA in the database. Type 'yes' to continue: ") == 'yes':
         reset_database()
     else:
         print("Aborted.")
