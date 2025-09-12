@@ -11,15 +11,49 @@
     <!-- PWA Meta Tags -->
     {% progressive_web_app_meta %}
     
-    <!-- Google Fonts -->
+    <!-- Fonts with fallbacks -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Kirang+Haerang&family=Work+Sans:wght@400;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- HTMX -->
-  <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js"></script>
     
-    <!-- Alpine.js -->
+    <!-- Local fallback loader (must be loaded first) -->
+    {% load static %}
+    <script>
+        function loadScript(src) {
+            const script = document.createElement('script');
+            script.src = src;
+            script.defer = true;
+            document.head.appendChild(script);
+        }
+        
+        // Font fallback styles if Google Fonts fail
+        setTimeout(function() {
+            if (!document.fonts || !document.fonts.check || document.fonts.check('1em "Work Sans"') === false) {
+                const style = document.createElement('style');
+                style.textContent = `
+                    :root {
+                        --font-family-brand: "Comic Sans MS", "Marker Felt", "Chalkduster", fantasy, cursive !important;
+                        --font-family-primary: "Segoe UI", "Roboto", "Helvetica Neue", -apple-system, system-ui, sans-serif !important;
+                        --font-family-body: "Segoe UI", "Roboto", "Helvetica Neue", -apple-system, system-ui, sans-serif !important;
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }, 100);
+        
+        // Load fallbacks immediately since CDN will be blocked
+        window.addEventListener('DOMContentLoaded', function() {
+            if (!window.htmx) {
+                loadScript('{% static "js/htmx-fallback.js" %}');
+            }
+            if (!window.Alpine) {
+                loadScript('{% static "js/alpine-fallback.js" %}');
+            }
+        });
+    </script>
+    
+    <!-- Try to load from CDN but expect them to fail -->
+    <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js" async></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
     <!-- Tailwind CSS -->
