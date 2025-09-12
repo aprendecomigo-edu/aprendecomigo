@@ -771,7 +771,7 @@ TAILWIND_APP_NAME="theme"
 # Default switch state - matches DEBUG setting
 # Development: DEBUG=True → switches enabled by default
 # Production: DEBUG=False → switches disabled by default
-WAFFLE_SWITCH_DEFAULT = DEBUG
+WAFFLE_SWITCH_DEFAULT = DEBUG=="True"
 
 # Individual switch configurations (optional overrides)
 # Use environment variables to override specific switches in production
