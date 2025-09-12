@@ -1,5 +1,5 @@
 """
-Comprehensive health check views for Railway deployment.
+Health check views for Railway deployment.
 """
 import logging
 import time
@@ -11,6 +11,32 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 
 logger = logging.getLogger(__name__)
+
+
+@never_cache
+@csrf_exempt
+def health_simple(request):
+    """
+    Simple, fast health check for Railway deployment health monitoring.
+    Only checks critical dependencies quickly.
+    """
+    try:
+        # Quick database check
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+
+        # Quick Redis check
+        cache.set("health", "ok", timeout=30)
+        if cache.get("health") != "ok":
+            raise Exception("Redis cache failed")
+        cache.delete("health")
+
+        return JsonResponse({"status": "ok"}, status=200)
+
+    except Exception as e:
+        logger.error("Health check failed: %s", e)
+        return JsonResponse({"status": "error", "error": str(e)}, status=503)
 
 
 @never_cache
