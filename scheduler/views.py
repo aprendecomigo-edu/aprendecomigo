@@ -5,12 +5,14 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Q
-from django.http import JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic import TemplateView
+from waffle.mixins import WaffleSwitchMixin
+from waffle.decorators import waffle_switch
 
 from accounts.models import CustomUser, School, SchoolMembership, SchoolRole, TeacherProfile
 
@@ -44,9 +46,9 @@ def ensure_school_access(user, school):
 
 
 
-
-class CalendarView(LoginRequiredMixin, View):
+class CalendarView(WaffleSwitchMixin, LoginRequiredMixin, View):
     """Calendar page view with HTMX support for dynamic updates"""
+    waffle_switch = "schedule_feature"
 
     def get(self, request):
         """Render calendar page with server-side events"""
@@ -404,9 +406,10 @@ class CalendarView(LoginRequiredMixin, View):
 
 # HTMX Template-based views for PWA
 @method_decorator(login_required, name='dispatch')
-class ClassScheduleTemplateView(TemplateView):
+class ClassScheduleTemplateView(WaffleSwitchMixin, TemplateView):
     """Main class schedule view with HTMX support"""
     template_name = 'scheduler/scheduling/class_schedule.html'
+    waffle_switch = "schedule_feature"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -590,9 +593,10 @@ class ClassScheduleTemplateView(TemplateView):
 
 
 @method_decorator(login_required, name='dispatch')
-class TeacherAvailabilityTemplateView(TemplateView):
+class TeacherAvailabilityTemplateView(WaffleSwitchMixin, TemplateView):
     """Teacher availability view with HTMX support"""
     template_name = 'scheduler/availability/teacher_availability.html'
+    waffle_switch = "schedule_feature"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -778,6 +782,7 @@ class TeacherAvailabilityTemplateView(TemplateView):
 
 
 # Action views for ClassSchedule
+@waffle_switch("schedule_feature")
 @login_required
 def class_schedule_cancel(request, schedule_id):
     """Cancel a class"""
@@ -815,6 +820,7 @@ def class_schedule_cancel(request, schedule_id):
         return JsonResponse({'error': f'Failed to cancel: {e!s}'}, status=500)
 
 
+@waffle_switch("schedule_feature")
 @login_required
 def class_schedule_confirm(request, schedule_id):
     """Confirm a class"""
@@ -848,6 +854,7 @@ def class_schedule_confirm(request, schedule_id):
         return JsonResponse({'error': f'Failed to confirm: {e!s}'}, status=500)
 
 
+@waffle_switch("schedule_feature")
 @login_required
 def class_schedule_complete(request, schedule_id):
     """Complete a class"""
@@ -883,6 +890,7 @@ def class_schedule_complete(request, schedule_id):
         return JsonResponse({'error': f'Failed to complete: {e!s}'}, status=500)
 
 
+@waffle_switch("schedule_feature")
 @login_required
 def class_schedule_no_show(request, schedule_id):
     """Mark class as no-show"""

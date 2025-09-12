@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     "webpush",      # Web push notifications
     "tailwind",
     "anymail",      # Email backend with ESP support
+    "waffle",       # Feature flags
     # Custom apps
     "theme",
     "accounts",
@@ -83,6 +84,7 @@ MIDDLEWARE = [
     "sesame.middleware.AuthenticationMiddleware",  # Magic link authentication - must come after AuthenticationMiddleware
     "accounts.middleware.ProgressiveVerificationMiddleware",  # Progressive verification - must come after auth
     "accounts.middleware.VerificationCompletionMiddleware",  # Handle verification completion
+    "waffle.middleware.WaffleMiddleware",  # Feature flags middleware
     "django_htmx.middleware.HtmxMiddleware",  # HTMX request detection
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -761,3 +763,20 @@ WEBPUSH_SETTINGS = {
 }
 
 TAILWIND_APP_NAME="theme"
+
+# Django Waffle Settings
+# Configure switches (not flags) for feature toggles
+# Switches are simple on/off settings like DEBUG - configured at deployment/environment level
+
+# Default switch state - matches DEBUG setting
+# Development: DEBUG=True → switches enabled by default
+# Production: DEBUG=False → switches disabled by default
+WAFFLE_SWITCH_DEFAULT = DEBUG
+
+# Individual switch configurations (optional overrides)
+# Use environment variables to override specific switches in production
+WAFFLE_SWITCH_SCHEDULE_FEATURE = os.getenv("WAFFLE_SWITCH_SCHEDULE_FEATURE", str(DEBUG)).lower() == "true"
+WAFFLE_SWITCH_CHAT_FEATURE = os.getenv("WAFFLE_SWITCH_CHAT_FEATURE", str(DEBUG)).lower() == "true"
+
+# Alternative: Use WAFFLE_CREATE_MISSING_SWITCHES to automatically create switches
+# WAFFLE_CREATE_MISSING_SWITCHES = True  # Creates switches in database if they don't exist

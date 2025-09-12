@@ -16,6 +16,8 @@ from django.shortcuts import get_object_or_404, render
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.http import require_http_methods
+from waffle.decorators import waffle_switch
+from waffle.mixins import WaffleSwitchMixin
 
 from accounts.models import School, SchoolMembership
 
@@ -65,8 +67,9 @@ def get_school_users(schools, exclude_user=None):
 
 
 @method_decorator(login_required, name='dispatch')
-class ChatUserSearchView(View):
+class ChatUserSearchView(WaffleSwitchMixin, View):
     """Search users within the same schools as the current user."""
+    waffle_switch = "chat_feature"
 
     def get(self, request):
         query = request.GET.get('search', '').strip()
@@ -101,9 +104,11 @@ class ChatUserSearchView(View):
         return JsonResponse({'users': filtered_users})
 
 
+
 @method_decorator(login_required, name='dispatch')
-class ChatChannelsView(View):
+class ChatChannelsView(WaffleSwitchMixin, View):
     """Get channels for the current user from their schools."""
+    waffle_switch = "chat_feature"
 
     def get(self, request):
         # Get channels where user is a participant
@@ -272,10 +277,10 @@ class ChatChannelsView(View):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
 
-
 @method_decorator(login_required, name='dispatch')
-class ChatMessagesView(View):
+class ChatMessagesView(WaffleSwitchMixin, View):
     """Get messages for a specific channel."""
+    waffle_switch = "chat_feature"
 
     def get(self, request, channel_id):
         # Verify user is participant in this channel
@@ -405,8 +410,9 @@ class ChatMessagesView(View):
 
 
 @method_decorator(login_required, name='dispatch')
-class MessageReactionsView(View):
+class MessageReactionsView(WaffleSwitchMixin, View):
     """Handle all reaction operations: list, add, and remove."""
+    waffle_switch = 'chat_feature'
 
     def get(self, request, message_id):
         """List reactions for a message."""
@@ -506,9 +512,11 @@ class MessageReactionsView(View):
             return JsonResponse({'error': str(e)}, status=500)
 
 
+
 @method_decorator(login_required, name='dispatch')
-class ChatView(View):
+class ChatView(WaffleSwitchMixin, View):
     """Chat page view with real-time messaging"""
+    waffle_switch = 'chat_feature'
 
     def get(self, request):
         """Render chat page with initial data"""
@@ -714,6 +722,7 @@ class ChatView(View):
 
 
 # Simple function-based views for easier integration
+@waffle_switch('chat_feature')
 @login_required
 @require_http_methods(["GET"])
 def chat_school_users(request):
