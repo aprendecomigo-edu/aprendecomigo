@@ -1489,7 +1489,7 @@ class ShoppingListAdmin(admin.ModelAdmin):
             color = "green"
             icon = "✅"
         elif percentage >= 75:
-            color = "orange"
+            color = "orange" 
             icon = "🔶"
         elif percentage >= 50:
             color = "blue"
@@ -1498,8 +1498,8 @@ class ShoppingListAdmin(admin.ModelAdmin):
             color = "gray"
             icon = "⚪"
         return format_html(
-            '{} <span style="color: {}; font-weight: bold;">{:.1f}%</span>',
-            icon, color, percentage
+            '{} <span style="color: {}; font-weight: bold;">{}</span>',
+            icon, color, f"{percentage:.1f}%"
         )
 
     @admin.display(description="Budget Status")
