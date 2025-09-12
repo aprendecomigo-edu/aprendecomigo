@@ -1486,6 +1486,27 @@ class PurchaseApprovalStatus(models.TextChoices):
     CANCELLED = "cancelled", _("Cancelled")
 
 
+class ShoppingCategory(models.TextChoices):
+    """Categories for shopping list items."""
+    
+    FRUITS_VEGETABLES = "fruits_vegetables", _("Frutas e Vegetais")
+    PROTEINS = "proteins", _("Proteínas")
+    DAIRY = "dairy", _("Lacticínios")
+    GRAINS_CEREALS = "grains_cereals", _("Cereais e Grãos")
+    HEALTHY_SNACKS = "healthy_snacks", _("Snacks Saudáveis")
+    BEVERAGES = "beverages", _("Bebidas")
+    HERBS_SPICES = "herbs_spices", _("Ervas e Especiarias")
+    PANTRY_STAPLES = "pantry_staples", _("Despensa Básica")
+
+
+class ShoppingItemStatus(models.TextChoices):
+    """Status of shopping list items."""
+    
+    PENDING = "pending", _("Pendente")
+    PURCHASED = "purchased", _("Comprado")
+    SKIPPED = "skipped", _("Ignorado")
+
+
 class PurchaseApprovalRequest(models.Model):
     """
     Purchase approval requests from students to parents.
@@ -2339,3 +2360,213 @@ class FraudAlert(models.Model):
         self.investigated_at = timezone.now()
         self.resolution_notes = resolution_notes
         self.save(update_fields=["status", "investigated_at", "resolution_notes", "updated_at"])
+
+
+# =======================
+# SHOPPING LIST MANAGEMENT FOR FAMILY BUDGETS  
+# =======================
+
+
+class ShoppingList(models.Model):
+    """
+    Monthly shopping lists for families with budget tracking.
+    Integrates with FamilyBudgetControl to help families manage their grocery expenses.
+    """
+
+    family_budget_control: models.ForeignKey = models.ForeignKey(
+        "FamilyBudgetControl",
+        on_delete=models.CASCADE,
+        related_name="shopping_lists",
+        verbose_name=_("family budget control"),
+        help_text=_("Budget control this shopping list belongs to"),
+    )
+
+    title: models.CharField = models.CharField(
+        _("title"),
+        max_length=200,
+        help_text=_("Title for this shopping list"),
+    )
+
+    month_year: models.DateField = models.DateField(
+        _("month and year"),
+        help_text=_("Month and year this shopping list is for"),
+    )
+
+    estimated_total: models.DecimalField = models.DecimalField(
+        _("estimated total"),
+        max_digits=8,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.00"))],
+        help_text=_("Estimated total cost for this shopping list"),
+    )
+
+    actual_total: models.DecimalField = models.DecimalField(
+        _("actual total"),
+        max_digits=8,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.00"))],
+        help_text=_("Actual total spent on this shopping list"),
+    )
+
+    notes: models.TextField = models.TextField(
+        _("notes"),
+        blank=True,
+        help_text=_("Additional notes for this shopping list"),
+    )
+
+    is_completed: models.BooleanField = models.BooleanField(
+        _("is completed"),
+        default=False,
+        help_text=_("Whether this shopping list has been completed"),
+    )
+
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Shopping List")
+        verbose_name_plural = _("Shopping Lists")
+        unique_together = [["family_budget_control", "month_year"]]
+        ordering = ["-month_year", "-created_at"]
+
+    def __str__(self) -> str:
+        return f"{self.title} - {self.month_year.strftime('%B %Y')}"
+
+    @property 
+    def completion_percentage(self) -> float:
+        """Calculate completion percentage based on purchased items."""
+        total_items = self.items.count()
+        if total_items == 0:
+            return 0.0
+        purchased_items = self.items.filter(status=ShoppingItemStatus.PURCHASED).count()
+        return round((purchased_items / total_items) * 100, 1)
+
+    @property
+    def budget_remaining(self) -> Decimal:
+        """Calculate remaining budget for this shopping list."""
+        budget_limit = self.family_budget_control.monthly_budget_limit or Decimal("0.00")
+        return budget_limit - self.actual_total
+
+    @property
+    def is_over_budget(self) -> bool:
+        """Check if actual spending exceeds estimated budget."""
+        return self.actual_total > self.estimated_total
+
+    def update_totals(self) -> None:
+        """Update estimated and actual totals based on shopping list items."""
+        items = self.items.all()
+        self.estimated_total = sum(item.estimated_price for item in items)
+        self.actual_total = sum(
+            item.actual_price for item in items 
+            if item.status == ShoppingItemStatus.PURCHASED and item.actual_price
+        )
+        self.save(update_fields=["estimated_total", "actual_total", "updated_at"])
+
+
+class ShoppingListItem(models.Model):
+    """
+    Individual items in a shopping list with healthy food focus.
+    """
+
+    shopping_list: models.ForeignKey = models.ForeignKey(
+        "ShoppingList", 
+        on_delete=models.CASCADE,
+        related_name="items",
+        verbose_name=_("shopping list"),
+    )
+
+    name: models.CharField = models.CharField(
+        _("item name"),
+        max_length=200,
+        help_text=_("Name of the shopping item"),
+    )
+
+    category: models.CharField = models.CharField(
+        _("category"),
+        max_length=20,
+        choices=ShoppingCategory.choices,
+        default=ShoppingCategory.FRUITS_VEGETABLES,
+        help_text=_("Category of this shopping item"),
+    )
+
+    quantity: models.CharField = models.CharField(
+        _("quantity"),
+        max_length=50,
+        help_text=_("Quantity needed (e.g., '2 kg', '1 liter', '6 units')"),
+    )
+
+    estimated_price: models.DecimalField = models.DecimalField(
+        _("estimated price"),
+        max_digits=6,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.00"))],
+        help_text=_("Estimated price for this item"),
+    )
+
+    actual_price: models.DecimalField = models.DecimalField(
+        _("actual price"),
+        max_digits=6,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0.00"))],
+        help_text=_("Actual price paid for this item"),
+    )
+
+    status: models.CharField = models.CharField(
+        _("status"),
+        max_length=20,
+        choices=ShoppingItemStatus.choices,
+        default=ShoppingItemStatus.PENDING,
+        help_text=_("Current status of this item"),
+    )
+
+    health_benefits: models.TextField = models.TextField(
+        _("health benefits"),
+        blank=True,
+        help_text=_("Health benefits of this item (optional educational content)"),
+    )
+
+    notes: models.TextField = models.TextField(
+        _("notes"),
+        blank=True,
+        help_text=_("Additional notes for this item"),
+    )
+
+    order: models.PositiveIntegerField = models.PositiveIntegerField(
+        _("order"),
+        default=0,
+        help_text=_("Order of this item in the shopping list"),
+    )
+
+    created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _("Shopping List Item")
+        verbose_name_plural = _("Shopping List Items")
+        ordering = ["order", "category", "name"]
+        unique_together = [["shopping_list", "name"]]
+
+    def __str__(self) -> str:
+        return f"{self.name} ({self.quantity}) - {self.get_category_display()}"
+
+    def mark_purchased(self, actual_price: Decimal | None = None) -> None:
+        """Mark this item as purchased."""
+        self.status = ShoppingItemStatus.PURCHASED
+        if actual_price is not None:
+            self.actual_price = actual_price
+        self.save(update_fields=["status", "actual_price", "updated_at"])
+        
+        # Update shopping list totals
+        self.shopping_list.update_totals()
+
+    def mark_skipped(self, reason: str = "") -> None:
+        """Mark this item as skipped."""
+        self.status = ShoppingItemStatus.SKIPPED
+        if reason:
+            self.notes = f"{self.notes}\nSkipped: {reason}".strip()
+        self.save(update_fields=["status", "notes", "updated_at"])

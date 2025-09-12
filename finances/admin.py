@@ -11,6 +11,8 @@ from .models import (
     PurchaseApprovalRequest,
     PurchaseTransaction,
     SchoolBillingSettings,
+    ShoppingList,
+    ShoppingListItem,
     StudentAccountBalance,
     TeacherCompensationRule,
     TeacherPaymentEntry,
@@ -1348,6 +1350,371 @@ class PurchaseApprovalRequestAdmin(admin.ModelAdmin):
             .get_queryset(request)
             .select_related("student", "parent", "parent_child_relationship__school", "pricing_plan", "class_session")
         )
+
+
+# =======================
+# SHOPPING LIST MANAGEMENT ADMIN
+# =======================
+
+
+class ShoppingListItemInline(admin.TabularInline):
+    """Inline admin for shopping list items."""
+    
+    model = ShoppingListItem
+    extra = 0
+    fields = [
+        "name", 
+        "category", 
+        "quantity", 
+        "estimated_price", 
+        "actual_price", 
+        "status",
+        "order"
+    ]
+    readonly_fields = []
+    ordering = ["order", "category", "name"]
+
+
+@admin.register(ShoppingList)
+class ShoppingListAdmin(admin.ModelAdmin):
+    """Admin interface for shopping lists."""
+
+    list_display = [
+        "title",
+        "family_display",
+        "month_year",
+        "estimated_total_display",
+        "actual_total_display",
+        "completion_percentage_display",
+        "is_over_budget_display",
+        "is_completed",
+        "updated_at",
+    ]
+    list_filter = [
+        "month_year",
+        "is_completed",
+        "family_budget_control__parent_child_relationship__school",
+        "created_at",
+    ]
+    search_fields = [
+        "title",
+        "family_budget_control__parent_child_relationship__parent__name",
+        "family_budget_control__parent_child_relationship__child__name",
+        "notes",
+    ]
+    readonly_fields = [
+        "completion_percentage_display",
+        "is_over_budget_display",
+        "budget_remaining_display",
+        "created_at",
+        "updated_at",
+    ]
+    date_hierarchy = "month_year"
+    inlines = [ShoppingListItemInline]
+    
+    fieldsets = (
+        (
+            "Basic Information",
+            {
+                "fields": (
+                    "family_budget_control",
+                    "title",
+                    "month_year",
+                )
+            },
+        ),
+        (
+            "Budget Tracking",
+            {
+                "fields": (
+                    "estimated_total",
+                    "actual_total",
+                    "budget_remaining_display",
+                    "is_over_budget_display",
+                )
+            },
+        ),
+        (
+            "Progress",
+            {
+                "fields": (
+                    "completion_percentage_display",
+                    "is_completed",
+                )
+            },
+        ),
+        (
+            "Additional Information",
+            {
+                "fields": ("notes",),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Timestamps",
+            {
+                "fields": ("created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
+        ),
+    )
+
+    actions = ["mark_completed", "update_totals"]
+
+    @admin.display(
+        description="Family",
+        ordering="family_budget_control__parent_child_relationship__parent__name",
+    )
+    def family_display(self, obj):
+        """Display family information."""
+        relationship = obj.family_budget_control.parent_child_relationship
+        return f"{relationship.parent.name} → {relationship.child.name}"
+
+    @admin.display(description="Estimated Total")
+    def estimated_total_display(self, obj):
+        """Display estimated total with currency formatting."""
+        return format_html("€{}", obj.estimated_total)
+
+    @admin.display(description="Actual Total")
+    def actual_total_display(self, obj):
+        """Display actual total with currency formatting."""
+        color = "red" if obj.is_over_budget else "green"
+        return format_html('<span style="color: {};">€{}</span>', color, obj.actual_total)
+
+    @admin.display(description="Completion")
+    def completion_percentage_display(self, obj):
+        """Display completion percentage with progress indicator."""
+        percentage = obj.completion_percentage
+        if percentage == 100:
+            color = "green"
+            icon = "✅"
+        elif percentage >= 75:
+            color = "orange"
+            icon = "🔶"
+        elif percentage >= 50:
+            color = "blue"
+            icon = "🔵"
+        else:
+            color = "gray"
+            icon = "⚪"
+        return format_html(
+            '{} <span style="color: {}; font-weight: bold;">{:.1f}%</span>',
+            icon, color, percentage
+        )
+
+    @admin.display(description="Budget Status")
+    def is_over_budget_display(self, obj):
+        """Display budget status with visual indicator."""
+        if obj.is_over_budget:
+            return format_html('<span style="color: red; font-weight: bold;">⚠️ Over Budget</span>')
+        else:
+            return format_html('<span style="color: green;">✅ On Budget</span>')
+
+    @admin.display(description="Budget Remaining")
+    def budget_remaining_display(self, obj):
+        """Display budget remaining."""
+        remaining = obj.budget_remaining
+        if remaining < 0:
+            return format_html(
+                '<span style="color: red; font-weight: bold;">€{} (over budget)</span>', 
+                abs(remaining)
+            )
+        else:
+            return format_html('<span style="color: green;">€{}</span>', remaining)
+
+    @admin.action(description="Mark selected shopping lists as completed")
+    def mark_completed(self, request, queryset):
+        """Mark selected shopping lists as completed."""
+        updated = queryset.update(is_completed=True)
+        self.message_user(request, f"{updated} shopping list(s) marked as completed.")
+
+    @admin.action(description="Update totals for selected shopping lists")
+    def update_totals(self, request, queryset):
+        """Update estimated and actual totals for selected shopping lists."""
+        updated_count = 0
+        for shopping_list in queryset:
+            shopping_list.update_totals()
+            updated_count += 1
+        
+        self.message_user(request, f"Updated totals for {updated_count} shopping list(s).")
+
+    def get_queryset(self, request):
+        """Optimize queryset with select_related."""
+        return (
+            super()
+            .get_queryset(request)
+            .select_related(
+                "family_budget_control__parent_child_relationship__parent",
+                "family_budget_control__parent_child_relationship__child",
+                "family_budget_control__parent_child_relationship__school",
+            )
+        )
+
+
+@admin.register(ShoppingListItem)
+class ShoppingListItemAdmin(admin.ModelAdmin):
+    """Admin interface for shopping list items."""
+
+    list_display = [
+        "name",
+        "shopping_list_title",
+        "category_display",
+        "quantity",
+        "estimated_price_display",
+        "actual_price",
+        "status",
+        "order",
+        "updated_at",
+    ]
+    list_filter = [
+        "category",
+        "status",
+        "shopping_list__month_year",
+        "shopping_list__family_budget_control__parent_child_relationship__school",
+        "created_at",
+    ]
+    search_fields = [
+        "name",
+        "shopping_list__title",
+        "shopping_list__family_budget_control__parent_child_relationship__parent__name",
+        "shopping_list__family_budget_control__parent_child_relationship__child__name",
+        "health_benefits",
+        "notes",
+    ]
+    readonly_fields = ["created_at", "updated_at"]
+    list_editable = ["status", "order"]
+    ordering = ["shopping_list", "order", "category", "name"]
+
+    fieldsets = (
+        (
+            "Basic Information",
+            {
+                "fields": (
+                    "shopping_list",
+                    "name",
+                    "category",
+                    "quantity",
+                    "order",
+                )
+            },
+        ),
+        (
+            "Pricing",
+            {
+                "fields": (
+                    "estimated_price",
+                    "actual_price",
+                    "status",
+                )
+            },
+        ),
+        (
+            "Additional Information",
+            {
+                "fields": (
+                    "health_benefits",
+                    "notes",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Timestamps",
+            {
+                "fields": ("created_at", "updated_at"),
+                "classes": ("collapse",),
+            },
+        ),
+    )
+
+    actions = ["mark_purchased", "mark_skipped", "mark_pending"]
+
+    @admin.display(
+        description="Shopping List",
+        ordering="shopping_list__title",
+    )
+    def shopping_list_title(self, obj):
+        """Display shopping list title."""
+        return obj.shopping_list.title
+
+    @admin.display(description="Category")
+    def category_display(self, obj):
+        """Display category with emoji."""
+        category_emojis = {
+            "fruits_vegetables": "🥬",
+            "proteins": "🥩",
+            "dairy": "🥛",
+            "grains_cereals": "🌾",
+            "healthy_snacks": "🥜",
+            "beverages": "🥤",
+            "herbs_spices": "🌿",
+            "pantry_staples": "🍯",
+        }
+        emoji = category_emojis.get(obj.category, "🛒")
+        return format_html("{} {}", emoji, obj.get_category_display())
+
+    @admin.display(description="Estimated Price")
+    def estimated_price_display(self, obj):
+        """Display estimated price with currency formatting."""
+        return format_html("€{}", obj.estimated_price)
+
+    @admin.display(description="Actual Price")
+    def actual_price_display(self, obj):
+        """Display actual price with currency formatting."""
+        if obj.actual_price:
+            color = "red" if obj.actual_price > obj.estimated_price else "green"
+            return format_html('<span style="color: {};">€{}</span>', color, obj.actual_price)
+        return "-"
+
+    @admin.display(description="Status")
+    def status_display(self, obj):
+        """Display status with color coding."""
+        status_colors = {
+            "pending": "orange",
+            "purchased": "green",
+            "skipped": "gray",
+        }
+        status_emojis = {
+            "pending": "⏳",
+            "purchased": "✅",
+            "skipped": "❌",
+        }
+        color = status_colors.get(obj.status, "black")
+        emoji = status_emojis.get(obj.status, "")
+        return format_html(
+            '{} <span style="color: {}; font-weight: bold;">{}</span>',
+            emoji, color, obj.get_status_display()
+        )
+
+    @admin.action(description="Mark selected items as purchased")
+    def mark_purchased(self, request, queryset):
+        """Mark selected items as purchased."""
+        updated_count = 0
+        for item in queryset:
+            item.mark_purchased()
+            updated_count += 1
+        
+        self.message_user(request, f"Marked {updated_count} item(s) as purchased.")
+
+    @admin.action(description="Mark selected items as skipped")
+    def mark_skipped(self, request, queryset):
+        """Mark selected items as skipped."""
+        updated_count = 0
+        for item in queryset:
+            item.mark_skipped()
+            updated_count += 1
+        
+        self.message_user(request, f"Marked {updated_count} item(s) as skipped.")
+
+    @admin.action(description="Mark selected items as pending")
+    def mark_pending(self, request, queryset):
+        """Mark selected items as pending."""
+        updated = queryset.update(status="pending")
+        self.message_user(request, f"Marked {updated} item(s) as pending.")
+
+    def get_queryset(self, request):
+        """Optimize queryset with select_related."""
+        return super().get_queryset(request).select_related("shopping_list")
 
 
 # Register admin for related models from other apps in AppConfig.ready()
