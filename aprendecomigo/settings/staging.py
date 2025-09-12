@@ -144,7 +144,7 @@ CACHES = {
             'CONNECTION_POOL_KWARGS': RAILWAY_REDIS_CONNECTION_KWARGS,
             'PICKLE_VERSION': -1,  # Use latest pickle protocol
             'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',  # Compress large values
-            'IGNORE_EXCEPTIONS': True,  # Graceful degradation during deployment and Redis issues
+            'IGNORE_EXCEPTIONS': False,  # Graceful degradation during deployment and Redis issues
         },
         'KEY_PREFIX': 'aprendecomigo',
         'VERSION': 1,

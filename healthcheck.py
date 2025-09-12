@@ -54,15 +54,20 @@ def _test_redis_connection_with_retry(cache_instance, cache_name, max_retries=3,
 
 @never_cache
 @csrf_exempt
-def health_detailed(request):
+def health_check(request):
     """
-    Detailed health check that validates all critical dependencies.
-    For Railway deployments:
-    - Database connectivity is REQUIRED
-    - Redis connectivity is REQUIRED for production but can be degraded during initial deployment
-    - Health check will fail if core dependencies are not available after retry attempts
+    Railway deployment health check.
+    
+    Railway's philosophy: Health check ensures app is ready to receive traffic.
+    If Redis/sessions are critical to your app, they must be verified here.
+    
+    This endpoint:
+    - REQUIRES database connectivity (fails fast if DB down)  
+    - REQUIRES Redis connectivity with retry logic (handles Railway internal network timing)
+    - Returns 200 only when ALL critical services are operational
+    - Returns 503 if any critical service fails after retries
     """
-    logger.info("Starting health check")
+    logger.info("Starting Railway health check")
     
     try:
         health_data = {
@@ -75,7 +80,7 @@ def health_detailed(request):
         overall_healthy = True
         is_railway = _is_railway_environment()
 
-        # 1. Database connectivity check
+        # 1. Database connectivity check - REQUIRED
         try:
             logger.info("Checking database connectivity")
             with connection.cursor() as cursor:
@@ -97,8 +102,8 @@ def health_detailed(request):
             }
             overall_healthy = False
 
-        # 2. Default cache (Redis) connectivity check
-        logger.info("Checking Redis default cache with retry logic")
+        # 2. Redis default cache check - REQUIRED for Railway  
+        logger.info("Checking Redis default cache")
         redis_default_result = _test_redis_connection_with_retry(cache, "default", max_retries=3 if is_railway else 1)
         
         if redis_default_result["success"]:
@@ -115,16 +120,16 @@ def health_detailed(request):
                 "attempts": redis_default_result.get("attempts", 0)
             }
             
-            # For Railway deployments, Redis is critical - fail the health check
+            # Redis is critical for the application - fail health check
             if is_railway:
                 overall_healthy = False
-                logger.error("Redis default cache is required for Railway deployment - marking health check as failed")
+                logger.error("Redis default cache is required - health check failed")
             else:
-                # For local development, Redis failures can be tolerated
-                logger.warning("Redis default cache failed in local environment - continuing")
+                # For local development, warn but don't fail
+                logger.warning("Redis default cache failed in local environment")
 
-        # 3. Sessions cache check with retry logic
-        logger.info("Checking Redis sessions cache with retry logic")
+        # 3. Redis sessions cache check - REQUIRED (sessions are critical)
+        logger.info("Checking Redis sessions cache")
         try:
             sessions_cache = caches['sessions']
             redis_sessions_result = _test_redis_connection_with_retry(sessions_cache, "sessions", max_retries=3 if is_railway else 1)
@@ -143,23 +148,22 @@ def health_detailed(request):
                     "attempts": redis_sessions_result.get("attempts", 0)
                 }
                 
-                # Sessions are critical for the application
+                # Sessions are critical - fail health check
                 if is_railway:
                     overall_healthy = False
-                    logger.error("Redis sessions cache is required for Railway deployment - marking health check as failed")
+                    logger.error("Redis sessions cache is required - health check failed")
                 else:
-                    logger.warning("Redis sessions cache failed in local environment - continuing")
+                    logger.warning("Redis sessions cache failed in local environment")
                     
         except Exception as e:
-            logger.error("Failed to access sessions cache configuration: %s", e)
+            logger.error("Failed to access sessions cache: %s", e)
             health_data["checks"]["redis_sessions"] = {
                 "status": "unhealthy",
-                "error": f"Sessions cache configuration error: {str(e)}"
+                "error": f"Sessions cache error: {str(e)}"
             }
             overall_healthy = False
 
-
-        # 4. Railway-specific Redis configuration check
+        # 4. Railway Redis configuration validation
         if is_railway:
             redis_url = os.getenv('REDIS_URL', '')
             parsed_redis = urlparse(redis_url) if redis_url else None
@@ -167,80 +171,28 @@ def health_detailed(request):
             health_data["checks"]["redis_config"] = {
                 "redis_url_present": bool(redis_url),
                 "redis_host": parsed_redis.hostname if parsed_redis else None,
-                "redis_port": parsed_redis.port if parsed_redis else None,
                 "is_railway_internal": "railway.internal" in redis_url if redis_url else False
             }
             
             if not redis_url:
-                logger.error("REDIS_URL environment variable not set in Railway")
-                health_data["checks"]["redis_config"]["status"] = "misconfigured"
+                logger.error("REDIS_URL environment variable not set")
                 overall_healthy = False
-            elif "railway.internal" not in redis_url:
-                logger.warning("Redis URL does not use Railway internal network: %s", redis_url)
-                health_data["checks"]["redis_config"]["status"] = "suboptimal"
-            else:
-                health_data["checks"]["redis_config"]["status"] = "configured"
 
-        # Set overall status
+        # Return final status
         if not overall_healthy:
             health_data["status"] = "unhealthy"
-            logger.error("Health check failed - returning 503. Failed checks: %s", 
-                        [k for k, v in health_data["checks"].items() 
-                         if v.get("status") in ["unhealthy", "misconfigured"]])
-            return JsonResponse(health_data, status=503)  # Service Unavailable
+            failed_checks = [k for k, v in health_data["checks"].items() 
+                           if v.get("status") == "unhealthy"]
+            logger.error("Health check FAILED - returning 503. Failed: %s", failed_checks)
+            return JsonResponse(health_data, status=503)
 
-        # Check if any services are degraded
-        degraded_services = [k for k, v in health_data["checks"].items() 
-                           if v.get("status") == "degraded"]
-        if degraded_services:
-            health_data["status"] = "degraded"
-            health_data["degraded_services"] = degraded_services
-            logger.warning("Health check passed but some services degraded: %s", degraded_services)
-        
-        logger.info("Health check passed - returning 200")
+        logger.info("Health check PASSED - returning 200")
         return JsonResponse(health_data, status=200)
         
     except Exception as e:
-        logger.error("Health check crashed with exception: %s", e, exc_info=True)
+        logger.error("Health check crashed: %s", e, exc_info=True)
         return JsonResponse({
             "status": "error",
             "error": str(e),
             "timestamp": time.time()
         }, status=500)
-
-
-@never_cache
-@csrf_exempt
-def health_simple(request):
-    """
-    Simple health check for Railway deployment startup phase.
-    Only checks database connectivity to allow app to start successfully.
-    Redis checks are handled by the detailed health check after startup.
-    """
-    logger.info("Starting simple health check for Railway startup")
-    
-    try:
-        # Quick database check only
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT 1")
-            result = cursor.fetchone()
-            
-            if result and result[0] == 1:
-                logger.info("Simple health check passed - database OK")
-                return JsonResponse({
-                    "status": "ok",
-                    "timestamp": time.time(),
-                    "checks": {
-                        "database": {"status": "healthy"}
-                    }
-                }, status=200)
-            else:
-                raise Exception("Database query returned unexpected result")
-                
-    except Exception as e:
-        logger.error("Simple health check failed: %s", e)
-        return JsonResponse({
-            "status": "error",
-            "error": str(e),
-            "timestamp": time.time()
-        }, status=503)
