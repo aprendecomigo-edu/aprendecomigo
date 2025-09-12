@@ -12,16 +12,7 @@
           ]
         }
       }
-    },
-    "watchPatterns": [
-      "**/*.py",
-      "**/*.html",
-      "**/*.css",
-      "**/*.js",
-      "requirements.txt",
-      "package.json",
-      "railway.web.json"
-    ]
+    }
   },
   "deploy": {
     "startCommand": "python manage.py migrate --noinput && python manage.py collectstatic --noinput --clear && gunicorn aprendecomigo.asgi:application --bind [::]:$PORT --workers 3 --worker-class uvicorn.workers.UvicornWorker --worker-connections 1000 --max-requests 1000 --max-requests-jitter 50 --timeout 120 --access-logfile - --error-logfile -",
