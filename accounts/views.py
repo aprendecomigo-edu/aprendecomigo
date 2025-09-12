@@ -690,8 +690,8 @@ class LogoutView(View):
         # Clear any session data
         request.session.flush()
 
-        # Redirect to home or signin page
-        return redirect("/accounts/signin/")
+        # Redirect to signin page using proper URL name
+        return redirect("accounts:signin")
 
 # =============================================================================
 # INVITATION MANAGEMENT VIEWS

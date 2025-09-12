@@ -123,19 +123,14 @@
     {% endif %}
 
     <!-- Submit Button -->
-    <div class="relative">
+    <div class="card-actions justify-center">
         <button type="submit" 
-                class="btn btn-neutral w-full bg-gradient-primary border-none text-white htmx-request:opacity-50 htmx-request:pointer-events-none">
-            <span class="htmx-indicator-none">Create Account</span>
+                class="btn btn-neutral w-full bg-gradient-primary border-none text-white">
             <span class="htmx-indicator">
                 <div class="loading loading-spinner loading-sm"></div>
                 Creating Account...
             </span>
+            <span class="htmx-indicator-none">Create Account</span>
         </button>
-        
-        <!-- Loading Spinner Overlay -->
-        <div class="htmx-indicator absolute inset-0 flex items-center justify-center bg-base-100/50 backdrop-blur-sm rounded-lg opacity-0 invisible">
-            <div class="loading loading-spinner loading-md text-primary"></div>
-        </div>
     </div>
 </form>
