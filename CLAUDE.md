@@ -7,12 +7,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Aprende Comigo is an educational platform that has been successfully migrated from Django REST API backend + React Native frontend to a Django-powered PWA. The PWA migration referenced in `docs/PWA_MIGRATION_PRD.md` has been completed. Ignore the legacy frontend code.
 
 **Current State**: Django-powered PWA with HTMX and Tailwind CSS ✅
-**Legacy Code**: React Native frontend code remains but is no longer used
 **Context**: Business application where functionality takes precedence over consumer-grade animations
 
 ## Architecture & Technology Stack
 
-### Backend (Django Framework) - ./backend folder
+### Django Framework
 - **Language**: Python 3.13
 - **Framework**: Django 5.2.5 with PWA capabilities
 - **Database**: SQLite (development), PostgreSQL (production ready)
@@ -20,12 +19,11 @@ Aprende Comigo is an educational platform that has been successfully migrated fr
 - **WebSockets**: Django Channels 4.3.1 with Redis channel layer
 - **PWA Features**: django-pwa, service workers, offline capabilities
 
-### Frontend (PWA Implementation) ✅
+### Frontend
 - **Technology**: Django Templates + HTMX + Tailwind CSS
 - **UI Framework**: Custom Tailwind components with Alpine.js
 - **Mobile Support**: Responsive design with bottom navigation
 - **PWA Features**: App manifest, service worker, installable
-- **Legacy**: React Native code in ./frontend (no longer active)
 
 ### Key Business Domains
 - **Multi-tenant**: Users can have multiple roles across different schools

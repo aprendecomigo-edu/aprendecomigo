@@ -209,6 +209,14 @@ LOGGING = {
         "require_debug_false": {
             "()": "django.utils.log.RequireDebugFalse",
         },
+        "sensitive_data": {
+            "()": "django.utils.log.CallbackFilter",
+            "callback": lambda record: True,  # Placeholder - can be enhanced for data scrubbing
+        },
+        "correlation": {
+            "()": "django.utils.log.CallbackFilter",
+            "callback": lambda record: True,  # Placeholder - can be enhanced for correlation IDs
+        },
     },
     "handlers": {
         # Console output for Railway/container environments

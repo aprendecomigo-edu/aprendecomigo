@@ -53,6 +53,7 @@ pytz==2025.2
 httpx==0.28.1
 urllib3==2.5.0
 whitenoise==6.8.2
+python-json-logger==2.0.7  # For Railway JSON logging
 
 # Core Python Dependencies (required by Django/DRF)
 asgiref==3.9.1
