@@ -157,6 +157,7 @@
                                    sidebarCollapsed ? 'justify-center' : 'gap-x-3'
                                ]"
                                :title="sidebarCollapsed ? item.desktopLabel : ''"
+                               :data-test="'navigate-' + item.id"
                                x-bind="item.htmx ? {
                                    'hx-get': item.htmx.get,
                                    'hx-trigger': item.htmx.trigger,
@@ -204,7 +205,8 @@
             <template x-for="item in getMobileNavItems()" :key="item.id">
                 <a :href="item.url"
                    class="flex flex-col items-center py-2 px-3 rounded-lg transition-colors relative"
-                   :class="isActive(item.id) ? 'text-blue-600' : 'text-gray-500'">
+                   :class="isActive(item.id) ? 'text-blue-600' : 'text-gray-500'"
+                   :data-test="'navigate-' + item.id">
                     <i :data-lucide="item.icon" class="w-5 h-5"></i>
                     <span class="text-xs font-medium mt-1" x-text="item.label"></span>
 
