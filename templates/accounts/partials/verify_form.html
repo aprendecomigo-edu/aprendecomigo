@@ -22,6 +22,7 @@
                    class="form-input text-center text-2xl tracking-widest font-mono"
                    autocomplete="one-time-code"
                    inputmode="numeric"
+                   data-test="input-verification-code"
                    autofocus
                    required>
         </div>
@@ -40,7 +41,8 @@
     <!-- Submit Button -->
     <div class="w-full mt-8">
         <button type="submit"
-                class="w-full bg-gradient-primary py-4 rounded-xl active:scale-98 transition-all shadow-lg text-white text-center font-bold font-primary text-base">
+                class="w-full bg-gradient-primary py-4 rounded-xl active:scale-98 transition-all shadow-lg text-white text-center font-bold font-primary text-base"
+                data-test="submit-verification">
             <span class="htmx-indicator">
                 <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -59,7 +61,8 @@
             <button type="button"
                     hx-post="{% url 'accounts:resend_code' %}"
                     hx-target="#verify-form-container"
-                    class="text-blue-600 hover:text-blue-800 font-medium underline">
+                    class="text-blue-600 hover:text-blue-800 font-medium underline"
+                    data-test="resend-verification">
                 Resend
             </button>
         </p>
