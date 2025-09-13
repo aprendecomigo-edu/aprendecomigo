@@ -17,7 +17,7 @@ import json
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import Client, TestCase
+from django.test import Client, TestCase, tag
 from django.urls import reverse
 from waffle.testutils import override_switch
 
@@ -28,6 +28,7 @@ from tests.test_waffle_switches import get_test_password
 User = get_user_model()
 
 
+@tag("classroom")
 class BaseViewTest(TestCase):
     """Base test class with common setup for school-based testing."""
 

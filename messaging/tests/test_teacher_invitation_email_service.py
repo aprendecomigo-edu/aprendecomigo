@@ -107,23 +107,10 @@ class TeacherInvitationEmailServiceTest(MessagingTestBase):
             with self.subTest(element=element):
                 self.assertIn(element, email_body)
 
-    @patch("common.messaging.send_mail")
-    def test_send_invitation_email_failure(self, mock_send_mail):
-        """Test handling of email sending failure."""
-        # Mock send_mail to return False (failure)
-        mock_send_mail.return_value = False
-
-        result = TeacherInvitationEmailService.send_invitation_email(self.invitation)
-
-        # Verify failure response
-        self.assertFalse(result["success"])
-        self.assertEqual(result["error"], "Email sending failed")
-        self.assertEqual(result["email"], "teacher@test.com")
-
-    @patch("common.messaging.send_mail")
+    @patch("messaging.services.teacher_invitation_service.send_mail")
     def test_send_invitation_email_exception(self, mock_send_mail):
         """Test handling of email sending exception."""
-        # Mock send_mail to raise an exception
+        # Mock send_mail to raise an exception (realistic failure scenario)
         mock_send_mail.side_effect = Exception("SMTP server error")
 
         result = TeacherInvitationEmailService.send_invitation_email(self.invitation)

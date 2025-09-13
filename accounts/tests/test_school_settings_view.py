@@ -58,13 +58,12 @@ class SchoolSettingsViewTest(BaseTestCase):
         )
 
     def test_anonymous_user_redirected_to_login(self):
-        """Test that anonymous users are redirected to login page"""
+        """Test that anonymous users get 403 Forbidden"""
         url = reverse("accounts:school_settings", kwargs={"pk": self.school.pk})
         response = self.client.get(url)
 
-        # Should redirect to login page (302)
-        self.assertEqual(response.status_code, 302)
-        self.assertIn("/signin/", response.url)
+        # Should return 403 Forbidden for anonymous users
+        self.assertEqual(response.status_code, 403)
 
     def test_school_owner_can_access_settings(self):
         """Test that school owner can access school settings"""

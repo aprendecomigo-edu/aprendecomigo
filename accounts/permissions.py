@@ -135,8 +135,13 @@ class SchoolPermissionMixin:
 
     def has_school_access(self, user, school):
         """Check if user has access to the school."""
+        if not user.is_authenticated:
+            return False
         if user.is_superuser:
             return True
+        # Check if user has school_memberships attribute (AnonymousUser doesn't)
+        if not hasattr(user, "school_memberships"):
+            return False
         return user.school_memberships.filter(school=school, is_active=True).exists()
 
 
@@ -147,8 +152,13 @@ class IsSchoolOwnerOrAdminMixin(SchoolPermissionMixin):
 
     def has_school_access(self, user, school):
         """Check if user is school owner or admin."""
+        if not user.is_authenticated:
+            return False
         if user.is_superuser:
             return True
+        # Check if user has school_memberships attribute (AnonymousUser doesn't)
+        if not hasattr(user, "school_memberships"):
+            return False
         return user.school_memberships.filter(
             school=school, is_active=True, role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN]
         ).exists()

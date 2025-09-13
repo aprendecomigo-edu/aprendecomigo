@@ -12,7 +12,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError, transaction
-from django.test import TestCase, override_settings
+from django.test import TestCase, override_settings, tag
 from django.urls import reverse
 from waffle.testutils import override_switch
 
@@ -23,6 +23,7 @@ from classroom.tests.test_fixtures import SchoolBasedTestMixin, TestDataFactory
 User = get_user_model()
 
 
+@tag("classroom")
 class ModelEdgeCasesTest(SchoolBasedTestMixin, TestCase):
     """Test edge cases in model behavior."""
 
@@ -153,6 +154,7 @@ class ModelEdgeCasesTest(SchoolBasedTestMixin, TestCase):
 
 
 @override_switch("chat_feature", active=True)
+@tag("classroom")
 class ViewEdgeCasesTest(SchoolBasedTestMixin, TestCase):
     """Test edge cases in view behavior."""
 
@@ -315,6 +317,7 @@ class ViewEdgeCasesTest(SchoolBasedTestMixin, TestCase):
         # The exact response depends on how validation is implemented
 
 
+@tag("classroom")
 class DatabaseEdgeCasesTest(SchoolBasedTestMixin, TestCase):
     """Test database-level edge cases and constraints."""
 
@@ -429,6 +432,7 @@ class DatabaseEdgeCasesTest(SchoolBasedTestMixin, TestCase):
                     _ = reaction.user.username
 
 
+@tag("classroom")
 class ConcurrencyEdgeCasesTest(SchoolBasedTestMixin, TestCase):
     """Test concurrency and race condition edge cases."""
 
@@ -524,6 +528,7 @@ class ConcurrencyEdgeCasesTest(SchoolBasedTestMixin, TestCase):
 
 @override_settings(DEBUG=True)  # Enable query logging for debugging
 @override_switch("chat_feature", active=True)
+@tag("classroom")
 class PerformanceEdgeCasesTest(SchoolBasedTestMixin, TestCase):
     """Test performance-related edge cases."""
 

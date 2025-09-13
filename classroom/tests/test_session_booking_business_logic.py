@@ -14,7 +14,7 @@ These tests focus on business logic validation without excessive mocking.
 from decimal import Decimal
 from unittest.mock import Mock, patch
 
-from django.test import TestCase
+from django.test import TestCase, tag
 
 from finances.services.hour_deduction_service import HourDeductionService, InsufficientBalanceError, PackageExpiredError
 from scheduler.services.session_booking_service import (
@@ -25,6 +25,7 @@ from scheduler.services.session_booking_service import (
 )
 
 
+@tag("classroom")
 class SessionCapacityValidationTest(TestCase):
     """Test session capacity validation business rules."""
 
@@ -65,6 +66,7 @@ class SessionCapacityValidationTest(TestCase):
             SessionBookingService._validate_session_capacity("individual", 15)
 
 
+@tag("classroom")
 class TeacherAvailabilityValidationTest(TestCase):
     """Test teacher availability validation business rules."""
 
@@ -89,6 +91,7 @@ class TeacherAvailabilityValidationTest(TestCase):
         self.assertIn("conflicting session", str(cm.exception))
 
 
+@tag("classroom")
 class HourDeductionValidationTest(TestCase):
     """Test hour deduction validation business rules."""
 
@@ -146,6 +149,7 @@ class HourDeductionValidationTest(TestCase):
             self.assertIn("all packages have expired", str(cm.exception))
 
 
+@tag("classroom")
 class BookingEligibilityLogicTest(TestCase):
     """Test booking eligibility business logic."""
 
@@ -203,6 +207,7 @@ class BookingEligibilityLogicTest(TestCase):
             self.assertEqual(result["reason"], "No active tutoring packages")
 
 
+@tag("classroom")
 class SessionAdjustmentLogicTest(TestCase):
     """Test session duration adjustment business logic."""
 
@@ -250,6 +255,7 @@ class SessionAdjustmentLogicTest(TestCase):
         self.assertIn("completed sessions", str(cm.exception))
 
 
+@tag("classroom")
 class SessionCancellationLogicTest(TestCase):
     """Test session cancellation business logic."""
 
@@ -294,6 +300,7 @@ class SessionCancellationLogicTest(TestCase):
         self.assertIn("Session 999 not found", str(cm.exception))
 
 
+@tag("classroom")
 class HourDeductionEdgeCasesTest(TestCase):
     """Test edge cases in hour deduction business logic."""
 

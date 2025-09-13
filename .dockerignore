@@ -5,12 +5,14 @@ CLAUDE_COMMAND_CHAINING_GUIDE.md
 CLAUDE.md
 SERVICES.md
 
+
 # Tests
 tests/
 test_*.py
 **/test_*.py
 **/*test*.py
 *_test.py
+.e2e/
 
 # Development files
 .env

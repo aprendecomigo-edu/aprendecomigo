@@ -14,7 +14,7 @@ The actual application uses Uvicorn for WebSocket support in production.
 from channels.db import database_sync_to_async
 from channels.testing import WebsocketCommunicator
 from django.contrib.auth import get_user_model
-from django.test import TestCase, override_settings
+from django.test import TestCase, override_settings, tag
 
 from classroom.consumers import ChatConsumer
 from classroom.models import Channel, Message
@@ -23,6 +23,7 @@ from tests.test_waffle_switches import get_test_password
 User = get_user_model()
 
 
+@tag("classroom")
 @override_settings(
     CHANNEL_LAYERS={
         "default": {
@@ -151,6 +152,7 @@ class ChatConsumerBusinessLogicTest(TestCase):
         await other_communicator.disconnect()
 
 
+@tag("classroom")
 class ChatConsumerSecurityTest(TestCase):
     """Test security features of WebSocket chat consumer."""
 
@@ -390,6 +392,7 @@ class ChatConsumerSecurityTest(TestCase):
         await comm2.disconnect()
 
 
+@tag("classroom")
 class ChatConsumerErrorHandlingTest(TestCase):
     """Test error handling in WebSocket chat consumer."""
 

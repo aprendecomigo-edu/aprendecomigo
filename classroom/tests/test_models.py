@@ -17,7 +17,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError
-from django.test import TestCase, override_settings
+from django.test import TestCase, override_settings, tag
 from django.utils import timezone
 
 from classroom.models import Attachment, Channel, Message, Reaction
@@ -26,6 +26,7 @@ from classroom.validators import validate_file_size
 User = get_user_model()
 
 
+@tag("classroom")
 class ChannelBusinessLogicTest(TestCase):
     """Test business logic for the Channel model.
 
@@ -140,6 +141,7 @@ class ChannelBusinessLogicTest(TestCase):
         self.assertEqual(channels[1], channel1)
 
 
+@tag("classroom")
 class MessageBusinessLogicTest(TestCase):
     """Test business logic for the Message model.
 
@@ -253,6 +255,7 @@ class MessageBusinessLogicTest(TestCase):
         self.assertIsNotNone(message.file)
 
 
+@tag("classroom")
 class ReactionBusinessLogicTest(TestCase):
     """Test business logic for the Reaction model.
 
@@ -376,6 +379,7 @@ class ReactionBusinessLogicTest(TestCase):
         self.assertEqual(reaction2.emoji, complex_emoji)
 
 
+@tag("classroom")
 class AttachmentBusinessLogicTest(TestCase):
     """Test business logic for the Attachment model.
 
@@ -537,6 +541,7 @@ class AttachmentBusinessLogicTest(TestCase):
             self.assertGreater(attachment.size, 0)
 
 
+@tag("classroom")
 class FileValidationTest(TestCase):
     """Test file upload validation functionality."""
 
