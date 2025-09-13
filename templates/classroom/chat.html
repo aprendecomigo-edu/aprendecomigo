@@ -27,14 +27,14 @@ function initWebSocket(channelId, channelName) {
     if (currentWebSocket) {
         currentWebSocket.close();
     }
-    
+
     const wsUrl = `${window.chatData.wsProtocol}//${window.chatData.wsHost}/ws/chat/${channelName}/`;
     currentWebSocket = new WebSocket(wsUrl);
-    
+
     currentWebSocket.onopen = () => {
         console.log('WebSocket connected to channel:', channelName);
     };
-    
+
     currentWebSocket.onmessage = (event) => {
         const data = JSON.parse(event.data);
         if (data.type === 'chat_message') {
@@ -44,22 +44,22 @@ function initWebSocket(channelId, channelName) {
             handleUserStatusUpdate(data);
         }
     };
-    
+
     currentWebSocket.onclose = () => {
         console.log('WebSocket disconnected');
     };
-    
+
     currentWebSocket.onerror = (error) => {
         console.error('WebSocket error:', error);
     };
-    
+
     return currentWebSocket;
 }
 
 function appendMessageToChat(messageData) {
     const messagesContainer = document.getElementById('messages-list');
     if (!messagesContainer) return;
-    
+
     // Create message HTML (simplified - in real implementation you'd want to render properly)
     const messageHtml = `
         <div class="message-item flex items-start space-x-3">
@@ -77,7 +77,7 @@ function appendMessageToChat(messageData) {
             </div>
         </div>
     `;
-    
+
     messagesContainer.insertAdjacentHTML('beforeend', messageHtml);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
@@ -90,10 +90,10 @@ function handleUserStatusUpdate(data) {
 
 <!-- Slack-style Chat Interface -->
 <div x-data="chatUI()" class="flex h-screen bg-gray-50">
-    
+
     <!-- Left Sidebar - Channels and DMs -->
     <div class="w-80 bg-gray-900 text-white flex flex-col">
-        
+
         <!-- Sidebar Header -->
         <div class="p-4 border-b border-gray-700">
             <div class="flex items-center justify-between">
@@ -108,7 +108,7 @@ function handleUserStatusUpdate(data) {
 
         <!-- Channels Section -->
         <div class="flex-1 overflow-y-auto">
-            
+
             <!-- Direct Messages -->
             <div class="p-4">
                 <div class="flex items-center justify-between mb-3">
@@ -119,7 +119,7 @@ function handleUserStatusUpdate(data) {
                         </svg>
                     </button>
                 </div>
-                
+
                 <!-- Server-rendered Channels List (No fetch calls) -->
                 {% include 'classroom/partials/channels_list.html' %}
             </div>
@@ -141,7 +141,7 @@ function handleUserStatusUpdate(data) {
 
     <!-- Main Chat Area -->
     <div class="flex-1 flex flex-col">
-        
+
         <!-- Chat Header -->
         {% if selected_channel %}
         <div class="bg-white border-b border-gray-200 px-6 py-4">
@@ -184,7 +184,7 @@ function handleUserStatusUpdate(data) {
                 </svg>
                 <h3 class="text-xl font-semibold text-gray-700 mb-2">Welcome to Chat</h3>
                 <p class="text-gray-500 mb-4">Select a conversation to start messaging</p>
-                <button @click="showNewDMModal = true" 
+                <button @click="showNewDMModal = true"
                         class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                     Start New Conversation
                 </button>
@@ -208,10 +208,10 @@ function handleUserStatusUpdate(data) {
                 {% csrf_token %}
                 <input type="hidden" name="action" value="send_message">
                 <input type="hidden" name="channel_id" value="{{ selected_channel.id }}">
-                
+
                 <div class="flex-1">
                     <div class="relative">
-                        <input type="text" 
+                        <input type="text"
                                name="content"
                                x-model="messageInput"
                                placeholder="Type your message..."
@@ -219,7 +219,7 @@ function handleUserStatusUpdate(data) {
                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     </div>
                 </div>
-                <button type="submit" 
+                <button type="submit"
                         :disabled="!messageInput.trim()"
                         class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium">
                     Send
@@ -230,7 +230,7 @@ function handleUserStatusUpdate(data) {
     </div>
 
     <!-- New DM Modal -->
-    <div x-show="showNewDMModal" 
+    <div x-show="showNewDMModal"
          x-transition:enter="transition ease-out duration-300"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
@@ -238,11 +238,11 @@ function handleUserStatusUpdate(data) {
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
          class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        
+
         <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4"
              @click.away="showNewDMModal = false">
             <h3 class="text-lg font-semibold mb-4">Start New Conversation</h3>
-            
+
             <!-- User Search with HTMX -->
             <div class="mb-4">
                 <input type="text"
@@ -265,7 +265,7 @@ function handleUserStatusUpdate(data) {
 
             <!-- Modal Actions -->
             <div class="flex justify-end space-x-3">
-                <button @click="showNewDMModal = false; userSearchQuery = ''" 
+                <button @click="showNewDMModal = false; userSearchQuery = ''"
                         class="px-4 py-2 text-gray-600 hover:text-gray-800">
                     Cancel
                 </button>
@@ -280,29 +280,29 @@ function chatUI() {
         messageInput: '',
         showNewDMModal: false,
         userSearchQuery: '',
-        
+
         init() {
             // Initialize WebSocket for selected channel on page load
             {% if selected_channel %}
                 initWebSocket({{ selected_channel.id }}, '{{ selected_channel.name }}');
             {% endif %}
-            
+
             // Scroll to bottom of messages on load
             this.$nextTick(() => {
                 this.scrollToBottom();
             });
         },
-        
+
         switchChannel(channelId, channelName) {
             // Reconnect WebSocket for new channel
             initWebSocket(channelId, channelName);
-            
+
             // Scroll to bottom after switching
             this.$nextTick(() => {
                 this.scrollToBottom();
             });
         },
-        
+
         scrollToBottom() {
             const container = document.getElementById('messages-list');
             if (container) {
@@ -315,7 +315,7 @@ function chatUI() {
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Chat interface loaded with HTMX and WebSocket');
-    
+
     // Auto-scroll messages container after HTMX swaps
     document.body.addEventListener('htmx:afterSwap', function(event) {
         if (event.target.id === 'messages-list' || event.target.closest('#messages-list')) {

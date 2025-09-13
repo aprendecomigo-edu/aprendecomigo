@@ -7,10 +7,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title|default:"Aprende Comigo" }}</title>
     <meta name="description" content="{{ meta_description|default:'Learn with Aprende Comigo - Quality education for everyone' }}">
-    
+
     <!-- PWA Meta Tags -->
     {% progressive_web_app_meta %}
-    
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,24 +18,24 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- HTMX -->
   <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.6/dist/htmx.min.js"></script>
-    
+
     <!-- Alpine.js -->
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    
+
     <!-- Tailwind CSS -->
     {% tailwind_css %}
 </head>
 <body class="min-h-screen bg-white" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
     {% block content %}
     {% endblock %}
-    
+
     <!-- HTMX Error Handling -->
     <script>
         document.addEventListener('htmx:responseError', function(evt) {
             // Show error alert for failed requests
             const errorAlert = document.getElementById('error-alert');
             const errorMessage = document.getElementById('error-message');
-            
+
             if (errorAlert && errorMessage) {
                 // Customize error message based on status code
                 let message = 'Something went wrong. Please try again.';
@@ -46,17 +46,17 @@
                 } else if (evt.detail.xhr.status >= 500) {
                     message = 'Server error. Please try again later.';
                 }
-                
+
                 errorMessage.textContent = message;
                 errorAlert.classList.remove('hidden');
-                
+
                 // Auto-hide after 5 seconds
                 setTimeout(() => {
                     errorAlert.classList.add('hidden');
                 }, 5000);
             }
         });
-        
+
         // Hide error alert on successful requests
         document.addEventListener('htmx:afterRequest', function(evt) {
             if (evt.detail.successful) {

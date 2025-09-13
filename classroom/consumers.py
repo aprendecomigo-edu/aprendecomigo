@@ -40,6 +40,7 @@ class ChatConsumer(WebsocketConsumer):
         # Security Check 2: Rate limiting
         # Skip rate limiting in test environment
         import os
+
         is_testing = getattr(settings, "TESTING", False) or os.getenv("DJANGO_TESTING") == "true"
         if not is_testing and not self.check_rate_limit():
             logger.warning(
@@ -142,12 +143,10 @@ class ChatConsumer(WebsocketConsumer):
             # Validate message data
             if "message" not in data:
                 logger.warning(
-                    "Missing 'message' field from user %s in channel: %s", 
-                    self.user.username, 
-                    self.channel_name_param
+                    "Missing 'message' field from user %s in channel: %s", self.user.username, self.channel_name_param
                 )
                 return
-            
+
             # Save message to database
             message = async_to_sync(self.save_message)(data["message"])
 
@@ -169,7 +168,7 @@ class ChatConsumer(WebsocketConsumer):
         elif message_type == "reaction":
             # Save reaction to database
             reaction = async_to_sync(self.save_reaction)(data["message_id"], data["emoji"])
-            
+
             # Only broadcast if reaction was successfully saved
             if reaction:
                 # Broadcast to group
@@ -206,15 +205,15 @@ class ChatConsumer(WebsocketConsumer):
             channel = Channel.objects.get(name=self.channel_name_param)
             channel.online.add(self.user)
         except Channel.DoesNotExist:
-            pass
+            logger.info("Channel '%s' does not exist while marking user online", self.channel_name_param)
         except Channel.MultipleObjectsReturned:
             # Handle multiple channels with same name - mark online in all that user participates in
             channels = Channel.objects.filter(name=self.channel_name_param)
             for channel in channels:
                 if channel.participants.filter(id=self.user.id).exists():
                     channel.online.add(self.user)
-        except Exception:
-            pass  # Silently handle other errors for this non-critical operation
+        except Exception as e:
+            logger.warning("Failed to mark user online in WebSocket channel: %s", str(e))
 
     @database_sync_to_async
     def mark_user_offline(self):
@@ -223,15 +222,15 @@ class ChatConsumer(WebsocketConsumer):
             channel = Channel.objects.get(name=self.channel_name_param)
             channel.online.remove(self.user)
         except Channel.DoesNotExist:
-            pass
+            logger.info("Channel '%s' does not exist while marking user offline", self.channel_name_param)
         except Channel.MultipleObjectsReturned:
             # Handle multiple channels with same name - mark offline in all that user participates in
             channels = Channel.objects.filter(name=self.channel_name_param)
             for channel in channels:
                 if channel.participants.filter(id=self.user.id).exists():
                     channel.online.remove(self.user)
-        except Exception:
-            pass  # Silently handle other errors for this non-critical operation
+        except Exception as e:
+            logger.warning("Failed to mark user offline in WebSocket channel: %s", str(e))
 
     @database_sync_to_async
     def save_message(self, content):
@@ -325,8 +324,5 @@ class ChatConsumer(WebsocketConsumer):
             )
         except Message.DoesNotExist:
             # Log and return None if message doesn't exist
-            logger.warning(
-                "User %s attempted to react to nonexistent message: %s",
-                self.user.username, message_id
-            )
+            logger.warning("User %s attempted to react to nonexistent message: %s", self.user.username, message_id)
             return None

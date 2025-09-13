@@ -34,16 +34,16 @@
     </td>
     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
         <div class="flex justify-end space-x-2">
-            <a href="{% url 'accounts:invitation_detail' invitation.pk %}" 
+            <a href="{% url 'accounts:invitation_detail' invitation.pk %}"
                class="text-blue-600 hover:text-blue-900">View</a>
-            
+
             {% if invitation.is_valid and invitation.can_retry %}
                 <button hx-post="{% url 'accounts:resend_invitation' invitation.pk %}"
                         hx-target="closest tr"
                         hx-swap="outerHTML"
                         class="text-green-600 hover:text-green-900">Resend</button>
             {% endif %}
-            
+
             {% if invitation.is_valid %}
                 <button hx-post="{% url 'accounts:cancel_invitation' invitation.pk %}"
                         hx-target="closest tr"

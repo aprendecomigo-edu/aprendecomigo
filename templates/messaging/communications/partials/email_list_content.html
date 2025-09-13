@@ -58,11 +58,11 @@
                             <div class="mb-3">
                                 {% if communication.template %}
                                     <p class="text-xs text-gray-500">
-                                        Template: {{ communication.template.name }} 
+                                        Template: {{ communication.template.name }}
                                         ({{ communication.template.get_template_type_display }})
                                     </p>
                                 {% endif %}
-                                
+
                                 {% if communication.sequence %}
                                     <p class="text-xs text-gray-500">
                                         Sequence: {{ communication.sequence.name }}
@@ -140,7 +140,7 @@
                         results
                     </p>
                 </div>
-                
+
                 <div class="flex-1 flex justify-between sm:justify-end">
                     {% if page_obj.has_previous %}
                         <button hx-get="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}"

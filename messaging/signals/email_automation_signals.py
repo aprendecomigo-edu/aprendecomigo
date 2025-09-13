@@ -268,10 +268,7 @@ def _calculate_profile_completion(user, teacher_profile) -> dict:
     completion_percentage = 100 if is_complete else 50
 
     # Determine if reminder is needed (profile incomplete and no recent reminder)
-    needs_reminder = (
-        not is_complete
-        and not _has_recent_profile_reminder(user, teacher_profile.school)
-    )
+    needs_reminder = not is_complete and not _has_recent_profile_reminder(user, teacher_profile.school)
 
     return {
         "is_complete": is_complete,

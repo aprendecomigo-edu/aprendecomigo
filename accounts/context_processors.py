@@ -19,18 +19,18 @@ def user_context(request):
 
     if request.user.is_authenticated:
         # Get user info
-        context['user_first_name'] = request.user.first_name
+        context["user_first_name"] = request.user.first_name
 
         # Get current school
         current_school = get_current_school(request)
 
         if current_school:
-            context['school_name'] = current_school.name
+            context["school_name"] = current_school.name
             # Get user role for this school
-            context['user_role'] = get_user_role_for_school(request.user, current_school)
+            context["user_role"] = get_user_role_for_school(request.user, current_school)
         else:
-            context['school_name'] = 'No School Selected'
-            context['user_role'] = 'guest'
+            context["school_name"] = "No School Selected"
+            context["user_role"] = "guest"
 
     return context
 
@@ -45,13 +45,13 @@ def get_current_school(request):
     3. First school the user belongs to
     """
     # Option 1: From session (user switched schools)
-    school_id = request.session.get('current_school_id')
+    school_id = request.session.get("current_school_id")
     if school_id:
         try:
             return School.objects.get(id=school_id, memberships__user=request.user, memberships__is_active=True)
         except School.DoesNotExist:
             # Clean up invalid session data
-            request.session.pop('current_school_id', None)
+            request.session.pop("current_school_id", None)
 
     # Option 2: From user's profile (if you have a default school field)
     # if hasattr(request.user, 'profile') and request.user.profile.default_school:
@@ -61,7 +61,7 @@ def get_current_school(request):
     first_school = School.objects.filter(memberships__user=request.user, memberships__is_active=True).first()
     if first_school:
         # Store in session for consistency
-        request.session['current_school_id'] = first_school.id
+        request.session["current_school_id"] = first_school.id
         return first_school
 
     return None

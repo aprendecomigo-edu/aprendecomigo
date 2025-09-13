@@ -21,7 +21,7 @@ validated number +351960095846
 ## Amazon AWS
 Account id 474691413289
 email: aprendecomigoclaude@gmail.com
-Anas phone nr 
+Anas phone nr
 
 
 

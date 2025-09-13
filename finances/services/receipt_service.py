@@ -140,7 +140,7 @@ class ReceiptGenerationService:
                 # Try to regenerate if missing
                 logger.warning(f"HTML file missing for receipt {receipt.id}, attempting regeneration")
                 generation_result = cls.generate_receipt(receipt.transaction.id, force_regenerate=True)  # type: ignore[attr-defined]
-  # type: ignore[no-any-return]
+                # type: ignore[no-any-return]
                 if not generation_result["success"]:
                     return {
                         "success": False,

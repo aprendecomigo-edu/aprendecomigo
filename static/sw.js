@@ -59,7 +59,7 @@ const CACHE_FIRST = [
 
 self.addEventListener('install', (event) => {
     log('Service Worker installing...');
-    
+
     event.waitUntil(
         caches.open(STATIC_CACHE)
             .then(cache => {
@@ -78,7 +78,7 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
     log('Service Worker activating...');
-    
+
     event.waitUntil(
         Promise.all([
             // Clean up old caches
@@ -86,7 +86,7 @@ self.addEventListener('activate', (event) => {
                 return Promise.all(
                     cacheNames
                         .filter(cacheName => {
-                            return cacheName.startsWith('aprende-comigo-') && 
+                            return cacheName.startsWith('aprende-comigo-') &&
                                    !cacheName.includes(CACHE_VERSION);
                         })
                         .map(cacheName => {
@@ -104,12 +104,12 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
-    
+
     // Skip cross-origin requests
     if (url.origin !== location.origin) {
         return;
     }
-    
+
     // Determine caching strategy
     if (shouldUseNetworkFirst(request)) {
         event.respondWith(networkFirstStrategy(request));
@@ -128,27 +128,27 @@ async function networkFirstStrategy(request) {
     try {
         // Try network first
         const networkResponse = await fetch(request);
-        
+
         // Cache successful responses
         if (networkResponse.ok) {
             const cache = await caches.open(DYNAMIC_CACHE);
             cache.put(request, networkResponse.clone());
         }
-        
+
         return networkResponse;
     } catch (error) {
         // Fallback to cache
         const cachedResponse = await caches.match(request);
-        
+
         if (cachedResponse) {
             return cachedResponse;
         }
-        
+
         // Return offline page for navigation requests
         if (request.mode === 'navigate') {
             return caches.match(OFFLINE_PAGE);
         }
-        
+
         throw error;
     }
 }
@@ -156,20 +156,20 @@ async function networkFirstStrategy(request) {
 async function cacheFirstStrategy(request) {
     // Try cache first
     const cachedResponse = await caches.match(request);
-    
+
     if (cachedResponse) {
         return cachedResponse;
     }
-    
+
     // Fallback to network
     try {
         const networkResponse = await fetch(request);
-        
+
         if (networkResponse.ok) {
             const cache = await caches.open(STATIC_CACHE);
             cache.put(request, networkResponse.clone());
         }
-        
+
         return networkResponse;
     } catch (error) {
         error('Cache-first strategy failed:', error);
@@ -180,7 +180,7 @@ async function cacheFirstStrategy(request) {
 async function staleWhileRevalidateStrategy(request) {
     const cache = await caches.open(API_CACHE);
     const cachedResponse = await cache.match(request);
-    
+
     // Fetch from network in background
     const networkPromise = fetch(request)
         .then(response => {
@@ -193,7 +193,7 @@ async function staleWhileRevalidateStrategy(request) {
             error('Network fetch failed:', error);
             return null;
         });
-    
+
     // Return cached version immediately, or wait for network
     return cachedResponse || networkPromise;
 }
@@ -201,27 +201,27 @@ async function staleWhileRevalidateStrategy(request) {
 async function networkFallbackStrategy(request) {
     try {
         const networkResponse = await fetch(request);
-        
+
         // Cache successful responses
         if (networkResponse.ok) {
             const cache = await caches.open(DYNAMIC_CACHE);
             cache.put(request, networkResponse.clone());
         }
-        
+
         return networkResponse;
     } catch (error) {
         // Fallback to cache
         const cachedResponse = await caches.match(request);
-        
+
         if (cachedResponse) {
             return cachedResponse;
         }
-        
+
         // Return offline page for navigation requests
         if (request.mode === 'navigate') {
             return caches.match(OFFLINE_PAGE);
         }
-        
+
         throw error;
     }
 }
@@ -233,7 +233,7 @@ function shouldUseNetworkFirst(request) {
 }
 
 function shouldUseCacheFirst(request) {
-    return CACHE_FIRST.some(pattern => 
+    return CACHE_FIRST.some(pattern =>
         request.url.includes(pattern) || request.url.endsWith(pattern)
     );
 }
@@ -246,7 +246,7 @@ function isAPIRequest(request) {
 // Background Sync
 self.addEventListener('sync', (event) => {
     log('Background sync triggered:', event.tag);
-    
+
     if (event.tag === 'background-sync-forms') {
         event.waitUntil(syncFormSubmissions());
     } else if (event.tag === 'background-sync-enrollments') {
@@ -258,24 +258,24 @@ async function syncFormSubmissions() {
     try {
         const cache = await caches.open('form-submissions-v1');
         const requests = await cache.keys();
-        
+
         for (const request of requests) {
             try {
                 const response = await cache.match(request);
                 const formData = await response.json();
-                
+
                 // Attempt to submit the form
                 const submitResponse = await fetch(formData.url, {
                     method: formData.method,
                     headers: formData.headers,
                     body: formData.body
                 });
-                
+
                 if (submitResponse.ok) {
                     // Remove from cache on success
                     await cache.delete(request);
                     log('Form submission synced successfully');
-                    
+
                     // Notify clients
                     self.clients.matchAll().then(clients => {
                         clients.forEach(client => {
@@ -303,7 +303,7 @@ async function syncEnrollments() {
 // Push Notifications
 self.addEventListener('push', (event) => {
     log('Push notification received:', event);
-    
+
     const options = {
         body: 'You have new updates in Aprende Comigo',
         icon: '/static/images/icon-192x192.png',
@@ -326,13 +326,13 @@ self.addEventListener('push', (event) => {
             }
         ]
     };
-    
+
     if (event.data) {
         const data = event.data.json();
         options.body = data.message || options.body;
         options.data = { ...options.data, ...data };
     }
-    
+
     event.waitUntil(
         self.registration.showNotification('Aprende Comigo', options)
     );
@@ -341,7 +341,7 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
     log('Notification clicked:', event);
     event.notification.close();
-    
+
     if (event.action === 'explore') {
         event.waitUntil(
             clients.openWindow('/')
@@ -360,7 +360,7 @@ self.addEventListener('notificationclick', (event) => {
 // Message Handler for communication with main thread
 self.addEventListener('message', (event) => {
     log('Service Worker received message:', event.data);
-    
+
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
     }

@@ -72,7 +72,9 @@
       "WebFetch(domain:redis-py.readthedocs.io)",
       "WebFetch(domain:redis.readthedocs.io)",
       "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_xewBzH/**)",
-      "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_LFGzNK/**)"
+      "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_LFGzNK/**)",
+      "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_KHl9TM/**)",
+      "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_Efu2ld/**)"
     ],
     "deny": [],
     "ask": []

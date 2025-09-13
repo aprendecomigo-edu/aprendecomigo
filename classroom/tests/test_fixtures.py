@@ -10,6 +10,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from accounts.models import School, SchoolMembership
 from classroom.models import Attachment, Channel, Message, Reaction
+from tests.test_waffle_switches import get_test_password
 
 User = get_user_model()
 
@@ -21,9 +22,9 @@ class TestDataFactory:
     def create_school(name="Test School", **kwargs):
         """Create a school with default or custom attributes."""
         defaults = {
-            'description': f'{name} description',
-            'address': f'{name} address',
-            'contact_email': f'contact@{name.lower().replace(" ", "")}.com',
+            "description": f"{name} description",
+            "address": f"{name} address",
+            "contact_email": f"contact@{name.lower().replace(' ', '')}.com",
         }
         defaults.update(kwargs)
         return School.objects.create(name=name, **defaults)
@@ -35,9 +36,9 @@ class TestDataFactory:
             email = f"{username}@example.com"
 
         defaults = {
-            'first_name': username.title(),
-            'last_name': 'User',
-            'password': 'testpass123',
+            "first_name": username.title(),
+            "last_name": "User",
+            "password": get_test_password(),
         }
         defaults.update(kwargs)
         return User.objects.create_user(username=username, email=email, **defaults)
@@ -66,12 +67,7 @@ class TestDataFactory:
     @staticmethod
     def create_message(channel, sender, content="Test message", file=None):
         """Create a message in a channel."""
-        return Message.objects.create(
-            channel=channel,
-            sender=sender,
-            content=content,
-            file=file
-        )
+        return Message.objects.create(channel=channel, sender=sender, content=content, file=file)
 
     @staticmethod
     def create_reaction(message, user, emoji="👍"):
@@ -83,11 +79,7 @@ class TestDataFactory:
         """Create an attachment for a message."""
         test_file = SimpleUploadedFile(filename, b"file content", content_type=file_type)
         return Attachment.objects.create(
-            message=message,
-            file=test_file,
-            filename=filename,
-            file_type=file_type,
-            size=size
+            message=message, file=test_file, filename=filename, file_type=file_type, size=size
         )
 
     @staticmethod
@@ -123,26 +115,16 @@ class SchoolBasedTestMixin:
 
         # Create channels
         self.school1_channel = TestDataFactory.create_channel(
-            "School 1 Channel",
-            participants=[self.teacher1, self.student1]
+            "School 1 Channel", participants=[self.teacher1, self.student1]
         )
         self.school2_channel = TestDataFactory.create_channel(
-            "School 2 Channel",
-            participants=[self.teacher2, self.student2]
+            "School 2 Channel", participants=[self.teacher2, self.student2]
         )
         self.dm_channel = TestDataFactory.create_dm_channel(self.teacher1, self.student1)
 
         # Create messages
-        self.message1 = TestDataFactory.create_message(
-            self.school1_channel,
-            self.teacher1,
-            "Message from teacher1"
-        )
-        self.message2 = TestDataFactory.create_message(
-            self.school1_channel,
-            self.student1,
-            "Message from student1"
-        )
+        self.message1 = TestDataFactory.create_message(self.school1_channel, self.teacher1, "Message from teacher1")
+        self.message2 = TestDataFactory.create_message(self.school1_channel, self.student1, "Message from student1")
 
     def get_school1_users(self):
         """Get all users from school1."""
@@ -168,17 +150,13 @@ class MessageTestMixin:
     def create_test_messages(self, channel, count=10, sender=None):
         """Create multiple test messages for pagination testing."""
         if sender is None:
-            sender = getattr(self, 'teacher1', None)
+            sender = getattr(self, "teacher1", None)
             if sender is None:
                 raise ValueError("No sender provided and no default teacher1 available")
 
         messages = []
         for i in range(count):
-            message = TestDataFactory.create_message(
-                channel,
-                sender,
-                f"Test message {i+1}"
-            )
+            message = TestDataFactory.create_message(channel, sender, f"Test message {i + 1}")
             messages.append(message)
         return messages
 
@@ -188,11 +166,7 @@ class MessageTestMixin:
         emojis = ["👍", "❤️", "😂", "😮", "😢"]
 
         for i in range(count):
-            message = TestDataFactory.create_message(
-                channel,
-                sender,
-                f"Message with reactions {i+1}"
-            )
+            message = TestDataFactory.create_message(channel, sender, f"Message with reactions {i + 1}")
 
             # Add reaction with corresponding emoji
             if i < len(emojis):
@@ -209,24 +183,19 @@ class FileTestMixin:
     def create_test_files(self):
         """Create various test files for upload testing."""
         return {
-            'pdf': TestDataFactory.create_test_file("document.pdf", b"PDF content", "application/pdf"),
-            'image': TestDataFactory.create_test_file("image.jpg", b"JPEG content", "image/jpeg"),
-            'doc': TestDataFactory.create_test_file("document.doc", b"DOC content", "application/msword"),
-            'large': TestDataFactory.create_test_file("large.pdf", b"x" * 1024 * 1024, "application/pdf"),  # 1MB
-            'invalid': TestDataFactory.create_test_file("script.exe", b"executable", "application/exe"),
+            "pdf": TestDataFactory.create_test_file("document.pdf", b"PDF content", "application/pdf"),
+            "image": TestDataFactory.create_test_file("image.jpg", b"JPEG content", "image/jpeg"),
+            "doc": TestDataFactory.create_test_file("document.doc", b"DOC content", "application/msword"),
+            "large": TestDataFactory.create_test_file("large.pdf", b"x" * 1024 * 1024, "application/pdf"),  # 1MB
+            "invalid": TestDataFactory.create_test_file("script.exe", b"executable", "application/exe"),
         }
 
-    def create_message_with_file(self, channel, sender, file_type='pdf'):
+    def create_message_with_file(self, channel, sender, file_type="pdf"):
         """Create a message with a file attachment."""
         test_files = self.create_test_files()
-        file = test_files.get(file_type, test_files['pdf'])
+        file = test_files.get(file_type, test_files["pdf"])
 
-        return TestDataFactory.create_message(
-            channel,
-            sender,
-            f"Message with {file_type} file",
-            file=file
-        )
+        return TestDataFactory.create_message(channel, sender, f"Message with {file_type} file", file=file)
 
 
 class WebSocketTestMixin:
@@ -236,10 +205,7 @@ class WebSocketTestMixin:
         """Create test data specifically for WebSocket testing."""
         # Create user and channel
         self.ws_user = TestDataFactory.create_user("websocket_user")
-        self.ws_channel = TestDataFactory.create_channel(
-            "WebSocket Test Channel",
-            participants=[self.ws_user]
-        )
+        self.ws_channel = TestDataFactory.create_channel("WebSocket Test Channel", participants=[self.ws_user])
 
         # Create some messages for testing
         self.ws_messages = [
@@ -264,14 +230,14 @@ class PermissionTestMixin:
 
     def assert_users_in_same_school(self, user1, user2):
         """Assert that two users belong to at least one common school."""
-        user1_schools = set(SchoolMembership.objects.filter(user=user1).values_list('school_id', flat=True))
-        user2_schools = set(SchoolMembership.objects.filter(user=user2).values_list('school_id', flat=True))
+        user1_schools = set(SchoolMembership.objects.filter(user=user1).values_list("school_id", flat=True))
+        user2_schools = set(SchoolMembership.objects.filter(user=user2).values_list("school_id", flat=True))
         self.assertTrue(bool(user1_schools & user2_schools), "Users should be in same school")
 
     def assert_users_in_different_schools(self, user1, user2):
         """Assert that two users belong to no common schools."""
-        user1_schools = set(SchoolMembership.objects.filter(user=user1).values_list('school_id', flat=True))
-        user2_schools = set(SchoolMembership.objects.filter(user=user2).values_list('school_id', flat=True))
+        user1_schools = set(SchoolMembership.objects.filter(user=user1).values_list("school_id", flat=True))
+        user2_schools = set(SchoolMembership.objects.filter(user=user2).values_list("school_id", flat=True))
         self.assertFalse(bool(user1_schools & user2_schools), "Users should be in different schools")
 
 
@@ -302,9 +268,9 @@ def create_test_school_environment():
     dm_channel = factory.create_dm_channel(teacher1, student1)
 
     return {
-        'schools': [school1, school2],
-        'users': [teacher1, student1, teacher2, student2],
-        'channels': [channel1, channel2, dm_channel],
-        'school1': {'school': school1, 'users': [teacher1, student1], 'channel': channel1},
-        'school2': {'school': school2, 'users': [teacher2, student2], 'channel': channel2},
+        "schools": [school1, school2],
+        "users": [teacher1, student1, teacher2, student2],
+        "channels": [channel1, channel2, dm_channel],
+        "school1": {"school": school1, "users": [teacher1, student1], "channel": channel1},
+        "school2": {"school": school2, "users": [teacher2, student2], "channel": channel2},
     }

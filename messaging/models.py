@@ -37,7 +37,7 @@ class Notification(models.Model):
     )
 
     notification_type = models.CharField(
-        _("notification type"), max_length=20, choices=NotificationType.choices, help_text=_("Type of notification")
+        _("notification type"), max_length=20, choices=NotificationType, help_text=_("Type of notification")
     )
 
     title = models.CharField(_("title"), max_length=200, help_text=_("Notification title"))
@@ -153,7 +153,7 @@ class SchoolEmailTemplate(models.Model):
         help_text=_("School this template belongs to"),
     )
     template_type = models.CharField(
-        _("template type"), max_length=50, choices=EmailTemplateType.choices, help_text=_("Type of email template")
+        _("template type"), max_length=50, choices=EmailTemplateType, help_text=_("Type of email template")
     )
     name = models.CharField(_("template name"), max_length=200, help_text=_("Human-readable name for the template"))
 
@@ -436,7 +436,7 @@ class EmailCommunication(models.Model):
         help_text=_("Template used for this email"),
     )
     template_type = models.CharField(
-        _("template type"), max_length=50, choices=EmailTemplateType.choices, help_text=_("Type of email template used")
+        _("template type"), max_length=50, choices=EmailTemplateType, help_text=_("Type of email template used")
     )
     subject = models.CharField(_("email subject"), max_length=300, help_text=_("Rendered email subject"))
 
@@ -444,7 +444,7 @@ class EmailCommunication(models.Model):
     communication_type = models.CharField(
         _("communication type"),
         max_length=20,
-        choices=EmailCommunicationType.choices,
+        choices=EmailCommunicationType,
         default=EmailCommunicationType.MANUAL,
         help_text=_("Type of communication"),
     )
@@ -471,7 +471,7 @@ class EmailCommunication(models.Model):
     delivery_status = models.CharField(
         _("delivery status"),
         max_length=20,
-        choices=EmailDeliveryStatus.choices,
+        choices=EmailDeliveryStatus,
         default=EmailDeliveryStatus.QUEUED,
         help_text=_("Current delivery status"),
     )

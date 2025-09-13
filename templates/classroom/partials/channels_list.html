@@ -7,7 +7,7 @@
          hx-swap="innerHTML"
          hx-vals='{"action": "load_channel", "channel_id": "{{ channel.id }}"}'
          @click="switchChannel({{ channel.id }}, '{{ channel.name }}')">
-        
+
         <!-- Channel/User Avatar -->
         <div class="flex items-center">
             <div class="w-8 h-8 rounded-full flex items-center justify-center mr-3
@@ -24,7 +24,7 @@
                     {% endif %}
                 </span>
             </div>
-            
+
             <!-- Channel Info -->
             <div class="flex-1 min-w-0">
                 <div class="flex items-center justify-between">

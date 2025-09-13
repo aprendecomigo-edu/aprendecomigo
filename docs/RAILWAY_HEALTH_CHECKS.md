@@ -22,7 +22,7 @@ This document outlines the health check implementation designed to handle Redis 
 
 #### 1. Simple Health Check (`/health/`)
 - **Purpose**: Railway startup health monitoring
-- **Checks**: Database connectivity only  
+- **Checks**: Database connectivity only
 - **Use Case**: Allows Railway to mark the deployment as "healthy" and route traffic
 - **Response**: Fast, minimal dependencies
 
@@ -98,7 +98,7 @@ gunicorn aprendecomigo.asgi:application ...
 1. **Environment Detection**: Determine if running in Railway vs local
 2. **Database Check**: Always required - fail fast if DB unavailable
 3. **Redis Default Cache**: Test with retry logic
-   - Railway: Required - fail if unavailable after retries  
+   - Railway: Required - fail if unavailable after retries
    - Local: Optional - log warnings only
 4. **Redis Sessions Cache**: Test with retry logic
    - Always critical since sessions are required for auth

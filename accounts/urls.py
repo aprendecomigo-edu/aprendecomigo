@@ -1,5 +1,4 @@
 from django.urls import path
-from sesame.views import LoginView
 
 # Import the Django web authentication views
 from .views import (
@@ -48,7 +47,6 @@ urlpatterns = [
     # Verification actions from profile page
     path("send-verification-email/", send_verification_email, name="send_verification_email"),
     path("send-verification-sms/", send_verification_sms, name="send_verification_sms"),
-
     # Teacher Invitation Management
     path("invitations/", TeacherInvitationListView.as_view(), name="invitation_list"),
     path("invitations/create/", TeacherInvitationCreateView.as_view(), name="invitation_create"),
@@ -57,15 +55,12 @@ urlpatterns = [
     path("invitations/<int:invitation_id>/resend/", resend_teacher_invitation, name="resend_invitation"),
     # Public invitation acceptance (no login required)
     path("invitations/accept/<str:token>/", AcceptTeacherInvitationView.as_view(), name="accept_invitation"),
-
     # Profile Management
     path("profile/", ProfileView.as_view(), name="profile"),
     path("profile/edit/", ProfileEditView.as_view(), name="profile_edit"),
-
     # School Management
     path("schools/<int:pk>/settings/", SchoolSettingsView.as_view(), name="school_settings"),
     path("schools/<int:school_pk>/members/", SchoolMemberListView.as_view(), name="school_members"),
-    
     # Internationalization
     path("set-language/", set_language, name="set_language"),
 ]

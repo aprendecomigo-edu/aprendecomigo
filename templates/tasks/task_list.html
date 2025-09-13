@@ -3,7 +3,7 @@
 
 {% block dashboard_content %}
 <div class="space-y-6" x-data="{ showForm: false }">
-    
+
     <!-- Page Header -->
     <div class="border-b border-gray-200 pb-4">
         <div class="sm:flex sm:items-center sm:justify-between">
@@ -12,7 +12,7 @@
                 <p class="mt-1 text-sm text-gray-600">{% trans "Manage your tasks and to-do items" %}</p>
             </div>
             <div class="mt-4 sm:mt-0">
-                <button 
+                <button
                     @click="showForm = !showForm"
                     class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                     <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -37,28 +37,28 @@
     <!-- Filters -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
         <div class="flex flex-wrap gap-2">
-            <button 
+            <button
                 hx-get="{% url 'tasks:task_list' %}?filter=all"
                 hx-target="#task-list-content"
                 hx-trigger="click"
                 class="filter-btn px-3 py-1 text-sm rounded-full {% if current_filter == 'all' %}bg-blue-100 text-blue-800{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
                 {% trans "All" %} ({{ summary.total_tasks }})
             </button>
-            <button 
+            <button
                 hx-get="{% url 'tasks:task_list' %}?filter=pending"
                 hx-target="#task-list-content"
                 hx-trigger="click"
                 class="filter-btn px-3 py-1 text-sm rounded-full {% if current_filter == 'pending' %}bg-blue-100 text-blue-800{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
                 {% trans "Pending" %} ({{ summary.pending_tasks }})
             </button>
-            <button 
+            <button
                 hx-get="{% url 'tasks:task_list' %}?filter=in_progress"
                 hx-target="#task-list-content"
                 hx-trigger="click"
                 class="filter-btn px-3 py-1 text-sm rounded-full {% if current_filter == 'in_progress' %}bg-blue-100 text-blue-800{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
                 {% trans "In Progress" %} ({{ summary.in_progress_tasks }})
             </button>
-            <button 
+            <button
                 hx-get="{% url 'tasks:task_list' %}?filter=completed"
                 hx-target="#task-list-content"
                 hx-trigger="click"
@@ -66,7 +66,7 @@
                 {% trans "Completed" %} ({{ summary.completed_tasks }})
             </button>
             {% if summary.overdue_tasks > 0 %}
-            <button 
+            <button
                 hx-get="{% url 'tasks:task_list' %}?filter=overdue"
                 hx-target="#task-list-content"
                 hx-trigger="click"
@@ -75,7 +75,7 @@
             </button>
             {% endif %}
             {% if summary.tasks_due_today > 0 %}
-            <button 
+            <button
                 hx-get="{% url 'tasks:task_list' %}?filter=due_today"
                 hx-target="#task-list-content"
                 hx-trigger="click"
@@ -84,7 +84,7 @@
             </button>
             {% endif %}
             {% if summary.urgent_tasks > 0 %}
-            <button 
+            <button
                 hx-get="{% url 'tasks:task_list' %}?filter=urgent"
                 hx-target="#task-list-content"
                 hx-trigger="click"

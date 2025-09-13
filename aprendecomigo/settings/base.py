@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 import os
 from pathlib import Path
+from urllib.parse import urlparse
 
 from dotenv import load_dotenv
 import redis
@@ -53,15 +54,15 @@ INSTALLED_APPS = [
     "channels",
     # PWA Migration packages
     "django_htmx",  # HTMX integration
-    "sesame",       # Magic link authentication
-    "django_otp",   # OTP authentication
+    "sesame",  # Magic link authentication
+    "django_otp",  # OTP authentication
     "django_otp.plugins.otp_totp",  # TOTP plugin
-    "django_otp.plugins.otp_static", # Static tokens plugin
-    "pwa",          # PWA support
-    "webpush",      # Web push notifications
+    "django_otp.plugins.otp_static",  # Static tokens plugin
+    "pwa",  # PWA support
+    "webpush",  # Web push notifications
     "tailwind",
-    "anymail",      # Email backend with ESP support
-    "waffle",       # Feature flags
+    "anymail",  # Email backend with ESP support
+    "waffle",  # Feature flags
     # Custom apps
     "theme",
     "accounts",
@@ -122,14 +123,14 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": (
-            "file:memorydb_default?mode=memory&cache=shared" 
-            if os.getenv("DJANGO_TESTING") 
-            else BASE_DIR / "db.sqlite3"
+            "file:memorydb_default?mode=memory&cache=shared" if os.getenv("DJANGO_TESTING") else BASE_DIR / "db.sqlite3"
         ),
         "OPTIONS": {
             "timeout": 60,
             "init_command": "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA cache_size=10000; PRAGMA temp_store=MEMORY;",
-        } if os.getenv("DJANGO_TESTING") else {},
+        }
+        if os.getenv("DJANGO_TESTING")
+        else {},
         "TEST": {
             "NAME": "file:memorydb_default?mode=memory&cache=shared",
             "OPTIONS": {
@@ -175,15 +176,14 @@ LOCALE_PATHS = [
 ]
 
 # Language cookie settings for persistence
-LANGUAGE_COOKIE_NAME = 'aprende_language'
+LANGUAGE_COOKIE_NAME = "aprende_language"
 LANGUAGE_COOKIE_AGE = 365 * 24 * 60 * 60  # 1 year
-LANGUAGE_COOKIE_PATH = '/'
-LANGUAGE_COOKIE_SAMESITE = 'Lax'
+LANGUAGE_COOKIE_PATH = "/"
+LANGUAGE_COOKIE_SAMESITE = "Lax"
 
 TIME_ZONE = "UTC"
 
 USE_I18N = True
-USE_L10N = True  # Enable localized formatting
 USE_TZ = True
 
 # Static files - minimal configuration for Swagger/ReDoc UI only
@@ -200,176 +200,177 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # Cache configuration with improved Railway Redis support
-redis_url = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379')
+redis_url = os.getenv("REDIS_URL", "redis://127.0.0.1:6379")
 
 # Use in-memory cache for tests
 if os.getenv("DJANGO_TESTING"):
     CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            'LOCATION': 'default-cache',
-            'TIMEOUT': 60 * 15,
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "default-cache",
+            "TIMEOUT": 60 * 15,
         },
-        'sessions': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            'LOCATION': 'sessions-cache',
-            'TIMEOUT': 60 * 60 * 24,
+        "sessions": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "sessions-cache",
+            "TIMEOUT": 60 * 60 * 24,
         },
-        'template_fragments': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            'LOCATION': 'templates-cache',
-            'TIMEOUT': 60 * 30,
-        }
+        "template_fragments": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "templates-cache",
+            "TIMEOUT": 60 * 30,
+        },
     }
 # Use Redis with improved connection settings for Railway
-elif redis_url.startswith('redis://') and 'railway.internal' in redis_url:
+elif redis_url.startswith("redis://") and "railway.internal" in redis_url:
     # Railway Redis configuration with enhanced reliability
     CACHES = {
-        'default': {
-            'BACKEND': 'django_redis.cache.RedisCache',
-            'LOCATION': redis_url + '/1',
-            'OPTIONS': {
-                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-                'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
-                'CONNECTION_POOL_KWARGS': {
-                    'max_connections': 20,  # Reduced for Railway
-                    'retry_on_timeout': True,
-                    'retry_on_error': [ConnectionError, TimeoutError],
-                    'socket_connect_timeout': 30,
-                    'socket_timeout': 30,
-                    'health_check_interval': 30,
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": redis_url + "/1",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",
+                "CONNECTION_POOL_KWARGS": {
+                    "max_connections": 20,  # Reduced for Railway
+                    "retry_on_timeout": True,
+                    "retry_on_error": [ConnectionError, TimeoutError],
+                    "socket_connect_timeout": 30,
+                    "socket_timeout": 30,
+                    "health_check_interval": 30,
                 },
-                'IGNORE_EXCEPTIONS': True,  # Graceful degradation for non-critical operations
+                "IGNORE_EXCEPTIONS": True,  # Graceful degradation for non-critical operations
             },
-            'KEY_PREFIX': 'aprendecomigo',
-            'VERSION': 1,
-            'TIMEOUT': 60 * 15,  # 15 minutes default timeout
+            "KEY_PREFIX": "aprendecomigo",
+            "VERSION": 1,
+            "TIMEOUT": 60 * 15,  # 15 minutes default timeout
         },
-        'sessions': {
-            'BACKEND': 'django_redis.cache.RedisCache',
-            'LOCATION': redis_url + '/2',
-            'OPTIONS': {
-                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-                'CONNECTION_POOL_KWARGS': {
-                    'max_connections': 20,  # Reduced for Railway
-                    'retry_on_timeout': True,
-                    'retry_on_error': [ConnectionError, TimeoutError],
-                    'socket_connect_timeout': 30,
-                    'socket_timeout': 30,
-                    'health_check_interval': 30,
+        "sessions": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": redis_url + "/2",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "CONNECTION_POOL_KWARGS": {
+                    "max_connections": 20,  # Reduced for Railway
+                    "retry_on_timeout": True,
+                    "retry_on_error": [ConnectionError, TimeoutError],
+                    "socket_connect_timeout": 30,
+                    "socket_timeout": 30,
+                    "health_check_interval": 30,
                 },
                 # Do NOT ignore exceptions for sessions - they're critical
             },
-            'KEY_PREFIX': 'sessions',
-            'TIMEOUT': 60 * 60 * 24,  # 24 hours for sessions
+            "KEY_PREFIX": "sessions",
+            "TIMEOUT": 60 * 60 * 24,  # 24 hours for sessions
         },
-        'template_fragments': {
-            'BACKEND': 'django_redis.cache.RedisCache',
-            'LOCATION': redis_url + '/3',
-            'OPTIONS': {
-                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-                'CONNECTION_POOL_KWARGS': {
-                    'max_connections': 20,  # Reduced for Railway
-                    'retry_on_timeout': True,
-                    'retry_on_error': [ConnectionError, TimeoutError],
-                    'socket_connect_timeout': 30,
-                    'socket_timeout': 30,
-                    'health_check_interval': 30,
+        "template_fragments": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": redis_url + "/3",
+            "OPTIONS": {
+                "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                "CONNECTION_POOL_KWARGS": {
+                    "max_connections": 20,  # Reduced for Railway
+                    "retry_on_timeout": True,
+                    "retry_on_error": [ConnectionError, TimeoutError],
+                    "socket_connect_timeout": 30,
+                    "socket_timeout": 30,
+                    "health_check_interval": 30,
                 },
-                'IGNORE_EXCEPTIONS': True,  # Template fragments can degrade gracefully
+                "IGNORE_EXCEPTIONS": True,  # Template fragments can degrade gracefully
             },
-            'KEY_PREFIX': 'templates',
-            'TIMEOUT': 60 * 30,  # 30 minutes for template fragments
-        }
+            "KEY_PREFIX": "templates",
+            "TIMEOUT": 60 * 30,  # 30 minutes for template fragments
+        },
     }
 else:
     # Local development or non-Railway Redis
     try:
         import redis
+
         redis_client = redis.Redis.from_url(redis_url, socket_connect_timeout=5)
         redis_client.ping()
-        
+
         # Redis is available - use Redis cache
         CACHES = {
-            'default': {
-                'BACKEND': 'django_redis.cache.RedisCache',
-                'LOCATION': redis_url + '/1',
-                'OPTIONS': {
-                    'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-                    'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
-                    'CONNECTION_POOL_KWARGS': {
-                        'max_connections': 50,
-                        'retry_on_timeout': True,
+            "default": {
+                "BACKEND": "django_redis.cache.RedisCache",
+                "LOCATION": redis_url + "/1",
+                "OPTIONS": {
+                    "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                    "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",
+                    "CONNECTION_POOL_KWARGS": {
+                        "max_connections": 50,
+                        "retry_on_timeout": True,
                     },
                 },
-                'KEY_PREFIX': 'aprendecomigo',
-                'VERSION': 1,
-                'TIMEOUT': 60 * 15,
+                "KEY_PREFIX": "aprendecomigo",
+                "VERSION": 1,
+                "TIMEOUT": 60 * 15,
             },
-            'sessions': {
-                'BACKEND': 'django_redis.cache.RedisCache',
-                'LOCATION': redis_url + '/2',
-                'OPTIONS': {
-                    'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-                    'CONNECTION_POOL_KWARGS': {
-                        'max_connections': 50,
-                        'retry_on_timeout': True,
+            "sessions": {
+                "BACKEND": "django_redis.cache.RedisCache",
+                "LOCATION": redis_url + "/2",
+                "OPTIONS": {
+                    "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                    "CONNECTION_POOL_KWARGS": {
+                        "max_connections": 50,
+                        "retry_on_timeout": True,
                     },
                 },
-                'KEY_PREFIX': 'sessions',
-                'TIMEOUT': 60 * 60 * 24,
+                "KEY_PREFIX": "sessions",
+                "TIMEOUT": 60 * 60 * 24,
             },
-            'template_fragments': {
-                'BACKEND': 'django_redis.cache.RedisCache',
-                'LOCATION': redis_url + '/3',
-                'OPTIONS': {
-                    'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-                    'CONNECTION_POOL_KWARGS': {
-                        'max_connections': 50,
-                        'retry_on_timeout': True,
+            "template_fragments": {
+                "BACKEND": "django_redis.cache.RedisCache",
+                "LOCATION": redis_url + "/3",
+                "OPTIONS": {
+                    "CLIENT_CLASS": "django_redis.client.DefaultClient",
+                    "CONNECTION_POOL_KWARGS": {
+                        "max_connections": 50,
+                        "retry_on_timeout": True,
                     },
                 },
-                'KEY_PREFIX': 'templates',
-                'TIMEOUT': 60 * 30,
-            }
+                "KEY_PREFIX": "templates",
+                "TIMEOUT": 60 * 30,
+            },
         }
     except (ImportError, redis.ConnectionError, redis.RedisError):
         # Redis not available - use local memory cache for development
         CACHES = {
-            'default': {
-                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-                'LOCATION': 'default-cache',
-                'TIMEOUT': 60 * 15,
+            "default": {
+                "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+                "LOCATION": "default-cache",
+                "TIMEOUT": 60 * 15,
             },
-            'sessions': {
-                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-                'LOCATION': 'sessions-cache',
-                'TIMEOUT': 60 * 60 * 24,
+            "sessions": {
+                "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+                "LOCATION": "sessions-cache",
+                "TIMEOUT": 60 * 60 * 24,
             },
-            'template_fragments': {
-                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-                'LOCATION': 'templates-cache',
-                'TIMEOUT': 60 * 30,
-            }
+            "template_fragments": {
+                "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+                "LOCATION": "templates-cache",
+                "TIMEOUT": 60 * 30,
+            },
         }
 
 # Session configuration with Redis fallback
 if os.getenv("DJANGO_TESTING"):
     # Use database sessions for tests to avoid cache complications
-    SESSION_ENGINE = 'django.contrib.sessions.backends.db'
-elif 'railway.internal' in redis_url:
+    SESSION_ENGINE = "django.contrib.sessions.backends.db"
+elif "railway.internal" in redis_url:
     # For Railway, use cached_db backend as it provides better reliability
     # Falls back to database if Redis cache is unavailable
-    SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
-    SESSION_CACHE_ALIAS = 'sessions'
+    SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
+    SESSION_CACHE_ALIAS = "sessions"
     # Session security settings for Railway
     SESSION_COOKIE_AGE = 60 * 60 * 24  # 24 hours
     SESSION_EXPIRE_AT_BROWSER_CLOSE = False
     SESSION_SAVE_EVERY_REQUEST = True  # Ensure session data is preserved
 else:
     # For local development, use Redis-only sessions
-    SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-    SESSION_CACHE_ALIAS = 'sessions'
+    SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+    SESSION_CACHE_ALIAS = "sessions"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -438,13 +439,12 @@ STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 
 # Channel Layers Configuration
 # Parse Redis URL safely without creating Redis connections at import time
-from urllib.parse import urlparse
 
-redis_url = os.getenv('REDIS_URL', 'redis://127.0.0.1:6379')
+redis_url = os.getenv("REDIS_URL", "redis://127.0.0.1:6379")
 parsed_redis_url = urlparse(redis_url)
 
 # Extract connection details safely
-redis_host = parsed_redis_url.hostname or '127.0.0.1'
+redis_host = parsed_redis_url.hostname or "127.0.0.1"
 redis_port = parsed_redis_url.port or 6379
 redis_password = parsed_redis_url.password
 
@@ -456,7 +456,7 @@ if os.getenv("DJANGO_TESTING"):
             "BACKEND": "channels.layers.InMemoryChannelLayer",
         },
     }
-elif 'railway.internal' in redis_url:
+elif "railway.internal" in redis_url:
     # Railway-specific configuration with enhanced reliability
     CHANNEL_LAYERS = {
         "default": {
@@ -773,26 +773,20 @@ LOGGING = {
 }
 
 # PWA Configuration
-PWA_APP_NAME = 'Aprende Comigo'
+PWA_APP_NAME = "Aprende Comigo"
 PWA_APP_DESCRIPTION = "Educational Platform - Connecting Teachers and Students"
-PWA_APP_THEME_COLOR = '#3B82F6'
-PWA_APP_BACKGROUND_COLOR = '#ffffff'
-PWA_APP_DISPLAY = 'standalone'
-PWA_APP_SCOPE = '/'
-PWA_APP_ORIENTATION = 'any'
-PWA_APP_START_URL = '/'
-PWA_APP_STATUS_BAR_COLOR = 'default'
+PWA_APP_THEME_COLOR = "#3B82F6"
+PWA_APP_BACKGROUND_COLOR = "#ffffff"
+PWA_APP_DISPLAY = "standalone"
+PWA_APP_SCOPE = "/"
+PWA_APP_ORIENTATION = "any"
+PWA_APP_START_URL = "/"
+PWA_APP_STATUS_BAR_COLOR = "default"
 PWA_APP_ICONS = [
-    {
-        'src': '/static/images/icon-192.png',
-        'sizes': '192x192'
-    },
-    {
-        'src': '/static/images/icon-512.png',
-        'sizes': '512x512'
-    }
+    {"src": "/static/images/icon-192.png", "sizes": "192x192"},
+    {"src": "/static/images/icon-512.png", "sizes": "512x512"},
 ]
-PWA_SERVICE_WORKER_PATH = os.path.join(BASE_DIR, 'static', 'js', 'service-worker.js')
+PWA_SERVICE_WORKER_PATH = os.path.join(BASE_DIR, "static", "js", "service-worker.js")
 
 # Sesame Configuration (Magic Links)
 SESAME_MAX_AGE = 900  # 15 minutes for better user experience
@@ -801,12 +795,14 @@ SESAME_INVALIDATE_ON_PASSWORD_CHANGE = True  # Invalidate on password change
 
 # Web Push Configuration (VAPID keys will be generated during setup)
 WEBPUSH_SETTINGS = {
-    "VAPID_PUBLIC_KEY": os.getenv("VAPID_PUBLIC_KEY", "BMOm-0mduZ953oV7A71Qvnrp7ovLiRewJhhHEhLPnWpcRKKBs7c9JhARV_K7DOQTTbXTqlqGcxnGYXgvBxkw9Hk"),
+    "VAPID_PUBLIC_KEY": os.getenv(
+        "VAPID_PUBLIC_KEY", "BMOm-0mduZ953oV7A71Qvnrp7ovLiRewJhhHEhLPnWpcRKKBs7c9JhARV_K7DOQTTbXTqlqGcxnGYXgvBxkw9Hk"
+    ),
     "VAPID_PRIVATE_KEY": os.getenv("VAPID_PRIVATE_KEY", "E9NAys9Mhnb13Bm7jbb-EDMGfBtSO43DBirbSQeEyxk"),
-    "VAPID_ADMIN_EMAIL": os.getenv("VAPID_ADMIN_EMAIL", "admin@aprendecomigo.com")
+    "VAPID_ADMIN_EMAIL": os.getenv("VAPID_ADMIN_EMAIL", "admin@aprendecomigo.com"),
 }
 
-TAILWIND_APP_NAME="theme"
+TAILWIND_APP_NAME = "theme"
 
 # Django Waffle Settings
 # Configure switches (not flags) for feature toggles
@@ -815,7 +811,7 @@ TAILWIND_APP_NAME="theme"
 # Default switch state - matches DEBUG setting
 # Development: DEBUG=True → switches enabled by default
 # Production: DEBUG=False → switches disabled by default
-WAFFLE_SWITCH_DEFAULT = DEBUG=="True"
+WAFFLE_SWITCH_DEFAULT = DEBUG == "True"
 
 # Individual switch configurations (optional overrides)
 # Use environment variables to override specific switches in production

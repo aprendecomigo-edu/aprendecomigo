@@ -35,7 +35,6 @@ class SchoolRole(models.TextChoices):
     PARENT = "parent", _("Parent")  # Can manage child accounts and approve purchases
 
 
-
 class School(models.Model):
     """
     School model representing an educational organization.
@@ -89,7 +88,7 @@ class SchoolMembership(models.Model):
         "CustomUser", on_delete=models.CASCADE, related_name="school_memberships"
     )
     school: models.ForeignKey = models.ForeignKey(School, on_delete=models.CASCADE, related_name="memberships")
-    role: models.CharField = models.CharField(_("role"), max_length=20, choices=SchoolRole.choices)
+    role: models.CharField = models.CharField(_("role"), max_length=20, choices=SchoolRole)
     is_active: models.BooleanField = models.BooleanField(_("is active"), default=True)
     joined_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
 
@@ -123,9 +122,7 @@ class SchoolMembership(models.Model):
                 return
 
             # Count remaining active memberships (excluding this one)
-            remaining_active = self.user.school_memberships.filter(
-                is_active=True
-            ).exclude(pk=self.pk).count()
+            remaining_active = self.user.school_memberships.filter(is_active=True).exclude(pk=self.pk).count()
 
             if remaining_active == 0:
                 raise ValidationError(
@@ -140,9 +137,7 @@ class SchoolMembership(models.Model):
         # Skip validation for superusers
         if not self.user.is_superuser:
             # Count remaining active memberships (excluding this one)
-            remaining_active = self.user.school_memberships.filter(
-                is_active=True
-            ).exclude(pk=self.pk).count()
+            remaining_active = self.user.school_memberships.filter(is_active=True).exclude(pk=self.pk).count()
 
             if remaining_active == 0:
                 raise ValidationError(

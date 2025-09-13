@@ -110,6 +110,7 @@ class ChannelBusinessLogicTest(TestCase):
         self.assertIsNotNone(channel.updated_at)
         # Don't test exact timing as it can be flaky in tests
         from datetime import datetime
+
         self.assertTrue(isinstance(channel.created_at, datetime))
         self.assertTrue(isinstance(channel.updated_at, datetime))
 
@@ -120,6 +121,7 @@ class ChannelBusinessLogicTest(TestCase):
 
         # Wait a small amount to ensure timestamp difference
         import time
+
         time.sleep(0.001)
 
         channel.name = "Updated Channel Name"
@@ -192,17 +194,10 @@ class MessageBusinessLogicTest(TestCase):
 
     def test_message_with_file_attachment(self):
         """Test creating message with file attachment."""
-        test_file = SimpleUploadedFile(
-            "test.txt",
-            b"test content",
-            content_type="text/plain"
-        )
+        test_file = SimpleUploadedFile("test.txt", b"test content", content_type="text/plain")
 
         message = Message.objects.create(
-            channel=self.channel,
-            sender=self.user,
-            content="Message with file",
-            file=test_file
+            channel=self.channel, sender=self.user, content="Message with file", file=test_file
         )
 
         self.assertEqual(message.content, "Message with file")
@@ -212,11 +207,7 @@ class MessageBusinessLogicTest(TestCase):
 
     def test_message_without_file_attachment(self):
         """Test creating message without file attachment."""
-        message = Message.objects.create(
-            channel=self.channel,
-            sender=self.user,
-            content="Message without file"
-        )
+        message = Message.objects.create(channel=self.channel, sender=self.user, content="Message without file")
 
         self.assertEqual(message.content, "Message without file")
         self.assertFalse(message.file)
@@ -255,7 +246,7 @@ class MessageBusinessLogicTest(TestCase):
             channel=self.channel,
             sender=self.user,
             content="",  # Empty content
-            file=test_file
+            file=test_file,
         )
 
         self.assertEqual(message.content, "")
@@ -588,15 +579,12 @@ class FileValidationTest(TestCase):
                 test_file = SimpleUploadedFile(
                     f"test.{ext}",
                     b"test content",
-                    content_type=f"application/{ext}" if ext in ["pdf", "doc", "docx"] else f"image/{ext}"
+                    content_type=f"application/{ext}" if ext in ["pdf", "doc", "docx"] else f"image/{ext}",
                 )
 
                 # Should be able to create message with allowed extension
                 message = Message.objects.create(
-                    channel=self.channel,
-                    sender=self.user,
-                    content="Test with file",
-                    file=test_file
+                    channel=self.channel, sender=self.user, content="Test with file", file=test_file
                 )
                 self.assertIsNotNone(message.file)
 
@@ -610,15 +598,12 @@ class FileValidationTest(TestCase):
                 test_file = SimpleUploadedFile(
                     f"test.{ext}",
                     b"test content",
-                    content_type="application/pdf" if ext.lower() == "pdf" else "image/jpeg"
+                    content_type="application/pdf" if ext.lower() == "pdf" else "image/jpeg",
                 )
 
                 # Should work regardless of case
                 message = Message.objects.create(
-                    channel=self.channel,
-                    sender=self.user,
-                    content="Test with file",
-                    file=test_file
+                    channel=self.channel, sender=self.user, content="Test with file", file=test_file
                 )
                 self.assertIsNotNone(message.file)
 
@@ -626,12 +611,7 @@ class FileValidationTest(TestCase):
         """Test that message files are uploaded to correct path."""
         test_file = SimpleUploadedFile("test.pdf", b"content", content_type="application/pdf")
 
-        message = Message.objects.create(
-            channel=self.channel,
-            sender=self.user,
-            content="Test",
-            file=test_file
-        )
+        message = Message.objects.create(channel=self.channel, sender=self.user, content="Test", file=test_file)
 
         # File should be stored in chat_attachments/ directory
         self.assertTrue(message.file.name.startswith("chat_attachments/"))

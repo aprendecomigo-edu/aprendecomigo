@@ -330,7 +330,10 @@ class PackageExpirationService:
             logger.error(error_msg)
 
             return NotificationResult(
-                success=False, notification_type="email", recipient=package.student.email, message=error_msg  # type: ignore[attr-defined]
+                success=False,
+                notification_type="email",
+                recipient=package.student.email,
+                message=error_msg,  # type: ignore[attr-defined]
             )
 
     @staticmethod
@@ -381,7 +384,10 @@ class PackageExpirationService:
             logger.error(error_msg)
 
             return NotificationResult(
-                success=False, notification_type="email", recipient=package.student.email, message=error_msg  # type: ignore[attr-defined]
+                success=False,
+                notification_type="email",
+                recipient=package.student.email,
+                message=error_msg,  # type: ignore[attr-defined]
             )
 
     @staticmethod

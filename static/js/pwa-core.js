@@ -14,7 +14,7 @@ class PWACore {
         this.isOnline = navigator.onLine;
         this.serviceWorker = null;
         this.installPrompt = null;
-        
+
         this.init();
     }
 
@@ -24,7 +24,7 @@ class PWACore {
             try {
                 this.serviceWorker = await navigator.serviceWorker.register('/sw.js');
                 log('Service Worker registered successfully');
-                
+
                 // Listen for service worker updates
                 this.serviceWorker.addEventListener('updatefound', () => {
                     this.handleServiceWorkerUpdate();
@@ -57,7 +57,7 @@ class PWACore {
     handleOnlineStatus(online) {
         this.isOnline = online;
         this.updateOfflineIndicator();
-        
+
         if (online) {
             this.syncPendingData();
         }
@@ -68,7 +68,7 @@ class PWACore {
         if (indicator) {
             indicator.style.display = this.isOnline ? 'none' : 'block';
         }
-        
+
         document.body.classList.toggle('offline', !this.isOnline);
     }
 
@@ -98,11 +98,11 @@ class PWACore {
         if (this.installPrompt) {
             this.installPrompt.prompt();
             const result = await this.installPrompt.userChoice;
-            
+
             if (result.outcome === 'accepted') {
                 log('PWA installation accepted');
             }
-            
+
             this.installPrompt = null;
             this.hideInstallButton();
         }
@@ -120,18 +120,18 @@ class PWACore {
         try {
             // Sync any cached form submissions
             const pendingForms = await this.getPendingFormData();
-            
+
             for (const formData of pendingForms) {
                 await this.submitCachedForm(formData);
             }
-            
+
             // Sync enrollment attempts
             const pendingEnrollments = await this.getPendingEnrollments();
-            
+
             for (const enrollment of pendingEnrollments) {
                 await this.submitCachedEnrollment(enrollment);
             }
-            
+
         } catch (error) {
             error('Data sync failed:', error);
         }
@@ -141,13 +141,13 @@ class PWACore {
         const cache = await caches.open('form-submissions-v1');
         const keys = await cache.keys();
         const pendingData = [];
-        
+
         for (const request of keys) {
             const response = await cache.match(request);
             const data = await response.json();
             pendingData.push(data);
         }
-        
+
         return pendingData;
     }
 
@@ -158,12 +158,12 @@ class PWACore {
                 headers: formData.headers,
                 body: formData.body
             });
-            
+
             if (response.ok) {
                 // Remove from cache after successful submission
                 const cache = await caches.open('form-submissions-v1');
                 await cache.delete(formData.url);
-                
+
                 // Show success notification
                 this.showNotification('Data synced successfully', 'success');
             }
@@ -192,7 +192,7 @@ class PWACore {
                 <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
             </div>
         `;
-        
+
         // Add to notification container
         let container = document.getElementById('notification-container');
         if (!container) {
@@ -201,9 +201,9 @@ class PWACore {
             container.className = 'fixed top-4 right-4 z-50 space-y-2';
             document.body.appendChild(container);
         }
-        
+
         container.appendChild(notification);
-        
+
         // Auto-remove after 5 seconds
         setTimeout(() => {
             if (notification.parentElement) {
@@ -227,11 +227,11 @@ class PWACore {
                     timestamp: Date.now()
                 })
             });
-            
+
             await cache.put(request, new Response(JSON.stringify({
                 url, method, headers, body, cached: true
             })));
-            
+
             this.showNotification('Data saved offline. Will sync when online.', 'info');
             return true;
         }

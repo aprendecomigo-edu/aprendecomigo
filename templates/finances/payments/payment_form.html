@@ -11,7 +11,7 @@
 <div class="max-w-4xl mx-auto p-6">
     <div class="bg-white rounded-lg shadow-md p-6">
         <h2 class="text-2xl font-bold text-gray-800 mb-6">Purchase Tutoring Hours</h2>
-        
+
         {% if stripe_error %}
             <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
                 {{ stripe_error }}
@@ -39,8 +39,8 @@
         <!-- Pricing Plans -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {% for plan in pricing_plans %}
-            <div class="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer pricing-plan" 
-                 data-plan-id="{{ plan.id }}" 
+            <div class="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer pricing-plan"
+                 data-plan-id="{{ plan.id }}"
                  data-price="{{ plan.price }}"
                  data-hours="{{ plan.tutoring_hours }}">
                 <div class="text-center">
@@ -99,21 +99,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const stripe = Stripe('{{ stripe_public_key }}');
     const elements = stripe.elements();
     const cardElement = elements.create('card');
-    
+
     let selectedPlan = null;
-    
+
     // Mount card element
     cardElement.mount('#card-element');
-    
+
     // Handle plan selection
     document.querySelectorAll('.pricing-plan').forEach(function(plan) {
         plan.addEventListener('click', function() {
             // Remove previous selection
             document.querySelectorAll('.pricing-plan').forEach(p => p.classList.remove('border-blue-500', 'bg-blue-50'));
-            
+
             // Add selection styling
             this.classList.add('border-blue-500', 'bg-blue-50');
-            
+
             // Store selected plan
             selectedPlan = {
                 id: this.dataset.planId,
@@ -121,28 +121,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 price: this.dataset.price,
                 hours: this.dataset.hours
             };
-            
+
             // Update form display
             document.getElementById('selected-plan-name').textContent = selectedPlan.name;
             document.getElementById('selected-plan-hours').textContent = selectedPlan.hours + ' hours';
             document.getElementById('selected-plan-price').textContent = '£' + selectedPlan.price;
-            
+
             // Show payment form
             document.getElementById('payment-form').classList.remove('hidden');
         });
     });
-    
+
     // Handle form submission
     document.getElementById('payment-form').addEventListener('submit', async function(event) {
         event.preventDefault();
-        
+
         if (!selectedPlan) {
             showError('Please select a plan');
             return;
         }
-        
+
         setLoading(true);
-        
+
         try {
             // Create payment intent
             const response = await fetch('{% url "finances:payment-create" %}', {
@@ -153,22 +153,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: 'plan_id=' + selectedPlan.id
             });
-            
+
             const result = await response.json();
-            
+
             if (result.error) {
                 showError(result.error);
                 setLoading(false);
                 return;
             }
-            
+
             // Confirm payment with Stripe
             const {error} = await stripe.confirmCardPayment(result.client_secret, {
                 payment_method: {
                     card: cardElement,
                 }
             });
-            
+
             if (error) {
                 showError(error.message);
                 setLoading(false);
@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setLoading(false);
         }
     });
-    
+
     async function confirmPayment(paymentIntentId) {
         try {
             const response = await fetch('{% url "finances:payment-confirm" %}', {
@@ -193,15 +193,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 },
                 body: 'payment_intent_id=' + paymentIntentId
             });
-            
+
             if (response.ok) {
                 const html = await response.text();
                 document.getElementById('payment-messages').innerHTML = html;
                 document.getElementById('payment-messages').classList.remove('hidden');
-                
+
                 // Hide the form
                 document.getElementById('payment-form').style.display = 'none';
-                
+
                 // Scroll to success message
                 document.getElementById('payment-messages').scrollIntoView({ behavior: 'smooth' });
             } else {
@@ -211,10 +211,10 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             showError('Payment confirmation failed');
         }
-        
+
         setLoading(false);
     }
-    
+
     function showError(message) {
         const messagesDiv = document.getElementById('payment-messages');
         messagesDiv.innerHTML = `
@@ -224,12 +224,12 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
         messagesDiv.classList.remove('hidden');
     }
-    
+
     function setLoading(loading) {
         const button = document.getElementById('submit-payment');
         const buttonText = document.getElementById('button-text');
         const spinner = document.getElementById('spinner');
-        
+
         if (loading) {
             button.disabled = true;
             buttonText.textContent = 'Processing...';

@@ -28,7 +28,7 @@ class BaseTestCase(TestCase):
             cls.default_educational_system = EducationalSystem.objects.get(code="pt")
         except EducationalSystem.DoesNotExist:
             # Create it with id=1 if it doesn't exist
-            cls.default_educational_system, created = EducationalSystem.objects.get_or_create(
+            cls.default_educational_system, _created = EducationalSystem.objects.get_or_create(
                 id=1,
                 defaults={
                     "name": "Portugal",
@@ -57,7 +57,7 @@ class BaseTransactionTestCase(TransactionTestCase):
             cls.default_educational_system = EducationalSystem.objects.get(code="pt")
         except EducationalSystem.DoesNotExist:
             # Create it with id=1 if it doesn't exist
-            cls.default_educational_system, created = EducationalSystem.objects.get_or_create(
+            cls.default_educational_system, _created = EducationalSystem.objects.get_or_create(
                 id=1,
                 defaults={
                     "name": "Portugal",

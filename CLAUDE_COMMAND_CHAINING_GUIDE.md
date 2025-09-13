@@ -37,7 +37,7 @@ claude -p "Update requirements.txt"
 # In a bash script for complex workflows
 #!/bin/bash
 claude -p "Analyze current database schema" > schema_analysis.txt
-claude -p "Suggest performance optimizations" > optimizations.txt  
+claude -p "Suggest performance optimizations" > optimizations.txt
 claude -p "Create implementation plan" > implementation_plan.txt
 ```
 
@@ -51,7 +51,7 @@ claude -p "Generate corresponding API serializers for: $(cat models.py)" > seria
 
 # Using session continuation for context
 claude -c "Start building a payment system"
-claude -c "Add validation for credit card data"  
+claude -c "Add validation for credit card data"
 claude -c "Implement fraud detection"
 ```
 
@@ -75,7 +75,7 @@ claude -p "Create comprehensive tests for the changes made"
 ## Operators Summary
 
 - `&&` - Run next command only if previous succeeds
-- `;` - Run next command regardless of previous result  
+- `;` - Run next command regardless of previous result
 - `|` - Pipe output directly to next command
 - `$(cat file.txt)` - Include file contents in command
 - `>` - Redirect output to file

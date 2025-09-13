@@ -12,12 +12,12 @@ from django.views.decorators.http import require_POST
 def set_language(request):
     """
     Set the user's language preference and redirect back to the previous page.
-    
+
     Expects a POST parameter 'language' with a valid language code.
     """
-    next_url = request.POST.get('next', request.META.get('HTTP_REFERER', '/'))
-    language = request.POST.get('language')
-    
+    next_url = request.POST.get("next", request.headers.get("referer", "/"))
+    language = request.POST.get("language")
+
     if language and language in dict(settings.LANGUAGES):
         translation.activate(language)
         response = HttpResponseRedirect(next_url)
@@ -29,5 +29,5 @@ def set_language(request):
             samesite=settings.LANGUAGE_COOKIE_SAMESITE,
         )
         return response
-    
+
     return HttpResponseRedirect(next_url)

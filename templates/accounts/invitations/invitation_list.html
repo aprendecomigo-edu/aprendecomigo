@@ -8,7 +8,7 @@
     <div class="mb-6">
         <div class="flex justify-between items-center">
             <h1 class="text-3xl font-bold text-gray-900">Teacher Invitations</h1>
-            <a href="{% url 'accounts:invitation_create' %}" 
+            <a href="{% url 'accounts:invitation_create' %}"
                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md font-medium transition-colors">
                 <i class="fas fa-plus mr-2"></i>Invite Teacher
             </a>
@@ -20,7 +20,7 @@
         <!-- School Filter -->
         <div class="mb-6">
             <label class="block text-sm font-medium text-gray-700 mb-2">Filter by School</label>
-            <select hx-get="{% url 'accounts:invitation_list' %}" 
+            <select hx-get="{% url 'accounts:invitation_list' %}"
                     hx-trigger="change"
                     hx-target="#invitation-list"
                     hx-include="[name='status']"
@@ -36,7 +36,7 @@
         <!-- Status Filter -->
         <div class="mb-6">
             <label class="block text-sm font-medium text-gray-700 mb-2">Filter by Status</label>
-            <select hx-get="{% url 'accounts:invitation_list' %}" 
+            <select hx-get="{% url 'accounts:invitation_list' %}"
                     hx-trigger="change"
                     hx-target="#invitation-list"
                     hx-include="[name='school']"
@@ -123,16 +123,16 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div class="flex justify-end space-x-2">
-                                            <a href="{% url 'accounts:invitation_detail' invitation.pk %}" 
+                                            <a href="{% url 'accounts:invitation_detail' invitation.pk %}"
                                                class="text-blue-600 hover:text-blue-900">View</a>
-                                            
+
                                             {% if invitation.is_valid and invitation.can_retry %}
                                                 <button hx-post="{% url 'accounts:resend_invitation' invitation.pk %}"
                                                         hx-target="closest tr"
                                                         hx-swap="outerHTML"
                                                         class="text-green-600 hover:text-green-900">Resend</button>
                                             {% endif %}
-                                            
+
                                             {% if invitation.is_valid %}
                                                 <button hx-post="{% url 'accounts:cancel_invitation' invitation.pk %}"
                                                         hx-target="closest tr"
@@ -201,7 +201,7 @@
                     <i class="fas fa-envelope text-gray-400 text-6xl mb-4"></i>
                     <h3 class="text-lg font-medium text-gray-900 mb-2">No invitations found</h3>
                     <p class="text-gray-500 mb-6">You haven't sent any teacher invitations yet.</p>
-                    <a href="{% url 'accounts:invitation_create' %}" 
+                    <a href="{% url 'accounts:invitation_create' %}"
                        class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-md font-medium transition-colors">
                         Send Your First Invitation
                     </a>

@@ -509,7 +509,7 @@ class PaymentService:
             purchase_transaction: Completed transaction containing hour information
         """
         # Get or create student account balance
-        student_balance, created = StudentAccountBalance.objects.get_or_create(
+        student_balance, _created = StudentAccountBalance.objects.get_or_create(
             student=purchase_transaction.student,
             defaults={
                 "hours_purchased": Decimal("0.00"),
@@ -541,7 +541,7 @@ class PaymentService:
             purchase_transaction: Completed transaction
         """
         # Get or create student account balance
-        student_balance, created = StudentAccountBalance.objects.get_or_create(
+        student_balance, _created = StudentAccountBalance.objects.get_or_create(
             student=purchase_transaction.student,
             defaults={
                 "hours_purchased": Decimal("0.00"),

@@ -89,7 +89,7 @@ class SchoolBillingSettings(models.Model):
     trial_cost_absorption: models.CharField = models.CharField(
         _("trial cost absorption"),
         max_length=20,
-        choices=TrialCostAbsorption.choices,
+        choices=TrialCostAbsorption,
         default=TrialCostAbsorption.SCHOOL,
         help_text=_("Who absorbs the cost of trial classes"),
     )
@@ -97,7 +97,7 @@ class SchoolBillingSettings(models.Model):
     teacher_payment_frequency: models.CharField = models.CharField(
         _("teacher payment frequency"),
         max_length=20,
-        choices=PaymentFrequency.choices,
+        choices=PaymentFrequency,
         default=PaymentFrequency.MONTHLY,
         help_text=_("How frequently teachers are paid"),
     )
@@ -141,7 +141,7 @@ class TeacherCompensationRule(models.Model):
         verbose_name=_("school"),
     )
 
-    rule_type: models.CharField = models.CharField(_("rule type"), max_length=20, choices=CompensationRuleType.choices)
+    rule_type: models.CharField = models.CharField(_("rule type"), max_length=20, choices=CompensationRuleType)
 
     # For grade-specific rules
     grade_level: models.CharField = models.CharField(
@@ -250,7 +250,7 @@ class ClassSession(models.Model):
     start_time: models.TimeField = models.TimeField(_("start time"))
     end_time: models.TimeField = models.TimeField(_("end time"))
 
-    session_type: models.CharField = models.CharField(_("session type"), max_length=20, choices=SessionType.choices)
+    session_type: models.CharField = models.CharField(_("session type"), max_length=20, choices=SessionType)
 
     grade_level: models.CharField = models.CharField(
         _("grade level"),
@@ -280,7 +280,7 @@ class ClassSession(models.Model):
     )
 
     status: models.CharField = models.CharField(
-        _("status"), max_length=20, choices=SessionStatus.choices, default=SessionStatus.SCHEDULED
+        _("status"), max_length=20, choices=SessionStatus, default=SessionStatus.SCHEDULED
     )
 
     # Session tracking fields
@@ -473,7 +473,7 @@ class TeacherPaymentEntry(models.Model):
     payment_status: models.CharField = models.CharField(
         _("payment status"),
         max_length=20,
-        choices=PaymentStatus.choices,
+        choices=PaymentStatus,
         default=PaymentStatus.PENDING,
     )
 
@@ -591,7 +591,7 @@ class PurchaseTransaction(models.Model):
     transaction_type: models.CharField = models.CharField(
         _("transaction type"),
         max_length=20,
-        choices=TransactionType.choices,
+        choices=TransactionType,
         help_text=_("Type of transaction (package or subscription)"),
     )
 
@@ -606,7 +606,7 @@ class PurchaseTransaction(models.Model):
     payment_status: models.CharField = models.CharField(
         _("payment status"),
         max_length=20,
-        choices=TransactionPaymentStatus.choices,
+        choices=TransactionPaymentStatus,
         default=TransactionPaymentStatus.PENDING,
         help_text=_("Current payment status"),
     )
@@ -745,7 +745,7 @@ class PricingPlan(models.Model):
     plan_type: models.CharField = models.CharField(
         _("plan type"),
         max_length=20,
-        choices=PlanType.choices,
+        choices=PlanType,
         help_text=_("Type of plan: package (expires) or subscription (recurring)"),
     )
 
@@ -1532,7 +1532,7 @@ class PurchaseApprovalRequest(models.Model):
     request_type: models.CharField = models.CharField(
         _("request type"),
         max_length=20,
-        choices=PurchaseRequestType.choices,
+        choices=PurchaseRequestType,
         help_text=_("Type of purchase being requested"),
     )
 
@@ -1540,7 +1540,7 @@ class PurchaseApprovalRequest(models.Model):
     status: models.CharField = models.CharField(
         _("status"),
         max_length=20,
-        choices=PurchaseApprovalStatus.choices,
+        choices=PurchaseApprovalStatus,
         default=PurchaseApprovalStatus.PENDING,
         help_text=_("Current status of the approval request"),
     )
@@ -1705,7 +1705,8 @@ class PurchaseApprovalRequest(models.Model):
 
         # Ensure the guardian-student relationship matches the student and guardian
         if self.guardian_student_relationship and (
-            self.guardian_student_relationship.guardian != self.guardian or self.guardian_student_relationship.student != self.student
+            self.guardian_student_relationship.guardian != self.guardian
+            or self.guardian_student_relationship.student != self.student
         ):
             raise ValidationError(_("Guardian-student relationship must match the student and guardian"))
 
@@ -1773,7 +1774,7 @@ class WebhookEventLog(models.Model):
     status: models.CharField = models.CharField(
         _("status"),
         max_length=20,
-        choices=WebhookEventStatus.choices,
+        choices=WebhookEventStatus,
         default=WebhookEventStatus.RECEIVED,
         help_text=_("Current processing status of the webhook event"),
     )
@@ -1980,11 +1981,11 @@ class PaymentDispute(models.Model):
     )
 
     reason: models.CharField = models.CharField(
-        _("dispute reason"), max_length=50, choices=DisputeReason.choices, help_text=_("Reason for the dispute")
+        _("dispute reason"), max_length=50, choices=DisputeReason, help_text=_("Reason for the dispute")
     )
 
     status: models.CharField = models.CharField(
-        _("status"), max_length=50, choices=DisputeStatus.choices, help_text=_("Current status of the dispute")
+        _("status"), max_length=50, choices=DisputeStatus, help_text=_("Current status of the dispute")
     )
 
     # Evidence and response
@@ -2067,7 +2068,7 @@ class AdminAction(models.Model):
     action_type: models.CharField = models.CharField(
         _("action type"),
         max_length=50,
-        choices=AdminActionType.choices,
+        choices=AdminActionType,
         help_text=_("Type of administrative action performed"),
     )
 
@@ -2194,14 +2195,14 @@ class FraudAlert(models.Model):
     severity: models.CharField = models.CharField(
         _("severity"),
         max_length=20,
-        choices=FraudAlertSeverity.choices,
+        choices=FraudAlertSeverity,
         help_text=_("Severity level of the fraud alert"),
     )
 
     status: models.CharField = models.CharField(
         _("status"),
         max_length=20,
-        choices=FraudAlertStatus.choices,
+        choices=FraudAlertStatus,
         default=FraudAlertStatus.ACTIVE,
         help_text=_("Current status of the fraud alert"),
     )

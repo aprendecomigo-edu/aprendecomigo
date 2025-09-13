@@ -1,9 +1,9 @@
-<form hx-post="{% url 'accounts:signin' %}" 
-      hx-target="#signin-form-container" 
+<form hx-post="{% url 'accounts:signin' %}"
+      hx-target="#signin-form-container"
       hx-swap="innerHTML"
       class="w-full space-y-8">
     {% csrf_token %}
-    
+
     <!-- Email or Phone Field with Join Component -->
     <div class="form-control">
         <label class="label">
@@ -13,8 +13,8 @@
             <div class="join w-full htmx-request:opacity-50 htmx-request:pointer-events-none transition-opacity">
                 <div class="flex-1">
                     <label class="input validator join-item glass-light w-full">
-                        <input type="text" 
-                               name="email" 
+                        <input type="text"
+                               name="email"
                                value="{{ email|default:'' }}"
                                placeholder="your_email@example.com"
                                pattern="^[^\s@]+@[^\s@]+\.[^\s@]+$"
@@ -25,7 +25,7 @@
                     <div class="validator-hint">
                         Must be a valid email address
                     </div>
-                    
+
                     <!-- Server-side error message -->
                     {% if error %}
                     <div class="validator-hint text-error">
@@ -33,12 +33,12 @@
                     </div>
                     {% endif %}
                 </div>
-                
+
                 <button type="submit" class="btn btn-neutral join-item bg-gradient-primary glass-light shrink-0">
                     Send Code
                 </button>
             </div>
-            
+
             <!-- Loading Spinner Overlay -->
             <div class="htmx-indicator absolute inset-0 flex items-center justify-center bg-base-100/50 backdrop-blur-sm rounded-lg opacity-0 invisible">
                 <div class="loading loading-spinner loading-md text-primary"></div>

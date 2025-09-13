@@ -9,16 +9,16 @@
         .offline-animation {
             animation: float 3s ease-in-out infinite;
         }
-        
+
         @keyframes float {
             0%, 100% { transform: translateY(0px); }
             50% { transform: translateY(-10px); }
         }
-        
+
         .pulse-dot {
             animation: pulse 2s infinite;
         }
-        
+
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
@@ -34,17 +34,17 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M18.364 5.636l-12.728 12.728m0 0L8 21l-2.828-2.828L8 15.344m-2.828 2.828L2.344 21M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
             </div>
-            
+
             <!-- Title -->
             <h1 class="text-3xl font-bold text-gray-900 mb-4">
                 You're Offline
             </h1>
-            
+
             <!-- Description -->
             <p class="text-lg text-gray-600 mb-8">
                 It looks like you're not connected to the internet. Don't worry, you can still access some features while offline.
             </p>
-            
+
             <!-- Status Indicator -->
             <div class="bg-white rounded-lg shadow-sm border p-6 mb-8">
                 <div class="flex items-center justify-between">
@@ -55,13 +55,13 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Available Actions -->
             <div class="space-y-4">
                 <h2 class="text-lg font-semibold text-gray-900 mb-4">
                     What you can do:
                 </h2>
-                
+
                 <div class="bg-white rounded-lg shadow-sm border p-4 text-left">
                     <div class="flex items-center">
                         <svg class="h-5 w-5 text-green-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -70,7 +70,7 @@
                         <span class="text-sm text-gray-700">View cached course materials</span>
                     </div>
                 </div>
-                
+
                 <div class="bg-white rounded-lg shadow-sm border p-4 text-left">
                     <div class="flex items-center">
                         <svg class="h-5 w-5 text-green-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -79,7 +79,7 @@
                         <span class="text-sm text-gray-700">Access your lesson schedule</span>
                     </div>
                 </div>
-                
+
                 <div class="bg-white rounded-lg shadow-sm border p-4 text-left">
                     <div class="flex items-center">
                         <svg class="h-5 w-5 text-green-500 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -89,25 +89,25 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Action Buttons -->
             <div class="mt-8 space-y-3">
-                <button onclick="window.history.back()" 
+                <button onclick="window.history.back()"
                         class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition duration-200">
                     Go Back
                 </button>
-                
-                <button onclick="window.location.reload()" 
+
+                <button onclick="window.location.reload()"
                         class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-4 rounded-lg transition duration-200">
                     Try Again
                 </button>
-                
-                <a href="/" 
+
+                <a href="/"
                    class="block w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg text-center transition duration-200">
                     Go to Home
                 </a>
             </div>
-            
+
             <!-- Sync Status -->
             <div class="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200" id="sync-status" style="display: none;">
                 <div class="flex items-center">
@@ -127,15 +127,15 @@
             const statusIndicator = document.getElementById('connection-status');
             const statusText = document.getElementById('status-text');
             const syncStatus = document.getElementById('sync-status');
-            
+
             if (navigator.onLine) {
                 statusIndicator.innerHTML = `
                     <div class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
                     <span class="text-sm text-green-600">Online</span>
                 `;
-                
+
                 syncStatus.style.display = 'block';
-                
+
                 // Redirect to home after a brief delay
                 setTimeout(() => {
                     window.location.href = '/';
@@ -148,14 +148,14 @@
                 syncStatus.style.display = 'none';
             }
         }
-        
+
         // Check connection status on load
         updateConnectionStatus();
-        
+
         // Listen for connection changes
         window.addEventListener('online', updateConnectionStatus);
         window.addEventListener('offline', updateConnectionStatus);
-        
+
         // Retry connection every 10 seconds
         setInterval(updateConnectionStatus, 10000);
     </script>

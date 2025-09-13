@@ -8,7 +8,7 @@
             </svg>
         </div>
     </div>
-    
+
     <!-- Success message -->
     <div class="space-y-2">
         <h3 class="text-xl font-bold text-gray-900 font-primary">Welcome, {{ full_name }}!</h3>
@@ -17,20 +17,20 @@
             <span class="font-medium text-gray-900">{{ email }}</span>
         </p>
     </div>
-    
+
     <!-- Continue button -->
     <div class="mt-6">
-        <a href="{% url 'accounts:verify_otp' %}" 
+        <a href="{% url 'accounts:verify_otp' %}"
            class="inline-block w-full bg-gradient-primary py-4 rounded-xl active:scale-98 transition-all shadow-lg text-white text-center font-bold font-primary text-base">
             Enter Verification Code
         </a>
     </div>
-    
+
     <!-- Resend option -->
     <div class="mt-4">
         <p class="text-sm text-gray-600 font-body">
             Didn't receive the code?
-            <button hx-post="{% url 'accounts:resend_code' %}" 
+            <button hx-post="{% url 'accounts:resend_code' %}"
                     hx-target="#signup-form-container"
                     class="text-blue-600 hover:text-blue-800 font-medium underline">
                 Resend

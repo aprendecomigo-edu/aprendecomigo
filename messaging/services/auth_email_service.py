@@ -76,18 +76,16 @@ The Aprende Comigo Team"""
             "success": True,
             "email": email,
             "sent_at": datetime.now().isoformat(),
-            "is_verification": is_verification
+            "is_verification": is_verification,
         }
     except Exception as e:
         logger.error(f"{'Verification' if is_verification else 'Magic link'} email sending failed: {e!s}")
-        return {
-            "success": False,
-            "error": f"Email sending failed: {e!s}",
-            "email": email
-        }
+        return {"success": False, "error": f"Email sending failed: {e!s}", "email": email}
 
 
-def send_sms_otp(phone_number: str, otp_code: str, user_name: str | None = None, is_verification: bool = False) -> dict[str, Any]:
+def send_sms_otp(
+    phone_number: str, otp_code: str, user_name: str | None = None, is_verification: bool = False
+) -> dict[str, Any]:
     """
     Send SMS OTP using external SMS service
 
@@ -124,19 +122,20 @@ If you didn't request this code, please ignore this message."""
         result = send_sms(to=phone_number, message=message)
 
         # Add additional metadata for OTP context
-        result.update({
-            "phone_number": phone_number,
-            "sent_at": datetime.now().isoformat(),
-            "service": "otp_verification",
-        })
+        result.update(
+            {
+                "phone_number": phone_number,
+                "sent_at": datetime.now().isoformat(),
+                "service": "otp_verification",
+            }
+        )
 
         # Log OTP code in development mode for debugging
-        if settings.DEBUG:
-            if result.get('debug'):
-                logger.info(f"[SMS DEBUG] OTP Code for {phone_number}: {otp_code}")
-                result["debug_otp_code"] = otp_code
+        if settings.DEBUG and result.get("debug"):
+            logger.info(f"[SMS DEBUG] OTP Code for {phone_number}: {otp_code}")
+            result["debug_otp_code"] = otp_code
 
-        if result['success']:
+        if result["success"]:
             logger.info(f"SMS OTP sent successfully to {phone_number}: {result.get('message_id', 'N/A')}")
         else:
             logger.error(f"SMS OTP failed for {phone_number}: {result.get('error', 'Unknown error')}")
@@ -149,7 +148,5 @@ If you didn't request this code, please ignore this message."""
             "success": False,
             "error": f"SMS service error: {e!s}",
             "phone_number": phone_number,
-            "sent_at": datetime.now().isoformat()
+            "sent_at": datetime.now().isoformat(),
         }
-
-

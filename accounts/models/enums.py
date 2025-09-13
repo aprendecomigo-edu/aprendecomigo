@@ -176,6 +176,3 @@ class InvitationStatus(models.TextChoices):
     DECLINED = "declined", _("Declined")
     EXPIRED = "expired", _("Expired")
     CANCELLED = "cancelled", _("Cancelled")
-
-
-

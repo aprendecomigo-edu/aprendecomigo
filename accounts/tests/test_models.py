@@ -108,9 +108,7 @@ class StudentProfileTests(TestCase):
         )
         # Create required EducationalSystem
         self.educational_system = EducationalSystem.objects.create(
-            name="Test System",
-            code="pt",
-            description="Test educational system"
+            name="Test System", code="pt", description="Test educational system"
         )
 
     def test_student_profile_creation_with_required_fields(self):
@@ -378,102 +376,81 @@ class ProgressiveVerificationModelTests(TestCase):
 
     def test_user_verification_fields_default_to_false(self):
         """Test that verification fields default to False for new users."""
-        user = User.objects.create_user(
-            email="test@example.com",
-            name="Test User"
-        )
-        
+        user = User.objects.create_user(email="test@example.com", name="Test User")
+
         self.assertFalse(user.email_verified)
         self.assertFalse(user.phone_verified)
         self.assertIsNone(user.verification_required_after)
 
     def test_verification_required_after_field_is_nullable(self):
         """Test that verification_required_after can be null for legacy users."""
-        user = User.objects.create_user(
-            email="legacy@example.com",
-            name="Legacy User"
-        )
+        user = User.objects.create_user(email="legacy@example.com", name="Legacy User")
         user.verification_required_after = None
         user.save()
-        
+
         # Should save without error
         user.refresh_from_db()
         self.assertIsNone(user.verification_required_after)
 
     def test_verification_required_after_field_accepts_datetime(self):
         """Test that verification_required_after accepts datetime values."""
-        user = User.objects.create_user(
-            email="datetime@example.com",
-            name="DateTime User"
-        )
-        
+        user = User.objects.create_user(email="datetime@example.com", name="DateTime User")
+
         deadline = timezone.now() + datetime.timedelta(hours=24)
         user.verification_required_after = deadline
         user.save()
-        
+
         user.refresh_from_db()
         self.assertEqual(user.verification_required_after, deadline)
 
     def test_user_can_be_partially_verified_email_only(self):
         """Test that user can have only email verified."""
-        user = User.objects.create_user(
-            email="email_only@example.com",
-            name="Email Only User"
-        )
-        
+        user = User.objects.create_user(email="email_only@example.com", name="Email Only User")
+
         user.email_verified = True
         user.phone_verified = False
         user.save()
-        
+
         user.refresh_from_db()
         self.assertTrue(user.email_verified)
         self.assertFalse(user.phone_verified)
 
     def test_user_can_be_partially_verified_phone_only(self):
         """Test that user can have only phone verified."""
-        user = User.objects.create_user(
-            email="phone_only@example.com",
-            name="Phone Only User"
-        )
-        
+        user = User.objects.create_user(email="phone_only@example.com", name="Phone Only User")
+
         user.email_verified = False
         user.phone_verified = True
         user.save()
-        
+
         user.refresh_from_db()
         self.assertFalse(user.email_verified)
         self.assertTrue(user.phone_verified)
 
     def test_user_can_be_fully_verified(self):
         """Test that user can have both email and phone verified."""
-        user = User.objects.create_user(
-            email="fully_verified@example.com",
-            name="Fully Verified User"
-        )
-        
+        user = User.objects.create_user(email="fully_verified@example.com", name="Fully Verified User")
+
         user.email_verified = True
         user.phone_verified = True
         user.save()
-        
+
         user.refresh_from_db()
         self.assertTrue(user.email_verified)
         self.assertTrue(user.phone_verified)
 
     def test_verification_fields_work_with_grace_period_logic(self):
         """Test verification fields work correctly with grace period scenarios."""
-        user = User.objects.create_user(
-            email="grace@example.com",
-            name="Grace User"
-        )
-        
+        user = User.objects.create_user(email="grace@example.com", name="Grace User")
+
         # New user in grace period
         user.email_verified = False
         user.phone_verified = False
         user.verification_required_after = timezone.now() + datetime.timedelta(hours=12)
         user.save()
-        
+
         user.refresh_from_db()
-        
+
         # User should be unverified but have time left
         self.assertFalse(user.email_verified)
         self.assertFalse(user.phone_verified)
@@ -481,19 +458,16 @@ class ProgressiveVerificationModelTests(TestCase):
 
     def test_verification_fields_work_with_expired_grace_period(self):
         """Test verification fields work correctly with expired grace period."""
-        user = User.objects.create_user(
-            email="expired@example.com",
-            name="Expired User"
-        )
-        
+        user = User.objects.create_user(email="expired@example.com", name="Expired User")
+
         # User with expired grace period
         user.email_verified = False
         user.phone_verified = False
         user.verification_required_after = timezone.now() - datetime.timedelta(hours=1)
         user.save()
-        
+
         user.refresh_from_db()
-        
+
         # User should be unverified with expired deadline
         self.assertFalse(user.email_verified)
         self.assertFalse(user.phone_verified)
@@ -508,52 +482,42 @@ class ProgressiveVerificationModelTests(TestCase):
             {"email": "user3@example.com", "email_verified": False, "phone_verified": False},
             {"email": "user4@example.com", "email_verified": True, "phone_verified": True},
         ]
-        
+
         for data in users_data:
             user = User.objects.create_user(email=data["email"], name="Test User")
             user.email_verified = data["email_verified"]
             user.phone_verified = data["phone_verified"]
             user.verification_required_after = timezone.now() + datetime.timedelta(hours=24)
             user.save()
-        
+
         # Query for unverified users (neither email nor phone verified)
-        unverified_users = User.objects.filter(
-            email_verified=False,
-            phone_verified=False
-        )
+        unverified_users = User.objects.filter(email_verified=False, phone_verified=False)
         self.assertEqual(unverified_users.count(), 1)
         self.assertEqual(unverified_users.first().email, "user3@example.com")
-        
+
         # Query for fully verified users
-        fully_verified_users = User.objects.filter(
-            email_verified=True,
-            phone_verified=True
-        )
+        fully_verified_users = User.objects.filter(email_verified=True, phone_verified=True)
         self.assertEqual(fully_verified_users.count(), 1)
         self.assertEqual(fully_verified_users.first().email, "user4@example.com")
-        
+
         # Query for partially verified users (at least one method verified)
         from django.db.models import Q
-        partially_verified_users = User.objects.filter(
-            Q(email_verified=True) | Q(phone_verified=True)
-        )
+
+        partially_verified_users = User.objects.filter(Q(email_verified=True) | Q(phone_verified=True))
         self.assertEqual(partially_verified_users.count(), 3)  # user1, user2, user4
 
     def test_verification_fields_migration_compatibility(self):
         """Test that verification fields are compatible with existing users."""
         # This test ensures that the new fields don't break existing users
-        
+
         # Create a user like it would have existed before the progressive verification
-        user = User.objects.create_user(
-            email="legacy@example.com",
-            name="Legacy User"
-        )
-        
+        user = User.objects.create_user(email="legacy@example.com", name="Legacy User")
+
         # Verify defaults are safe for existing logic
         self.assertFalse(user.email_verified)
         self.assertFalse(user.phone_verified)
         self.assertIsNone(user.verification_required_after)
-        
+
         # User should be queryable
         users = User.objects.filter(email=user.email)
         self.assertEqual(users.count(), 1)

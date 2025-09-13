@@ -24,7 +24,7 @@ jobs:
   django-tests:
     name: Pre-Deploy Tests
     runs-on: ubuntu-latest
-    
+
     strategy:
       fail-fast: true
       matrix:
@@ -64,4 +64,3 @@ jobs:
     - name: Run Django tests
       run: |
         python manage.py test --settings=aprendecomigo.settings.development --verbosity=2
-

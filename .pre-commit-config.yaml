@@ -1,0 +1,97 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.13.0
+    hooks:
+      # Run the linter.
+      - id: ruff-check
+        args: [ --fix ]
+      # Run the formatter.
+      - id: ruff-format
+  # Built-in pre-commit hooks for general file hygiene
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      # Remove trailing whitespace
+      - id: trailing-whitespace
+        exclude: \.min\.(js|css)$
+      # Ensure files end with newline
+      - id: end-of-file-fixer
+        exclude: \.min\.(js|css)$
+      # Check for merge conflicts
+      - id: check-merge-conflict
+      # Check YAML syntax
+      - id: check-yaml
+        exclude: \.github/workflows/.*\.ya?ml$
+      # Check JSON syntax
+      - id: check-json
+        exclude: \.vscode/.*\.json$
+      # Check for large files (>500KB)
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      # Prevent committing to main
+      - id: no-commit-to-branch
+        args: ['--branch', 'main']
+
+  # Django-specific checks
+  - repo: https://github.com/adamchainz/django-upgrade
+    rev: 1.28.0
+    hooks:
+      - id: django-upgrade
+        args: [--target-version, "5.2"]
+
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v3.20.0
+    hooks:
+    - id: pyupgrade
+
+  # Security scanning
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.6
+    hooks:
+      - id: bandit
+        args: ['--skip', 'B101,B601']
+        exclude: |
+          (?x)^(
+              .*/tests/.*|
+              .*/migrations/.*|
+              manage\.py
+          )$
+
+  # Pre-push hook for running tests
+  - repo: local
+    hooks:
+      - id: django-tests
+        name: Django Tests
+        entry: bash -c 'source venv/bin/activate && python manage.py test'
+        language: system
+        stages: [pre-push]
+        pass_filenames: false
+        always_run: true
+        verbose: true
+
+# Global configuration
+default_language_version:
+  python: python3.13
+
+# Install both pre-commit and pre-push hooks by default
+default_install_hook_types: [pre-commit, pre-push]
+
+# Exclude patterns
+exclude: |
+  (?x)^(
+      .*/migrations/.*|
+      .*\.min\.(js|css)$|
+      .*/static/.*|
+      .*/media/.*|
+      .*/__pycache__/.*|
+      .*\.pyc$|
+      .git/.*|
+      .venv/.*|
+      venv/.*|
+      build/.*|
+      dist/.*
+  )$
+
+# Performance optimization
+fail_fast: false

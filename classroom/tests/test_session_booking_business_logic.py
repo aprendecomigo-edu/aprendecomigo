@@ -16,13 +16,13 @@ from unittest.mock import Mock, patch
 
 from django.test import TestCase
 
+from finances.services.hour_deduction_service import HourDeductionService, InsufficientBalanceError, PackageExpiredError
 from scheduler.services.session_booking_service import (
     SessionBookingError,
     SessionBookingService,
     SessionCapacityError,
     SessionTimingError,
 )
-from finances.services.hour_deduction_service import HourDeductionService, InsufficientBalanceError, PackageExpiredError
 
 
 class SessionCapacityValidationTest(TestCase):

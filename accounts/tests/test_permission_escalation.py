@@ -47,10 +47,10 @@ class RoleBasedBusinessLogicTestCase(BaseTestCase):
         # Create profiles
         self.teacher_profile = TeacherProfile.objects.create(user=self.teacher, bio="Test teacher")
         self.student_profile = StudentProfile.objects.create(
-            user=self.student, 
-            educational_system=self.default_educational_system, 
-            birth_date="2010-01-01", 
-            school_year="5th"
+            user=self.student,
+            educational_system=self.default_educational_system,
+            birth_date="2010-01-01",
+            school_year="5th",
         )
 
     def test_school_owner_can_have_teacher_role_simultaneously(self):

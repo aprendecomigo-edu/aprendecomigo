@@ -161,7 +161,7 @@ msgctxt "button"
 msgid "Save"
 msgstr "Guardar"  (save a file)
 
-msgctxt "finance" 
+msgctxt "finance"
 msgid "Save"
 msgstr "Poupar"   (save money)
 ```

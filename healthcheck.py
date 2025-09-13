@@ -1,9 +1,10 @@
 """
 Health check views for Railway deployment.
 """
+
 import logging
-import time
 import os
+import time
 from urllib.parse import urlparse
 
 from django.core.cache import cache, caches
@@ -17,38 +18,38 @@ logger = logging.getLogger(__name__)
 
 def _is_railway_environment():
     """Check if we're running in Railway environment."""
-    return os.getenv('RAILWAY_ENVIRONMENT') is not None
+    return os.getenv("RAILWAY_ENVIRONMENT") is not None
 
 
 def _test_redis_connection_with_retry(cache_instance, cache_name, max_retries=3, retry_delay=1):
     """Test Redis connection with retry logic for Railway deployment timing issues."""
     import time
-    
+
     for attempt in range(max_retries):
         try:
             test_key = f"health_check_test_{cache_name}_{int(time.time())}"
             test_value = f"test_value_{attempt}_{int(time.time())}"
-            
+
             # Test write
             cache_instance.set(test_key, test_value, timeout=30)
-            
+
             # Test read
             retrieved_value = cache_instance.get(test_key)
-            
+
             if retrieved_value == test_value:
                 # Cleanup
                 cache_instance.delete(test_key)
                 return {"success": True, "attempt": attempt + 1}
             else:
                 raise Exception(f"Cache read/write mismatch. Expected: {test_value}, Got: {retrieved_value}")
-                
+
         except Exception as e:
             logger.warning(f"Redis {cache_name} connection attempt {attempt + 1}/{max_retries} failed: {e}")
             if attempt < max_retries - 1:
                 time.sleep(retry_delay * (attempt + 1))  # Exponential backoff
             else:
                 return {"success": False, "error": str(e), "attempts": max_retries}
-    
+
     return {"success": False, "error": "Max retries exceeded", "attempts": max_retries}
 
 
@@ -57,24 +58,24 @@ def _test_redis_connection_with_retry(cache_instance, cache_name, max_retries=3,
 def health_check(request):
     """
     Railway deployment health check.
-    
+
     Railway's philosophy: Health check ensures app is ready to receive traffic.
     If Redis/sessions are critical to your app, they must be verified here.
-    
+
     This endpoint:
-    - REQUIRES database connectivity (fails fast if DB down)  
+    - REQUIRES database connectivity (fails fast if DB down)
     - REQUIRES Redis connectivity with retry logic (handles Railway internal network timing)
     - Returns 200 only when ALL critical services are operational
     - Returns 503 if any critical service fails after retries
     """
     logger.info("Starting Railway health check")
-    
+
     try:
         health_data = {
             "status": "ok",
             "timestamp": time.time(),
             "environment": "railway" if _is_railway_environment() else "local",
-            "checks": {}
+            "checks": {},
         }
 
         overall_healthy = True
@@ -89,27 +90,24 @@ def health_check(request):
                 if result and result[0] == 1:
                     health_data["checks"]["database"] = {
                         "status": "healthy",
-                        "details": "PostgreSQL connection successful"
+                        "details": "PostgreSQL connection successful",
                     }
                     logger.info("Database check passed")
                 else:
                     raise Exception("Unexpected query result")
         except Exception as e:
             logger.error("Database health check failed: %s", e)
-            health_data["checks"]["database"] = {
-                "status": "unhealthy",
-                "error": str(e)
-            }
+            health_data["checks"]["database"] = {"status": "unhealthy", "error": str(e)}
             overall_healthy = False
 
-        # 2. Redis default cache check - REQUIRED for Railway  
+        # 2. Redis default cache check - REQUIRED for Railway
         logger.info("Checking Redis default cache")
         redis_default_result = _test_redis_connection_with_retry(cache, "default", max_retries=3 if is_railway else 1)
-        
+
         if redis_default_result["success"]:
             health_data["checks"]["redis_default"] = {
                 "status": "healthy",
-                "details": f"Redis default cache operational (attempt {redis_default_result['attempt']})"
+                "details": f"Redis default cache operational (attempt {redis_default_result['attempt']})",
             }
             logger.info("Redis default cache check passed")
         else:
@@ -117,9 +115,9 @@ def health_check(request):
             health_data["checks"]["redis_default"] = {
                 "status": "unhealthy",
                 "error": redis_default_result["error"],
-                "attempts": redis_default_result.get("attempts", 0)
+                "attempts": redis_default_result.get("attempts", 0),
             }
-            
+
             # Redis is critical for the application - fail health check
             if is_railway:
                 overall_healthy = False
@@ -131,13 +129,15 @@ def health_check(request):
         # 3. Redis sessions cache check - REQUIRED (sessions are critical)
         logger.info("Checking Redis sessions cache")
         try:
-            sessions_cache = caches['sessions']
-            redis_sessions_result = _test_redis_connection_with_retry(sessions_cache, "sessions", max_retries=3 if is_railway else 1)
-            
+            sessions_cache = caches["sessions"]
+            redis_sessions_result = _test_redis_connection_with_retry(
+                sessions_cache, "sessions", max_retries=3 if is_railway else 1
+            )
+
             if redis_sessions_result["success"]:
                 health_data["checks"]["redis_sessions"] = {
                     "status": "healthy",
-                    "details": f"Redis sessions cache operational (attempt {redis_sessions_result['attempt']})"
+                    "details": f"Redis sessions cache operational (attempt {redis_sessions_result['attempt']})",
                 }
                 logger.info("Redis sessions cache check passed")
             else:
@@ -145,35 +145,32 @@ def health_check(request):
                 health_data["checks"]["redis_sessions"] = {
                     "status": "unhealthy",
                     "error": redis_sessions_result["error"],
-                    "attempts": redis_sessions_result.get("attempts", 0)
+                    "attempts": redis_sessions_result.get("attempts", 0),
                 }
-                
+
                 # Sessions are critical - fail health check
                 if is_railway:
                     overall_healthy = False
                     logger.error("Redis sessions cache is required - health check failed")
                 else:
                     logger.warning("Redis sessions cache failed in local environment")
-                    
+
         except Exception as e:
             logger.error("Failed to access sessions cache: %s", e)
-            health_data["checks"]["redis_sessions"] = {
-                "status": "unhealthy",
-                "error": f"Sessions cache error: {str(e)}"
-            }
+            health_data["checks"]["redis_sessions"] = {"status": "unhealthy", "error": f"Sessions cache error: {e!s}"}
             overall_healthy = False
 
         # 4. Railway Redis configuration validation
         if is_railway:
-            redis_url = os.getenv('REDIS_URL', '')
+            redis_url = os.getenv("REDIS_URL", "")
             parsed_redis = urlparse(redis_url) if redis_url else None
-            
+
             health_data["checks"]["redis_config"] = {
                 "redis_url_present": bool(redis_url),
                 "redis_host": parsed_redis.hostname if parsed_redis else None,
-                "is_railway_internal": "railway.internal" in redis_url if redis_url else False
+                "is_railway_internal": "railway.internal" in redis_url if redis_url else False,
             }
-            
+
             if not redis_url:
                 logger.error("REDIS_URL environment variable not set")
                 overall_healthy = False
@@ -181,18 +178,13 @@ def health_check(request):
         # Return final status
         if not overall_healthy:
             health_data["status"] = "unhealthy"
-            failed_checks = [k for k, v in health_data["checks"].items() 
-                           if v.get("status") == "unhealthy"]
+            failed_checks = [k for k, v in health_data["checks"].items() if v.get("status") == "unhealthy"]
             logger.error("Health check FAILED - returning 503. Failed: %s", failed_checks)
             return JsonResponse(health_data, status=503)
 
         logger.info("Health check PASSED - returning 200")
         return JsonResponse(health_data, status=200)
-        
+
     except Exception as e:
         logger.error("Health check crashed: %s", e, exc_info=True)
-        return JsonResponse({
-            "status": "error",
-            "error": str(e),
-            "timestamp": time.time()
-        }, status=500)
+        return JsonResponse({"status": "error", "error": str(e), "timestamp": time.time()}, status=500)

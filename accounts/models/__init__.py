@@ -39,8 +39,8 @@ from .permissions import (
     StudentPermission,
 )
 from .profiles import (
-    GuardianStudentRelationship,
     GuardianProfile,
+    GuardianStudentRelationship,
     StudentProfile,
     TeacherProfile,
 )
@@ -78,11 +78,11 @@ __all__ = [
     "EducationalSystemType",
     "EmailDeliveryStatus",
     "EmailIntegrationChoices",
-    "InvitationStatus",
-    "LanguageChoices",
+    "GuardianProfile",
     # Profiles
     "GuardianStudentRelationship",
-    "GuardianProfile",
+    "InvitationStatus",
+    "LanguageChoices",
     # Schools
     "School",
     "SchoolActivity",

@@ -24,14 +24,14 @@
                     </div>
                 {% endif %}
             </div>
-            
+
             <!-- Transaction Details -->
             <div>
                 <div class="flex items-center space-x-2">
                     <h4 class="text-sm font-medium text-gray-900">
                         {{ transaction.transaction_type.name }}
                     </h4>
-                    
+
                     <!-- Payment Status Badge -->
                     {% if transaction.payment_status %}
                         {% if transaction.payment_status == "COMPLETED" %}
@@ -49,7 +49,7 @@
                         {% endif %}
                     {% endif %}
                 </div>
-                
+
                 <p class="text-sm text-gray-500">
                     {{ transaction.created_at|date:"M d, Y H:i" }}
                     {% if transaction.description %}
@@ -58,7 +58,7 @@
                 </p>
             </div>
         </div>
-        
+
         <!-- Transaction Amount/Hours -->
         <div class="text-right">
             <div class="text-sm font-medium text-gray-900">
@@ -68,13 +68,13 @@
                     <span class="text-blue-600">-{{ transaction.tutoring_hours_consumed }} hours</span>
                 {% endif %}
             </div>
-            
+
             {% if transaction.amount_paid %}
                 <div class="text-sm text-gray-500">
                     £{{ transaction.amount_paid }}
                 </div>
             {% endif %}
-            
+
             {% if transaction.receipt_number %}
                 <div class="text-xs text-gray-400 mt-1">
                     Receipt: {{ transaction.receipt_number }}

@@ -6,7 +6,7 @@ To ensure that pushes and merges to `main` and `staging` branches only succeed w
 
 ### 1. Navigate to Branch Protection Rules
 1. Go to your repository on GitHub
-2. Click **Settings** → **Branches** 
+2. Click **Settings** → **Branches**
 3. Click **Add rule** for each protected branch
 
 ### 2. Configure Protection for `main` Branch
@@ -21,7 +21,7 @@ To ensure that pushes and merges to `main` and `staging` branches only succeed w
   - ✅ **Require branches to be up to date before merging**
   - **Required status checks:** `Pre-Deploy Tests`
 - ✅ **Require conversation resolution before merging**
-- ✅ **Restrict pushes that create files** 
+- ✅ **Restrict pushes that create files**
 - ✅ **Do not allow bypassing the above settings**
 
 ### 3. Configure Protection for `staging` Branch
@@ -30,7 +30,7 @@ To ensure that pushes and merges to `main` and `staging` branches only succeed w
 
 **Required settings:**
 - ✅ **Require status checks to pass before merging**
-  - ✅ **Require branches to be up to date before merging**  
+  - ✅ **Require branches to be up to date before merging**
   - **Required status checks:** `Pre-Deploy Tests`
 - ✅ **Restrict pushes that create files**
 - ✅ **Do not allow bypassing the above settings**

@@ -72,14 +72,13 @@ class RecurringClassScheduleAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at", "updated_at", "cancelled_at", "paused_at")
     filter_horizontal = ("students",)
 
+    @admin.display(description="Students")
     def get_students_display(self, obj):
         """Display students in a readable format"""
         student_names = [student.name for student in obj.students.all()[:3]]
         if obj.students.count() > 3:
             student_names.append(f"... (+{obj.students.count() - 3} more)")
         return ", ".join(student_names) if student_names else "No students"
-
-    get_students_display.short_description = "Students"  # type: ignore[attr-defined]
 
     fieldsets = (
         ("Class Information", {"fields": ("title", "description", "class_type", "max_participants")}),

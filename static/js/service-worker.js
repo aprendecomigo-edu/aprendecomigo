@@ -81,7 +81,7 @@ self.addEventListener('fetch', (event) => {
         if (response) {
           return response;
         }
-        
+
         // Otherwise fetch from network
         return fetch(event.request)
           .then((response) => {
@@ -92,7 +92,7 @@ self.addEventListener('fetch', (event) => {
 
             // Clone response before caching
             const responseToCache = response.clone();
-            
+
             caches.open(CACHE_NAME)
               .then((cache) => {
                 cache.put(event.request, responseToCache);
@@ -117,12 +117,12 @@ self.addEventListener('fetch', (event) => {
 // Background sync for offline actions
 self.addEventListener('sync', (event) => {
   log('Service Worker: Background sync', event.tag);
-  
+
   if (event.tag === 'chat-message-sync') {
     // Handle offline chat message queue
     event.waitUntil(syncOfflineMessages());
   }
-  
+
   if (event.tag === 'file-upload-sync') {
     // Handle offline file upload queue
     event.waitUntil(syncOfflineUploads());
@@ -132,7 +132,7 @@ self.addEventListener('sync', (event) => {
 // Push notification handling
 self.addEventListener('push', (event) => {
   log('Service Worker: Push notification received');
-  
+
   const options = {
     body: event.data ? event.data.text() : 'New notification from Aprende Comigo',
     icon: '/static/images/icon-192.png',
@@ -162,9 +162,9 @@ self.addEventListener('push', (event) => {
 // Notification click handling
 self.addEventListener('notificationclick', (event) => {
   log('Service Worker: Notification clicked', event.action);
-  
+
   event.notification.close();
-  
+
   if (event.action === 'open') {
     event.waitUntil(
       clients.openWindow('/')
@@ -177,7 +177,7 @@ async function syncOfflineMessages() {
   try {
     const cache = await caches.open('offline-queue');
     const requests = await cache.keys();
-    
+
     for (const request of requests) {
       if (request.url.includes('/api/messages/')) {
         // Attempt to send cached message
@@ -197,7 +197,7 @@ async function syncOfflineUploads() {
   try {
     const cache = await caches.open('offline-queue');
     const requests = await cache.keys();
-    
+
     for (const request of requests) {
       if (request.url.includes('/upload/')) {
         // Attempt to upload cached file

@@ -17,13 +17,10 @@ app_name = "scheduler"
 urlpatterns = [
     # === MAIN PWA VIEWS (HTMX/Server-side rendering) ===
     # Note: Calendar view is now accessed via main URLs at /calendar/
-
     # Class scheduling - main interface
     path("", ClassScheduleTemplateView.as_view(), name="schedule-home"),
-
     # Teacher availability - main interface
     path("availability/", TeacherAvailabilityTemplateView.as_view(), name="availability-home"),
-
     # Class schedule actions - HTMX endpoints
     path("schedules/<int:schedule_id>/cancel/", class_schedule_cancel, name="schedule-cancel"),
     path("schedules/<int:schedule_id>/confirm/", class_schedule_confirm, name="schedule-confirm"),

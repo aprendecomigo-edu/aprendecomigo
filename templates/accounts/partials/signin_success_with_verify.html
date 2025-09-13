@@ -8,7 +8,7 @@
             </svg>
         </div>
     </div>
-    
+
     <!-- Success message -->
     <div class="space-y-2 mb-6">
         <h3 class="card-title color-primary font-primary text-2xl font-bold justify-center">Code Sent!</h3>
@@ -17,65 +17,65 @@
             <span class="font-medium text-base-content">{{ email }}</span>
         </p>
     </div>
-    
+
     <!-- Verification Form -->
-    <form hx-post="{% url 'accounts:verify_otp' %}" 
-          hx-target="#signin-form-container" 
+    <form hx-post="{% url 'accounts:verify_otp' %}"
+          hx-target="#signin-form-container"
           hx-swap="innerHTML"
           class="w-full space-y-6">
         {% csrf_token %}
-        
+
         <!-- Verification Code Field with 6 Separate Inputs -->
         <div class="w-full">
             <label class="block mb-4 text-center">
                 <span class="font-primary font-medium text-gray-700">Enter the 6-digit code</span>
             </label>
-            
+
             <div class="relative">
                 <!-- 6 Individual Input Fields -->
                 <div class="flex justify-center gap-3 mb-4" id="otp-inputs">
-                    <input type="text" 
+                    <input type="text"
                            class="otp-input w-12 h-12 text-center text-xl font-mono border-2 border-gray-300 rounded-lg focus:border-primary focus:outline-none transition-colors"
-                           maxlength="1" 
-                           inputmode="numeric" 
-                           pattern="[0-9]" 
-                           data-index="0" 
+                           maxlength="1"
+                           inputmode="numeric"
+                           pattern="[0-9]"
+                           data-index="0"
                            autofocus />
-                    <input type="text" 
+                    <input type="text"
                            class="otp-input w-12 h-12 text-center text-xl font-mono border-2 border-gray-300 rounded-lg focus:border-primary focus:outline-none transition-colors"
-                           maxlength="1" 
-                           inputmode="numeric" 
-                           pattern="[0-9]" 
+                           maxlength="1"
+                           inputmode="numeric"
+                           pattern="[0-9]"
                            data-index="1" />
-                    <input type="text" 
+                    <input type="text"
                            class="otp-input w-12 h-12 text-center text-xl font-mono border-2 border-gray-300 rounded-lg focus:border-primary focus:outline-none transition-colors"
-                           maxlength="1" 
-                           inputmode="numeric" 
-                           pattern="[0-9]" 
+                           maxlength="1"
+                           inputmode="numeric"
+                           pattern="[0-9]"
                            data-index="2" />
-                    <input type="text" 
+                    <input type="text"
                            class="otp-input w-12 h-12 text-center text-xl font-mono border-2 border-gray-300 rounded-lg focus:border-primary focus:outline-none transition-colors"
-                           maxlength="1" 
-                           inputmode="numeric" 
-                           pattern="[0-9]" 
+                           maxlength="1"
+                           inputmode="numeric"
+                           pattern="[0-9]"
                            data-index="3" />
-                    <input type="text" 
+                    <input type="text"
                            class="otp-input w-12 h-12 text-center text-xl font-mono border-2 border-gray-300 rounded-lg focus:border-primary focus:outline-none transition-colors"
-                           maxlength="1" 
-                           inputmode="numeric" 
-                           pattern="[0-9]" 
+                           maxlength="1"
+                           inputmode="numeric"
+                           pattern="[0-9]"
                            data-index="4" />
-                    <input type="text" 
+                    <input type="text"
                            class="otp-input w-12 h-12 text-center text-xl font-mono border-2 border-gray-300 rounded-lg focus:border-primary focus:outline-none transition-colors"
-                           maxlength="1" 
-                           inputmode="numeric" 
-                           pattern="[0-9]" 
+                           maxlength="1"
+                           inputmode="numeric"
+                           pattern="[0-9]"
                            data-index="5" />
                 </div>
-                
+
                 <!-- Hidden input for form submission -->
                 <input type="hidden" name="verification_code" id="verification-code-hidden" />
-                
+
                 <!-- Server-side error message -->
                 {% if error %}
                 <div class="flex items-center justify-center mt-2 text-red-600">
@@ -85,7 +85,7 @@
                     <span class="font-body text-sm">{{ error }}</span>
                 </div>
                 {% endif %}
-                
+
                 <!-- Loading Spinner Overlay -->
                 <div class="htmx-indicator absolute inset-0 flex items-center justify-center bg-base-100/50 backdrop-blur-sm rounded-lg opacity-0 invisible">
                     <div class="loading loading-spinner loading-md text-primary"></div>
@@ -95,7 +95,7 @@
 
         <!-- Submit Button -->
         <div class="w-full mt-8">
-            <button type="submit" 
+            <button type="submit"
                     class="w-full bg-gradient-primary py-4 rounded-xl active:scale-98 transition-all shadow-lg text-white text-center font-bold font-primary text-base">
                 <span class="htmx-indicator">
                     <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -107,13 +107,13 @@
                 <span class="htmx-indicator-none">Verify Code</span>
             </button>
         </div>
-        
+
         <!-- Resend option -->
         <div class="text-center mt-4">
             <p class="text-sm text-base-content/70 font-body">
                 Didn't receive the code?
                 <button type="button"
-                        hx-post="{% url 'accounts:resend_code' %}" 
+                        hx-post="{% url 'accounts:resend_code' %}"
                         hx-target="#signin-form-container"
                         class="link link-primary font-medium">
                     Resend
@@ -127,74 +127,74 @@
     // Handle 6 separate OTP input fields - HTMX compatible version
     (function() {
         'use strict';
-        
+
         // Use a unique identifier to prevent double initialization
         const INITIALIZATION_KEY = 'otp-initialized-' + Date.now();
-        
+
         function initializeOtpInputs() {
             // Skip if already initialized on this page load
             if (document.body.getAttribute('data-' + INITIALIZATION_KEY)) {
                 return;
             }
-            
+
             const otpInputs = document.querySelectorAll('.otp-input');
             const hiddenInput = document.getElementById('verification-code-hidden');
             const form = document.querySelector('form');
-            
+
             // Early return if elements not found
             if (otpInputs.length === 0 || !hiddenInput || !form) {
                 console.warn('OTP initialization: Missing required elements');
                 return;
             }
-            
+
             console.log('OTP initialization: Found', otpInputs.length, 'inputs');
-            
+
             // Mark as initialized
             document.body.setAttribute('data-' + INITIALIZATION_KEY, 'true');
-            
+
             // Update hidden input with combined value
             function updateHiddenInput() {
                 const currentInputs = document.querySelectorAll('.otp-input');
                 const code = Array.from(currentInputs).map(input => input.value).join('');
                 hiddenInput.value = code;
-                
+
                 console.log('OTP code updated:', code);
-                
+
                 // Auto-submit when all 6 digits are entered
                 if (code.length === 6) {
                     console.log('Auto-submitting form with complete code');
                     form.dispatchEvent(new Event('submit'));
                 }
             }
-            
+
             otpInputs.forEach((input, index) => {
                 console.log('Initializing OTP input', index);
-                
+
                 // Handle input
                 input.addEventListener('input', function(e) {
                     console.log('Input event on field', index, 'value:', e.target.value);
-                    
+
                     // Only allow numbers
                     const sanitizedValue = e.target.value.replace(/[^0-9]/g, '');
                     if (e.target.value !== sanitizedValue) {
                         e.target.value = sanitizedValue;
                     }
-                    
+
                     // Move to next input if digit is entered
                     if (e.target.value.length === 1 && index < otpInputs.length - 1) {
                         console.log('Moving focus from', index, 'to', index + 1);
                         const nextInput = otpInputs[index + 1];
-                        
+
                         // Small delay to ensure the current input processing is complete
                         setTimeout(() => {
                             nextInput.focus();
                             nextInput.select();
                         }, 10);
                     }
-                    
+
                     updateHiddenInput();
                 });
-                
+
                 // Handle backspace
                 input.addEventListener('keydown', function(e) {
                     if (e.key === 'Backspace') {
@@ -214,19 +214,19 @@
                         }
                     }
                 });
-                
+
                 // Handle paste
                 input.addEventListener('paste', function(e) {
                     e.preventDefault();
                     const pastedData = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6);
-                    
+
                     console.log('Paste event: data =', pastedData);
-                    
+
                     // Fill inputs with pasted digits
                     for (let i = 0; i < pastedData.length && (index + i) < otpInputs.length; i++) {
                         otpInputs[index + i].value = pastedData[i];
                     }
-                    
+
                     // Focus on next empty input or last input
                     const nextIndex = Math.min(index + pastedData.length, otpInputs.length - 1);
                     setTimeout(() => {
@@ -236,7 +236,7 @@
                     }, 10);
                 });
             });
-            
+
             // Focus first input
             setTimeout(() => {
                 if (otpInputs[0]) {
@@ -245,10 +245,10 @@
                 }
             }, 100);
         }
-        
+
         // Initialize immediately (for dynamic content)
         initializeOtpInputs();
-        
+
         // Also initialize after HTMX content is settled (backup)
         if (window.htmx) {
             document.addEventListener('htmx:afterSettle', function(event) {

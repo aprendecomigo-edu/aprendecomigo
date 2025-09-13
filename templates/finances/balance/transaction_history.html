@@ -12,11 +12,11 @@
                 <p class="text-gray-600">View all your payment and usage transactions</p>
             </div>
             <div class="flex space-x-3">
-                <a href="{% url 'finances:balance-overview' %}" 
+                <a href="{% url 'finances:balance-overview' %}"
                    class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors">
                     Back to Balance
                 </a>
-                <a href="{% url 'finances:payment-form' %}" 
+                <a href="{% url 'finances:payment-form' %}"
                    class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
                     Purchase Hours
                 </a>
@@ -34,13 +34,13 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="divide-y divide-gray-200">
                 {% for transaction in transactions %}
                 {% include 'finances/balance/partials/transaction_item.html' %}
                 {% endfor %}
             </div>
-            
+
             <!-- Pagination -->
             {% if is_paginated %}
             <div class="px-6 py-4 border-t border-gray-200">
@@ -48,17 +48,17 @@
                     <div class="text-sm text-gray-700">
                         Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ paginator.count }} results
                     </div>
-                    
+
                     <div class="flex space-x-2">
                         {% if page_obj.has_previous %}
                             <a href="?page=1" class="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200">First</a>
                             <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200">Previous</a>
                         {% endif %}
-                        
+
                         <span class="px-3 py-2 text-sm bg-blue-600 text-white rounded">
                             Page {{ page_obj.number }} of {{ paginator.num_pages }}
                         </span>
-                        
+
                         {% if page_obj.has_next %}
                             <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200">Next</a>
                             <a href="?page={{ paginator.num_pages }}" class="px-3 py-2 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200">Last</a>
@@ -74,12 +74,12 @@
             <svg class="mx-auto h-24 w-24 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
-            
+
             <h3 class="mt-4 text-lg font-medium text-gray-900">No transactions yet</h3>
             <p class="mt-2 text-gray-500">You haven't made any payments or used any hours yet.</p>
-            
+
             <div class="mt-6">
-                <a href="{% url 'finances:payment-form' %}" 
+                <a href="{% url 'finances:payment-form' %}"
                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
