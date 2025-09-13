@@ -144,6 +144,28 @@ class SchoolPermissionMixin:
             return False
         return user.school_memberships.filter(school=school, is_active=True).exists()
 
+    def get_user_schools_by_role(self, role):
+        """Get schools where user has a specific role."""
+        if not hasattr(self, "request") or not self.request.user.is_authenticated:
+            return School.objects.none()
+
+        return School.objects.filter(
+            memberships__user=self.request.user, memberships__role=role, memberships__is_active=True
+        )
+
+    def has_school_permission(self, school, roles):
+        """Check if user has specific role permissions for a school."""
+        if not hasattr(self, "request") or not self.request.user.is_authenticated:
+            return False
+
+        if self.request.user.is_superuser:
+            return True
+
+        if isinstance(roles, str):
+            roles = [roles]
+
+        return self.request.user.school_memberships.filter(school=school, is_active=True, role__in=roles).exists()
+
 
 class IsSchoolOwnerOrAdminMixin(SchoolPermissionMixin):
     """

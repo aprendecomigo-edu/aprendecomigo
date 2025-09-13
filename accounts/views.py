@@ -149,6 +149,10 @@ class SignInView(View):
             if not user_exists(email):
                 # Log the event for security monitoring
                 logger.warning(f"Authentication attempt with unregistered email: {email}")
+
+                # Set minimal session data for security (prevent email enumeration)
+                request.session["verification_email"] = email
+
                 # Still show success to prevent email enumeration
                 return render(request, "accounts/partials/signin_success_with_verify.html", {"email": email})
 

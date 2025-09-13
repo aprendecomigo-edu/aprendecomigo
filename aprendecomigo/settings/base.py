@@ -82,12 +82,12 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",  # Must come before custom middleware that uses messages
     "sesame.middleware.AuthenticationMiddleware",  # Magic link authentication - must come after AuthenticationMiddleware
-    "accounts.middleware.ProgressiveVerificationMiddleware",  # Progressive verification - must come after auth
+    "accounts.middleware.ProgressiveVerificationMiddleware",  # Progressive verification - must come after auth and messages
     "accounts.middleware.VerificationCompletionMiddleware",  # Handle verification completion
     "waffle.middleware.WaffleMiddleware",  # Feature flags middleware
     "django_htmx.middleware.HtmxMiddleware",  # HTMX request detection
-    "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 

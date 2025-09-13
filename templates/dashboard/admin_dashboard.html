@@ -41,7 +41,7 @@
 
     <!-- Statistics Cards - Mobile Optimized -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6 mb-6 lg:mb-8">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 lg:p-6">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 lg:p-6" data-test="metric-teacher-count" data-value="{{ total_teachers }}">
             <div class="flex flex-col lg:flex-row lg:items-center space-y-2 lg:space-y-0">
                 <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center lg:mr-3">
                     <svg class="w-4 h-4 lg:w-5 lg:h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,7 +55,7 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 lg:p-6">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 lg:p-6" data-test="metric-student-count" data-value="{{ total_students }}">
             <div class="flex flex-col lg:flex-row lg:items-center space-y-2 lg:space-y-0">
                 <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center lg:mr-3">
                     <svg class="w-4 h-4 lg:w-5 lg:h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -69,7 +69,7 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 lg:p-6">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 lg:p-6" data-test="metric-session-count" data-value="{{ active_sessions }}">
             <div class="flex flex-col lg:flex-row lg:items-center space-y-2 lg:space-y-0">
                 <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center lg:mr-3">
                     <svg class="w-4 h-4 lg:w-5 lg:h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,7 +83,7 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 lg:p-6">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 lg:p-6" data-test="metric-monthly-revenue" data-value="{{ revenue_this_month }}" data-currency="EUR">
             <div class="flex flex-col lg:flex-row lg:items-center space-y-2 lg:space-y-0">
                 <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center lg:mr-3">
                     <svg class="w-4 h-4 lg:w-5 lg:h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -208,7 +208,7 @@
     </div>
 
     <!-- Todo List (Full Width Row) with Alpine.js - Mobile Optimized -->
-    <div class="mb-6 lg:mb-8">
+    <div class="mb-6 lg:mb-8" data-test="section-pending-tasks">
         <div x-data="{
             tasks: {{ tasks|default:'[]' }},
             showAddForm: false,
@@ -320,15 +320,16 @@
                 </div>
 
                 <!-- Tasks List -->
-                <div class="space-y-3 max-h-96 overflow-y-auto">
+                <div class="space-y-3 max-h-96 overflow-y-auto" data-test="list-tasks">
                     <!-- Pending Tasks -->
                     <div x-show="pendingTasks.length > 0">
                         <p class="text-xs font-semibold text-gray-700 mb-2">Pendentes</p>
                         <template x-for="task in pendingTasks" :key="task.id">
-                            <div class="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg" data-test="item-task" :data-task-id="task.id" data-task-type="pending">
                                 <button
                                     @click="toggleTask(task.id)"
-                                    class="w-4 h-4 mt-0.5 border-2 border-gray-300 rounded bg-white flex items-center justify-center hover:border-blue-500 transition-colors">
+                                    class="w-4 h-4 mt-0.5 border-2 border-gray-300 rounded bg-white flex items-center justify-center hover:border-blue-500 transition-colors"
+                                    data-test="complete-task">
                                 </button>
                                 <div class="flex-1 min-w-0">
                                     <p class="text-sm font-medium text-gray-900" x-text="task.title"></p>
@@ -343,7 +344,8 @@
                                 </div>
                                 <button
                                     @click="deleteTask(task.id)"
-                                    class="p-1 text-gray-400 hover:text-red-500 transition-colors">
+                                    class="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                                    data-test="dismiss-task">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                     </svg>
