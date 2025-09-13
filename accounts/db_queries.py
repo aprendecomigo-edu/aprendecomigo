@@ -24,12 +24,12 @@ def create_school_owner(
 ) -> tuple[CustomUser, School]:
     """
     Create a user with a school in a single atomic transaction.
-    
+
     This ensures that a user is never created without a school membership.
     If any part fails, the entire operation is rolled back.
     """
     from django.db import transaction
-    
+
     with transaction.atomic():
         # Use CustomUser.objects.create_user for type safety
         # Create the user
@@ -152,6 +152,7 @@ def create_user_school_and_membership(user: CustomUser, school_name: str) -> Sch
         Exception: If school or membership creation fails (by design for transaction rollback)
     """
     import logging
+
     from django.db import transaction
 
     logger = logging.getLogger(__name__)
@@ -168,10 +169,10 @@ def create_user_school_and_membership(user: CustomUser, school_name: str) -> Sch
         # Create school membership as owner (no try/catch - let exceptions bubble up)
         SchoolMembership.objects.create(
             user=user,
-        school=school,
-        role=SchoolRole.SCHOOL_OWNER,
-        is_active=True,
-    )
+            school=school,
+            role=SchoolRole.SCHOOL_OWNER,
+            is_active=True,
+        )
 
     logger.info(f"Created school '{school_name}' and owner membership for user: {user.email}")
     return school

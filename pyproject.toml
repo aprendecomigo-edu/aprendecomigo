@@ -47,7 +47,7 @@ directory = "htmlcov"
 
 [tool.ruff]
 # Ruff is the primary linter for this project
-# 
+#
 # HOW TO RUN LINTING:
 # -------------------
 # Check for issues:       ch django lint
@@ -69,7 +69,7 @@ exclude = [
 [tool.ruff.lint]
 select = [
     "E",     # pycodestyle errors
-    "W",     # pycodestyle warnings  
+    "W",     # pycodestyle warnings
     "F",     # pyflakes
     "I",     # isort
     "B",     # flake8-bugbear

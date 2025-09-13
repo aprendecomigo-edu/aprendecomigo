@@ -12,6 +12,7 @@ from django.test import TestCase
 from accounts.db_queries import create_user_school_and_membership
 from accounts.models import School, SchoolMembership, SchoolRole
 from accounts.tests.test_base import BaseTestCase
+from tests.test_waffle_switches import get_test_password
 
 User = get_user_model()
 
@@ -57,21 +58,11 @@ class UserSchoolConstraintTestCase(BaseTestCase):
     def test_create_user_school_duplicate_name_handling(self):
         """Test creating multiple schools with same name for different users"""
         # Arrange: Create first user and school
-        user1 = User.objects.create_user(
-            email="user1@example.com",
-            name="User One",
-            first_name="User",
-            last_name="One"
-        )
+        user1 = User.objects.create_user(email="user1@example.com", name="User One", first_name="User", last_name="One")
         school1 = create_user_school_and_membership(user1, self.valid_school_name)
 
         # Act: Create second user with same school name
-        user2 = User.objects.create_user(
-            email="user2@example.com",
-            name="User Two",
-            first_name="User",
-            last_name="Two"
-        )
+        user2 = User.objects.create_user(email="user2@example.com", name="User Two", first_name="User", last_name="Two")
         school2 = create_user_school_and_membership(user2, self.valid_school_name)
 
         # Assert: Both schools created successfully (names can be duplicate)
@@ -88,9 +79,7 @@ class UserSchoolConstraintTestCase(BaseTestCase):
         """Test that superusers can exist without school memberships"""
         # Act: Create superuser
         superuser = User.objects.create_superuser(
-            email="admin@example.com",
-            password="testpass123",
-            name="Admin User"
+            email="admin@example.com", password=get_test_password(), name="Admin User"
         )
 
         # Assert: Superuser exists without memberships
@@ -167,15 +156,9 @@ class UserSchoolConstraintTestCase(BaseTestCase):
         school1 = create_user_school_and_membership(user, "School 1")
 
         # Create second school and membership
-        school2 = School.objects.create(
-            name="School 2",
-            contact_email=user.email
-        )
+        school2 = School.objects.create(name="School 2", contact_email=user.email)
         membership2 = SchoolMembership.objects.create(
-            user=user,
-            school=school2,
-            role=SchoolRole.TEACHER,
-            is_active=True
+            user=user, school=school2, role=SchoolRole.TEACHER, is_active=True
         )
 
         # Act: Deactivate one membership (not the last one)
@@ -194,15 +177,9 @@ class UserSchoolConstraintTestCase(BaseTestCase):
         school1 = create_user_school_and_membership(user, "School 1")
 
         # Create second school and membership
-        school2 = School.objects.create(
-            name="School 2",
-            contact_email=user.email
-        )
+        school2 = School.objects.create(name="School 2", contact_email=user.email)
         membership2 = SchoolMembership.objects.create(
-            user=user,
-            school=school2,
-            role=SchoolRole.TEACHER,
-            is_active=True
+            user=user, school=school2, role=SchoolRole.TEACHER, is_active=True
         )
 
         # Act: Delete one membership (not the last one)
@@ -217,9 +194,7 @@ class UserSchoolConstraintTestCase(BaseTestCase):
         """Test that superusers can deactivate all their memberships"""
         # Arrange: Create superuser with school membership
         superuser = User.objects.create_superuser(
-            email="admin@example.com",
-            password="testpass123",
-            name="Admin User"
+            email="admin@example.com", password=get_test_password(), name="Admin User"
         )
         school = create_user_school_and_membership(superuser, "Admin School")
         membership = SchoolMembership.objects.get(user=superuser, school=school)
@@ -237,9 +212,7 @@ class UserSchoolConstraintTestCase(BaseTestCase):
         """Test that superusers can delete all their memberships"""
         # Arrange: Create superuser with school membership
         superuser = User.objects.create_superuser(
-            email="admin@example.com",
-            password="testpass123",
-            name="Admin User"
+            email="admin@example.com", password=get_test_password(), name="Admin User"
         )
         school = create_user_school_and_membership(superuser, "Admin School")
         membership = SchoolMembership.objects.get(user=superuser, school=school)

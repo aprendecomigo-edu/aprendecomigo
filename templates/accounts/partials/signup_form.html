@@ -1,15 +1,15 @@
-<form hx-post="{% url 'accounts:signup' %}" 
-      hx-target="#signup-form-container" 
+<form hx-post="{% url 'accounts:signup' %}"
+      hx-target="#signup-form-container"
       hx-swap="innerHTML"
       class="w-full space-y-6"
       x-data="{ accountType: 'tutor' }">
     {% csrf_token %}
-    
+
     <!-- Account Type Selection -->
     <div class="w-full">
         <div role="tablist" class="tabs tabs-border mb-6">
-            <button type="button" 
-                    role="tab" 
+            <button type="button"
+                    role="tab"
                     class="tab flex items-center gap-2 font-semibold text-base"
                     :class="accountType === 'tutor' ? 'tab-active font-bold' : ''"
                     @click="accountType = 'tutor'">
@@ -18,8 +18,8 @@
                 </svg>
                 <span>Individual Tutor</span>
             </button>
-            <button type="button" 
-                    role="tab" 
+            <button type="button"
+                    role="tab"
                     class="tab flex items-center gap-2 font-semibold text-base"
                     :class="accountType === 'school' ? 'tab-active font-bold' : ''"
                     @click="accountType = 'school'">
@@ -29,7 +29,7 @@
                 <span>School Admin</span>
             </button>
         </div>
-        
+
         <!-- Account Type Description -->
         <div class="alert mb-6" :class="accountType === 'tutor' ? 'alert-info' : 'alert-success'">
             <svg class="w-6 h-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
@@ -48,28 +48,28 @@
 
     <!-- Hidden field to track account type -->
     <input type="hidden" name="account_type" :value="accountType">
-    
+
     <!-- Personal Information Section -->
     <div class="space-y-4">
         <h3 class="text-lg font-primary font-semibold text-base-content">Personal Information</h3>
-        
+
         <!-- Full Name Field -->
         <fieldset class="fieldset">
             <legend class="fieldset-legend font-primary font-medium">Full Name</legend>
-            <input type="text" 
-                   name="full_name" 
+            <input type="text"
+                   name="full_name"
                    value="{{ full_name|default:'' }}"
                    placeholder="Enter your full name"
                    class="input input-lg w-full glass-light p-4 rounded-xl"
                    autocomplete="name"
                    required />
         </fieldset>
-        
+
         <!-- Email Field -->
         <fieldset class="fieldset">
             <legend class="fieldset-legend font-primary font-medium">Email Address</legend>
-            <input type="email" 
-                   name="email" 
+            <input type="email"
+                   name="email"
                    value="{{ email|default:'' }}"
                    placeholder="Enter your email address"
                    class="input input-lg w-full glass-light p-4 rounded-xl"
@@ -78,12 +78,12 @@
                    autocomplete="email"
                    required />
         </fieldset>
-        
+
         <!-- Phone Number Field -->
         <fieldset class="fieldset">
             <legend class="fieldset-legend font-primary font-medium">Phone Number</legend>
-            <input type="tel" 
-                   name="phone_number" 
+            <input type="tel"
+                   name="phone_number"
                    value="{{ phone_number|default:'' }}"
                    placeholder="+1 (555) 123-4567"
                    class="input input-lg w-full glass-light p-4 rounded-xl"
@@ -95,23 +95,23 @@
 
     <!-- Practice/School Information Section -->
     <div class="space-y-4">
-        <h3 class="text-lg font-primary font-semibold text-base-content" 
+        <h3 class="text-lg font-primary font-semibold text-base-content"
             x-text="accountType === 'tutor' ? 'Practice Information' : 'School Information'">
         </h3>
-        
+
         <fieldset class="fieldset">
-            <legend class="fieldset-legend font-primary font-medium" 
+            <legend class="fieldset-legend font-primary font-medium"
                     x-text="accountType === 'tutor' ? 'Practice Name' : 'School Name'">
             </legend>
-            <input type="text" 
-                   name="organization_name" 
+            <input type="text"
+                   name="organization_name"
                    :placeholder="accountType === 'tutor' ? 'Your practice name' : 'Your school name'"
                    class="input input-lg w-full glass-light p-4 rounded-xl"
-                   autocomplete="organization" 
+                   autocomplete="organization"
                    required />
         </fieldset>
     </div>
-    
+
     <!-- Server-side error message -->
     {% if error %}
     <div class="alert alert-error">
@@ -124,7 +124,7 @@
 
     <!-- Submit Button -->
     <div class="relative">
-        <button type="submit" 
+        <button type="submit"
                 class="btn btn-neutral w-full bg-gradient-primary border-none text-white htmx-request:opacity-50 htmx-request:pointer-events-none">
             <span class="htmx-indicator-none">Create Account</span>
             <span class="htmx-indicator">
@@ -132,7 +132,7 @@
                 Creating Account...
             </span>
         </button>
-        
+
         <!-- Loading Spinner Overlay -->
         <div class="htmx-indicator absolute inset-0 flex items-center justify-center bg-base-100/50 backdrop-blur-sm rounded-lg opacity-0 invisible">
             <div class="loading loading-spinner loading-md text-primary"></div>

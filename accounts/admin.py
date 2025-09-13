@@ -4,8 +4,8 @@ from django.contrib.auth.admin import UserAdmin
 from .models import (
     Course,
     CustomUser,
-    GuardianStudentRelationship,
     GuardianProfile,
+    GuardianStudentRelationship,
     School,
     SchoolMembership,
     StudentProfile,

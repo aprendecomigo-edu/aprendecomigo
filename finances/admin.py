@@ -1346,7 +1346,9 @@ class PurchaseApprovalRequestAdmin(admin.ModelAdmin):
         return (
             super()
             .get_queryset(request)
-            .select_related("student", "parent", "guardian_student_relationship__school", "pricing_plan", "class_session")
+            .select_related(
+                "student", "parent", "guardian_student_relationship__school", "pricing_plan", "class_session"
+            )
         )
 
 

@@ -247,9 +247,12 @@ class TeacherDashboardService:
         week_end = week_start + timedelta(days=6)
 
         # Total students (count unique students from sessions)
-        unique_students = ClassSession.objects.filter(
-            teacher=self.teacher_profile, status=SessionStatus.COMPLETED
-        ).values("students").distinct().count()
+        unique_students = (
+            ClassSession.objects.filter(teacher=self.teacher_profile, status=SessionStatus.COMPLETED)
+            .values("students")
+            .distinct()
+            .count()
+        )
 
         # Sessions today
         sessions_today = ClassSession.objects.filter(teacher=self.teacher_profile, date=today).count()

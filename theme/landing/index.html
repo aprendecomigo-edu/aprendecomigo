@@ -117,7 +117,7 @@ font-family: var(--font-primary);
       font-family: var(--font-body);
       margin: 0 0 1rem;
       font-size: 1rem;
-      line-height: 1.5; 
+      line-height: 1.5;
       min-height: 100vh;
     }
     h1, h2, h3 {
@@ -127,39 +127,39 @@ font-family: var(--font-primary);
       letter-spacing: 0.5px;
       margin-bottom: 1rem;
     }
-    
+
     .feature-card-gradient {
         background: var(--gradient-subtle);
         border: 1px solid #e2e8f0;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    
+
     .feature-card:hover {
       transform: translateY(-4px);
       box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
       border-color: #10b981;
     }
-    
-    
+
+
     .hero-card {
       background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
       border: 1px solid #e5e7eb;
       transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    
+
     .hero-card:hover {
       transform: translateY(-6px) scale(1.02);
       box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
     }
-    
-    
-    
+
+
+
     .section-container {
       background: rgba(255, 255, 255, 0.8);
       backdrop-filter: blur(10px);
       border: 1px solid rgba(255, 255, 255, 0.2);
     }
-    
+
     .glass-nav {
       background: rgba(255, 255, 255, 0.9);
       backdrop-filter: blur(20px);
@@ -168,45 +168,45 @@ font-family: var(--font-primary);
     .glass-nav a{
         font-family: var(--font-primary);
     }
-    
+
     /* Language Dropdown Styles */
     .language-dropdown {
       position: relative;
     }
-    
+
     .language-current:hover {
       background: rgba(255, 255, 255, 0.9);
       border-color: var(--color-primary);
     }
-    
+
     .language-options.show {
       opacity: 1;
       visibility: visible;
       transform: scale(1);
     }
-    
+
     .language-options {
       min-width: 140px;
       backdrop-filter: blur(10px);
     }
-    
+
     .language-option:hover {
       background: var(--color-light-gray);
     }
-    
+
     .language-option.active {
       background: var(--color-primary);
       color: white;
     }
-    
+
     .language-option.active:hover {
       background: var(--color-primary-dark);
     }
-    
+
     #dropdown-arrow.rotated {
       transform: rotate(180deg);
     }
-    
+
     /* Close dropdown when clicking outside */
     .language-dropdown.open .language-options {
       opacity: 1;
@@ -232,7 +232,7 @@ font-family: var(--font-primary);
         <a href="#contacto" class="hover:color-accent transition-colors" data-pt="Contacto" data-en="Contact">Contacto</a>
       </div>
     </div>
-    
+
     <!-- Language Switcher -->
     <div class="flex items-center gap-4">
       <div class="language-dropdown relative">
@@ -243,7 +243,7 @@ font-family: var(--font-primary);
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
           </svg>
         </button>
-        
+
         <div class="language-options absolute top-full right-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden opacity-0 invisible transition-all duration-200 transform scale-95 origin-top-right z-50" id="language-menu">
           <button onclick="selectLanguage('pt')" class="language-option flex items-center gap-3 w-full px-4 py-3 text-sm text-left hover:bg-gray-50 transition-colors" data-lang="pt">
             <span>🇵🇹</span>
@@ -255,9 +255,9 @@ font-family: var(--font-primary);
           </button>
         </div>
       </div>
-      
-      <button class="bg-black text-white px-6 py-3 rounded-full text-sm font-semibold shadow-lg hover:bg-gray-900 hover:shadow-xl transition-all" 
-              data-pt="Criar uma conta" 
+
+      <button class="bg-black text-white px-6 py-3 rounded-full text-sm font-semibold shadow-lg hover:bg-gray-900 hover:shadow-xl transition-all"
+              data-pt="Criar uma conta"
               data-en="Create Account">
         Criar uma conta
       </button>
@@ -270,30 +270,30 @@ font-family: var(--font-primary);
       <span class="w-2 h-2 bg-accent-pink rounded-full animate-pulse"></span>
       <span data-pt="Conecte professores qualificados com" data-en="Connect qualified teachers with">Conecte professores qualificados com</span> <span class="font-semibold bg-gradient-accent" data-pt="Tecnologia em Tempo Real" data-en="Real-Time Technology">Tecnologia em Tempo Real</span> 🚀
     </div>
-    
+
     <h1 class="text-4xl md:text-6xl font-black leading-tight mb-6 tracking-tight">
       <span data-pt="O ecossistema completo para" data-en="The complete ecosystem for">O ecossistema completo para</span>
       <span data-pt=" ensinar e aprender" data-en=" teaching and learning "class="bg-gradient-primary"> ensinar e aprender</span>
 
     </h1>
-    
+
     <p class="text-gray-600 text-xl mb-10 max-w-3xl mx-auto leading-relaxed" data-pt="Escolas gerem com eficiência. Professores ensinam com qualidade. Famílias acompanham com transparência." data-en="Schools manage efficiently. Teachers teach with quality. Families follow with transparency.">
       Escolas gerem com eficiência. Professores ensinam com qualidade. Famílias acompanham com transparência.
     </p>
-    
+
     <div class="flex flex-col md:flex-row gap-4 justify-center items-center mb-16">
-      <button class="bg-black text-white px-8 py-4 rounded-full font-bold shadow-xl hover:bg-gray-900 hover:shadow-2xl transition-all text-lg" 
-              data-pt="Criar Escola" 
+      <button class="bg-black text-white px-8 py-4 rounded-full font-bold shadow-xl hover:bg-gray-900 hover:shadow-2xl transition-all text-lg"
+              data-pt="Criar Escola"
               data-en="Create School">
         Criar Escola
       </button>
-      <button class="text-black border-2 border-black px-8 py-4 rounded-full font-semibold hover:bg-black hover:text-white transition-all text-lg" 
-              data-pt="Explorar Escolas Existentes" 
+      <button class="text-black border-2 border-black px-8 py-4 rounded-full font-semibold hover:bg-black hover:text-white transition-all text-lg"
+              data-pt="Explorar Escolas Existentes"
               data-en="Explore Existing Schools">
         Explorar Escolas Existentes
       </button>
     </div>
-    
+
     <!-- Process Cards -->
     <div id="como-funciona" class="text-center mb-8">
       <h3 class="text-2xl font-bold mb-4" data-pt="Como Funciona" data-en="How It Works">Como Funciona</h3>
@@ -308,7 +308,7 @@ font-family: var(--font-primary);
         <h4 class="font-bold text-xl mb-3" data-pt="Configure ou Junte-se" data-en="Setup or Join">Configure ou Junte-se</h4>
         <p class="text-gray-600 text-center leading-relaxed" data-pt="Configure a sua escola em minutos ou junte-se à rede nacional de professores qualificados." data-en="Set up your school in minutes or join the national network of qualified teachers.">Configure a sua escola em minutos ou junte-se à rede nacional de professores qualificados.</p>
       </div>
-      
+
       <div class="hero-card rounded-3xl p-8 w-full lg:w-80 flex flex-col items-center transform lg:scale-105 z-20 shadow-2xl">
         <div class="bg-blue-100 p-4 rounded-2xl mb-6 shadow-lg">
           <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
@@ -318,7 +318,7 @@ font-family: var(--font-primary);
         <h4 class="font-bold text-xl mb-3" data-pt="Conecte-se à Rede" data-en="Connect to the Network">Conecte-se à Rede</h4>
         <p class="text-gray-600 text-center leading-relaxed" data-pt="Aceda a professores certificados ou ofereça serviços em múltiplas escolas com pagamentos transparentes." data-en="Access certified teachers or offer services across multiple schools with transparent payments.">Aceda a professores certificados ou ofereça serviços em múltiplas escolas com pagamentos transparentes.</p>
       </div>
-      
+
       <div class="hero-card rounded-3xl p-8 w-full lg:w-80 flex flex-col items-center transform lg:rotate-3 lg:hover:rotate-0 shadow-2xl">
         <div class="bg-purple-100 p-4 rounded-2xl mb-6 shadow-lg">
           <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
@@ -349,7 +349,7 @@ font-family: var(--font-primary);
         <h3 class="font-bold text-xl mb-4">Gestão Multi-Institucional</h3>
         <p class="text-gray-600 leading-relaxed">Controle centralizado de múltiplas escolas. Dashboards executivos, relatórios consolidados e visão 360º de toda a operação educacional.</p>
       </div>
-      
+
       <div class="feature-card-gradient rounded-3xl p-8 group">
         <div class="bg-green-100 p-4 rounded-2xl mb-6 w-fit group-hover:scale-110 transition-transform">
           <span class="text-3xl">💰</span>
@@ -357,7 +357,7 @@ font-family: var(--font-primary);
         <h3 class="font-bold text-xl mb-4">Compensação Automática</h3>
         <p class="text-gray-600 leading-relaxed">Sistema automático de pagamentos para professores baseado em horas lecionadas. Transparência total e redução de custos administrativos.</p>
       </div>
-      
+
       <div class="feature-card-gradient rounded-3xl p-8 group">
         <div class="bg-purple-100 p-4 rounded-2xl mb-6 w-fit group-hover:scale-110 transition-transform">
           <span class="text-3xl">📊</span>
@@ -365,7 +365,7 @@ font-family: var(--font-primary);
         <h3 class="font-bold text-xl mb-4">Supervisão em Tempo Real</h3>
         <p class="text-gray-600 leading-relaxed">Monitorize todas as aulas ao vivo. Acompanhe performance de professores, progresso de alunos e qualidade educacional instantaneamente.</p>
       </div>
-      
+
       <div class="feature-card-gradient rounded-3xl p-8 group">
         <div class="bg-orange-100 p-4 rounded-2xl mb-6 w-fit group-hover:scale-110 transition-transform">
           <span class="text-3xl">📈</span>
@@ -377,13 +377,13 @@ font-family: var(--font-primary);
 
     <div class="text-center">
       <div class="flex flex-col md:flex-row gap-4 justify-center items-center mb-4">
-        <button class="bg-black text-white px-8 py-4 rounded-full font-bold shadow-xl hover:bg-gray-900 hover:shadow-2xl transition-all text-lg" 
-                data-pt="Registar Escola" 
+        <button class="bg-black text-white px-8 py-4 rounded-full font-bold shadow-xl hover:bg-gray-900 hover:shadow-2xl transition-all text-lg"
+                data-pt="Registar Escola"
                 data-en="Register School">
           Registar Escola
         </button>
-        <button class="text-black border-2 border-black px-8 py-4 rounded-full font-semibold hover:bg-black hover:text-white transition-all text-lg" 
-                data-pt="Saber Mais" 
+        <button class="text-black border-2 border-black px-8 py-4 rounded-full font-semibold hover:bg-black hover:text-white transition-all text-lg"
+                data-pt="Saber Mais"
                 data-en="Learn More">
           Saber Mais
         </button>
@@ -411,7 +411,7 @@ font-family: var(--font-primary);
           <h3 class="font-bold text-xl mb-4">Rendimentos Transparentes</h3>
           <p class="text-gray-600 leading-relaxed">€15-25/hora conforme experiência. Pagamentos automáticos, sem atrasos. Veja exactamente quanto ganha por cada aula lecionada.</p>
         </div>
-        
+
         <div class="bg-white rounded-3xl p-8 shadow-lg group hover:shadow-xl transition-all">
           <div class="bg-blue-100 p-4 rounded-2xl mb-6 w-fit group-hover:scale-110 transition-transform">
             <span class="text-3xl">🌟</span>
@@ -419,7 +419,7 @@ font-family: var(--font-primary);
           <h3 class="font-bold text-xl mb-4">Oportunidades Multi-Escola</h3>
           <p class="text-gray-600 leading-relaxed">Ensine em várias escolas simultaneamente. Maximize o seu horário e rendimento com flexibilidade total na gestão de alunos.</p>
         </div>
-        
+
         <div class="bg-white rounded-3xl p-8 shadow-lg group hover:shadow-xl transition-all">
           <div class="bg-purple-100 p-4 rounded-2xl mb-6 w-fit group-hover:scale-110 transition-transform">
             <span class="text-3xl">⏰</span>
@@ -427,7 +427,7 @@ font-family: var(--font-primary);
           <h3 class="font-bold text-xl mb-4">Horários Flexíveis</h3>
           <p class="text-gray-600 leading-relaxed">Defina a sua disponibilidade. Sistema inteligente que combina as suas preferências com as necessidades dos alunos.</p>
         </div>
-        
+
         <div class="bg-white rounded-3xl p-8 shadow-lg group hover:shadow-xl transition-all">
           <div class="bg-orange-100 p-4 rounded-2xl mb-6 w-fit group-hover:scale-110 transition-transform">
             <span class="text-3xl">🎓</span>
@@ -439,13 +439,13 @@ font-family: var(--font-primary);
 
       <div class="text-center">
         <div class="flex flex-col md:flex-row gap-4 justify-center items-center mb-4">
-          <button class="bg-black text-white px-8 py-4 rounded-full font-bold shadow-xl hover:bg-gray-900 hover:shadow-2xl transition-all text-lg" 
-                  data-pt="Começar como Tutor Independente" 
+          <button class="bg-black text-white px-8 py-4 rounded-full font-bold shadow-xl hover:bg-gray-900 hover:shadow-2xl transition-all text-lg"
+                  data-pt="Começar como Tutor Independente"
                   data-en="Start as Independent Tutor">
             Começar como Tutor Independente
           </button>
-          <button class="text-black border-2 border-black px-8 py-4 rounded-full font-semibold hover:bg-black hover:text-white transition-all text-lg" 
-                  data-pt="Juntar-me a Escolas Existentes" 
+          <button class="text-black border-2 border-black px-8 py-4 rounded-full font-semibold hover:bg-black hover:text-white transition-all text-lg"
+                  data-pt="Juntar-me a Escolas Existentes"
                   data-en="Join Existing Schools">
             Juntar-me a Escolas Existentes
           </button>
@@ -473,7 +473,7 @@ font-family: var(--font-primary);
         <h3 class="font-bold text-xl mb-4">Professores Verificados</h3>
         <p class="text-gray-600 leading-relaxed">Todos os professores são certificados e verificados. Curriculum académico, experiência comprovada e avaliações de outros pais.</p>
       </div>
-      
+
       <div class="feature-card-gradient rounded-3xl p-8 group">
         <div class="bg-green-100 p-4 rounded-2xl mb-6 w-fit group-hover:scale-110 transition-transform">
           <span class="text-3xl">📱</span>
@@ -481,7 +481,7 @@ font-family: var(--font-primary);
         <h3 class="font-bold text-xl mb-4">Acompanhamento em Tempo Real</h3>
         <p class="text-gray-600 leading-relaxed">Veja o progresso do seu filho instantaneamente. Relatórios detalhados, feedback dos professores e notificações automáticas.</p>
       </div>
-      
+
       <div class="feature-card-gradient rounded-3xl p-8 group">
         <div class="bg-purple-100 p-4 rounded-2xl mb-6 w-fit group-hover:scale-110 transition-transform">
           <span class="text-3xl">💳</span>
@@ -489,7 +489,7 @@ font-family: var(--font-primary);
         <h3 class="font-bold text-xl mb-4">Pagamento Justo</h3>
         <p class="text-gray-600 leading-relaxed">Pague apenas pelas horas de aula efectivamente dadas. Sem mensalidades fixas, sem compromissos anuais, máxima flexibilidade.</p>
       </div>
-      
+
       <div class="feature-card-gradient rounded-3xl p-8 group">
         <div class="bg-orange-100 p-4 rounded-2xl mb-6 w-fit group-hover:scale-110 transition-transform">
           <span class="text-3xl">🎯</span>
@@ -501,13 +501,13 @@ font-family: var(--font-primary);
 
     <div class="text-center">
       <div class="flex flex-col md:flex-row gap-4 justify-center items-center mb-4">
-        <button class="bg-black text-white px-8 py-4 rounded-full font-bold shadow-xl hover:bg-gray-900 hover:shadow-2xl transition-all text-lg" 
-                data-pt="Encontrar Escolas na Minha Área" 
+        <button class="bg-black text-white px-8 py-4 rounded-full font-bold shadow-xl hover:bg-gray-900 hover:shadow-2xl transition-all text-lg"
+                data-pt="Encontrar Escolas na Minha Área"
                 data-en="Find Schools in My Area">
           Encontrar Escolas na Minha Área
         </button>
-        <button class="text-black border-2 border-black px-8 py-4 rounded-full font-semibold hover:bg-black hover:text-white transition-all text-lg" 
-                data-pt="Ver Como Funciona" 
+        <button class="text-black border-2 border-black px-8 py-4 rounded-full font-semibold hover:bg-black hover:text-white transition-all text-lg"
+                data-pt="Ver Como Funciona"
                 data-en="See How It Works">
           Ver Como Funciona
         </button>
@@ -527,20 +527,20 @@ font-family: var(--font-primary);
       <p class="text-gray-300 text-xl mb-10 max-w-2xl mx-auto leading-relaxed" data-pt="Junte-se a centenas de escolas e professores que confiam no Aprende Comigo para revolucionar o ensino. Começe em minutos." data-en="Join hundreds of schools and teachers who trust Aprende Comigo to revolutionize education. Get started in minutes.">
         Junte-se a centenas de escolas e professores que confiam no Aprende Comigo para revolucionar o ensino. Começe em minutos.
       </p>
-      
+
       <div class="flex flex-col md:flex-row gap-4 justify-center items-center mb-12">
-        <button class="bg-white text-black px-8 py-4 rounded-full font-bold shadow-xl hover:bg-gray-100 hover:shadow-2xl transition-all text-lg" 
-                data-pt="Encontrar ou Criar Escola" 
+        <button class="bg-white text-black px-8 py-4 rounded-full font-bold shadow-xl hover:bg-gray-100 hover:shadow-2xl transition-all text-lg"
+                data-pt="Encontrar ou Criar Escola"
                 data-en="Find or Create School">
           Encontrar ou Criar Escola
         </button>
-        <button class="text-white border-2 border-white px-8 py-4 rounded-full font-semibold hover:bg-white hover:text-black transition-all text-lg" 
-                data-pt="Falar com Especialista" 
+        <button class="text-white border-2 border-white px-8 py-4 rounded-full font-semibold hover:bg-white hover:text-black transition-all text-lg"
+                data-pt="Falar com Especialista"
                 data-en="Talk to Specialist">
           Falar com Especialista
         </button>
       </div>
-      
+
       <!-- Contact Info -->
       <div class="grid md:grid-cols-3 gap-8 text-center">
         <div>
@@ -576,7 +576,7 @@ font-family: var(--font-primary);
           <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-accent-pink hover:text-white transition-colors cursor-pointer">in</div>
         </div>
       </div>
-      
+
       <div>
         <h4 class="font-semibold text-gray-900 mb-4">Produto</h4>
         <ul class="space-y-2 text-sm text-gray-600">
@@ -586,7 +586,7 @@ font-family: var(--font-primary);
           <li><a href="#" class="hover:color-accent transition-colors">Para Professores</a></li>
         </ul>
       </div>
-      
+
       <div>
         <h4 class="font-semibold text-gray-900 mb-4">Suporte</h4>
         <ul class="space-y-2 text-sm text-gray-600">
@@ -596,7 +596,7 @@ font-family: var(--font-primary);
           <li><a href="#" class="hover:color-accent transition-colors">Documentação</a></li>
         </ul>
       </div>
-      
+
       <div>
         <h4 class="font-semibold text-gray-900 mb-4">Empresa</h4>
         <ul class="space-y-2 text-sm text-gray-600">
@@ -607,7 +607,7 @@ font-family: var(--font-primary);
         </ul>
       </div>
     </div>
-    
+
     <div class="border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center">
       <p class="text-gray-500 text-sm">&copy; 2024 Aprende Comigo. Todos os direitos reservados.</p>
       <div class="flex gap-6 text-sm text-gray-500 mt-4 md:mt-0">
@@ -622,21 +622,21 @@ font-family: var(--font-primary);
     // Language switching functionality
     let currentLanguage = 'pt'; // Default to Portuguese
     let dropdownOpen = false;
-    
+
     // Initialize language from localStorage or default to Portuguese
     function initializeLanguage() {
       const savedLanguage = localStorage.getItem('preferredLanguage') || 'pt';
       selectLanguage(savedLanguage);
     }
-    
+
     // Toggle dropdown visibility
     function toggleLanguageDropdown() {
       const dropdown = document.getElementById('language-menu');
       const arrow = document.getElementById('dropdown-arrow');
       const dropdownContainer = document.querySelector('.language-dropdown');
-      
+
       dropdownOpen = !dropdownOpen;
-      
+
       if (dropdownOpen) {
         dropdown.classList.add('show');
         arrow.classList.add('rotated');
@@ -647,21 +647,21 @@ font-family: var(--font-primary);
         dropdownContainer.classList.remove('open');
       }
     }
-    
+
     // Select language and close dropdown
     function selectLanguage(lang) {
       currentLanguage = lang;
-      
+
       // Save preference to localStorage
       localStorage.setItem('preferredLanguage', lang);
-      
+
       // Update HTML lang attribute
       document.documentElement.lang = lang === 'pt' ? 'pt-PT' : 'en-US';
-      
+
       // Update current language display
       const currentFlag = document.getElementById('current-flag');
       const currentLang = document.getElementById('current-lang');
-      
+
       if (lang === 'pt') {
         currentFlag.textContent = '🇵🇹';
         currentLang.textContent = 'PT';
@@ -669,7 +669,7 @@ font-family: var(--font-primary);
         currentFlag.textContent = '🇬🇧';
         currentLang.textContent = 'EN';
       }
-      
+
       // Update all elements with data-pt and data-en attributes
       const elementsWithTranslations = document.querySelectorAll('[data-pt][data-en]');
       elementsWithTranslations.forEach(element => {
@@ -678,7 +678,7 @@ font-family: var(--font-primary);
           element.textContent = translation;
         }
       });
-      
+
       // Update dropdown options active state
       document.querySelectorAll('.language-option').forEach(option => {
         option.classList.remove('active');
@@ -686,13 +686,13 @@ font-family: var(--font-primary);
           option.classList.add('active');
         }
       });
-      
+
       // Close dropdown after selection
       if (dropdownOpen) {
         toggleLanguageDropdown();
       }
     }
-    
+
     // Close dropdown when clicking outside
     document.addEventListener('click', function(event) {
       const dropdown = document.querySelector('.language-dropdown');
@@ -700,12 +700,12 @@ font-family: var(--font-primary);
         toggleLanguageDropdown();
       }
     });
-    
+
     // Initialize language on page load
     document.addEventListener('DOMContentLoaded', function() {
       initializeLanguage();
     });
-    
+
     // Make functions globally available
     window.toggleLanguageDropdown = toggleLanguageDropdown;
     window.selectLanguage = selectLanguage;

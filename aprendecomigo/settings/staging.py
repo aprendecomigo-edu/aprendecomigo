@@ -4,7 +4,6 @@ Django staging settings for aprendecomigo project.
 
 import os
 import socket
-from urllib.parse import urlparse
 
 import dj_database_url
 
@@ -19,14 +18,14 @@ SECRET_KEY = str(secret_key)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "True") == "True"  # Railway docs recommend DEBUG=True for staging
-ALLOWED_HOSTS = ["*"] # railway settings
+ALLOWED_HOSTS = ["*"]  # railway settings
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 # Use PostgreSQL in production
 # Railway provides DATABASE_URL automatically when PostgreSQL is provisioned
 if os.environ.get("DATABASE_URL"):
     DATABASES = {
-        'default': dj_database_url.parse(
+        "default": dj_database_url.parse(
             os.environ["DATABASE_URL"],
             conn_max_age=600,
             conn_health_checks=True,
@@ -34,17 +33,17 @@ if os.environ.get("DATABASE_URL"):
     }
 else:
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ["PGDATABASE"],
-            'USER': os.environ["PGUSER"],
-            'PASSWORD': os.environ["PGPASSWORD"],
-            'HOST': os.environ["PGHOST"],
-            'PORT': os.environ.get("PGPORT", "5432"),
-            'CONN_MAX_AGE': 600,
-            'OPTIONS': {
-                'connect_timeout': 10,
-            }
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ["PGDATABASE"],
+            "USER": os.environ["PGUSER"],
+            "PASSWORD": os.environ["PGPASSWORD"],
+            "HOST": os.environ["PGHOST"],
+            "PORT": os.environ.get("PGPORT", "5432"),
+            "CONN_MAX_AGE": 600,
+            "OPTIONS": {
+                "connect_timeout": 10,
+            },
         }
     }
 
@@ -92,7 +91,7 @@ CORS_ALLOW_ALL_ORIGINS = False
 # CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
 
 # CSRF trusted origins for Railway deployment
-railway_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN')
+railway_domain = os.getenv("RAILWAY_PUBLIC_DOMAIN")
 if railway_domain:
     CSRF_TRUSTED_ORIGINS = [f"https://{railway_domain}"]
 else:
@@ -113,14 +112,14 @@ SECURE_HSTS_PRELOAD = True
 # Other security settings
 # Railway handles SSL termination, so we don't need to redirect
 SECURE_SSL_REDIRECT = False  # Railway handles SSL, avoid redirect loops
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # Trust Railway's proxy
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")  # Trust Railway's proxy
 SECURE_REFERRER_POLICY = "same-origin"
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 
 # Redis configuration for Railway staging
 # Railway's internal network is IPv6-only
-redis_url = os.getenv('REDIS_URL', '')
+redis_url = os.getenv("REDIS_URL", "")
 
 if not redis_url:
     raise ValueError("REDIS_URL environment variable is not set")
@@ -130,53 +129,277 @@ print(f"Using Redis URL for staging: {redis_url}")
 # Connection pool configuration for Railway IPv6 network
 # Railways uses IPv6-only internal networking, so we configure socket family accordingly
 RAILWAY_REDIS_CONNECTION_KWARGS = {
-    'max_connections': 50,  # Finite pool size
-    'retry_on_timeout': True,  # Retry commands on TimeoutError
-    'socket_connect_timeout': 10,  # Connect timeout for Railway network
-    'socket_timeout': 10,  # Socket timeout
-    'socket_type': socket.AF_UNSPEC,  # Allow both IPv4 and IPv6 (dual-stack)
+    "max_connections": 50,  # Finite pool size
+    "retry_on_timeout": True,  # Retry commands on TimeoutError
+    "socket_connect_timeout": 10,  # Connect timeout for Railway network
+    "socket_timeout": 10,  # Socket timeout
+    "socket_type": socket.AF_UNSPEC,  # Allow both IPv4 and IPv6 (dual-stack)
 }
 
 # django-redis cache configuration with IPv6 support for Railway
 CACHES = {
-    'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': redis_url,  # Database 0 (default)
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'CONNECTION_POOL_KWARGS': RAILWAY_REDIS_CONNECTION_KWARGS,
-            'PICKLE_VERSION': -1,  # Use latest pickle protocol
-            'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',  # Compress large values
-            'IGNORE_EXCEPTIONS': False,  # Fail fast if Redis is down
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": redis_url,  # Database 0 (default)
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "CONNECTION_POOL_KWARGS": RAILWAY_REDIS_CONNECTION_KWARGS,
+            "PICKLE_VERSION": -1,  # Use latest pickle protocol
+            "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",  # Compress large values
+            "IGNORE_EXCEPTIONS": False,  # Fail fast if Redis is down
         },
-        'KEY_PREFIX': 'aprendecomigo',
-        'VERSION': 1,
-        'TIMEOUT': 300,  # 5 minutes default timeout
+        "KEY_PREFIX": "aprendecomigo",
+        "VERSION": 1,
+        "TIMEOUT": 300,  # 5 minutes default timeout
     },
-    'sessions': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': f"{redis_url}/1",  # Database 1 for sessions
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'CONNECTION_POOL_KWARGS': RAILWAY_REDIS_CONNECTION_KWARGS,
-            'PICKLE_VERSION': -1,
-            'IGNORE_EXCEPTIONS': False,  # Sessions are critical - fail if Redis is down
+    "sessions": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"{redis_url}/1",  # Database 1 for sessions
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "CONNECTION_POOL_KWARGS": RAILWAY_REDIS_CONNECTION_KWARGS,
+            "PICKLE_VERSION": -1,
+            "IGNORE_EXCEPTIONS": False,  # Sessions are critical - fail if Redis is down
         },
-        'KEY_PREFIX': 'aprendecomigo_session',  # Match SESSION_KEY_PREFIX
-        'TIMEOUT': 86400,  # 24 hours for sessions
+        "KEY_PREFIX": "aprendecomigo_session",  # Match SESSION_KEY_PREFIX
+        "TIMEOUT": 86400,  # 24 hours for sessions
     },
 }
 
 # Use Redis-only for sessions (no database fallback to avoid django_session table requirement)
 # If Redis is down, sessions will fail fast rather than falling back to non-existent DB table
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-SESSION_CACHE_ALIAS = 'sessions'
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "sessions"
 SESSION_COOKIE_AGE = 86400  # 24 hours
 
 # Session key prefix to avoid collisions
-SESSION_KEY_PREFIX = 'aprendecomigo_session'
+SESSION_KEY_PREFIX = "aprendecomigo_session"
 
 # Fail fast if Redis is unavailable (don't ignore session cache exceptions)
 # This ensures we know immediately if sessions are broken
 
+# Static Files Configuration - WhiteNoise (can be overridden in production)
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+    },
+}
 
+REMINDER_MOCK_MODE = True
+COMMUNICATION_SERVICE_ENABLED = True
+
+# Logging Configuration for Railway/Cloud Deployments
+# Both staging and production use stdout/stderr for log aggregation
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "json": {
+            "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
+            "format": "%(levelname)s %(asctime)s %(name)s %(module)s %(funcName)s %(lineno)d %(message)s",
+        },
+        "simple": {
+            "format": "%(levelname)s %(asctime)s %(name)s - %(message)s",
+        },
+    },
+    "filters": {
+        "require_debug_false": {
+            "()": "django.utils.log.RequireDebugFalse",
+        },
+        "sensitive_data": {
+            "()": "django.utils.log.CallbackFilter",
+            "callback": lambda record: True,  # Placeholder - can be enhanced for data scrubbing
+        },
+        "correlation": {
+            "()": "django.utils.log.CallbackFilter",
+            "callback": lambda record: True,  # Placeholder - can be enhanced for correlation IDs
+        },
+    },
+    "handlers": {
+        # Console output for Railway/container environments
+        # All logs go to stdout/stderr for platform log aggregation
+        "console": {
+            "level": "DEBUG" if DEBUG else "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "json",
+            "filters": ["sensitive_data", "correlation"],
+        },
+        # Separate handler for errors to stderr
+        "console_error": {
+            "level": "ERROR",
+            "class": "logging.StreamHandler",
+            "formatter": "json",
+            "stream": "ext://sys.stderr",
+            "filters": ["sensitive_data", "correlation"],
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "DEBUG" if DEBUG else "INFO",
+    },
+    "loggers": {
+        # Django core
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django.request": {
+            "handlers": ["console_error"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+        "django.db.backends": {
+            "handlers": ["console"],
+            "level": "WARNING",  # Log slow queries
+            "propagate": False,
+        },
+        "django.channels": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        # Application loggers
+        "accounts": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "accounts.auth": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "accounts.security": {
+            "handlers": ["console_error"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "accounts.throttles": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        # Financial operations
+        "finances": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "finances.payments": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "finances.stripe": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "finances.fraud": {
+            "handlers": ["console_error"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "finances.webhooks": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        # Scheduling
+        "scheduler": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "scheduler.bookings": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "scheduler.conflicts": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "scheduler.reminders": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        # Communication
+        "messaging": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "messaging.email": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "messaging.invitations": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        # Classroom operations
+        "classroom": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "classroom.sessions": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        # Business event loggers
+        "business": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "business.payments": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "business.sessions": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "business.authentication": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        # Security loggers
+        "security.events": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "security.auth_failures": {
+            "handlers": ["console_error"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        # Performance monitoring
+        "performance": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        # Third-party - errors only
+        "stripe": {
+            "handlers": ["console_error"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+    },
+}

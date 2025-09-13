@@ -26,7 +26,7 @@
                 <div class="text-xs font-medium text-gray-500 uppercase tracking-wide">Sat</div>
             </div>
         </div>
-        
+
         <!-- Calendar Days Grid -->
         <div class="grid grid-cols-7">
             {% for day in month_days %}
@@ -34,17 +34,17 @@
                             {% if not day.is_current_month %}bg-gray-50 text-gray-400{% endif %}
                             {% if day.is_today %}bg-blue-50 ring-1 ring-inset ring-blue-600{% endif %}"
                      @click="openEventModal('{{ day.date|date:'Y-m-d' }}', '09:00')">
-                    
+
                     <!-- Date number -->
                     <div class="{% if day.is_today %}bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center{% else %}{% if not day.is_current_month %}text-gray-400{% else %}text-gray-900{% endif %}{% endif %} text-sm font-semibold mb-1">
                         {{ day.date|date:'j' }}
                     </div>
-                    
+
                     <!-- Click to book hint -->
                     <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-blue-50 bg-opacity-75">
                         <span class="text-xs text-blue-600 font-medium">Click to book</span>
                     </div>
-                    
+
                     <!-- Events for this day -->
                     {% with day_events=events|default:'' %}
                         {% for event in day_events %}

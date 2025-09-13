@@ -26,6 +26,7 @@ Created to resolve issue #181 - Test Setup and Fixture Issues.
 
 from datetime import date, datetime, timedelta
 from decimal import Decimal
+import os
 import uuid
 
 from django.contrib.auth import get_user_model
@@ -35,8 +36,8 @@ from accounts.models import (
     Course,
     EducationalSystem,
     EducationalSystemType,
-    GuardianStudentRelationship,
     GuardianProfile,
+    GuardianStudentRelationship,
     RelationshipType,
     School,
     SchoolMembership,
@@ -69,6 +70,11 @@ from finances.models import (
 )
 
 User = get_user_model()
+
+
+def get_test_password():
+    """Get secure test password from environment or default."""
+    return os.environ.get("TEST_PASSWORD", "t3st_p@ssw0rd_2024")
 
 
 class FinanceTestFixtures:
@@ -104,7 +110,7 @@ class FinanceTestFixtures:
         """
         # Create Educational System first (required for StudentProfile)
         # Try to use existing EducationalSystem first (performance optimization)
-        educational_system, created = EducationalSystem.objects.get_or_create(
+        educational_system, _created = EducationalSystem.objects.get_or_create(
             code=EducationalSystemType.PORTUGAL,
             defaults={"name": "Portuguese System", "description": "Portuguese educational system for testing"},
         )
@@ -127,14 +133,20 @@ class FinanceTestFixtures:
         )
 
         # Create Users
-        teacher_user = User.objects.create_user(email="teacher@test.com", password="testpass123", name="Test Teacher")
+        teacher_user = User.objects.create_user(
+            email="teacher@test.com", password=get_test_password(), name="Test Teacher"
+        )
 
-        student_user = User.objects.create_user(email="student@test.com", password="testpass123", name="Test Student")
+        student_user = User.objects.create_user(
+            email="student@test.com", password=get_test_password(), name="Test Student"
+        )
 
-        parent_user = User.objects.create_user(email="parent@test.com", password="testpass123", name="Test Parent")
+        parent_user = User.objects.create_user(
+            email="parent@test.com", password=get_test_password(), name="Test Parent"
+        )
 
         admin_user = User.objects.create_user(
-            email="admin@test.com", password="testpass123", name="Test Admin", is_staff=True
+            email="admin@test.com", password=get_test_password(), name="Test Admin", is_staff=True
         )
 
         # Create School Memberships
@@ -303,7 +315,7 @@ class FinanceTestFixtures:
             "teacher_profile": teacher_profile,
             "student_profile": student_profile,
             "guardian_profile": guardian_profile,
-            "parent_child_relationship": parent_child_relationship,
+            "guardian_student_relationship": guardian_student_relationship,
             "course": course,
             "teacher_course": teacher_course,
             "pricing_plan": pricing_plan,
@@ -359,7 +371,7 @@ class FinanceTestFixtures:
 
         teacher_user = User.objects.create_user(
             email=email,
-            password="testpass123",
+            password=get_test_password(),
             name="Teacher User",
         )
 
@@ -401,7 +413,7 @@ class FinanceTestFixtures:
 
         student_user = User.objects.create_user(
             email=email,
-            password="testpass123",
+            password=get_test_password(),
             name="Student User",
         )
 
@@ -472,13 +484,13 @@ class FinanceTestFixtures:
 
         parent_user = User.objects.create_user(
             email=parent_email,
-            password="testpass123",
+            password=get_test_password(),
             name="Parent User",
         )
 
         child_user = User.objects.create_user(
             email=child_email,
-            password="testpass123",
+            password=get_test_password(),
             name="Child User",
         )
 
@@ -508,7 +520,7 @@ class FinanceTestFixtures:
             "child_membership": child_membership,
             "guardian_profile": guardian_profile,
             "student_profile": student_profile,
-            "parent_child_relationship": parent_child_relationship,
+            "guardian_student_relationship": guardian_student_relationship,
         }
 
     @staticmethod

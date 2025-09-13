@@ -34,11 +34,10 @@ from django.utils.translation import gettext as _
 from django.views import View
 from django.views.decorators.csrf import csrf_protect
 from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView
-from sesame.utils import get_query_string
+from sesame.utils import get_query_string, get_query_string as sesame_get_query_string
 from sesame.views import LoginView as SesameLoginView
 
 from messaging.services import send_magic_link_email, send_sms_otp
-from sesame.utils import get_query_string as sesame_get_query_string
 
 from .db_queries import create_user_school_and_membership, get_user_by_email, user_exists
 from .models import School, SchoolMembership, SchoolSettings, TeacherInvitation
@@ -46,44 +45,41 @@ from .permissions import IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
-email_confirmation_logger = logging.getLogger('accounts.email_confirmation')
+email_confirmation_logger = logging.getLogger("accounts.email_confirmation")
 
 # =============================================================================
 # EMAIL CONFIRMATION LOGGING SYSTEM (Development Environment)
 # =============================================================================
 
+
 def log_email_confirmation_sent(email: str, confirmation_token: str | None = None) -> None:
     """Log email confirmation sent in development environment"""
     token_info = f" (Token: {confirmation_token})" if confirmation_token else ""
     email_confirmation_logger.info(
-        f"📧 Email confirmation sent to {email}{token_info} - "
-        f"User needs to confirm their email to activate account"
+        f"📧 Email confirmation sent to {email}{token_info} - User needs to confirm their email to activate account"
     )
+
 
 def log_email_confirmation_success(email: str) -> None:
     """Log successful email confirmation in development environment"""
-    email_confirmation_logger.info(
-        f"✅ Email confirmation successful for {email} - Account activated"
-    )
+    email_confirmation_logger.info(f"✅ Email confirmation successful for {email} - Account activated")
+
 
 def log_email_confirmation_failure(email: str, reason: str = "Unknown") -> None:
     """Log failed email confirmation in development environment"""
-    email_confirmation_logger.warning(
-        f"❌ Email confirmation failed for {email} - Reason: {reason}"
-    )
+    email_confirmation_logger.warning(f"❌ Email confirmation failed for {email} - Reason: {reason}")
+
 
 def log_email_confirmation_resent(email: str, confirmation_token: str | None = None) -> None:
     """Log email confirmation resent in development environment"""
     token_info = f" (New Token: {confirmation_token})" if confirmation_token else ""
-    email_confirmation_logger.info(
-        f"🔄 Email confirmation resent to {email}{token_info}"
-    )
+    email_confirmation_logger.info(f"🔄 Email confirmation resent to {email}{token_info}")
+
 
 def log_email_confirmation_expired(email: str) -> None:
     """Log email confirmation token expiry in development environment"""
-    email_confirmation_logger.warning(
-        f"⏰ Email confirmation token expired for {email} - User needs new confirmation"
-    )
+    email_confirmation_logger.warning(f"⏰ Email confirmation token expired for {email} - User needs new confirmation")
+
 
 # Constants
 EMAIL_REGEX = re.compile(r"^[^@]+@[^@]+\.[^@]+$")
@@ -177,7 +173,7 @@ class SignInView(View):
                 # Log email confirmation for development environment
                 if email_result.get("success"):
                     # Extract token from magic link for logging (last part after 'sesame=')
-                    token = magic_link.split('sesame=')[-1] if 'sesame=' in magic_link else 'generated'
+                    token = magic_link.split("sesame=")[-1] if "sesame=" in magic_link else "generated"
                     log_email_confirmation_sent(email, token[:8] + "...")  # Show partial token for security
                 else:
                     log_email_confirmation_failure(email, "Email sending failed")
@@ -198,7 +194,9 @@ class SignInView(View):
                     request.session["verification_otp_expires"] = otp_expires
                     request.session["is_signin"] = True
 
-                    logger.info(f"Dual verification sent successfully to: {email} and {user.phone_number or 'no phone'}")
+                    logger.info(
+                        f"Dual verification sent successfully to: {email} and {user.phone_number or 'no phone'}"
+                    )
                     return render(
                         request,
                         "accounts/partials/signin_success_with_verify.html",
@@ -349,7 +347,7 @@ class SignUpView(View):
                     first_name=first_name,
                     last_name=" ".join(full_name.split()[1:]) if len(full_name.split()) > 1 else "",
                 )
-                
+
                 # Set user as unverified but allow access
                 user.email_verified = False
                 user.phone_verified = False
@@ -361,39 +359,43 @@ class SignUpView(View):
                 create_user_school_and_membership(user, organization_name)
 
                 # Log in the user immediately (progressive verification)
-                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-                
+                login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+
                 # Mark this as an unverified session (expires in 24h)
-                request.session['is_unverified_user'] = True
-                request.session['unverified_until'] = (timezone.now() + timedelta(hours=24)).timestamp()
+                request.session["is_unverified_user"] = True
+                request.session["unverified_until"] = (timezone.now() + timedelta(hours=24)).timestamp()
                 request.session.set_expiry(24 * 60 * 60)  # 24 hours
-                
+
                 logger.info(f"User signup completed for: {email} (unverified, 24h grace period)")
-                
+
                 # Send verification emails/SMS asynchronously (non-blocking)
                 try:
                     # Generate magic link for email verification
                     login_url = reverse("accounts:verify_email")
                     from sesame.utils import get_query_string
+
                     magic_link = request.build_absolute_uri(login_url) + get_query_string(user)
-                    
+
                     # Send email verification (non-blocking)
                     send_magic_link_email(email, magic_link, first_name, is_verification=True)
                     logger.info(f"Verification email sent to: {email}")
-                    
+
                     # Generate and send SMS OTP if phone provided
                     if phone_number:
                         otp_code = str(secrets.randbelow(900000) + 100000)
-                        request.session[f'verify_otp_{user.id}'] = otp_code
-                        request.session[f'verify_otp_expires_{user.id}'] = (timezone.now() + timedelta(minutes=30)).timestamp()
+                        request.session[f"verify_otp_{user.id}"] = otp_code
+                        request.session[f"verify_otp_expires_{user.id}"] = (
+                            timezone.now() + timedelta(minutes=30)
+                        ).timestamp()
                         send_sms_otp(phone_number, otp_code, first_name, is_verification=True)
                         logger.info(f"Verification SMS sent to: {phone_number}")
                 except Exception as e:
                     # Don't block signup if verification sending fails
                     logger.error(f"Failed to send verifications for {email}: {e}")
-                
+
                 # Create verification tasks using the task service
                 from tasks.services import TaskService
+
                 TaskService.create_verification_tasks(user, email, phone_number)
 
             # Return success with redirect to dashboard
@@ -533,7 +535,7 @@ class VerifyOTPView(View):
 
                 elif is_signin:
                     # For signin, SMS OTP is sufficient
-                    login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+                    login(request, user, backend="django.contrib.auth.backends.ModelBackend")
                     logger.info(f"SMS authentication successful for user: {user.email}")
 
                     # Clear session data
@@ -592,8 +594,6 @@ class VerifyOTPView(View):
             request.session.pop(key, None)
 
 
-
-
 # Function for resending verification code via HTMX
 @csrf_protect
 def resend_code(request: HttpRequest) -> HttpResponse:
@@ -634,7 +634,7 @@ def resend_code(request: HttpRequest) -> HttpResponse:
             logger.info(f"Magic link resent successfully to: {email}")
 
             # Log email confirmation resent for development environment
-            token = magic_link.split('sesame=')[-1] if 'sesame=' in magic_link else 'generated'
+            token = magic_link.split("sesame=")[-1] if "sesame=" in magic_link else "generated"
             log_email_confirmation_resent(email, token[:8] + "...")  # Show partial token for security
 
             return render(
@@ -699,9 +699,11 @@ class LogoutView(View):
         # Redirect to signin page using correct URL
         return redirect(reverse("accounts:signin"))
 
+
 # =============================================================================
 # INVITATION MANAGEMENT VIEWS
 # =============================================================================
+
 
 class TeacherInvitationListView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin, ListView):
     """
@@ -721,18 +723,20 @@ class TeacherInvitationListView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin
 
     def get_queryset(self):
         # Get schools the user can manage
-        user_schools = self.get_user_schools_by_role('school_owner') | \
-                      self.get_user_schools_by_role('school_admin')
+        user_schools = self.get_user_schools_by_role("school_owner") | self.get_user_schools_by_role("school_admin")
 
         # Filter invitations for these schools
-        return TeacherInvitation.objects.filter(
-            school__in=user_schools
-        ).select_related('school', 'invited_by').order_by('-created_at')
+        return (
+            TeacherInvitation.objects.filter(school__in=user_schools)
+            .select_related("school", "invited_by")
+            .order_by("-created_at")
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['schools'] = self.get_user_schools_by_role('school_owner') | \
-                           self.get_user_schools_by_role('school_admin')
+        context["schools"] = self.get_user_schools_by_role("school_owner") | self.get_user_schools_by_role(
+            "school_admin"
+        )
         return context
 
 
@@ -755,15 +759,14 @@ class TeacherInvitationCreateView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMix
 
     model = TeacherInvitation
     template_name = "accounts/invitations/invitation_create.html"
-    fields = ['school', 'email', 'custom_message']
-    success_url = reverse_lazy('accounts:invitation_list')
+    fields = ["school", "email", "custom_message"]
+    success_url = reverse_lazy("accounts:invitation_list")
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
         # Limit school choices to schools the user can manage
-        user_schools = self.get_user_schools_by_role('school_owner') | \
-                      self.get_user_schools_by_role('school_admin')
-        form.fields['school'].queryset = user_schools
+        user_schools = self.get_user_schools_by_role("school_owner") | self.get_user_schools_by_role("school_admin")
+        form.fields["school"].queryset = user_schools
         return form
 
     def form_valid(self, form):
@@ -773,11 +776,11 @@ class TeacherInvitationCreateView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMix
         # Set the invitation details
         form.instance.invited_by = self.request.user
         form.instance.batch_id = batch_id
-        form.instance.role = 'teacher'  # Default to teacher role
+        form.instance.role = "teacher"  # Default to teacher role
 
         # Check if user has permission to invite to this school
         school = form.instance.school
-        if not self.has_school_permission(school, ['school_owner', 'school_admin']):
+        if not self.has_school_permission(school, ["school_owner", "school_admin"]):
             messages.error(self.request, _("You don't have permission to invite teachers to this school."))
             return self.form_invalid(form)
 
@@ -788,7 +791,9 @@ class TeacherInvitationCreateView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMix
                 # Send invitation email (implement this based on your email system)
                 # send_teacher_invitation_email(form.instance)
 
-                messages.success(self.request, _("Teacher invitation sent to %(email)s") % {'email': form.instance.email})
+                messages.success(
+                    self.request, _("Teacher invitation sent to %(email)s") % {"email": form.instance.email}
+                )
                 return response
 
         except ValidationError as e:
@@ -813,8 +818,7 @@ class TeacherInvitationDetailView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMix
 
     def get_queryset(self):
         # Limit to invitations for schools the user can manage
-        user_schools = self.get_user_schools_by_role('school_owner') | \
-                      self.get_user_schools_by_role('school_admin')
+        user_schools = self.get_user_schools_by_role("school_owner") | self.get_user_schools_by_role("school_admin")
         return TeacherInvitation.objects.filter(school__in=user_schools)
 
 
@@ -839,16 +843,12 @@ class AcceptTeacherInvitationView(View):
 
         # Check if invitation is valid
         if not invitation.is_valid():
-            return render(request, 'accounts/invitations/invitation_expired.html', {
-                'invitation': invitation
-            })
+            return render(request, "accounts/invitations/invitation_expired.html", {"invitation": invitation})
 
         # Mark as viewed
         invitation.mark_viewed()
 
-        return render(request, 'accounts/invitations/accept_invitation.html', {
-            'invitation': invitation
-        })
+        return render(request, "accounts/invitations/accept_invitation.html", {"invitation": invitation})
 
     @method_decorator(csrf_protect)
     def post(self, request: HttpRequest, token: str) -> HttpResponse:
@@ -870,23 +870,18 @@ class AcceptTeacherInvitationView(View):
 
         # Check if invitation is valid
         if not invitation.is_valid():
-            return render(request, 'accounts/invitations/invitation_expired.html', {
-                'invitation': invitation
-            })
+            return render(request, "accounts/invitations/invitation_expired.html", {"invitation": invitation})
 
-        action = request.POST.get('action')
+        action = request.POST.get("action")
 
-        if action == 'accept':
+        if action == "accept":
             # Check if user exists
             try:
                 user = User.objects.get(email=invitation.email)
 
                 # Create school membership
                 membership, created = SchoolMembership.objects.get_or_create(
-                    user=user,
-                    school=invitation.school,
-                    role=invitation.role,
-                    defaults={'is_active': True}
+                    user=user, school=invitation.school, role=invitation.role, defaults={"is_active": True}
                 )
 
                 if not created and not membership.is_active:
@@ -898,79 +893,78 @@ class AcceptTeacherInvitationView(View):
 
                 # If user is logged in and it's the correct user, redirect to dashboard
                 if request.user.is_authenticated and request.user.email == invitation.email:
-                    messages.success(request, _("Welcome to %(school)s! You are now a %(role)s.") % {
-                        'school': invitation.school.name,
-                        'role': invitation.get_role_display()
-                    })
-                    return redirect(reverse('dashboard:dashboard'))
+                    messages.success(
+                        request,
+                        _("Welcome to %(school)s! You are now a %(role)s.")
+                        % {"school": invitation.school.name, "role": invitation.get_role_display()},
+                    )
+                    return redirect(reverse("dashboard:dashboard"))
 
                 # Otherwise, show success page with login instructions
-                return render(request, 'accounts/invitations/invitation_accepted.html', {
-                    'invitation': invitation,
-                    'user_exists': True
-                })
+                return render(
+                    request,
+                    "accounts/invitations/invitation_accepted.html",
+                    {"invitation": invitation, "user_exists": True},
+                )
 
             except User.DoesNotExist:
                 # User doesn't exist, show signup flow
-                return render(request, 'accounts/invitations/invitation_accepted.html', {
-                    'invitation': invitation,
-                    'user_exists': False,
-                    'signup_url': reverse('accounts:signup') + f'?email={invitation.email}&invitation_token={token}'
-                })
+                return render(
+                    request,
+                    "accounts/invitations/invitation_accepted.html",
+                    {
+                        "invitation": invitation,
+                        "user_exists": False,
+                        "signup_url": reverse("accounts:signup")
+                        + f"?email={invitation.email}&invitation_token={token}",
+                    },
+                )
 
-        elif action == 'decline':
+        elif action == "decline":
             invitation.decline()
-            return render(request, 'accounts/invitations/invitation_declined.html', {
-                'invitation': invitation
-            })
+            return render(request, "accounts/invitations/invitation_declined.html", {"invitation": invitation})
 
-        return redirect(reverse('accounts:accept_invitation', kwargs={'token': token}))
+        return redirect(reverse("accounts:accept_invitation", kwargs={"token": token}))
 
 
 class CustomMagicLoginView(SesameLoginView):
     """
     Custom magic link login view with enhanced error handling and logging.
-    
+
     Extends sesame's LoginView to provide better user feedback and debugging
     information for magic link authentication failures.
     """
-    
+
     def dispatch(self, request, *args, **kwargs):
         """Override dispatch to add custom error handling."""
         try:
             logger.info(f"Magic link login attempt from IP: {request.META.get('REMOTE_ADDR')}")
             logger.info(f"Magic link URL: {request.get_full_path()}")
-            logger.info(f"User-Agent: {request.META.get('HTTP_USER_AGENT', 'Unknown')}")
-            
+            logger.info(f"User-Agent: {request.headers.get('user-agent', 'Unknown')}")
+
             response = super().dispatch(request, *args, **kwargs)
-            
+
             # Log successful authentication
-            if hasattr(request, 'user') and request.user.is_authenticated:
+            if hasattr(request, "user") and request.user.is_authenticated:
                 logger.info(f"Magic link authentication successful for user: {request.user.email}")
-            
+
             return response
-            
+
         except PermissionDenied as e:
             logger.warning(f"Magic link authentication failed: {e}")
             logger.warning(f"Request details - Path: {request.get_full_path()}, IP: {request.META.get('REMOTE_ADDR')}")
-            
+
             # Provide user-friendly error message
-            messages.error(
-                request,
-                "This login link has expired or is invalid. Please request a new one."
-            )
-            return redirect(reverse('accounts:signin'))
-            
+            messages.error(request, "This login link has expired or is invalid. Please request a new one.")
+            return redirect(reverse("accounts:signin"))
+
         except Exception as e:
             logger.error(f"Unexpected error in magic link authentication: {e}")
             logger.error(f"Request details - Path: {request.get_full_path()}, IP: {request.META.get('REMOTE_ADDR')}")
-            
+
             # Provide generic error message
-            messages.error(
-                request,
-                "There was an issue with your login link. Please try signing in again."
-            )
-            return redirect(reverse('accounts:signin'))
+            messages.error(request, "There was an issue with your login link. Please try signing in again.")
+            return redirect(reverse("accounts:signin"))
 
 
 @login_required
@@ -994,24 +988,20 @@ def cancel_teacher_invitation(request: HttpRequest, invitation_id: int) -> HttpR
 
     # Check permission
     user_schools = SchoolMembership.objects.filter(
-        user=request.user,
-        role__in=['school_owner', 'school_admin'],
-        is_active=True
-    ).values_list('school_id', flat=True)
+        user=request.user, role__in=["school_owner", "school_admin"], is_active=True
+    ).values_list("school_id", flat=True)
 
     if invitation.school_id not in user_schools and not request.user.is_superuser:
         return HttpResponse("Permission denied", status=403)
 
-    if request.method == 'POST':
+    if request.method == "POST":
         try:
             invitation.cancel()
-            return render(request, 'accounts/invitations/partials/invitation_cancelled.html', {
-                'invitation': invitation
-            })
+            return render(
+                request, "accounts/invitations/partials/invitation_cancelled.html", {"invitation": invitation}
+            )
         except ValidationError as e:
-            return render(request, 'accounts/invitations/partials/invitation_error.html', {
-                'error': str(e)
-            })
+            return render(request, "accounts/invitations/partials/invitation_error.html", {"error": str(e)})
 
     return HttpResponse("Method not allowed", status=405)
 
@@ -1037,21 +1027,21 @@ def resend_teacher_invitation(request: HttpRequest, invitation_id: int) -> HttpR
 
     # Check permission
     user_schools = SchoolMembership.objects.filter(
-        user=request.user,
-        role__in=['school_owner', 'school_admin'],
-        is_active=True
-    ).values_list('school_id', flat=True)
+        user=request.user, role__in=["school_owner", "school_admin"], is_active=True
+    ).values_list("school_id", flat=True)
 
     if invitation.school_id not in user_schools and not request.user.is_superuser:
         return HttpResponse("Permission denied", status=403)
 
-    if request.method == 'POST':
+    if request.method == "POST":
         try:
             # Check if can retry
             if not invitation.can_retry():
-                return render(request, 'accounts/invitations/partials/invitation_error.html', {
-                    'error': "Maximum retry attempts reached for this invitation."
-                })
+                return render(
+                    request,
+                    "accounts/invitations/partials/invitation_error.html",
+                    {"error": "Maximum retry attempts reached for this invitation."},
+                )
 
             # Resend email (implement based on your email system)
             # send_teacher_invitation_email(invitation)
@@ -1059,15 +1049,15 @@ def resend_teacher_invitation(request: HttpRequest, invitation_id: int) -> HttpR
             # Update invitation status
             invitation.mark_email_sent()
 
-            return render(request, 'accounts/invitations/partials/invitation_resent.html', {
-                'invitation': invitation
-            })
+            return render(request, "accounts/invitations/partials/invitation_resent.html", {"invitation": invitation})
 
         except Exception as e:
             invitation.mark_email_failed(str(e))
-            return render(request, 'accounts/invitations/partials/invitation_error.html', {
-                'error': "Failed to resend invitation. Please try again."
-            })
+            return render(
+                request,
+                "accounts/invitations/partials/invitation_error.html",
+                {"error": "Failed to resend invitation. Please try again."},
+            )
 
     return HttpResponse("Method not allowed", status=405)
 
@@ -1076,16 +1066,14 @@ def resend_teacher_invitation(request: HttpRequest, invitation_id: int) -> HttpR
 # PROFILE MANAGEMENT VIEWS
 # =============================================================================
 
+
 class ProfileEditView(LoginRequiredMixin, UpdateView):
     """Edit comprehensive user profile"""
 
     model = User
     template_name = "accounts/profile/profile_edit.html"
-    fields = [
-        'name', 'email', 'phone_number', 'profile_photo',
-        'primary_contact'
-    ]
-    success_url = reverse_lazy('accounts:profile')
+    fields = ["name", "email", "phone_number", "profile_photo", "primary_contact"]
+    success_url = reverse_lazy("accounts:profile")
 
     def get_object(self):
         return self.request.user
@@ -1096,10 +1084,10 @@ class ProfileEditView(LoginRequiredMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['user'] = self.request.user
+        context["user"] = self.request.user
         # Add verification status for display
-        context['email_verified'] = self.request.user.email_verified
-        context['phone_verified'] = self.request.user.phone_verified
+        context["email_verified"] = self.request.user.email_verified
+        context["phone_verified"] = self.request.user.phone_verified
         return context
 
 
@@ -1117,19 +1105,20 @@ class ProfileView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
 
         # Get user's school memberships
-        memberships = SchoolMembership.objects.filter(
-            user=self.request.user,
-            is_active=True
-        ).select_related('school').order_by('joined_at')
+        memberships = (
+            SchoolMembership.objects.filter(user=self.request.user, is_active=True)
+            .select_related("school")
+            .order_by("joined_at")
+        )
 
-        context['memberships'] = memberships
-        
+        context["memberships"] = memberships
+
         # Add dashboard context for base_with_navs template
-        context['active_section'] = 'profile'
-        context['school_name'] = memberships.first().school.name if memberships.exists() else "No School"
-        context['user_first_name'] = self.request.user.first_name
-        context['user_role'] = memberships.first().get_role_display() if memberships.exists() else "User"
-        
+        context["active_section"] = "profile"
+        context["school_name"] = memberships.first().school.name if memberships.exists() else "No School"
+        context["user_first_name"] = self.request.user.first_name
+        context["user_role"] = memberships.first().get_role_display() if memberships.exists() else "User"
+
         return context
 
 
@@ -1137,59 +1126,38 @@ class ProfileView(LoginRequiredMixin, DetailView):
 # SCHOOL MANAGEMENT VIEWS
 # =============================================================================
 
+
 class ComprehensiveSchoolSettingsForm(forms.Form):
     """Comprehensive form for both School and SchoolSettings"""
 
     # School fields
     name = forms.CharField(max_length=150, label="School Name")
-    description = forms.CharField(
-        widget=forms.Textarea(attrs={'rows': 3}),
-        required=False,
-        label="Description"
-    )
-    address = forms.CharField(
-        widget=forms.Textarea(attrs={'rows': 2}),
-        required=False,
-        label="Address"
-    )
+    description = forms.CharField(widget=forms.Textarea(attrs={"rows": 3}), required=False, label="Description")
+    address = forms.CharField(widget=forms.Textarea(attrs={"rows": 2}), required=False, label="Address")
     contact_email = forms.EmailField(required=False, label="Contact Email")
     phone_number = forms.CharField(max_length=20, required=False, label="Phone Number")
     website = forms.URLField(required=False, label="Website")
     logo = forms.ImageField(required=False, label="School Logo")
     primary_color = forms.CharField(
-        max_length=7,
-        widget=forms.TextInput(attrs={'type': 'color'}),
-        initial="#3B82F6",
-        label="Primary Color"
+        max_length=7, widget=forms.TextInput(attrs={"type": "color"}), initial="#3B82F6", label="Primary Color"
     )
     secondary_color = forms.CharField(
-        max_length=7,
-        widget=forms.TextInput(attrs={'type': 'color'}),
-        initial="#1F2937",
-        label="Secondary Color"
+        max_length=7, widget=forms.TextInput(attrs={"type": "color"}), initial="#1F2937", label="Secondary Color"
     )
 
     # SchoolSettings fields - Legal & Billing
     tax_id = forms.CharField(max_length=50, required=False, label="Tax ID (NIF)")
-    billing_address = forms.CharField(
-        widget=forms.Textarea(attrs={'rows': 3}),
-        required=False,
-        label="Billing Address"
-    )
+    billing_address = forms.CharField(widget=forms.Textarea(attrs={"rows": 3}), required=False, label="Billing Address")
     billing_contact_name = forms.CharField(max_length=100, required=False, label="Billing Contact Name")
     billing_contact_email = forms.EmailField(required=False, label="Billing Contact Email")
 
     # SchoolSettings fields - Operational
     timezone = forms.CharField(max_length=50, initial="Europe/Lisbon", label="Timezone")
     language = forms.ChoiceField(
-        choices=[('pt', 'Portuguese'), ('en', 'English')],
-        initial='pt',
-        label="Default Language"
+        choices=[("pt", "Portuguese"), ("en", "English")], initial="pt", label="Default Language"
     )
     currency_code = forms.ChoiceField(
-        choices=[('EUR', 'Euro'), ('USD', 'US Dollar'), ('GBP', 'British Pound')],
-        initial='EUR',
-        label="Currency"
+        choices=[("EUR", "Euro"), ("USD", "US Dollar"), ("GBP", "British Pound")], initial="EUR", label="Currency"
     )
 
     def __init__(self, school, *args, **kwargs):
@@ -1203,127 +1171,120 @@ class ComprehensiveSchoolSettingsForm(forms.Form):
             self.school_settings = SchoolSettings(school=school)
 
         # Populate initial data
-        if not kwargs.get('data'):
+        if not kwargs.get("data"):
             # School fields
-            self.initial.update({
-                'name': school.name or '',
-                'description': school.description or '',
-                'address': school.address or '',
-                'contact_email': school.contact_email or '',
-                'phone_number': school.phone_number or '',
-                'website': school.website or '',
-                'primary_color': school.primary_color or '#3B82F6',
-                'secondary_color': school.secondary_color or '#1F2937',
-            })
+            self.initial.update(
+                {
+                    "name": school.name or "",
+                    "description": school.description or "",
+                    "address": school.address or "",
+                    "contact_email": school.contact_email or "",
+                    "phone_number": school.phone_number or "",
+                    "website": school.website or "",
+                    "primary_color": school.primary_color or "#3B82F6",
+                    "secondary_color": school.secondary_color or "#1F2937",
+                }
+            )
 
             # SchoolSettings fields - only if the settings exist
-            if hasattr(self.school_settings, 'pk') and self.school_settings.pk:
-                self.initial.update({
-                    'tax_id': self.school_settings.tax_id,
-                    'billing_address': self.school_settings.billing_address,
-                    'billing_contact_name': self.school_settings.billing_contact_name,
-                    'billing_contact_email': self.school_settings.billing_contact_email,
-                    'timezone': self.school_settings.timezone,
-                    'language': self.school_settings.language,
-                    'currency_code': self.school_settings.currency_code,
-                })
+            if hasattr(self.school_settings, "pk") and self.school_settings.pk:
+                self.initial.update(
+                    {
+                        "tax_id": self.school_settings.tax_id,
+                        "billing_address": self.school_settings.billing_address,
+                        "billing_contact_name": self.school_settings.billing_contact_name,
+                        "billing_contact_email": self.school_settings.billing_contact_email,
+                        "timezone": self.school_settings.timezone,
+                        "language": self.school_settings.language,
+                        "currency_code": self.school_settings.currency_code,
+                    }
+                )
 
     def save(self):
         """Save both School and SchoolSettings"""
         with transaction.atomic():
             # Update School fields
-            self.school.name = self.cleaned_data['name']
-            self.school.description = self.cleaned_data['description']
-            self.school.address = self.cleaned_data['address']
-            self.school.contact_email = self.cleaned_data['contact_email']
-            self.school.phone_number = self.cleaned_data['phone_number']
-            self.school.website = self.cleaned_data['website']
-            self.school.primary_color = self.cleaned_data['primary_color']
-            self.school.secondary_color = self.cleaned_data['secondary_color']
+            self.school.name = self.cleaned_data["name"]
+            self.school.description = self.cleaned_data["description"]
+            self.school.address = self.cleaned_data["address"]
+            self.school.contact_email = self.cleaned_data["contact_email"]
+            self.school.phone_number = self.cleaned_data["phone_number"]
+            self.school.website = self.cleaned_data["website"]
+            self.school.primary_color = self.cleaned_data["primary_color"]
+            self.school.secondary_color = self.cleaned_data["secondary_color"]
 
-            if self.cleaned_data.get('logo'):
-                self.school.logo = self.cleaned_data['logo']
+            if self.cleaned_data.get("logo"):
+                self.school.logo = self.cleaned_data["logo"]
 
             self.school.save()
 
             # Update SchoolSettings fields
             self.school_settings.school = self.school
-            self.school_settings.tax_id = self.cleaned_data['tax_id']
-            self.school_settings.billing_address = self.cleaned_data['billing_address']
-            self.school_settings.billing_contact_name = self.cleaned_data['billing_contact_name']
-            self.school_settings.billing_contact_email = self.cleaned_data['billing_contact_email']
-            self.school_settings.timezone = self.cleaned_data['timezone']
-            self.school_settings.language = self.cleaned_data['language']
-            self.school_settings.currency_code = self.cleaned_data['currency_code']
+            self.school_settings.tax_id = self.cleaned_data["tax_id"]
+            self.school_settings.billing_address = self.cleaned_data["billing_address"]
+            self.school_settings.billing_contact_name = self.cleaned_data["billing_contact_name"]
+            self.school_settings.billing_contact_email = self.cleaned_data["billing_contact_email"]
+            self.school_settings.timezone = self.cleaned_data["timezone"]
+            self.school_settings.language = self.cleaned_data["language"]
+            self.school_settings.currency_code = self.cleaned_data["currency_code"]
 
             self.school_settings.save()
 
         return self.school
 
+
 @login_required
 def send_verification_email(request):
     """Send verification email to the current user (HTMX endpoint)."""
     user = request.user
-    
+
     # Check if already verified
     if user.email_verified:
-        return HttpResponse(
-            '<div class="text-green-600 text-sm">Your email is already verified!</div>'
-        )
-    
+        return HttpResponse('<div class="text-green-600 text-sm">Your email is already verified!</div>')
+
     try:
         # Generate magic link for email verification
         login_url = reverse("accounts:verify_email")
         magic_link = request.build_absolute_uri(login_url) + sesame_get_query_string(user)
-        
+
         # Send verification email
         result = send_magic_link_email(user.email, magic_link, user.first_name, is_verification=True)
-        
+
         if result.get("success"):
             logger.info(f"Verification email sent to: {user.email}")
-            return HttpResponse(
-                '<div class="text-green-600 text-sm">Verification email sent! Check your inbox.</div>'
-            )
+            return HttpResponse('<div class="text-green-600 text-sm">Verification email sent! Check your inbox.</div>')
         else:
             logger.error(f"Failed to send verification email to {user.email}")
-            return HttpResponse(
-                '<div class="text-red-600 text-sm">Failed to send email. Please try again later.</div>'
-            )
+            return HttpResponse('<div class="text-red-600 text-sm">Failed to send email. Please try again later.</div>')
     except Exception as e:
         logger.error(f"Error sending verification email to {user.email}: {e}")
-        return HttpResponse(
-            '<div class="text-red-600 text-sm">An error occurred. Please try again later.</div>'
-        )
+        return HttpResponse('<div class="text-red-600 text-sm">An error occurred. Please try again later.</div>')
 
 
 @login_required
 def send_verification_sms(request):
     """Send verification SMS to the current user (HTMX endpoint)."""
     user = request.user
-    
+
     # Check if phone number exists
     if not user.phone_number:
-        return HttpResponse(
-            '<div class="text-red-600 text-sm">No phone number on file. Please add one first.</div>'
-        )
-    
+        return HttpResponse('<div class="text-red-600 text-sm">No phone number on file. Please add one first.</div>')
+
     # Check if already verified
     if user.phone_verified:
-        return HttpResponse(
-            '<div class="text-green-600 text-sm">Your phone is already verified!</div>'
-        )
-    
+        return HttpResponse('<div class="text-green-600 text-sm">Your phone is already verified!</div>')
+
     try:
         # Generate OTP code
         otp_code = str(secrets.randbelow(900000) + 100000)
-        
+
         # Store in session
-        request.session[f'verify_otp_{user.id}'] = otp_code
-        request.session[f'verify_otp_expires_{user.id}'] = (timezone.now() + timedelta(minutes=30)).timestamp()
-        
+        request.session[f"verify_otp_{user.id}"] = otp_code
+        request.session[f"verify_otp_expires_{user.id}"] = (timezone.now() + timedelta(minutes=30)).timestamp()
+
         # Send SMS
         result = send_sms_otp(user.phone_number, otp_code, user.first_name, is_verification=True)
-        
+
         if result.get("success"):
             logger.info(f"Verification SMS sent to: {user.phone_number}")
             return HttpResponse(
@@ -1332,14 +1293,10 @@ def send_verification_sms(request):
             )
         else:
             logger.error(f"Failed to send verification SMS to {user.phone_number}")
-            return HttpResponse(
-                '<div class="text-red-600 text-sm">Failed to send SMS. Please try again later.</div>'
-            )
+            return HttpResponse('<div class="text-red-600 text-sm">Failed to send SMS. Please try again later.</div>')
     except Exception as e:
         logger.error(f"Error sending verification SMS to {user.phone_number}: {e}")
-        return HttpResponse(
-            '<div class="text-red-600 text-sm">An error occurred. Please try again later.</div>'
-        )
+        return HttpResponse('<div class="text-red-600 text-sm">An error occurred. Please try again later.</div>')
 
 
 class SchoolSettingsView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin, FormView):
@@ -1361,10 +1318,12 @@ class SchoolSettingsView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin, FormV
 
         # Now that we know the user is authenticated, check school-specific permissions
         from .models.schools import SchoolRole
-        school_queryset = self.get_user_schools_by_role(SchoolRole.SCHOOL_OWNER) | \
-                         self.get_user_schools_by_role(SchoolRole.SCHOOL_ADMIN)
+
+        school_queryset = self.get_user_schools_by_role(SchoolRole.SCHOOL_OWNER) | self.get_user_schools_by_role(
+            SchoolRole.SCHOOL_ADMIN
+        )
         try:
-            self.school = school_queryset.get(pk=kwargs['pk'])
+            self.school = school_queryset.get(pk=kwargs["pk"])
         except School.DoesNotExist:
             raise PermissionDenied("You don't have permission to edit this school's settings.")
 
@@ -1378,27 +1337,27 @@ class SchoolSettingsView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin, FormV
             return School.objects.none()
 
         return School.objects.filter(
-            memberships__user=self.request.user,
-            memberships__role=role,
-            memberships__is_active=True
+            memberships__user=self.request.user, memberships__role=role, memberships__is_active=True
         )
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['school'] = self.school
+        kwargs["school"] = self.school
         return kwargs
 
     def form_valid(self, form):
         form.save()
-        messages.success(self.request, _("Settings for %(school)s have been updated successfully.") % {'school': self.school.name})
+        messages.success(
+            self.request, _("Settings for %(school)s have been updated successfully.") % {"school": self.school.name}
+        )
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse('accounts:school_settings', kwargs={'pk': self.school.pk})
+        return reverse("accounts:school_settings", kwargs={"pk": self.school.pk})
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['object'] = self.school
+        context["object"] = self.school
         return context
 
 
@@ -1411,24 +1370,26 @@ class SchoolMemberListView(IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin, Lis
     paginate_by = 50
 
     def get_queryset(self):
-        self.school = get_object_or_404(School, pk=self.kwargs['school_pk'])
+        self.school = get_object_or_404(School, pk=self.kwargs["school_pk"])
 
         # Check permission for this specific school
-        if not self.has_school_permission(self.school, ['school_owner', 'school_admin']):
+        if not self.has_school_permission(self.school, ["school_owner", "school_admin"]):
             raise Http404("You don't have permission to view this school's members.")
 
-        return SchoolMembership.objects.filter(
-            school=self.school,
-            is_active=True
-        ).select_related('user').order_by('role', 'joined_at')
+        return (
+            SchoolMembership.objects.filter(school=self.school, is_active=True)
+            .select_related("user")
+            .order_by("role", "joined_at")
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['school'] = self.school
+        context["school"] = self.school
         return context
 
 
 # Using django-sesame's built-in LoginView directly - no custom implementation needed
+
 
 def root_redirect(request):
     """
@@ -1437,6 +1398,6 @@ def root_redirect(request):
     - Anonymous users → /accounts/signin/
     """
     if request.user.is_authenticated:
-        return HttpResponseRedirect(reverse('dashboard:dashboard'))
+        return HttpResponseRedirect(reverse("dashboard:dashboard"))
     else:
-        return HttpResponseRedirect(reverse('accounts:signin'))
+        return HttpResponseRedirect(reverse("accounts:signin"))

@@ -5,7 +5,7 @@
         <div class="bg-gray-50 border-b border-gray-200 p-3 text-center">
             <h3 class="text-lg font-semibold text-gray-900">{{ current_date|date:'l' }}</h3>
         </div>
-        
+
         <!-- All-day events section -->
         <div class="border-b border-gray-200">
             <div class="grid" style="grid-template-columns: 80px 1fr;">
@@ -23,7 +23,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Hourly timeline -->
         <div class="grid" style="grid-template-columns: 80px 1fr;">
             <!-- Time labels column -->
@@ -34,23 +34,23 @@
                     </div>
                 {% endfor %}
             </div>
-            
+
             <!-- Events column -->
             <div class="relative">
                 <!-- Current time indicator (client-side updated) -->
                 <div class="current-time-indicator absolute left-0 right-0 h-0.5 bg-red-500 z-10" style="top: 0; display: none;">
                     <div class="absolute -left-2 -top-2 w-4 h-4 bg-red-500 rounded-full"></div>
                 </div>
-                
+
                 {% for hour in hours %}
                     <div class="h-20 border-t border-gray-200 first:border-t-0 bg-white relative hover:bg-blue-50 transition-colors cursor-pointer group"
                          @click="openEventModal('{{ current_date|date:'Y-m-d' }}', '{{ hour }}:00')">
-                        
+
                         <!-- Click to book hint -->
                         <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                             <span class="text-sm text-blue-600 font-medium">Click to book class</span>
                         </div>
-                        
+
                         <!-- Events for this hour -->
                         {% for event in events %}
                             {% if event.scheduled_date|date:'Y-m-d' == current_date|date:'Y-m-d' and event.start_time|slice:':2' == hour|stringformat:'02d' %}

@@ -7,9 +7,9 @@
 <div class="container mx-auto px-4 py-6">
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold text-gray-900">Email Templates</h1>
-        
+
         <!-- Create New Template Button -->
-        <a href="{% url 'messaging:template-create' %}" 
+        <a href="{% url 'messaging:template-create' %}"
            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
             <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
@@ -20,17 +20,17 @@
 
     <!-- Filters -->
     <div class="bg-white rounded-lg shadow-sm border p-4 mb-6">
-        <form hx-get="{% url 'messaging:template-list' %}" 
+        <form hx-get="{% url 'messaging:template-list' %}"
               hx-target="#templates-container"
               hx-trigger="change, submit"
               class="flex flex-wrap gap-4 items-end">
-            
+
             <!-- Template Type Filter -->
             <div>
                 <label for="template_type" class="block text-sm font-medium text-gray-700 mb-1">
                     Template Type
                 </label>
-                <select name="template_type" id="template_type" 
+                <select name="template_type" id="template_type"
                         class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     <option value="">All types</option>
                     {% for value, label in template_types %}
@@ -44,7 +44,7 @@
                 <label for="school" class="block text-sm font-medium text-gray-700 mb-1">
                     School
                 </label>
-                <select name="school" id="school" 
+                <select name="school" id="school"
                         class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     <option value="">All schools</option>
                     {% for school in user_schools %}
@@ -58,7 +58,7 @@
                 <label for="is_active" class="block text-sm font-medium text-gray-700 mb-1">
                     Status
                 </label>
-                <select name="is_active" id="is_active" 
+                <select name="is_active" id="is_active"
                         class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     <option value="">All templates</option>
                     <option value="true">Active only</option>
@@ -68,7 +68,7 @@
 
             <!-- Clear Filters Button -->
             <div>
-                <a href="{% url 'messaging:template-list' %}" 
+                <a href="{% url 'messaging:template-list' %}"
                    class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     Clear Filters
                 </a>

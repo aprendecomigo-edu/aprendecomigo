@@ -47,11 +47,11 @@
     <div id="update-banner" class="fixed top-0 left-0 right-0 bg-blue-600 text-white text-center py-3 px-4 z-50" style="display: none;">
         <div class="flex items-center justify-center space-x-4">
             <span>A new version is available!</span>
-            <button onclick="window.pwaCore.refreshApp()" 
+            <button onclick="window.pwaCore.refreshApp()"
                     class="bg-blue-800 hover:bg-blue-900 px-3 py-1 rounded text-sm font-medium transition-colors">
                 Update Now
             </button>
-            <button onclick="document.getElementById('update-banner').style.display='none'" 
+            <button onclick="document.getElementById('update-banner').style.display='none'"
                     class="text-blue-200 hover:text-white">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -142,7 +142,7 @@
         .hide-in-pwa {
             display: none !important;
         }
-        
+
         .show-in-pwa {
             display: block !important;
         }
@@ -160,19 +160,19 @@
         .notification {
             @apply bg-gray-800 text-white;
         }
-        
+
         .notification-success {
             @apply bg-green-900 border-green-700;
         }
-        
+
         .notification-error {
             @apply bg-red-900 border-red-700;
         }
-        
+
         .notification-warning {
             @apply bg-yellow-900 border-yellow-700;
         }
-        
+
         .notification-info {
             @apply bg-blue-900 border-blue-700;
         }
@@ -185,7 +185,7 @@
         // Configure HTMX for PWA
         htmx.config.globalViewTransitions = true;
         htmx.config.useTemplateFragments = true;
-        
+
         // Enhanced HTMX error handling for offline scenarios
         htmx.on('htmx:sendError', function(event) {
             if (!navigator.onLine) {
@@ -195,25 +195,25 @@
                     const formData = new FormData(form);
                     const url = form.action || window.location.href;
                     const method = form.method || 'POST';
-                    
+
                     // Attempt to cache for background sync
                     if (window.pwaCore) {
                         const headers = { 'X-Requested-With': 'XMLHttpRequest' };
                         if (document.querySelector('[name=csrfmiddlewaretoken]')) {
                             headers['X-CSRFToken'] = document.querySelector('[name=csrfmiddlewaretoken]').value;
                         }
-                        
+
                         window.pwaCore.cacheFormSubmission(
-                            url, 
-                            method.toUpperCase(), 
-                            headers, 
+                            url,
+                            method.toUpperCase(),
+                            headers,
                             new URLSearchParams(formData).toString()
                         );
                     }
                 }
             }
         });
-        
+
         // Enhanced loading indicators
         htmx.on('htmx:beforeRequest', function(event) {
             if (event.detail.elt.hasAttribute('data-loading-disable')) {
@@ -221,7 +221,7 @@
                 event.detail.elt.style.opacity = '0.6';
             }
         });
-        
+
         htmx.on('htmx:afterRequest', function(event) {
             if (event.detail.elt.hasAttribute('data-loading-disable')) {
                 event.detail.elt.disabled = false;

@@ -35,7 +35,6 @@ application = ProtocolTypeRouter(
                     [
                         # Production chat functionality
                         path("ws/chat/<str:channel_name>/", ChatConsumer.as_asgi()),
-
                     ]
                 )
             )

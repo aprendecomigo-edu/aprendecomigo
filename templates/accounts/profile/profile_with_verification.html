@@ -40,7 +40,7 @@
                 <div class="px-6 py-4 border-b border-gray-200">
                     <div class="flex justify-between items-center">
                         <h2 class="text-lg font-medium text-gray-900">Personal Information</h2>
-                        <a href="{% url 'accounts:profile_edit' %}" 
+                        <a href="{% url 'accounts:profile_edit' %}"
                            class="text-sm text-blue-600 hover:text-blue-700 font-medium">
                             Edit
                         </a>
@@ -187,7 +187,7 @@
                                     Verified
                                 </span>
                             {% else %}
-                                <a href="{% url 'accounts:profile_edit' %}" 
+                                <a href="{% url 'accounts:profile_edit' %}"
                                    class="px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors">
                                     Add Phone Number
                                 </a>
@@ -210,8 +210,8 @@
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
                                     {% if membership.school.logo %}
-                                        <img class="h-10 w-10 rounded-full object-cover" 
-                                             src="{{ membership.school.logo.url }}" 
+                                        <img class="h-10 w-10 rounded-full object-cover"
+                                             src="{{ membership.school.logo.url }}"
                                              alt="{{ membership.school.name }}">
                                     {% else %}
                                         <div class="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
@@ -278,37 +278,37 @@
                     <h2 class="text-lg font-medium text-gray-900">Quick Actions</h2>
                 </div>
                 <div class="px-6 py-4 space-y-3">
-                    <a href="{% url 'accounts:profile_edit' %}" 
+                    <a href="{% url 'accounts:profile_edit' %}"
                        class="flex items-center text-sm text-blue-600 hover:text-blue-700">
                         <i data-lucide="edit" class="h-4 w-4 mr-2"></i>
                         Edit Profile
                     </a>
-                    
+
                     {% if not user.email_verified %}
-                    <a href="#email-verification" 
+                    <a href="#email-verification"
                        class="flex items-center text-sm text-amber-600 hover:text-amber-700">
                         <i data-lucide="mail" class="h-4 w-4 mr-2"></i>
                         Verify Email
                     </a>
                     {% endif %}
-                    
+
                     {% if user.phone_number and not user.phone_verified %}
-                    <a href="#phone-verification" 
+                    <a href="#phone-verification"
                        class="flex items-center text-sm text-amber-600 hover:text-amber-700">
                         <i data-lucide="phone" class="h-4 w-4 mr-2"></i>
                         Verify Phone
                     </a>
                     {% endif %}
-                    
-                    <a href="{% url 'dashboard:dashboard' %}" 
+
+                    <a href="{% url 'dashboard:dashboard' %}"
                        class="flex items-center text-sm text-gray-600 hover:text-gray-700">
                         <i data-lucide="home" class="h-4 w-4 mr-2"></i>
                         Back to Dashboard
                     </a>
-                    
+
                     <hr class="my-3">
-                    
-                    <a href="{% url 'accounts:logout' %}" 
+
+                    <a href="{% url 'accounts:logout' %}"
                        class="flex items-center text-sm text-red-600 hover:text-red-700">
                         <i data-lucide="log-out" class="h-4 w-4 mr-2"></i>
                         Sign Out

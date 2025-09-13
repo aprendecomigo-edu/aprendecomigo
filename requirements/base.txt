@@ -28,6 +28,7 @@ django-redis==6.0.0
 django-pwa==2.0.1
 django-htmx==1.23.2
 django-tailwind==4.2.0
+django-waffle==5.0.0
 # API Documentation - removed for PWA migration
 
 # Payment Processing
@@ -36,6 +37,7 @@ stripe==12.4.0
 # Email & Messaging
 bleach==6.2.0
 django-webpush==0.3.6
+django-anymail[amazon-ses]==13.1.0
 
 # HTTP Client Libraries
 httpx==0.28.1
@@ -51,6 +53,7 @@ pytz==2025.2
 httpx==0.28.1
 urllib3==2.5.0
 whitenoise==6.8.2
+python-json-logger==2.0.7  # For Railway JSON logging
 
 # Core Python Dependencies (required by Django/DRF)
 asgiref==3.9.1

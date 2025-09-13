@@ -61,6 +61,7 @@ class CustomEducationLevel(models.TextChoices):
     MIDDLE_SCHOOL = "middle_school", _("Middle School")
     HIGH_SCHOOL = "high_school", _("High School")
 
+
 class EducationalSystemType(models.TextChoices):
     """Types of educational systems"""
 
@@ -83,7 +84,7 @@ class EducationalSystem(models.Model):
         _("system code"),
         max_length=20,
         unique=True,
-        choices=EducationalSystemType.choices,
+        choices=EducationalSystemType,
         help_text=_("Unique code for the system (e.g., 'pt')"),
     )
     description: models.TextField = models.TextField(
@@ -197,7 +198,6 @@ class Course(models.Model):
             and self.education_level
             and not self.educational_system.validate_education_level(self.education_level)
         ):
-
             valid_levels = dict(self.educational_system.education_level_choices)
             raise ValidationError(
                 {

@@ -4,7 +4,7 @@
                 {% if message.sender.username == user.username %}bg-blue-600{% else %}bg-gray-600{% endif %}">
         <span class="text-white font-medium text-sm">{{ message.sender.first_name|first|upper }}</span>
     </div>
-    
+
     <!-- Message Content -->
     <div class="flex-1 max-w-3xl">
         <div class="flex items-center space-x-2 mb-1">
@@ -27,14 +27,14 @@
             <!-- File attachment -->
             {% if message.file %}
                 <div class="mt-2">
-                    <a href="{{ message.file.url }}" target="_blank" 
+                    <a href="{{ message.file.url }}" target="_blank"
                        class="text-blue-600 hover:text-blue-800 text-sm underline">
                         📎 View attachment
                     </a>
                 </div>
             {% endif %}
         </div>
-        
+
         <!-- Reactions -->
         {% if message.reactions.exists %}
             <div class="flex space-x-1 mt-2">

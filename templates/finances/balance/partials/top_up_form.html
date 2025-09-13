@@ -1,10 +1,10 @@
 <!-- Top-up Form Partial (for HTMX modal) -->
 <form hx-post="{% url 'finances:top-up-form' %}" hx-target="#top-up-modal">
     {% csrf_token %}
-    
+
     <div class="space-y-4">
         <h4 class="text-base font-medium text-gray-900">Select a Quick Top-up Plan</h4>
-        
+
         <div class="space-y-3">
             {% for plan in pricing_plans %}
             <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
@@ -22,13 +22,13 @@
             </label>
             {% endfor %}
         </div>
-        
+
         <div class="flex space-x-3 pt-4">
-            <button type="submit" 
+            <button type="submit"
                     class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
                 Continue to Payment
             </button>
-            <button type="button" 
+            <button type="button"
                     onclick="document.getElementById('top-up-modal').classList.add('hidden')"
                     class="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors">
                 Cancel

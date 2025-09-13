@@ -87,16 +87,16 @@ class QuerysetIsolationTestCase(BaseTestCase):
         SchoolMembership.objects.create(user=student2, school=self.school2, role=SchoolRole.STUDENT)
 
         profile1 = StudentProfile.objects.create(
-            user=student1, 
-            educational_system=self.default_educational_system, 
-            birth_date="2010-01-01", 
-            school_year="5th"
+            user=student1,
+            educational_system=self.default_educational_system,
+            birth_date="2010-01-01",
+            school_year="5th",
         )
         profile2 = StudentProfile.objects.create(
-            user=student2, 
-            educational_system=self.default_educational_system, 
-            birth_date="2011-01-01", 
-            school_year="4th"
+            user=student2,
+            educational_system=self.default_educational_system,
+            birth_date="2011-01-01",
+            school_year="4th",
         )
 
         # Get students from school1 only

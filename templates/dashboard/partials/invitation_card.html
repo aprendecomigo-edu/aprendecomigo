@@ -17,7 +17,7 @@
         <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">{{ invitation.role }}</span>
     </td>
     <td class="px-6 py-4 whitespace-nowrap">
-        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
+        <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
             {% if invitation.status == 'Pending' or invitation.status == 'Sent' or invitation.status == 'Delivered' %}bg-yellow-100 text-yellow-800
             {% elif invitation.status == 'Accepted' %}bg-green-100 text-green-800
             {% elif invitation.status == 'Declined' or invitation.status == 'Expired' %}bg-red-100 text-red-800
@@ -29,8 +29,8 @@
     </td>
     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
         {% if invitation.is_active %}
-            <form hx-post="{% url 'invitations' %}" 
-                  hx-target="#message-area" 
+            <form hx-post="{% url 'invitations' %}"
+                  hx-target="#message-area"
                   hx-swap="innerHTML"
                   class="inline">
                 {% csrf_token %}
@@ -40,8 +40,8 @@
                     Resend
                 </button>
             </form>
-            <form hx-post="{% url 'invitations' %}" 
-                  hx-target="#message-area" 
+            <form hx-post="{% url 'invitations' %}"
+                  hx-target="#message-area"
                   hx-swap="innerHTML"
                   hx-confirm="Are you sure you want to cancel this invitation?"
                   class="inline">

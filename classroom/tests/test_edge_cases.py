@@ -12,8 +12,9 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError, transaction
-from django.test import TestCase, override_settings
+from django.test import TestCase, override_settings, tag
 from django.urls import reverse
+from waffle.testutils import override_switch
 
 from accounts.models import School, SchoolMembership
 from classroom.models import Attachment, Channel, Message, Reaction
@@ -22,6 +23,7 @@ from classroom.tests.test_fixtures import SchoolBasedTestMixin, TestDataFactory
 User = get_user_model()
 
 
+@tag("classroom")
 class ModelEdgeCasesTest(SchoolBasedTestMixin, TestCase):
     """Test edge cases in model behavior."""
 
@@ -75,7 +77,7 @@ class ModelEdgeCasesTest(SchoolBasedTestMixin, TestCase):
         message = Message.objects.create(
             channel=self.school1_channel,
             sender=self.teacher1,
-            content=""  # Empty content, no file
+            content="",  # Empty content, no file
         )
 
         self.assertEqual(message.content, "")
@@ -85,11 +87,7 @@ class ModelEdgeCasesTest(SchoolBasedTestMixin, TestCase):
         """Test message with very long content."""
         long_content = "A" * 10000  # 10k characters
 
-        message = Message.objects.create(
-            channel=self.school1_channel,
-            sender=self.teacher1,
-            content=long_content
-        )
+        message = Message.objects.create(channel=self.school1_channel, sender=self.teacher1, content=long_content)
 
         self.assertEqual(len(message.content), 10000)
 
@@ -102,11 +100,7 @@ class ModelEdgeCasesTest(SchoolBasedTestMixin, TestCase):
         # Some compound emojis can be quite long
         long_emoji = "👨‍👩‍👧‍👦"  # Family emoji
 
-        reaction = Reaction.objects.create(
-            message=self.message1,
-            user=self.teacher1,
-            emoji=long_emoji
-        )
+        reaction = Reaction.objects.create(message=self.message1, user=self.teacher1, emoji=long_emoji)
 
         self.assertEqual(reaction.emoji, long_emoji)
 
@@ -115,11 +109,7 @@ class ModelEdgeCasesTest(SchoolBasedTestMixin, TestCase):
         empty_file = SimpleUploadedFile("empty.txt", b"", content_type="text/plain")
 
         attachment = Attachment.objects.create(
-            message=self.message1,
-            file=empty_file,
-            filename="empty.txt",
-            file_type="text/plain",
-            size=0
+            message=self.message1, file=empty_file, filename="empty.txt", file_type="text/plain", size=0
         )
 
         self.assertEqual(attachment.size, 0)
@@ -151,23 +141,20 @@ class ModelEdgeCasesTest(SchoolBasedTestMixin, TestCase):
         messages = []
         for i in range(5):
             message = Message.objects.create(
-                channel=self.school1_channel,
-                sender=self.teacher1,
-                content=f"Rapid message {i}"
+                channel=self.school1_channel, sender=self.teacher1, content=f"Rapid message {i}"
             )
             messages.append(message)
 
         # All messages should be in timestamp order
-        retrieved_messages = list(Message.objects.filter(channel=self.school1_channel).order_by('timestamp'))
+        retrieved_messages = list(Message.objects.filter(channel=self.school1_channel).order_by("timestamp"))
 
         # Should maintain insertion order even with very close timestamps
         for i in range(len(messages) - 1):
-            self.assertLessEqual(
-                retrieved_messages[i].timestamp,
-                retrieved_messages[i + 1].timestamp
-            )
+            self.assertLessEqual(retrieved_messages[i].timestamp, retrieved_messages[i + 1].timestamp)
 
 
+@override_switch("chat_feature", active=True)
+@tag("classroom")
 class ViewEdgeCasesTest(SchoolBasedTestMixin, TestCase):
     """Test edge cases in view behavior."""
 
@@ -179,34 +166,29 @@ class ViewEdgeCasesTest(SchoolBasedTestMixin, TestCase):
 
         self.client.force_login(lonely_user)
 
-        response = self.client.get(reverse('chat'))
+        response = self.client.get(reverse("chat"))
         self.assertEqual(response.status_code, 200)
 
         # Should handle gracefully with no channels
-        self.assertContains(response, 'Chat - Aprende Comigo')
+        self.assertContains(response, "Chat - Aprende Comigo")
 
     def test_message_pagination_edge_cases(self):
         """Test message pagination with edge cases."""
         # Create exactly 50 messages (page size)
         for i in range(50):
-            Message.objects.create(
-                channel=self.school1_channel,
-                sender=self.teacher1,
-                content=f"Message {i}"
-            )
+            Message.objects.create(channel=self.school1_channel, sender=self.teacher1, content=f"Message {i}")
 
         self.client.force_login(self.teacher1)
 
         # Request page that's too high
         response = self.client.get(
-            reverse('chat_messages', kwargs={'channel_id': self.school1_channel.id}),
-            {'page': 999}
+            reverse("chat_messages", kwargs={"channel_id": self.school1_channel.id}), {"page": 999}
         )
 
         # Django paginator should handle gracefully
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
-        self.assertIn('messages', data)
+        self.assertIn("messages", data)
 
     def test_user_search_with_special_characters(self):
         """Test user search with special characters in names."""
@@ -216,45 +198,47 @@ class ViewEdgeCasesTest(SchoolBasedTestMixin, TestCase):
             email="special@example.com",
             first_name="João",
             last_name="São-Paulo",
-            password="pass"
+            password="pass",
         )
         TestDataFactory.create_school_membership(special_user, self.school1, "student")
 
         self.client.force_login(self.teacher1)
 
         # Search with special characters
-        response = self.client.get(reverse('chat_user_search'), {'search': 'João'})
+        response = self.client.get(reverse("chat_user_search"), {"search": "João"})
         self.assertEqual(response.status_code, 200)
 
         data = json.loads(response.content)
-        usernames = [user['username'] for user in data['users']]
-        self.assertIn('user_special', usernames)
+        usernames = [user["username"] for user in data["users"]]
+        self.assertIn("user_special", usernames)
 
     def test_create_channel_with_invalid_participant_id(self):
         """Test creating channel with invalid participant ID."""
         self.client.force_login(self.teacher1)
 
         response = self.client.post(
-            reverse('chat_channels'),
-            json.dumps({
-                'is_direct': True,
-                'participant_ids': [99999]  # Invalid ID
-            }),
-            content_type='application/json'
+            reverse("chat_channels"),
+            json.dumps(
+                {
+                    "is_direct": True,
+                    "participant_ids": [99999],  # Invalid ID
+                }
+            ),
+            content_type="application/json",
         )
 
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.content)
-        self.assertIn('error', data)
+        self.assertIn("error", data)
 
     def test_send_message_to_nonexistent_channel(self):
         """Test sending message to nonexistent channel."""
         self.client.force_login(self.teacher1)
 
         response = self.client.post(
-            reverse('chat_messages', kwargs={'channel_id': 99999}),
-            json.dumps({'content': 'Message to nowhere'}),
-            content_type='application/json'
+            reverse("chat_messages", kwargs={"channel_id": 99999}),
+            json.dumps({"content": "Message to nowhere"}),
+            content_type="application/json",
         )
 
         self.assertEqual(response.status_code, 404)
@@ -262,19 +246,15 @@ class ViewEdgeCasesTest(SchoolBasedTestMixin, TestCase):
     def test_reaction_to_message_in_inaccessible_channel(self):
         """Test adding reaction to message in inaccessible channel."""
         # Create message in school2 channel
-        message = Message.objects.create(
-            channel=self.school2_channel,
-            sender=self.teacher2,
-            content="Secret message"
-        )
+        message = Message.objects.create(channel=self.school2_channel, sender=self.teacher2, content="Secret message")
 
         # Try to react as school1 user
         self.client.force_login(self.teacher1)
 
         response = self.client.post(
-            reverse('message_reactions', kwargs={'message_id': message.id}),
-            json.dumps({'emoji': '👍'}),
-            content_type='application/json'
+            reverse("message_reactions", kwargs={"message_id": message.id}),
+            json.dumps({"emoji": "👍"}),
+            content_type="application/json",
         )
 
         self.assertEqual(response.status_code, 404)
@@ -284,16 +264,16 @@ class ViewEdgeCasesTest(SchoolBasedTestMixin, TestCase):
         self.client.force_login(self.teacher1)
 
         response = self.client.post(
-            reverse('chat_messages', kwargs={'channel_id': self.school1_channel.id}),
+            reverse("chat_messages", kwargs={"channel_id": self.school1_channel.id}),
             {
-                'content': '',
+                "content": "",
                 # Missing 'file' field
-            }
+            },
         )
 
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.content)
-        self.assertIn('required', data['error'])
+        self.assertIn("required", data["error"])
 
     def test_concurrent_dm_creation(self):
         """Test concurrent DM channel creation (race condition)."""
@@ -301,22 +281,16 @@ class ViewEdgeCasesTest(SchoolBasedTestMixin, TestCase):
 
         # Create first DM
         response1 = self.client.post(
-            reverse('chat_channels'),
-            json.dumps({
-                'is_direct': True,
-                'participant_ids': [self.student1.id]
-            }),
-            content_type='application/json'
+            reverse("chat_channels"),
+            json.dumps({"is_direct": True, "participant_ids": [self.student1.id]}),
+            content_type="application/json",
         )
 
         # Try to create duplicate DM
         response2 = self.client.post(
-            reverse('chat_channels'),
-            json.dumps({
-                'is_direct': True,
-                'participant_ids': [self.student1.id]
-            }),
-            content_type='application/json'
+            reverse("chat_channels"),
+            json.dumps({"is_direct": True, "participant_ids": [self.student1.id]}),
+            content_type="application/json",
         )
 
         # Both should succeed, second should return existing
@@ -325,7 +299,7 @@ class ViewEdgeCasesTest(SchoolBasedTestMixin, TestCase):
 
         data1 = json.loads(response1.content)
         data2 = json.loads(response2.content)
-        self.assertEqual(data1['id'], data2['id'])  # Same channel returned
+        self.assertEqual(data1["id"], data2["id"])  # Same channel returned
 
     @override_settings(MAX_UPLOAD_SIZE=100)  # Very small limit
     def test_file_upload_size_limit_enforcement(self):
@@ -335,36 +309,26 @@ class ViewEdgeCasesTest(SchoolBasedTestMixin, TestCase):
         self.client.force_login(self.teacher1)
 
         response = self.client.post(
-            reverse('chat_messages', kwargs={'channel_id': self.school1_channel.id}),
-            {
-                'content': 'File too large',
-                'file': large_file
-            }
+            reverse("chat_messages", kwargs={"channel_id": self.school1_channel.id}),
+            {"content": "File too large", "file": large_file},
         )
 
         # Should handle file size validation error gracefully
         # The exact response depends on how validation is implemented
 
 
+@tag("classroom")
 class DatabaseEdgeCasesTest(SchoolBasedTestMixin, TestCase):
     """Test database-level edge cases and constraints."""
 
     def test_reaction_unique_constraint_with_database_level(self):
         """Test reaction unique constraint at database level."""
         # Create first reaction
-        Reaction.objects.create(
-            message=self.message1,
-            user=self.teacher1,
-            emoji="👍"
-        )
+        Reaction.objects.create(message=self.message1, user=self.teacher1, emoji="👍")
 
         # Attempt to create duplicate at database level should fail
         with self.assertRaises(IntegrityError):
-            Reaction.objects.create(
-                message=self.message1,
-                user=self.teacher1,
-                emoji="👍"
-            )
+            Reaction.objects.create(message=self.message1, user=self.teacher1, emoji="👍")
 
     def test_cascade_deletion_chain(self):
         """Test cascade deletion chain: School -> User -> Message -> Reaction."""
@@ -405,9 +369,7 @@ class DatabaseEdgeCasesTest(SchoolBasedTestMixin, TestCase):
             with transaction.atomic():
                 # Create a message
                 message = Message.objects.create(
-                    channel=self.school1_channel,
-                    sender=self.teacher1,
-                    content="This should be rolled back"
+                    channel=self.school1_channel, sender=self.teacher1, content="This should be rolled back"
                 )
                 message_id = message.id
 
@@ -422,11 +384,7 @@ class DatabaseEdgeCasesTest(SchoolBasedTestMixin, TestCase):
         # Create many messages
         messages = []
         for i in range(1000):
-            message = Message(
-                channel=self.school1_channel,
-                sender=self.teacher1,
-                content=f"Bulk message {i}"
-            )
+            message = Message(channel=self.school1_channel, sender=self.teacher1, content=f"Bulk message {i}")
             messages.append(message)
 
         # Bulk create
@@ -434,15 +392,11 @@ class DatabaseEdgeCasesTest(SchoolBasedTestMixin, TestCase):
         self.assertEqual(len(created_messages), 1000)
 
         # Bulk update
-        Message.objects.filter(
-            channel=self.school1_channel,
-            content__startswith="Bulk message"
-        ).update(content="Updated bulk message")
-
-        updated_count = Message.objects.filter(
-            channel=self.school1_channel,
+        Message.objects.filter(channel=self.school1_channel, content__startswith="Bulk message").update(
             content="Updated bulk message"
-        ).count()
+        )
+
+        updated_count = Message.objects.filter(channel=self.school1_channel, content="Updated bulk message").count()
 
         self.assertEqual(updated_count, 1000)
 
@@ -465,9 +419,11 @@ class DatabaseEdgeCasesTest(SchoolBasedTestMixin, TestCase):
 
         # Test efficient queries with select_related and prefetch_related
         with self.assertNumQueries(3):  # Should be efficient
-            messages = Message.objects.filter(
-                channel=channel
-            ).select_related('sender').prefetch_related('reactions__user')[:10]
+            messages = (
+                Message.objects.filter(channel=channel)
+                .select_related("sender")
+                .prefetch_related("reactions__user")[:10]
+            )
 
             # Access related objects to trigger queries
             for message in messages:
@@ -476,6 +432,7 @@ class DatabaseEdgeCasesTest(SchoolBasedTestMixin, TestCase):
                     _ = reaction.user.username
 
 
+@tag("classroom")
 class ConcurrencyEdgeCasesTest(SchoolBasedTestMixin, TestCase):
     """Test concurrency and race condition edge cases."""
 
@@ -487,11 +444,7 @@ class ConcurrencyEdgeCasesTest(SchoolBasedTestMixin, TestCase):
         messages_created = []
 
         def create_message(content):
-            message = Message.objects.create(
-                channel=self.school1_channel,
-                sender=self.teacher1,
-                content=content
-            )
+            message = Message.objects.create(channel=self.school1_channel, sender=self.teacher1, content=content)
             messages_created.append(message)
 
         # Create multiple threads creating messages simultaneously
@@ -525,11 +478,7 @@ class ConcurrencyEdgeCasesTest(SchoolBasedTestMixin, TestCase):
 
         def create_reaction(emoji):
             try:
-                reaction = Reaction.objects.create(
-                    message=self.message1,
-                    user=self.teacher1,
-                    emoji=emoji
-                )
+                reaction = Reaction.objects.create(message=self.message1, user=self.teacher1, emoji=emoji)
                 reactions_created.append(reaction)
             except Exception as e:
                 errors.append(e)
@@ -578,6 +527,8 @@ class ConcurrencyEdgeCasesTest(SchoolBasedTestMixin, TestCase):
 
 
 @override_settings(DEBUG=True)  # Enable query logging for debugging
+@override_switch("chat_feature", active=True)
+@tag("classroom")
 class PerformanceEdgeCasesTest(SchoolBasedTestMixin, TestCase):
     """Test performance-related edge cases."""
 
@@ -586,20 +537,18 @@ class PerformanceEdgeCasesTest(SchoolBasedTestMixin, TestCase):
         # Create multiple messages with reactions
         messages = []
         for i in range(20):
-            message = TestDataFactory.create_message(
-                self.school1_channel,
-                self.teacher1,
-                f"Message {i}"
-            )
+            message = TestDataFactory.create_message(self.school1_channel, self.teacher1, f"Message {i}")
             TestDataFactory.create_reaction(message, self.teacher1, "👍")
             TestDataFactory.create_reaction(message, self.student1, "❤️")
             messages.append(message)
 
         # Query messages with reactions efficiently
         with self.assertNumQueries(3):  # Should be constant regardless of message count
-            messages_with_reactions = Message.objects.filter(
-                channel=self.school1_channel
-            ).select_related('sender').prefetch_related('reactions__user')
+            messages_with_reactions = (
+                Message.objects.filter(channel=self.school1_channel)
+                .select_related("sender")
+                .prefetch_related("reactions__user")
+            )
 
             # Access all related data
             for message in messages_with_reactions:
@@ -620,9 +569,9 @@ class PerformanceEdgeCasesTest(SchoolBasedTestMixin, TestCase):
 
         # Query channel with all participants efficiently
         with self.assertNumQueries(2):
-            channel_with_participants = Channel.objects.filter(
-                id=large_channel.id
-            ).prefetch_related('participants', 'online').first()
+            channel_with_participants = (
+                Channel.objects.filter(id=large_channel.id).prefetch_related("participants", "online").first()
+            )
 
             participant_count = channel_with_participants.participants.count()
             online_count = channel_with_participants.online.count()
@@ -634,11 +583,7 @@ class PerformanceEdgeCasesTest(SchoolBasedTestMixin, TestCase):
         """Test message pagination performance with large datasets."""
         # Create many messages
         for i in range(1000):
-            TestDataFactory.create_message(
-                self.school1_channel,
-                self.teacher1,
-                f"Paginated message {i}"
-            )
+            TestDataFactory.create_message(self.school1_channel, self.teacher1, f"Paginated message {i}")
 
         # Test pagination performance (should be consistent across pages)
         self.client.force_login(self.teacher1)
@@ -647,10 +592,9 @@ class PerformanceEdgeCasesTest(SchoolBasedTestMixin, TestCase):
         for page in [1, 5, 10, 20]:
             with self.assertNumQueries(5):  # Should be constant
                 response = self.client.get(
-                    reverse('chat_messages', kwargs={'channel_id': self.school1_channel.id}),
-                    {'page': page}
+                    reverse("chat_messages", kwargs={"channel_id": self.school1_channel.id}), {"page": page}
                 )
                 self.assertEqual(response.status_code, 200)
 
                 data = json.loads(response.content)
-                self.assertTrue(len(data['messages']) > 0)
+                self.assertTrue(len(data["messages"]) > 0)

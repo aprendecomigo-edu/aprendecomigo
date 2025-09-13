@@ -5,13 +5,13 @@
         <!-- Modal panel -->
         <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full" style="background-color: white !important;">
             <!-- Modal content will be populated by Alpine.js or HTMX -->
-            <form hx-post="{% url 'calendar' %}" 
+            <form hx-post="{% url 'calendar' %}"
                   hx-target="#calendar-grid"
                   hx-swap="outerHTML"
                   @htmx:after-request.window="if($event.detail.successful) closeEventModal()"
                 {% csrf_token %}
                 <input type="hidden" name="action" value="create_event">
-                
+
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
                         <div class="w-full">
@@ -34,7 +34,7 @@
                                     <label class="block text-sm font-medium text-gray-700 mb-1">
                                         Título <span class="text-red-500">*</span>
                                     </label>
-                                    <input type="text" 
+                                    <input type="text"
                                            name="title"
                                            x-model="eventModalData.title"
                                            required
@@ -58,7 +58,7 @@
                                         <label class="block text-sm font-medium text-gray-700 mb-1">
                                             Data <span class="text-red-500">*</span>
                                         </label>
-                                        <input type="date" 
+                                        <input type="date"
                                                name="date"
                                                x-model="eventModalData.date"
                                                required
@@ -66,7 +66,7 @@
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Início</label>
-                                        <input type="time" 
+                                        <input type="time"
                                                name="start_time"
                                                x-model="eventModalData.time"
                                                @change="updateEndTime()"
@@ -74,7 +74,7 @@
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Fim</label>
-                                        <input type="time" 
+                                        <input type="time"
                                                name="end_time"
                                                x-model="eventModalData.endTime"
                                                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
@@ -128,7 +128,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Modal Footer -->
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                     <button type="submit"
@@ -144,8 +144,8 @@
                             Criando...
                         </span>
                     </button>
-                    <button type="button" 
-                            @click="closeEventModal()" 
+                    <button type="button"
+                            @click="closeEventModal()"
                             class="mt-3 w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors">
                         Cancelar
                     </button>

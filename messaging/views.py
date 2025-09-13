@@ -53,9 +53,10 @@ class NotificationListView(LoginRequiredMixin, ListView):
 
     HTMX: Returns partial template for dynamic updates
     """
+
     model = Notification
-    template_name = 'messaging/notifications/notification_list.html'
-    context_object_name = 'notifications'
+    template_name = "messaging/notifications/notification_list.html"
+    context_object_name = "notifications"
     paginate_by = 20
 
     def get_queryset(self):
@@ -82,27 +83,25 @@ class NotificationListView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
 
         # Add filter options for template
-        context['notification_types'] = [
-            ('low_balance', 'Low Balance'),
-            ('package_expiring', 'Package Expiring'),
-            ('balance_depleted', 'Balance Depleted'),
+        context["notification_types"] = [
+            ("low_balance", "Low Balance"),
+            ("package_expiring", "Package Expiring"),
+            ("balance_depleted", "Balance Depleted"),
         ]
 
         # Current filter values
-        context['current_type'] = self.request.GET.get('notification_type', '')
-        context['current_read_status'] = self.request.GET.get('is_read', '')
+        context["current_type"] = self.request.GET.get("notification_type", "")
+        context["current_read_status"] = self.request.GET.get("is_read", "")
 
         # Unread count for badge
-        context['unread_count'] = Notification.objects.filter(
-            user=self.request.user, is_read=False
-        ).count()
+        context["unread_count"] = Notification.objects.filter(user=self.request.user, is_read=False).count()
 
         return context
 
     def get_template_names(self):
         """Return partial template for HTMX requests."""
         if self.request.htmx:
-            return ['messaging/notifications/partials/notification_list_content.html']
+            return ["messaging/notifications/partials/notification_list_content.html"]
         return [self.template_name]
 
 
@@ -114,9 +113,10 @@ class NotificationDetailView(LoginRequiredMixin, DetailView):
 
     Users can only access their own notifications.
     """
+
     model = Notification
-    template_name = 'messaging/notifications/notification_detail.html'
-    context_object_name = 'notification'
+    template_name = "messaging/notifications/notification_detail.html"
+    context_object_name = "notification"
 
     def get_queryset(self):
         """Return notifications for the authenticated user only."""
@@ -134,9 +134,7 @@ class NotificationMarkReadView(LoginRequiredMixin, View):
 
     def post(self, request, pk):
         """Mark notification as read."""
-        notification = get_object_or_404(
-            Notification, pk=pk, user=request.user
-        )
+        notification = get_object_or_404(Notification, pk=pk, user=request.user)
 
         # Mark as read if not already read
         if not notification.is_read:
@@ -145,14 +143,11 @@ class NotificationMarkReadView(LoginRequiredMixin, View):
         # Return appropriate response based on request type
         if request.htmx:
             # Return updated notification item for HTMX
-            return render(request, 'messaging/notifications/partials/notification_item.html', {
-                'notification': notification
-            })
+            return render(
+                request, "messaging/notifications/partials/notification_item.html", {"notification": notification}
+            )
         else:
-            return JsonResponse({
-                'success': True,
-                'message': 'Notification marked as read'
-            })
+            return JsonResponse({"success": True, "message": "Notification marked as read"})
 
 
 class NotificationUnreadCountView(LoginRequiredMixin, View):
@@ -166,19 +161,13 @@ class NotificationUnreadCountView(LoginRequiredMixin, View):
 
     def get(self, request):
         """Return unread notification count."""
-        unread_count = Notification.objects.filter(
-            user=request.user, is_read=False
-        ).count()
+        unread_count = Notification.objects.filter(user=request.user, is_read=False).count()
 
         if request.htmx:
             # Return badge partial for HTMX updates
-            return render(request, 'messaging/notifications/partials/unread_count.html', {
-                'unread_count': unread_count
-            })
+            return render(request, "messaging/notifications/partials/unread_count.html", {"unread_count": unread_count})
         else:
-            return JsonResponse({'unread_count': unread_count})
-
-
+            return JsonResponse({"unread_count": unread_count})
 
 
 # =======================
@@ -192,9 +181,10 @@ class SchoolEmailTemplateListView(IsSchoolOwnerOrAdminMixin, ListView):
 
     GET /email-templates/
     """
+
     model = SchoolEmailTemplate
-    template_name = 'messaging/email_templates/template_list.html'
-    context_object_name = 'templates'
+    template_name = "messaging/email_templates/template_list.html"
+    context_object_name = "templates"
     paginate_by = 20
 
     def get_queryset(self):
@@ -214,18 +204,18 @@ class SchoolEmailTemplateListView(IsSchoolOwnerOrAdminMixin, ListView):
         context = super().get_context_data(**kwargs)
 
         # Add template type options
-        context['template_types'] = EmailTemplateType.choices
+        context["template_types"] = EmailTemplateType.choices
 
         # Current user's schools
         school_ids = list_school_ids_owned_or_managed(self.request.user)
-        context['user_schools'] = School.objects.filter(id__in=school_ids)
+        context["user_schools"] = School.objects.filter(id__in=school_ids)
 
         return context
 
     def get_template_names(self):
         """Return partial template for HTMX requests."""
         if self.request.htmx:
-            return ['messaging/email_templates/partials/template_list_content.html']
+            return ["messaging/email_templates/partials/template_list_content.html"]
         return [self.template_name]
 
 
@@ -235,9 +225,10 @@ class SchoolEmailTemplateDetailView(IsSchoolOwnerOrAdminMixin, DetailView):
 
     GET /email-templates/{id}/
     """
+
     model = SchoolEmailTemplate
-    template_name = 'messaging/email_templates/template_detail.html'
-    context_object_name = 'template'
+    template_name = "messaging/email_templates/template_detail.html"
+    context_object_name = "template"
 
     def get_queryset(self):
         """Filter templates by user's schools."""
@@ -253,17 +244,18 @@ class SchoolEmailTemplateCreateView(IsSchoolOwnerOrAdminMixin, TemplateView):
     GET /email-templates/create/ - Show form
     POST /email-templates/create/ - Create template
     """
-    template_name = 'messaging/email_templates/template_create.html'
+
+    template_name = "messaging/email_templates/template_create.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
         # Template type options
-        context['template_types'] = EmailTemplateType.choices
+        context["template_types"] = EmailTemplateType.choices
 
         # Current user's schools
         school_ids = list_school_ids_owned_or_managed(self.request.user)
-        context['user_schools'] = School.objects.filter(id__in=school_ids)
+        context["user_schools"] = School.objects.filter(id__in=school_ids)
 
         return context
 
@@ -276,7 +268,7 @@ class SchoolEmailTemplateCreateView(IsSchoolOwnerOrAdminMixin, TemplateView):
                 raise PermissionDenied("You don't manage any schools")
 
             # Get school from form data
-            school_id = request.POST.get('school')
+            school_id = request.POST.get("school")
             if not school_id or int(school_id) not in school_ids:
                 raise PermissionDenied("Invalid school selection")
 
@@ -285,37 +277,31 @@ class SchoolEmailTemplateCreateView(IsSchoolOwnerOrAdminMixin, TemplateView):
             # Create template
             template = SchoolEmailTemplate.objects.create(
                 school=school,
-                template_type=request.POST.get('template_type'),
-                name=request.POST.get('name'),
-                subject_template=request.POST.get('subject_template'),
-                html_content=request.POST.get('html_content'),
-                text_content=request.POST.get('text_content'),
-                use_school_branding=request.POST.get('use_school_branding') == 'on',
-                custom_css=request.POST.get('custom_css', ''),
+                template_type=request.POST.get("template_type"),
+                name=request.POST.get("name"),
+                subject_template=request.POST.get("subject_template"),
+                html_content=request.POST.get("html_content"),
+                text_content=request.POST.get("text_content"),
+                use_school_branding=request.POST.get("use_school_branding") == "on",
+                custom_css=request.POST.get("custom_css", ""),
                 created_by=request.user,
             )
 
             if request.htmx:
                 # Return success partial for HTMX
-                return render(request, 'messaging/email_templates/partials/create_success.html', {
-                    'template': template
-                })
+                return render(request, "messaging/email_templates/partials/create_success.html", {"template": template})
             else:
-                return JsonResponse({
-                    'success': True,
-                    'template_id': template.id,
-                    'message': 'Template created successfully'
-                })
+                return JsonResponse(
+                    {"success": True, "template_id": template.id, "message": "Template created successfully"}
+                )
 
         except Exception as e:
             logger.error(f"Failed to create template: {e}")
 
             if request.htmx:
-                return render(request, 'messaging/email_templates/partials/create_error.html', {
-                    'error': str(e)
-                })
+                return render(request, "messaging/email_templates/partials/create_error.html", {"error": str(e)})
             else:
-                return JsonResponse({'success': False, 'error': str(e)}, status=400)
+                return JsonResponse({"success": False, "error": str(e)}, status=400)
 
 
 class SchoolEmailTemplateEditView(IsSchoolOwnerOrAdminMixin, DetailView):
@@ -325,9 +311,10 @@ class SchoolEmailTemplateEditView(IsSchoolOwnerOrAdminMixin, DetailView):
     GET /email-templates/{id}/edit/ - Show edit form
     POST /email-templates/{id}/edit/ - Update template
     """
+
     model = SchoolEmailTemplate
-    template_name = 'messaging/email_templates/template_edit.html'
-    context_object_name = 'template'
+    template_name = "messaging/email_templates/template_edit.html"
+    context_object_name = "template"
 
     def get_queryset(self):
         """Filter templates by user's schools."""
@@ -339,11 +326,11 @@ class SchoolEmailTemplateEditView(IsSchoolOwnerOrAdminMixin, DetailView):
         context = super().get_context_data(**kwargs)
 
         # Template type options
-        context['template_types'] = EmailTemplateType.choices
+        context["template_types"] = EmailTemplateType.choices
 
         # Current user's schools
         school_ids = list_school_ids_owned_or_managed(self.request.user)
-        context['user_schools'] = School.objects.filter(id__in=school_ids)
+        context["user_schools"] = School.objects.filter(id__in=school_ids)
 
         return context
 
@@ -353,36 +340,29 @@ class SchoolEmailTemplateEditView(IsSchoolOwnerOrAdminMixin, DetailView):
 
         try:
             # Update template fields
-            template.name = request.POST.get('name', template.name)
-            template.subject_template = request.POST.get('subject_template', template.subject_template)
-            template.html_content = request.POST.get('html_content', template.html_content)
-            template.text_content = request.POST.get('text_content', template.text_content)
-            template.use_school_branding = request.POST.get('use_school_branding') == 'on'
-            template.custom_css = request.POST.get('custom_css', '')
-            template.is_active = request.POST.get('is_active') == 'on'
+            template.name = request.POST.get("name", template.name)
+            template.subject_template = request.POST.get("subject_template", template.subject_template)
+            template.html_content = request.POST.get("html_content", template.html_content)
+            template.text_content = request.POST.get("text_content", template.text_content)
+            template.use_school_branding = request.POST.get("use_school_branding") == "on"
+            template.custom_css = request.POST.get("custom_css", "")
+            template.is_active = request.POST.get("is_active") == "on"
 
             template.save()
 
             if request.htmx:
                 # Return success partial for HTMX
-                return render(request, 'messaging/email_templates/partials/edit_success.html', {
-                    'template': template
-                })
+                return render(request, "messaging/email_templates/partials/edit_success.html", {"template": template})
             else:
-                return JsonResponse({
-                    'success': True,
-                    'message': 'Template updated successfully'
-                })
+                return JsonResponse({"success": True, "message": "Template updated successfully"})
 
         except Exception as e:
             logger.error(f"Failed to update template {pk}: {e}")
 
             if request.htmx:
-                return render(request, 'messaging/email_templates/partials/edit_error.html', {
-                    'error': str(e)
-                })
+                return render(request, "messaging/email_templates/partials/edit_error.html", {"error": str(e)})
             else:
-                return JsonResponse({'success': False, 'error': str(e)}, status=400)
+                return JsonResponse({"success": False, "error": str(e)}, status=400)
 
 
 class SchoolEmailTemplatePreviewView(IsSchoolOwnerOrAdminMixin, DetailView):
@@ -391,8 +371,9 @@ class SchoolEmailTemplatePreviewView(IsSchoolOwnerOrAdminMixin, DetailView):
 
     POST /email-templates/{id}/preview/
     """
+
     model = SchoolEmailTemplate
-    template_name = 'messaging/email_templates/partials/template_preview.html'
+    template_name = "messaging/email_templates/partials/template_preview.html"
 
     def get_queryset(self):
         """Filter templates by user's schools."""
@@ -406,7 +387,7 @@ class SchoolEmailTemplatePreviewView(IsSchoolOwnerOrAdminMixin, DetailView):
 
         try:
             # Get template variables from request
-            variables = json.loads(request.POST.get('variables', '{}'))
+            variables = json.loads(request.POST.get("variables", "{}"))
 
             # Render template with variables using secure service
             from messaging.services.email_template_service import EmailTemplateRenderingService
@@ -416,20 +397,18 @@ class SchoolEmailTemplatePreviewView(IsSchoolOwnerOrAdminMixin, DetailView):
             )
 
             context = {
-                'template': template,
-                'rendered_subject': subject,
-                'rendered_html': html_content,
-                'rendered_text': text_content,
-                'variables': variables,
+                "template": template,
+                "rendered_subject": subject,
+                "rendered_html": html_content,
+                "rendered_text": text_content,
+                "variables": variables,
             }
 
             return render(request, self.template_name, context)
 
         except Exception as e:
             logger.error(f"Failed to preview template {pk}: {e}")
-            return render(request, 'messaging/email_templates/partials/preview_error.html', {
-                'error': str(e)
-            })
+            return render(request, "messaging/email_templates/partials/preview_error.html", {"error": str(e)})
 
 
 # =======================
@@ -443,9 +422,10 @@ class EmailCommunicationListView(IsSchoolOwnerOrAdminMixin, ListView):
 
     GET /communications/
     """
+
     model = EmailCommunication
-    template_name = 'messaging/communications/email_list.html'
-    context_object_name = 'communications'
+    template_name = "messaging/communications/email_list.html"
+    context_object_name = "communications"
     paginate_by = 20
 
     def get_queryset(self):
@@ -486,15 +466,15 @@ class EmailCommunicationListView(IsSchoolOwnerOrAdminMixin, ListView):
         context = super().get_context_data(**kwargs)
 
         # Add filter options
-        context['communication_types'] = EmailCommunicationType.choices
-        context['delivery_statuses'] = EmailDeliveryStatus.choices
+        context["communication_types"] = EmailCommunicationType.choices
+        context["delivery_statuses"] = EmailDeliveryStatus.choices
 
         return context
 
     def get_template_names(self):
         """Return partial template for HTMX requests."""
         if self.request.htmx:
-            return ['messaging/communications/partials/email_list_content.html']
+            return ["messaging/communications/partials/email_list_content.html"]
         return [self.template_name]
 
 
@@ -504,7 +484,8 @@ class EmailAnalyticsView(IsSchoolOwnerOrAdminMixin, TemplateView):
 
     GET /communications/analytics/
     """
-    template_name = 'messaging/communications/analytics.html'
+
+    template_name = "messaging/communications/analytics.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -523,16 +504,12 @@ class EmailAnalyticsView(IsSchoolOwnerOrAdminMixin, TemplateView):
 
             # Get communications for user's schools
             communications = EmailCommunication.objects.filter(
-                school_id__in=school_ids,
-                sent_at__gte=start_date,
-                sent_at__lte=end_date
+                school_id__in=school_ids, sent_at__gte=start_date, sent_at__lte=end_date
             )
 
             # Calculate metrics
             total_sent = communications.count()
-            delivered_count = communications.filter(
-                delivery_status=EmailDeliveryStatus.DELIVERED
-            ).count()
+            delivered_count = communications.filter(delivery_status=EmailDeliveryStatus.DELIVERED).count()
             opened_count = communications.filter(opened_at__isnull=False).count()
             clicked_count = communications.filter(clicked_at__isnull=False).count()
 
@@ -541,16 +518,16 @@ class EmailAnalyticsView(IsSchoolOwnerOrAdminMixin, TemplateView):
             open_rate = (opened_count / delivered_count * 100) if delivered_count > 0 else 0
             click_rate = (clicked_count / opened_count * 100) if opened_count > 0 else 0
 
-            context.update({
-                'period_start': start_date.date(),
-                'period_end': end_date.date(),
-                'total_sent': total_sent,
-                'delivery_rate': round(delivery_rate, 2),
-                'open_rate': round(open_rate, 2),
-                'click_rate': round(click_rate, 2),
-                'recent_communications': communications.order_by("-sent_at")[:10],
-            })
+            context.update(
+                {
+                    "period_start": start_date.date(),
+                    "period_end": end_date.date(),
+                    "total_sent": total_sent,
+                    "delivery_rate": round(delivery_rate, 2),
+                    "open_rate": round(open_rate, 2),
+                    "click_rate": round(click_rate, 2),
+                    "recent_communications": communications.order_by("-sent_at")[:10],
+                }
+            )
 
         return context
-
-

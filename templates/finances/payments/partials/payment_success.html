@@ -9,7 +9,7 @@
             <p class="text-sm mt-1">Your tutoring hours have been added to your account.</p>
         </div>
     </div>
-    
+
     {% if transaction %}
     <div class="mt-4 p-3 bg-white bg-opacity-50 rounded">
         <div class="grid grid-cols-2 gap-4 text-sm">
@@ -34,13 +34,13 @@
         </div>
     </div>
     {% endif %}
-    
+
     <div class="mt-4 flex space-x-3">
-        <a href="{% url 'finances:balance-overview' %}" 
+        <a href="{% url 'finances:balance-overview' %}"
            class="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700 transition-colors">
             View Balance
         </a>
-        <a href="{% url 'dashboard:dashboard' %}" 
+        <a href="{% url 'dashboard:dashboard' %}"
            class="bg-gray-600 text-white px-4 py-2 rounded text-sm hover:bg-gray-700 transition-colors">
             Back to Dashboard
         </a>

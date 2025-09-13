@@ -1,6 +1,7 @@
 """
 Classroom app URLs - Chat functionality only (no DRF).
 """
+
 from django.urls import path
 
 from .views import (

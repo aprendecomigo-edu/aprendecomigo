@@ -9,7 +9,7 @@ This directory contains comprehensive tests for the refactored PeopleView in `da
 The test suite covers all three account type scenarios:
 
 1. **STUDENT_GUARDIAN** - Both student and guardian have accounts, guardian handles finances
-2. **ADULT_STUDENT** - Student manages everything themselves  
+2. **ADULT_STUDENT** - Student manages everything themselves
 3. **GUARDIAN_ONLY** - Student has no account, guardian manages everything
 
 ### Test Classes
@@ -17,7 +17,7 @@ The test suite covers all three account type scenarios:
 - `PeopleViewTestCase` - Base test case with common setup
 - `PeopleViewGetRequestsTests` - Tests for GET requests and template rendering
 - `PeopleViewStudentGuardianTests` - Tests for STUDENT_GUARDIAN account type creation
-- `PeopleViewAdultStudentTests` - Tests for ADULT_STUDENT account type creation  
+- `PeopleViewAdultStudentTests` - Tests for ADULT_STUDENT account type creation
 - `PeopleViewGuardianOnlyTests` - Tests for GUARDIAN_ONLY account type creation
 - `PeopleViewErrorHandlingTests` - Tests for error handling and edge cases
 - `PeopleViewAuthorizationTests` - Tests for authentication and authorization

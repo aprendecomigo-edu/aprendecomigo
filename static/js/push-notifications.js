@@ -15,7 +15,7 @@ class PushNotificationManager {
         this.subscription = null;
         this.vapidPublicKey = null;
         this.isSubscribed = false;
-        
+
         this.init();
     }
 
@@ -29,16 +29,16 @@ class PushNotificationManager {
         try {
             // Get VAPID public key from server
             await this.getVapidPublicKey();
-            
+
             // Check current subscription status
             await this.checkSubscriptionStatus();
-            
+
             // Set up UI
             this.setupPushUI();
-            
+
             // Handle notification clicks
             this.setupNotificationHandlers();
-            
+
         } catch (error) {
             error('Failed to initialize push notifications:', error);
         }
@@ -65,9 +65,9 @@ class PushNotificationManager {
             const registration = await navigator.serviceWorker.ready;
             this.subscription = await registration.pushManager.getSubscription();
             this.isSubscribed = this.subscription !== null;
-            
+
             log('Push subscription status:', this.isSubscribed);
-            
+
             if (this.isSubscribed) {
                 console.log('User is subscribed to push notifications');
                 await this.sendSubscriptionToServer(this.subscription);
@@ -86,14 +86,14 @@ class PushNotificationManager {
             }
 
             const registration = await navigator.serviceWorker.ready;
-            
+
             // Request notification permission
             const permission = await Notification.requestPermission();
-            
+
             if (permission === 'denied') {
                 throw new Error('Notification permission denied');
             }
-            
+
             if (permission === 'default') {
                 throw new Error('Notification permission not granted');
             }
@@ -108,14 +108,14 @@ class PushNotificationManager {
 
             // Send subscription to server
             await this.sendSubscriptionToServer(subscription);
-            
+
             this.subscription = subscription;
             this.isSubscribed = true;
             this.updatePushUI();
-            
+
             // Show success notification
             this.showNotification('Push notifications enabled! You\'ll receive important updates.', 'success');
-            
+
             return subscription;
 
         } catch (error) {
@@ -133,14 +133,14 @@ class PushNotificationManager {
 
             // Unsubscribe from push notifications
             await this.subscription.unsubscribe();
-            
+
             // Remove subscription from server
             await this.removeSubscriptionFromServer(this.subscription);
-            
+
             this.subscription = null;
             this.isSubscribed = false;
             this.updatePushUI();
-            
+
             console.log('User unsubscribed from push notifications');
             this.showNotification('Push notifications disabled.', 'info');
 
@@ -155,7 +155,7 @@ class PushNotificationManager {
         try {
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
                              document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
-            
+
             const response = await fetch('/webpush/save_information/', {
                 method: 'POST',
                 headers: {
@@ -185,7 +185,7 @@ class PushNotificationManager {
         try {
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
                              document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
-            
+
             const response = await fetch('/webpush/unsubscribe/', {
                 method: 'POST',
                 headers: {
@@ -212,7 +212,7 @@ class PushNotificationManager {
     setupPushUI() {
         // Create push notification toggle button
         const pushButton = document.getElementById('push-toggle-button');
-        
+
         if (pushButton) {
             pushButton.addEventListener('click', () => this.togglePushSubscription());
             this.updatePushUI();
@@ -225,7 +225,7 @@ class PushNotificationManager {
     createPushUI() {
         // Check if we should show push notification prompt
         const container = document.getElementById('notification-container') || document.body;
-        
+
         // Don't show if user has already dismissed or subscribed
         if (localStorage.getItem('push-prompt-dismissed') || this.isSubscribed) {
             return;
@@ -247,11 +247,11 @@ class PushNotificationManager {
                         Get notified about lesson reminders, assignments, and course updates.
                     </p>
                     <div class="mt-3 flex space-x-2">
-                        <button id="enable-push-btn" 
+                        <button id="enable-push-btn"
                                 class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded font-medium transition-colors">
                             Enable Notifications
                         </button>
-                        <button id="dismiss-push-btn" 
+                        <button id="dismiss-push-btn"
                                 class="bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs px-3 py-1 rounded font-medium transition-colors">
                             Not Now
                         </button>
@@ -298,7 +298,7 @@ class PushNotificationManager {
 
     updatePushUI() {
         const pushButton = document.getElementById('push-toggle-button');
-        
+
         if (pushButton) {
             if (this.isSubscribed) {
                 pushButton.textContent = 'Disable Notifications';
@@ -342,7 +342,7 @@ class PushNotificationManager {
         // Handle service worker messages
         navigator.serviceWorker.addEventListener('message', (event) => {
             const { type, data } = event.data || {};
-            
+
             switch (type) {
                 case 'PUSH_RECEIVED':
                     console.log('Push notification received:', data);
@@ -359,9 +359,9 @@ class PushNotificationManager {
 
     handleNotificationClick(data) {
         const { action, notificationData } = data;
-        
+
         console.log('Notification clicked:', action, notificationData);
-        
+
         // Handle different notification actions
         switch (action) {
             case 'view_course':
@@ -395,12 +395,12 @@ class PushNotificationManager {
     getBrowserInfo() {
         const userAgent = navigator.userAgent;
         let browser = 'Unknown';
-        
+
         if (userAgent.includes('Chrome')) browser = 'Chrome';
         else if (userAgent.includes('Firefox')) browser = 'Firefox';
         else if (userAgent.includes('Safari')) browser = 'Safari';
         else if (userAgent.includes('Edge')) browser = 'Edge';
-        
+
         return browser;
     }
 
@@ -432,7 +432,7 @@ class PushNotificationManager {
         try {
             const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
                              document.querySelector('meta[name=csrf-token]')?.getAttribute('content');
-            
+
             const response = await fetch('/webpush/send_push/', {
                 method: 'POST',
                 headers: {

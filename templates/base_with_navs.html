@@ -6,51 +6,51 @@
     sidebarOpen: false,
     sidebarCollapsed: false,
     activeSection: '{{ active_section|default:'dashboard' }}',
-    
+
     navigation: [
-        { 
-            id: 'dashboard', 
-            label: 'Home', 
+        {
+            id: 'dashboard',
+            label: 'Home',
             desktopLabel: 'Dashboard',
-            url: '{% url 'dashboard:dashboard' %}', 
-            icon: 'home', 
-            priority: 1 
+            url: '{% url 'dashboard:dashboard' %}',
+            icon: 'home',
+            priority: 1
         },
-        { 
-            id: 'people', 
-            label: 'People', 
+        {
+            id: 'people',
+            label: 'People',
             desktopLabel: 'People',
-            url: '/people/', 
-            icon: 'users', 
-            priority: 1, 
+            url: '/people/',
+            icon: 'users',
+            priority: 1,
         },
         {% switch "schedule_feature" %}
-        { 
-            id: 'scheduler', 
-            label: 'Schedule', 
+        {
+            id: 'scheduler',
+            label: 'Schedule',
             desktopLabel: 'Schedule',
-            url: '/calendar/', 
-            icon: 'calendar', 
-            priority: 1 
+            url: '/calendar/',
+            icon: 'calendar',
+            priority: 1
         },
         {% endswitch %}
         {% switch "chat_feature" %}
-        { 
-            id: 'chat', 
-            label: 'Chat', 
+        {
+            id: 'chat',
+            label: 'Chat',
             desktopLabel: 'Chat',
-            url: '/chat/', 
-            icon: 'message-circle', 
-            priority: 1 
+            url: '/chat/',
+            icon: 'message-circle',
+            priority: 1
         },
         {% endswitch %}
-        { 
-            id: 'notifications', 
-            label: 'Notifications', 
+        {
+            id: 'notifications',
+            label: 'Notifications',
             desktopLabel: 'Notifications',
-            url: '/messaging/notifications/', 
-            icon: 'bell', 
-            priority: 2, 
+            url: '/messaging/notifications/',
+            icon: 'bell',
+            priority: 2,
             badge: { count: 0, color: 'red' },
             htmx: {
                 get: '/messaging/notifications/unread-count/',
@@ -60,37 +60,37 @@
             }
         },
         {% if user.school_memberships.exists %}
-        { 
-            id: 'settings', 
-            label: 'Settings', 
+        {
+            id: 'settings',
+            label: 'Settings',
             desktopLabel: 'School Settings',
-            url: '{% url 'accounts:school_settings' pk=user.school_memberships.first.school.pk %}', 
-            icon: 'settings', 
+            url: '{% url 'accounts:school_settings' pk=user.school_memberships.first.school.pk %}',
+            icon: 'settings',
             priority: 3
         },
         {% endif %}
-        { 
-            id: 'profile', 
-            label: 'Profile', 
+        {
+            id: 'profile',
+            label: 'Profile',
             desktopLabel: 'My Profile',
-            url: '{% url 'accounts:profile' %}', 
-            icon: 'user', 
+            url: '{% url 'accounts:profile' %}',
+            icon: 'user',
             priority: 3
         },
     ],
-    
+
     isActive(itemId) {
         return this.activeSection === itemId;
     },
-    
+
     getMobileNavItems() {
         return this.navigation.filter(item => item.priority === 1);
     },
-    
+
     getDesktopNavItems() {
         return this.navigation.filter(item => item.priority <= 3);
     },
-    
+
     getBadgeClasses(color) {
         const colors = {
             'purple': 'bg-purple-100 text-purple-600',
@@ -99,7 +99,7 @@
         };
         return colors[color] || 'bg-gray-100 text-gray-600';
     },
-    
+
     init() {
         // Initialize Lucide icons after Alpine component mounts
         this.$nextTick(() => {
@@ -109,7 +109,7 @@
         });
     }
 }">
-    
+
     <!-- Mobile Header -->
     <header class="lg:hidden bg-white/90 backdrop-blur-sm border-b border-gray-200 px-4 py-3 fixed top-0 left-0 right-0 z-40">
         <div class="flex items-center justify-between">
@@ -149,7 +149,7 @@
                 <ul role="list" class="flex flex-1 flex-col gap-y-2">
                     <template x-for="item in getDesktopNavItems()" :key="item.id">
                         <li>
-                            <a :href="item.url" 
+                            <a :href="item.url"
                                class="group flex rounded-xl p-3 text-sm leading-6 font-semibold hover:bg-white/50 transition-colors"
                                :class="[
                                    isActive(item.id) ? 'bg-blue-500 text-white' : 'text-gray-700 hover:text-gray-900',
@@ -157,23 +157,24 @@
                                    sidebarCollapsed ? 'justify-center' : 'gap-x-3'
                                ]"
                                :title="sidebarCollapsed ? item.desktopLabel : ''"
+                               :data-test="'navigate-' + item.id"
                                x-bind="item.htmx ? {
                                    'hx-get': item.htmx.get,
                                    'hx-trigger': item.htmx.trigger,
                                    'hx-target': item.htmx.target,
                                    'hx-swap': item.htmx.swap
                                } : {}">
-                                
+
                                 <div class="flex items-center" :class="sidebarCollapsed ? 'justify-center' : 'gap-x-3'">
-                                    <i :data-lucide="item.icon" 
-                                       class="h-5 w-5 shrink-0" 
+                                    <i :data-lucide="item.icon"
+                                       class="h-5 w-5 shrink-0"
                                        :class="isActive(item.id) ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'"></i>
                                     <span x-text="item.desktopLabel" x-show="!sidebarCollapsed"></span>
                                 </div>
-                                
+
                                 <template x-if="item.badge && !sidebarCollapsed">
                                     <span :id="item.id === 'notifications' ? 'notification-badge' : ''"
-                                          :class="getBadgeClasses(item.badge.color)" 
+                                          :class="getBadgeClasses(item.badge.color)"
                                           class="text-xs font-medium px-2 py-1 rounded-full"
                                           x-show="item.badge.count > 0 || item.id === 'notifications'"
                                           x-text="item.badge.count"></span>
@@ -185,7 +186,7 @@
                         {% include 'includes/language_switcher.html' %}
                     </li>
                     <li class="mt-auto">
-                        <a href="{% url 'accounts:logout' %}" 
+                        <a href="{% url 'accounts:logout' %}"
                            class="group flex rounded-xl p-3 text-sm leading-6 font-semibold text-red-600 hover:bg-red-50 transition-colors"
                            :class="sidebarCollapsed ? 'justify-center' : 'gap-x-3'"
                            :title="sidebarCollapsed ? 'Logout' : ''">
@@ -202,12 +203,13 @@
     <nav class="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 z-50">
         <div class="flex items-center justify-around py-2">
             <template x-for="item in getMobileNavItems()" :key="item.id">
-                <a :href="item.url" 
+                <a :href="item.url"
                    class="flex flex-col items-center py-2 px-3 rounded-lg transition-colors relative"
-                   :class="isActive(item.id) ? 'text-blue-600' : 'text-gray-500'">
+                   :class="isActive(item.id) ? 'text-blue-600' : 'text-gray-500'"
+                   :data-test="'navigate-' + item.id">
                     <i :data-lucide="item.icon" class="w-5 h-5"></i>
                     <span class="text-xs font-medium mt-1" x-text="item.label"></span>
-                    
+
                     <template x-if="item.badge">
                         <span class="absolute -top-1 -right-1 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center"
                               :class="item.badge.color === 'purple' ? 'bg-purple-500' : 'bg-red-500'"
@@ -220,7 +222,7 @@
     </nav>
 
     <!-- Main Content Area - Single responsive layout -->
-    <main class="pt-16 pb-24 lg:pt-0 lg:pb-0 transition-all duration-300 ease-in-out" 
+    <main class="pt-16 pb-24 lg:pt-0 lg:pb-0 transition-all duration-300 ease-in-out"
           :class="sidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'">
         <!-- Desktop Header Bar -->
         <div class="hidden lg:block bg-white/90 backdrop-blur-sm border-b border-gray-200 px-6 py-4">

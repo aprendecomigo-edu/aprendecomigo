@@ -41,19 +41,19 @@
             <!-- Message -->
             <div class="text-center">
                 <p class="text-sm text-gray-600 mb-6">
-                    The school has been notified of your decision. If you change your mind, 
+                    The school has been notified of your decision. If you change your mind,
                     you'll need to contact them directly for a new invitation.
                 </p>
 
                 <!-- Action Buttons -->
                 <div class="space-y-3">
-                    <a href="/" 
+                    <a href="/"
                        class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                         Return to Homepage
                     </a>
-                    
+
                     {% if invitation.school.contact_email %}
-                        <a href="mailto:{{ invitation.school.contact_email }}?subject=Teacher Invitation Question - {{ invitation.school.name }}" 
+                        <a href="mailto:{{ invitation.school.contact_email }}?subject=Teacher Invitation Question - {{ invitation.school.name }}"
                            class="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                             Contact School
                         </a>
@@ -65,11 +65,11 @@
             <div class="mt-6 p-4 bg-green-50 rounded-lg">
                 <h4 class="text-sm font-medium text-green-900 mb-2">Looking for teaching opportunities?</h4>
                 <p class="text-sm text-green-700">
-                    Join our platform to explore other schools and teaching positions 
+                    Join our platform to explore other schools and teaching positions
                     that might be a better fit for you.
                 </p>
                 <div class="mt-3">
-                    <a href="{% url 'accounts:signup' %}" 
+                    <a href="{% url 'accounts:signup' %}"
                        class="text-sm font-medium text-green-600 hover:text-green-500">
                         Create Teacher Account →
                     </a>

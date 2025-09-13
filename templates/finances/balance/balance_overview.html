@@ -22,18 +22,18 @@
         <div class="space-y-4">
             <div class="bg-white rounded-lg shadow-md p-6">
                 <h3 class="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
-                
+
                 <div class="space-y-3">
-                    <a href="{% url 'finances:payment-form' %}" 
+                    <a href="{% url 'finances:payment-form' %}"
                        class="block w-full bg-blue-600 text-white text-center py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors">
                         <svg class="inline-block w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                         </svg>
                         Purchase Hours
                     </a>
-                    
-                    <button hx-get="{% url 'finances:top-up-form' %}" 
-                            hx-target="#top-up-modal" 
+
+                    <button hx-get="{% url 'finances:top-up-form' %}"
+                            hx-target="#top-up-modal"
                             hx-trigger="click"
                             onclick="document.getElementById('top-up-modal').classList.remove('hidden')"
                             class="block w-full bg-green-600 text-white text-center py-3 px-4 rounded-lg hover:bg-green-700 transition-colors">
@@ -42,8 +42,8 @@
                         </svg>
                         Quick Top-up
                     </button>
-                    
-                    <a href="{% url 'finances:transaction-history' %}" 
+
+                    <a href="{% url 'finances:transaction-history' %}"
                        class="block w-full bg-gray-600 text-white text-center py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors">
                         <svg class="inline-block w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -56,20 +56,20 @@
             <!-- Quick Stats -->
             <div class="bg-white rounded-lg shadow-md p-6">
                 <h3 class="text-lg font-semibold text-gray-800 mb-4">Quick Stats</h3>
-                
+
                 <div class="space-y-3">
                     <div class="flex justify-between items-center">
                         <span class="text-gray-600">Total Transactions:</span>
                         <span class="font-semibold">{{ recent_transactions|length }}</span>
                     </div>
-                    
+
                     {% if recent_transactions %}
                     <div class="flex justify-between items-center">
                         <span class="text-gray-600">Last Purchase:</span>
                         <span class="font-semibold">{{ recent_transactions.0.created_at|date:"M d" }}</span>
                     </div>
                     {% endif %}
-                    
+
                     <div class="flex justify-between items-center">
                         <span class="text-gray-600">Available Plans:</span>
                         <span class="font-semibold">{{ pricing_plans|length }}</span>
@@ -86,13 +86,13 @@
             <div class="px-6 py-4 border-b border-gray-200">
                 <div class="flex justify-between items-center">
                     <h3 class="text-lg font-semibold text-gray-800">Recent Transactions</h3>
-                    <a href="{% url 'finances:transaction-history' %}" 
+                    <a href="{% url 'finances:transaction-history' %}"
                        class="text-blue-600 hover:text-blue-800 text-sm font-medium">
                         View All →
                     </a>
                 </div>
             </div>
-            
+
             <div class="divide-y divide-gray-200">
                 {% for transaction in recent_transactions|slice:":5" %}
                 {% include 'finances/balance/partials/transaction_item.html' %}
@@ -109,14 +109,14 @@
         <div class="mt-3">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-medium text-gray-900">Quick Top-up</h3>
-                <button onclick="document.getElementById('top-up-modal').classList.add('hidden')" 
+                <button onclick="document.getElementById('top-up-modal').classList.add('hidden')"
                         class="text-gray-400 hover:text-gray-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
                 </button>
             </div>
-            
+
             <div id="top-up-modal">
                 <!-- HTMX will load the form here -->
             </div>

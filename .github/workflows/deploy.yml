@@ -1,0 +1,66 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main, staging]
+    paths:
+      - '**/*.py'
+      - 'requirements/**'
+      - 'requirements.txt'
+      - 'manage.py'
+      - 'pyproject.toml'
+      - '.github/workflows/deploy.yml'
+  pull_request:
+    branches: [main, staging]
+    paths:
+      - '**/*.py'
+      - 'requirements/**'
+      - 'requirements.txt'
+      - 'manage.py'
+      - 'pyproject.toml'
+      - '.github/workflows/deploy.yml'
+
+jobs:
+  django-tests:
+    name: Pre-Deploy Tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: ["3.13"]
+
+    env:
+      DJANGO_TESTING: true
+      DJANGO_SETTINGS_MODULE: aprendecomigo.settings.development
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install -r requirements/dev.txt
+
+    - name: Check Django configuration
+      run: |
+        python manage.py check --settings=aprendecomigo.settings.development
+
+    - name: Run database migrations
+      run: |
+        python manage.py migrate --settings=aprendecomigo.settings.development
+
+    - name: Lint with ruff
+      run: |
+        ruff check . --output-format=github
+
+    - name: Run Django tests
+      run: |
+        python manage.py test --exclude-tag=classroom --settings=aprendecomigo.settings.development --verbosity=2

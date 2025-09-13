@@ -29,7 +29,7 @@
         },
         eventModalLoading: false,
         currentTimeInterval: null,
-        
+
         openEventModal(date = null, time = '09:00') {
             const selectedDate = date || this.currentDate;
             this.eventModalData = {
@@ -44,7 +44,7 @@
             };
             this.showEventModal = true;
         },
-        
+
         closeEventModal() {
             this.showEventModal = false;
             this.eventModalData = {
@@ -58,7 +58,7 @@
                 student: null
             };
         },
-        
+
         calculateEndTime(startTime, durationMinutes) {
             const [hours, minutes] = startTime.split(':').map(Number);
             const startDate = new Date();
@@ -66,30 +66,30 @@
             const endDate = new Date(startDate.getTime() + durationMinutes * 60000);
             return endDate.toTimeString().slice(0, 5);
         },
-        
+
         updateEndTime() {
             this.eventModalData.endTime = this.calculateEndTime(this.eventModalData.time, 60);
         },
-        
+
         updateCurrentTimeIndicator() {
             const now = new Date();
             const today = now.toISOString().split('T')[0];
             const currentHour = now.getHours();
             const currentMinutes = now.getMinutes();
-            
+
             // Only show indicator if viewing today
             const viewingDate = this.currentView === 'week' ? today : this.currentDate;
-            const isToday = (this.currentView === 'day' && this.currentDate === today) || 
+            const isToday = (this.currentView === 'day' && this.currentDate === today) ||
                            (this.currentView === 'week');
-            
+
             if (!isToday) return;
-            
+
             // Calculate position based on time (assumes 64px height per hour in week, 80px in day)
             const hourHeight = this.currentView === 'day' ? 80 : 64;
             const startHour = 8; // Calendar starts at 8 AM
             const totalMinutesFromStart = (currentHour - startHour) * 60 + currentMinutes;
             const position = (totalMinutesFromStart / 60) * hourHeight;
-            
+
             // Update all current time indicators
             const indicators = document.querySelectorAll('.current-time-indicator');
             indicators.forEach(indicator => {
@@ -101,28 +101,28 @@
                 }
             });
         },
-        
+
         initCurrentTimeIndicator() {
             // Update immediately
             this.updateCurrentTimeIndicator();
-            
+
             // Update every 5 minutes (300000 ms)
             this.currentTimeInterval = setInterval(() => {
                 this.updateCurrentTimeIndicator();
             }, 300000);
         },
-        
+
         destroyCurrentTimeIndicator() {
             if (this.currentTimeInterval) {
                 clearInterval(this.currentTimeInterval);
                 this.currentTimeInterval = null;
             }
         }
-     }" 
+     }"
      x-init="initCurrentTimeIndicator()"
      @destroy="destroyCurrentTimeIndicator()"
      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-    
+
     <div class="bg-white rounded-lg shadow-sm p-6">
         <!-- Calendar Header - EventCalendar Inspired -->
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
@@ -148,7 +148,7 @@
                         </svg>
                     </button>
                 </div>
-                
+
                 <button hx-post="{% url 'calendar' %}"
                         hx-target="#calendar-grid"
                         hx-vals='{"action": "navigate", "direction": "today", "view": "{{ current_view }}", "date": "{{ current_date|date:'Y-m-d' }}"}'
@@ -156,7 +156,7 @@
                         class="px-3 py-1.5 text-sm bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded transition-colors font-medium">
                     today
                 </button>
-                
+
                 <h1 class="text-2xl font-normal text-gray-900">
                     {% if current_view == 'month' %}
                         {{ current_date|date:'F Y' }}
@@ -169,17 +169,17 @@
                     {% endif %}
                 </h1>
             </div>
-            
+
             <!-- Right section: View switcher and actions -->
             <div class="flex items-center space-x-3">
-                <button @click="openEventModal()" 
+                <button @click="openEventModal()"
                         class="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors flex items-center space-x-1.5">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                     </svg>
                     <span>Book Class</span>
                 </button>
-                
+
                 <!-- View Switcher -->
                 <div class="flex bg-white border border-gray-300 rounded overflow-hidden">
                     <button hx-post="{% url 'calendar' %}"
@@ -240,8 +240,8 @@
     {% include 'scheduler/partials/event_modal_form.html' %}
 
     <!-- HTMX Event Listeners -->
-    <div hx-trigger="refreshCalendar from:body" 
-         hx-post="{% url 'calendar' %}" 
+    <div hx-trigger="refreshCalendar from:body"
+         hx-post="{% url 'calendar' %}"
          hx-target="#calendar-grid"
          hx-vals='{"action": "load_events", "view": "{{ current_view }}", "date": "{{ current_date|date:'Y-m-d' }}"}'
          @htmx:afterSettle="$nextTick(() => initCurrentTimeIndicator())">

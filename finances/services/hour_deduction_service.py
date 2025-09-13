@@ -123,7 +123,7 @@ class HourDeductionService:
             PackageExpiredError: If student has expired packages
         """
         # Get or create student balance
-        balance, created = StudentAccountBalance.objects.get_or_create(
+        balance, _created = StudentAccountBalance.objects.get_or_create(
             student=student,
             defaults={
                 "hours_purchased": Decimal("0.00"),
@@ -285,7 +285,7 @@ class HourDeductionService:
         """
         try:
             # Get or create student balance
-            balance, created = StudentAccountBalance.objects.get_or_create(
+            balance, _created = StudentAccountBalance.objects.get_or_create(
                 student=student,
                 defaults={
                     "hours_purchased": Decimal("0.00"),

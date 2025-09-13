@@ -14,17 +14,18 @@ These tests focus on business logic validation without excessive mocking.
 from decimal import Decimal
 from unittest.mock import Mock, patch
 
-from django.test import TestCase
+from django.test import TestCase, tag
 
-from classroom.services.session_booking_service import (
+from finances.services.hour_deduction_service import HourDeductionService, InsufficientBalanceError, PackageExpiredError
+from scheduler.services.session_booking_service import (
     SessionBookingError,
     SessionBookingService,
     SessionCapacityError,
     SessionTimingError,
 )
-from finances.services.hour_deduction_service import HourDeductionService, InsufficientBalanceError, PackageExpiredError
 
 
+@tag("classroom")
 class SessionCapacityValidationTest(TestCase):
     """Test session capacity validation business rules."""
 
@@ -65,6 +66,7 @@ class SessionCapacityValidationTest(TestCase):
             SessionBookingService._validate_session_capacity("individual", 15)
 
 
+@tag("classroom")
 class TeacherAvailabilityValidationTest(TestCase):
     """Test teacher availability validation business rules."""
 
@@ -73,7 +75,7 @@ class TeacherAvailabilityValidationTest(TestCase):
         self.teacher = Mock()
         self.teacher.id = 1
 
-    @patch("classroom.services.session_booking_service.ClassSession.objects.filter")
+    @patch("scheduler.services.session_booking_service.ClassSession.objects.filter")
     def test_teacher_availability_conflict_detection(self, mock_filter):
         """Test teacher availability properly detects conflicts."""
         # No conflicts - should succeed
@@ -89,6 +91,7 @@ class TeacherAvailabilityValidationTest(TestCase):
         self.assertIn("conflicting session", str(cm.exception))
 
 
+@tag("classroom")
 class HourDeductionValidationTest(TestCase):
     """Test hour deduction validation business rules."""
 
@@ -146,6 +149,7 @@ class HourDeductionValidationTest(TestCase):
             self.assertIn("all packages have expired", str(cm.exception))
 
 
+@tag("classroom")
 class BookingEligibilityLogicTest(TestCase):
     """Test booking eligibility business logic."""
 
@@ -203,6 +207,7 @@ class BookingEligibilityLogicTest(TestCase):
             self.assertEqual(result["reason"], "No active tutoring packages")
 
 
+@tag("classroom")
 class SessionAdjustmentLogicTest(TestCase):
     """Test session duration adjustment business logic."""
 
@@ -214,7 +219,7 @@ class SessionAdjustmentLogicTest(TestCase):
         self.session.is_trial = False
         self.session.duration_hours = Decimal("2.00")
 
-    @patch("classroom.services.session_booking_service.ClassSession.objects.get")
+    @patch("scheduler.services.session_booking_service.ClassSession.objects.get")
     def test_adjust_session_duration_trial_sessions_ignored(self, mock_get):
         """Test trial session duration adjustments don't affect hours."""
         self.session.is_trial = True
@@ -227,7 +232,7 @@ class SessionAdjustmentLogicTest(TestCase):
         self.assertFalse(result["adjustment_applied"])
         self.assertIn("Trial sessions don't affect", result["reason"])
 
-    @patch("classroom.services.session_booking_service.ClassSession.objects.get")
+    @patch("scheduler.services.session_booking_service.ClassSession.objects.get")
     def test_adjust_session_duration_insufficient_difference_ignored(self, mock_get):
         """Test small duration differences are ignored."""
         mock_get.return_value = self.session
@@ -238,7 +243,7 @@ class SessionAdjustmentLogicTest(TestCase):
         self.assertFalse(result["adjustment_applied"])
         self.assertEqual(result["duration_difference"], "0.05")
 
-    @patch("classroom.services.session_booking_service.ClassSession.objects.get")
+    @patch("scheduler.services.session_booking_service.ClassSession.objects.get")
     def test_adjust_session_duration_invalid_status_rejected(self, mock_get):
         """Test adjustment rejects non-completed sessions."""
         self.session.status = "scheduled"
@@ -250,6 +255,7 @@ class SessionAdjustmentLogicTest(TestCase):
         self.assertIn("completed sessions", str(cm.exception))
 
 
+@tag("classroom")
 class SessionCancellationLogicTest(TestCase):
     """Test session cancellation business logic."""
 
@@ -262,7 +268,7 @@ class SessionCancellationLogicTest(TestCase):
         self.session.duration_hours = Decimal("2.00")
         self.session.notes = "Original notes"
 
-    @patch("classroom.services.session_booking_service.ClassSession.objects.get")
+    @patch("scheduler.services.session_booking_service.ClassSession.objects.get")
     def test_cancel_session_status_validation(self, mock_get):
         """Test session cancellation validates current status."""
         # Already cancelled
@@ -281,7 +287,7 @@ class SessionCancellationLogicTest(TestCase):
             SessionBookingService.cancel_session(1, "Late cancellation")
         self.assertIn("Cannot cancel a completed session", str(cm.exception))
 
-    @patch("classroom.services.session_booking_service.ClassSession.objects.get")
+    @patch("scheduler.services.session_booking_service.ClassSession.objects.get")
     def test_cancel_session_not_found(self, mock_get):
         """Test cancellation handles non-existent sessions."""
         from finances.models import ClassSession
@@ -294,6 +300,7 @@ class SessionCancellationLogicTest(TestCase):
         self.assertIn("Session 999 not found", str(cm.exception))
 
 
+@tag("classroom")
 class HourDeductionEdgeCasesTest(TestCase):
     """Test edge cases in hour deduction business logic."""
 

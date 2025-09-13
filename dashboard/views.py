@@ -15,13 +15,14 @@ from django.utils import timezone
 from django.views import View
 
 from accounts.models import CustomUser, InvitationStatus, School, SchoolMembership, TeacherInvitation
-from accounts.models.profiles import StudentProfile, TeacherProfile
 from accounts.models.enums import SchoolRole
+from accounts.models.profiles import StudentProfile, TeacherProfile
 from finances.models import PurchaseTransaction
 from scheduler.models import ClassSchedule
 from tasks.models import Task
 
-logger = logging.getLogger('accounts.auth')
+logger = logging.getLogger("accounts.auth")
+
 
 class DashboardView(LoginRequiredMixin, View):
     """Main dashboard view that renders appropriate template based on user role"""
@@ -30,10 +31,7 @@ class DashboardView(LoginRequiredMixin, View):
         """Render appropriate dashboard template based on user role"""
 
         # Get user's active school membership to determine role
-        active_membership = SchoolMembership.objects.filter(
-            user=request.user,
-            is_active=True
-        ).first()
+        active_membership = SchoolMembership.objects.filter(user=request.user, is_active=True).first()
 
         if active_membership:
             role = active_membership.role
@@ -49,7 +47,7 @@ class DashboardView(LoginRequiredMixin, View):
 
         # TODO: No Fallbacks something is wrong if there's no active membership
         logger.error(f"User {request.user.id} has no active school membership.")
-        return JsonResponse({'error': 'No active school membership found.'}, status=403)
+        return JsonResponse({"error": "No active school membership found."}, status=403)
 
     def _render_admin_dashboard(self, request):
         """Render admin dashboard directly at /dashboard/ - moved from AdminDashboardView"""
@@ -67,7 +65,7 @@ class DashboardView(LoginRequiredMixin, View):
         active_sessions = ClassSchedule.objects.filter(
             scheduled_date__gte=today.date(),
             scheduled_date__lte=week_from_now.date(),
-            status__in=['scheduled', 'confirmed']
+            status__in=["scheduled", "confirmed"],
         ).count()
 
         # Get revenue this month from actual financial data
@@ -76,116 +74,117 @@ class DashboardView(LoginRequiredMixin, View):
         current_year = today.year
 
         try:
-            revenue_this_month = PurchaseTransaction.objects.filter(
-                created_at__year=current_year,
-                created_at__month=current_month,
-                status='completed'
-            ).aggregate(total=models.Sum('amount_charged'))['total'] or 0
+            revenue_this_month = (
+                PurchaseTransaction.objects.filter(
+                    created_at__year=current_year, created_at__month=current_month, status="completed"
+                ).aggregate(total=models.Sum("amount_charged"))["total"]
+                or 0
+            )
             revenue_this_month = int(revenue_this_month / 100)  # Convert cents to euros
         except Exception:
             revenue_this_month = 0  # Default to 0 if no payment data
 
         # Get tasks from task management system
         try:
-            user_tasks = Task.objects.filter(user=user).order_by('-created_at')[:10]
+            user_tasks = Task.objects.filter(user=user).order_by("-created_at")[:10]
             tasks = []
             for task in user_tasks:
-                tasks.append({
-                    'id': task.pk,
-                    'title': task.title,
-                    'priority': task.priority.lower() if task.priority else 'medium',
-                    'status': 'completed' if task.status == 'completed' else 'pending',
-                    'due_date': task.due_date.strftime('%Y-%m-%d') if task.due_date else None
-                })
+                tasks.append(
+                    {
+                        "id": task.pk,
+                        "title": task.title,
+                        "priority": task.priority.lower() if task.priority else "medium",
+                        "status": "completed" if task.status == "completed" else "pending",
+                        "due_date": task.due_date.strftime("%Y-%m-%d") if task.due_date else None,
+                    }
+                )
         except Exception:
             # Fallback to empty tasks if Task model doesn't exist or has issues
             tasks = []
 
         # Get upcoming events (classes) - simplified for now
         events = []
-        schedules = ClassSchedule.objects.select_related(
-            'teacher__user', 'student'
-        ).filter(
-            scheduled_date__gte=today.date(),
-            scheduled_date__lte=week_from_now.date()
-        ).order_by('scheduled_date', 'start_time')[:10]
+        schedules = (
+            ClassSchedule.objects.select_related("teacher__user", "student")
+            .filter(scheduled_date__gte=today.date(), scheduled_date__lte=week_from_now.date())
+            .order_by("scheduled_date", "start_time")[:10]
+        )
 
         for schedule in schedules:
             # Get real teacher name
-            teacher_name = 'Professor'
+            teacher_name = "Professor"
             if schedule.teacher and schedule.teacher.user:
                 teacher_name = schedule.teacher.user.name
                 if not teacher_name:
-                    teacher_name = schedule.teacher.user.email.split('@')[0]
+                    teacher_name = schedule.teacher.user.email.split("@")[0]
 
             # Get real student name
-            student_name = 'Aluno'
+            student_name = "Aluno"
             if schedule.student:
                 student_name = schedule.student.name
                 if not student_name:
-                    student_name = schedule.student.email.split('@')[0] if schedule.student.email else 'Aluno'
+                    student_name = schedule.student.email.split("@")[0] if schedule.student.email else "Aluno"
 
             # Use the actual title from the schedule, or create a descriptive one
             if schedule.title and schedule.title.strip():
                 title = schedule.title
             else:
                 # Create a descriptive title based on available data
-                class_type_display = schedule.get_class_type_display() if schedule.class_type else 'Aula'
+                class_type_display = schedule.get_class_type_display() if schedule.class_type else "Aula"
                 title = f"{class_type_display} - {teacher_name}"
 
-            events.append({
-                'id': schedule.pk,
-                'title': title,
-                'scheduled_date': schedule.scheduled_date.strftime('%Y-%m-%d'),
-                'start_time': schedule.start_time.strftime('%H:%M') if schedule.start_time else '09:00',
-                'end_time': schedule.end_time.strftime('%H:%M') if schedule.end_time else '10:00',
-                'duration_minutes': 60,
-                'teacher_name': teacher_name,
-                'student_name': student_name,
-                'status': schedule.status or 'scheduled'
-            })
+            events.append(
+                {
+                    "id": schedule.pk,
+                    "title": title,
+                    "scheduled_date": schedule.scheduled_date.strftime("%Y-%m-%d"),
+                    "start_time": schedule.start_time.strftime("%H:%M") if schedule.start_time else "09:00",
+                    "end_time": schedule.end_time.strftime("%H:%M") if schedule.end_time else "10:00",
+                    "duration_minutes": 60,
+                    "teacher_name": teacher_name,
+                    "student_name": student_name,
+                    "status": schedule.status or "scheduled",
+                }
+            )
 
         context = {
-            'title': 'Admin Dashboard - Aprende Comigo',
-            'user': user,
-            'active_section': 'dashboard',
-            'total_teachers': total_teachers,
-            'total_students': total_students,
-            'active_sessions': active_sessions,
-            'revenue_this_month': revenue_this_month,
-            'tasks': json.dumps(tasks),  # JSON encode for JavaScript
-            'events': events,
-            'now': timezone.now(),
+            "title": "Admin Dashboard - Aprende Comigo",
+            "user": user,
+            "active_section": "dashboard",
+            "total_teachers": total_teachers,
+            "total_students": total_students,
+            "active_sessions": active_sessions,
+            "revenue_this_month": revenue_this_month,
+            "tasks": json.dumps(tasks),  # JSON encode for JavaScript
+            "events": events,
+            "now": timezone.now(),
         }
 
-        return render(request, 'dashboard/admin_dashboard.html', context)
+        return render(request, "dashboard/admin_dashboard.html", context)
 
     def _render_teacher_dashboard(self, request):
         """Render teacher dashboard with teaching tools and data"""
-        return render(request, 'dashboard/teacher_dashboard.html', {
-            'title': 'Teacher Dashboard - Aprende Comigo',
-            'user': request.user,
-            'active_section': 'dashboard'
-        })
+        return render(
+            request,
+            "dashboard/teacher_dashboard.html",
+            {"title": "Teacher Dashboard - Aprende Comigo", "user": request.user, "active_section": "dashboard"},
+        )
 
     def _render_student_dashboard(self, request):
         """Render student dashboard with learning tools"""
-        return render(request, 'dashboard/student_dashboard.html', {
-            'title': 'Student Portal - Aprende Comigo',
-            'user': request.user,
-            'active_section': 'dashboard'
-        })
+        return render(
+            request,
+            "dashboard/student_dashboard.html",
+            {"title": "Student Portal - Aprende Comigo", "user": request.user, "active_section": "dashboard"},
+        )
 
     def _render_guardian_dashboard(self, request):
         """Render guardian dashboard with student progress monitoring"""
-        return render(request, 'dashboard/guardian_dashboard.html', {
-            'title': 'Guardian Portal - Aprende Comigo',
-            'user': request.user,
-            'active_section': 'dashboard'
-        })
-
-
-
+        return render(
+            request,
+            "dashboard/guardian_dashboard.html",
+            {"title": "Guardian Portal - Aprende Comigo", "user": request.user, "active_section": "dashboard"},
+        )
 
 
 class TeachersView(View):
@@ -197,11 +196,11 @@ class TeachersView(View):
         # if not request.user.is_authenticated:
         #     return redirect('accounts:signin')
 
-        return render(request, 'dashboard/teachers.html', {
-            'title': 'Teachers - Aprende Comigo',
-            'user': request.user,
-            'active_section': 'teachers'
-        })
+        return render(
+            request,
+            "dashboard/teachers.html",
+            {"title": "Teachers - Aprende Comigo", "user": request.user, "active_section": "teachers"},
+        )
 
 
 class StudentsView(View):
@@ -213,11 +212,11 @@ class StudentsView(View):
         # if not request.user.is_authenticated:
         #     return redirect('accounts:signin')
 
-        return render(request, 'dashboard/students.html', {
-            'title': 'Students - Aprende Comigo',
-            'user': request.user,
-            'active_section': 'students'
-        })
+        return render(
+            request,
+            "dashboard/students.html",
+            {"title": "Students - Aprende Comigo", "user": request.user, "active_section": "students"},
+        )
 
 
 class InvitationsView(LoginRequiredMixin, View):
@@ -226,89 +225,95 @@ class InvitationsView(LoginRequiredMixin, View):
     def get(self, request):
         """Render invitations page with server-side data"""
 
-
         # Get user's schools - using same logic as PeopleView
         def get_user_schools(user):
             if user.is_staff or user.is_superuser:
                 return School.objects.all()
-            school_ids = SchoolMembership.objects.filter(user=user).values_list('school_id', flat=True)
+            school_ids = SchoolMembership.objects.filter(user=user).values_list("school_id", flat=True)
             return School.objects.filter(id__in=school_ids)
 
         user_schools = get_user_schools(request.user)
 
         # Check if this is a partial request for invitations list
-        if request.GET.get('load_invitations'):
+        if request.GET.get("load_invitations"):
             return self._render_invitations_list(request)
 
         # Fetch invitations server-side
-        invitations_queryset = TeacherInvitation.objects.filter(
-            school__in=user_schools
-        ).select_related('school', 'invited_by').order_by('-created_at')
+        invitations_queryset = (
+            TeacherInvitation.objects.filter(school__in=user_schools)
+            .select_related("school", "invited_by")
+            .order_by("-created_at")
+        )
 
         invitations = []
         for invitation in invitations_queryset:
-            invitations.append({
-                'id': invitation.pk,
-                'email': invitation.email,
-                'role': invitation.get_role_display(),
-                'status': invitation.get_status_display(),
-                'created_at': invitation.created_at,
-                'school_name': invitation.school.name if invitation.school else '',
-                'invited_by': invitation.invited_by.get_full_name() if invitation.invited_by else '',
-                'custom_message': invitation.custom_message or '',
-                'is_active': invitation.status in ['pending', 'sent', 'delivered', 'viewed'] and not invitation.is_accepted and invitation.expires_at > timezone.now()
-            })
+            invitations.append(
+                {
+                    "id": invitation.pk,
+                    "email": invitation.email,
+                    "role": invitation.get_role_display(),
+                    "status": invitation.get_status_display(),
+                    "created_at": invitation.created_at,
+                    "school_name": invitation.school.name if invitation.school else "",
+                    "invited_by": invitation.invited_by.get_full_name() if invitation.invited_by else "",
+                    "custom_message": invitation.custom_message or "",
+                    "is_active": invitation.status in ["pending", "sent", "delivered", "viewed"]
+                    and not invitation.is_accepted
+                    and invitation.expires_at > timezone.now(),
+                }
+            )
 
-        return render(request, 'dashboard/invitations.html', {
-            'title': 'Invitations - Aprende Comigo',
-            'user': request.user,
-            'active_section': 'invitations',
-            'invitations': invitations,
-            'user_schools': user_schools,
-        })
+        return render(
+            request,
+            "dashboard/invitations.html",
+            {
+                "title": "Invitations - Aprende Comigo",
+                "user": request.user,
+                "active_section": "invitations",
+                "invitations": invitations,
+                "user_schools": user_schools,
+            },
+        )
 
     def post(self, request):
         """Handle invitation form submissions"""
-        action = request.POST.get('action')
+        action = request.POST.get("action")
 
-        if action == 'send_invitation':
+        if action == "send_invitation":
             return self._handle_send_invitation(request)
-        elif action == 'resend_invitation':
+        elif action == "resend_invitation":
             return self._handle_resend_invitation(request)
-        elif action == 'cancel_invitation':
+        elif action == "cancel_invitation":
             return self._handle_cancel_invitation(request)
-        elif action == 'load_invitations':
+        elif action == "load_invitations":
             return self._render_invitations_list(request)
         else:
-            return JsonResponse({'error': 'Invalid action'}, status=400)
+            return JsonResponse({"error": "Invalid action"}, status=400)
 
     def _handle_send_invitation(self, request):
         """Handle sending a new teacher invitation"""
 
-
         try:
-            email = request.POST.get('email')
-            role = request.POST.get('role', 'teacher')
-            custom_message = request.POST.get('custom_message', '')
+            email = request.POST.get("email")
+            role = request.POST.get("role", "teacher")
+            custom_message = request.POST.get("custom_message", "")
 
             if not email:
-                return render(request, 'shared/partials/error_message.html', {
-                    'error': 'Email is required'
-                })
+                return render(request, "shared/partials/error_message.html", {"error": "Email is required"})
 
             # Get user's schools
             def get_user_schools(user):
                 if user.is_staff or user.is_superuser:
                     return School.objects.all()
-                school_ids = SchoolMembership.objects.filter(user=user).values_list('school_id', flat=True)
+                school_ids = SchoolMembership.objects.filter(user=user).values_list("school_id", flat=True)
                 return School.objects.filter(id__in=school_ids)
 
             user_schools = get_user_schools(request.user)
 
             if not user_schools.exists():
-                return render(request, 'shared/partials/error_message.html', {
-                    'error': 'No schools found for this user'
-                })
+                return render(
+                    request, "shared/partials/error_message.html", {"error": "No schools found for this user"}
+                )
 
             # Use the first school for now (TODO: allow school selection)
             school = user_schools.first()
@@ -328,9 +333,11 @@ class InvitationsView(LoginRequiredMixin, View):
             ).first()
 
             if existing:
-                return render(request, 'shared/partials/error_message.html', {
-                    'error': 'An active invitation already exists for this email and school'
-                })
+                return render(
+                    request,
+                    "shared/partials/error_message.html",
+                    {"error": "An active invitation already exists for this email and school"},
+                )
 
             # Create new invitation
             invitation = TeacherInvitation.objects.create(
@@ -340,79 +347,75 @@ class InvitationsView(LoginRequiredMixin, View):
                 role=role,
                 custom_message=custom_message,
                 batch_id=uuid4(),
-                status=InvitationStatus.PENDING
+                status=InvitationStatus.PENDING,
             )
 
             # TODO: Send email invitation using messaging service
             invitation.mark_email_sent()
 
             # Return success message and update the invitations list
-            response = render(request, 'shared/partials/success_message.html', {
-                'message': f'Invitation sent successfully to {email}!'
-            })
-            response['HX-Trigger'] = 'refreshInvitations'
+            response = render(
+                request,
+                "shared/partials/success_message.html",
+                {"message": f"Invitation sent successfully to {email}!"},
+            )
+            response["HX-Trigger"] = "refreshInvitations"
             return response
 
         except Exception as e:
-            return render(request, 'shared/partials/error_message.html', {
-                'error': f'Failed to send invitation: {e!s}'
-            })
+            return render(request, "shared/partials/error_message.html", {"error": f"Failed to send invitation: {e!s}"})
 
     def _handle_resend_invitation(self, request):
         """Handle resending an existing invitation"""
         try:
-            invitation_id = request.POST.get('invitation_id')
+            invitation_id = request.POST.get("invitation_id")
             if not invitation_id:
-                return render(request, 'shared/partials/error_message.html', {
-                    'error': 'Invitation ID is required'
-                })
+                return render(request, "shared/partials/error_message.html", {"error": "Invitation ID is required"})
 
             invitation = TeacherInvitation.objects.get(pk=invitation_id)
 
             # TODO: Resend email using messaging service
             invitation.mark_email_sent()
 
-            response = render(request, 'shared/partials/success_message.html', {
-                'message': f'Invitation resent to {invitation.email}!'
-            })
-            response['HX-Trigger'] = 'refreshInvitations'
+            response = render(
+                request,
+                "shared/partials/success_message.html",
+                {"message": f"Invitation resent to {invitation.email}!"},
+            )
+            response["HX-Trigger"] = "refreshInvitations"
             return response
 
         except TeacherInvitation.DoesNotExist:
-            return render(request, 'shared/partials/error_message.html', {
-                'error': 'Invitation not found'
-            })
+            return render(request, "shared/partials/error_message.html", {"error": "Invitation not found"})
         except Exception as e:
-            return render(request, 'shared/partials/error_message.html', {
-                'error': f'Failed to resend invitation: {e!s}'
-            })
+            return render(
+                request, "shared/partials/error_message.html", {"error": f"Failed to resend invitation: {e!s}"}
+            )
 
     def _handle_cancel_invitation(self, request):
         """Handle canceling an existing invitation"""
         try:
-            invitation_id = request.POST.get('invitation_id')
+            invitation_id = request.POST.get("invitation_id")
             if not invitation_id:
-                return render(request, 'shared/partials/error_message.html', {
-                    'error': 'Invitation ID is required'
-                })
+                return render(request, "shared/partials/error_message.html", {"error": "Invitation ID is required"})
 
             invitation = TeacherInvitation.objects.get(pk=invitation_id)
             invitation.cancel()
 
-            response = render(request, 'shared/partials/success_message.html', {
-                'message': f'Invitation to {invitation.email} has been cancelled!'
-            })
-            response['HX-Trigger'] = 'refreshInvitations'
+            response = render(
+                request,
+                "shared/partials/success_message.html",
+                {"message": f"Invitation to {invitation.email} has been cancelled!"},
+            )
+            response["HX-Trigger"] = "refreshInvitations"
             return response
 
         except TeacherInvitation.DoesNotExist:
-            return render(request, 'shared/partials/error_message.html', {
-                'error': 'Invitation not found'
-            })
+            return render(request, "shared/partials/error_message.html", {"error": "Invitation not found"})
         except Exception as e:
-            return render(request, 'shared/partials/error_message.html', {
-                'error': f'Failed to cancel invitation: {e!s}'
-            })
+            return render(
+                request, "shared/partials/error_message.html", {"error": f"Failed to cancel invitation: {e!s}"}
+            )
 
     def _render_invitations_list(self, request):
         """Render invitations list partial for HTMX updates"""
@@ -421,33 +424,43 @@ class InvitationsView(LoginRequiredMixin, View):
         def get_user_schools(user):
             if user.is_staff or user.is_superuser:
                 return School.objects.all()
-            school_ids = SchoolMembership.objects.filter(user=user).values_list('school_id', flat=True)
+            school_ids = SchoolMembership.objects.filter(user=user).values_list("school_id", flat=True)
             return School.objects.filter(id__in=school_ids)
 
         user_schools = get_user_schools(request.user)
 
         # Fetch invitations
-        invitations_queryset = TeacherInvitation.objects.filter(
-            school__in=user_schools
-        ).select_related('school', 'invited_by').order_by('-created_at')
+        invitations_queryset = (
+            TeacherInvitation.objects.filter(school__in=user_schools)
+            .select_related("school", "invited_by")
+            .order_by("-created_at")
+        )
 
         invitations = []
         for invitation in invitations_queryset:
-            invitations.append({
-                'id': invitation.pk,
-                'email': invitation.email,
-                'role': invitation.get_role_display(),
-                'status': invitation.get_status_display(),
-                'created_at': invitation.created_at,
-                'school_name': invitation.school.name if invitation.school else '',
-                'invited_by': invitation.invited_by.get_full_name() if invitation.invited_by else '',
-                'custom_message': invitation.custom_message or '',
-                'is_active': invitation.status in ['pending', 'sent', 'delivered', 'viewed'] and not invitation.is_accepted and invitation.expires_at > timezone.now()
-            })
+            invitations.append(
+                {
+                    "id": invitation.pk,
+                    "email": invitation.email,
+                    "role": invitation.get_role_display(),
+                    "status": invitation.get_status_display(),
+                    "created_at": invitation.created_at,
+                    "school_name": invitation.school.name if invitation.school else "",
+                    "invited_by": invitation.invited_by.get_full_name() if invitation.invited_by else "",
+                    "custom_message": invitation.custom_message or "",
+                    "is_active": invitation.status in ["pending", "sent", "delivered", "viewed"]
+                    and not invitation.is_accepted
+                    and invitation.expires_at > timezone.now(),
+                }
+            )
 
-        return render(request, 'dashboard/partials/invitations_list.html', {
-            'invitations': invitations,
-        })
+        return render(
+            request,
+            "dashboard/partials/invitations_list.html",
+            {
+                "invitations": invitations,
+            },
+        )
 
 
 class PeopleView(LoginRequiredMixin, View):
@@ -460,16 +473,15 @@ class PeopleView(LoginRequiredMixin, View):
         def get_user_schools(user):
             if user.is_staff or user.is_superuser:
                 return School.objects.all()
-            school_ids = SchoolMembership.objects.filter(user=user).values_list('school_id', flat=True)
+            school_ids = SchoolMembership.objects.filter(user=user).values_list("school_id", flat=True)
             return School.objects.filter(id__in=school_ids)
 
         user_schools = get_user_schools(request.user)
 
         # Get teachers data with profiles
         teacher_memberships = SchoolMembership.objects.filter(
-            school__in=user_schools,
-            role=SchoolRole.TEACHER.value
-        ).select_related('user', 'school')
+            school__in=user_schools, role=SchoolRole.TEACHER.value
+        ).select_related("user", "school")
 
         teachers = []
         for membership in teacher_memberships:
@@ -480,30 +492,28 @@ class PeopleView(LoginRequiredMixin, View):
                 specialty = profile.specialty
                 hourly_rate = float(profile.hourly_rate) if profile.hourly_rate else None
             except TeacherProfile.DoesNotExist:
-                bio = ''
-                specialty = ''
+                bio = ""
+                specialty = ""
                 hourly_rate = None
 
-            teachers.append({
-                'id': user.id,
-                'email': user.email,
-                'name': user.name,
-                'full_name': user.get_full_name(),
-                'bio': bio,
-                'specialty': specialty,
-                'hourly_rate': hourly_rate,
-                'school': {
-                    'id': membership.school.id,
-                    'name': membership.school.name
-                },
-                'status': 'active' if user.is_active else 'inactive'
-            })
+            teachers.append(
+                {
+                    "id": user.id,
+                    "email": user.email,
+                    "name": user.name,
+                    "full_name": user.get_full_name(),
+                    "bio": bio,
+                    "specialty": specialty,
+                    "hourly_rate": hourly_rate,
+                    "school": {"id": membership.school.id, "name": membership.school.name},
+                    "status": "active" if user.is_active else "inactive",
+                }
+            )
 
         # Get students data with profiles
         student_memberships = SchoolMembership.objects.filter(
-            school__in=user_schools,
-            role=SchoolRole.STUDENT.value
-        ).select_related('user', 'school')
+            school__in=user_schools, role=SchoolRole.STUDENT.value
+        ).select_related("user", "school")
 
         students = []
         for membership in student_memberships:
@@ -512,74 +522,73 @@ class PeopleView(LoginRequiredMixin, View):
                 profile = user.student_profile
                 school_year = profile.school_year
             except (StudentProfile.DoesNotExist, AttributeError):
-                school_year = ''
+                school_year = ""
 
-            students.append({
-                'id': user.id,
-                'email': user.email,
-                'name': user.name,
-                'full_name': user.get_full_name(),
-                'school_year': school_year,
-                'school': {
-                    'id': membership.school.id,
-                    'name': membership.school.name
-                },
-                'status': 'active' if user.is_active else 'inactive'
-            })
+            students.append(
+                {
+                    "id": user.id,
+                    "email": user.email,
+                    "name": user.name,
+                    "full_name": user.get_full_name(),
+                    "school_year": school_year,
+                    "school": {"id": membership.school.id, "name": membership.school.name},
+                    "status": "active" if user.is_active else "inactive",
+                }
+            )
 
         # Calculate stats
         teacher_stats = {
-            'active': len([t for t in teachers if t['status'] == 'active']),
-            'pending': 0,  # We'll implement this based on invitations later
-            'inactive': len([t for t in teachers if t['status'] == 'inactive']),
-            'total': len(teachers)
+            "active": len([t for t in teachers if t["status"] == "active"]),
+            "pending": 0,  # We'll implement this based on invitations later
+            "inactive": len([t for t in teachers if t["status"] == "inactive"]),
+            "total": len(teachers),
         }
 
-        student_stats = {
-            'total': len(students)
-        }
+        student_stats = {"total": len(students)}
 
-        return render(request, 'dashboard/people.html', {
-            'title': 'People - Aprende Comigo',
-            'user': request.user,
-            'active_section': 'people',
-            'teachers': teachers,
-            'students': students,
-            'teacher_stats': teacher_stats,
-            'student_stats': student_stats,
-        })
+        return render(
+            request,
+            "dashboard/people.html",
+            {
+                "title": "People - Aprende Comigo",
+                "user": request.user,
+                "active_section": "people",
+                "teachers": teachers,
+                "students": students,
+                "teacher_stats": teacher_stats,
+                "student_stats": student_stats,
+            },
+        )
 
     def post(self, request):
         """Handle form submissions for adding teachers/students"""
-        action = request.POST.get('action')
+        action = request.POST.get("action")
 
-        if action == 'add_teacher':
+        if action == "add_teacher":
             return self._handle_add_teacher(request)
-        elif action == 'add_student':
+        elif action == "add_student":
             return self._handle_add_student(request)
-        elif action == 'invite_teacher':
+        elif action == "invite_teacher":
             return self._handle_invite_teacher(request)
         else:
-            return JsonResponse({'error': 'Invalid action'}, status=400)
+            return JsonResponse({"error": "Invalid action"}, status=400)
 
     def _handle_add_teacher(self, request):
         """Handle adding a new teacher"""
 
         try:
-            email = request.POST.get('email')
-            bio = request.POST.get('bio', '')
-            specialty = request.POST.get('specialty', '')
+            email = request.POST.get("email")
+            bio = request.POST.get("bio", "")
+            specialty = request.POST.get("specialty", "")
 
             if not email:
-                return render(request, 'shared/partials/error_message.html', {
-                    'error': 'Email is required'
-                })
+                return render(request, "shared/partials/error_message.html", {"error": "Email is required"})
 
             # Get user's schools
             def get_user_schools(user):
                 if user.is_staff or user.is_superuser:
                     return School.objects.all()
-                school_ids = SchoolMembership.objects.filter(user=user).values_list('school_id', flat=True)
+                school_ids = SchoolMembership.objects.filter(user=user).values_list("school_id", flat=True)
                 return School.objects.filter(id__in=school_ids)
 
             user_schools = get_user_schools(request.user)
@@ -589,16 +598,15 @@ class PeopleView(LoginRequiredMixin, View):
                 user = CustomUser.objects.get(email=email)
             except CustomUser.DoesNotExist:
                 # Create new user if doesn't exist - use email prefix as default name
-                default_name = email.split('@')[0].replace('.', ' ').replace('_', ' ').title()
+                default_name = email.split("@")[0].replace(".", " ").replace("_", " ").title()
                 user = CustomUser.objects.create_user(
                     email=email,
-                    name=default_name  # Use the name field that exists on CustomUser
+                    name=default_name,  # Use the name field that exists on CustomUser
                 )
 
             # Create or update teacher profile
             teacher_profile, created = TeacherProfile.objects.get_or_create(
-                user=user,
-                defaults={'bio': bio, 'specialty': specialty}
+                user=user, defaults={"bio": bio, "specialty": specialty}
             )
             if not created:
                 teacher_profile.bio = bio
@@ -607,19 +615,13 @@ class PeopleView(LoginRequiredMixin, View):
 
             # Add to user's schools as teacher
             for school in user_schools:
-                SchoolMembership.objects.get_or_create(
-                    user=user,
-                    school=school,
-                    defaults={'role': SchoolRole.TEACHER}
-                )
+                SchoolMembership.objects.get_or_create(user=user, school=school, defaults={"role": SchoolRole.TEACHER})
 
             # Return updated teachers partial
             return self._render_teachers_partial(request)
 
         except Exception as e:
-            return render(request, 'shared/partials/error_message.html', {
-                'error': f'Failed to add teacher: {e!s}'
-            })
+            return render(request, "shared/partials/error_message.html", {"error": f"Failed to add teacher: {e!s}"})
 
     def _handle_add_student(self, request):
         """Handle adding a new student with the three account type scenarios"""
@@ -629,235 +631,226 @@ class PeopleView(LoginRequiredMixin, View):
         from accounts.models.educational import EducationalSystem
         from accounts.models.profiles import GuardianProfile
         from accounts.permissions import PermissionService
-        
+
         try:
-            account_type = request.POST.get('account_type', 'separate')
-            
+            account_type = request.POST.get("account_type", "separate")
+
             # Get user's schools
             def get_user_schools(user):
                 if user.is_staff or user.is_superuser:
                     return School.objects.all()
-                school_ids = SchoolMembership.objects.filter(user=user).values_list('school_id', flat=True)
+                school_ids = SchoolMembership.objects.filter(user=user).values_list("school_id", flat=True)
                 return School.objects.filter(id__in=school_ids)
 
             user_schools = get_user_schools(request.user)
-            
+
             # Get default educational system (Portugal)
-            educational_system = EducationalSystem.objects.filter(code='pt').first()
+            educational_system = EducationalSystem.objects.filter(code="pt").first()
             if not educational_system:
                 educational_system = EducationalSystem.objects.first()
 
             with transaction.atomic():
-                if account_type == 'guardian_only':
+                if account_type == "guardian_only":
                     # Handle guardian-only scenario (young student without login)
-                    student_name = request.POST.get('guardian_only_student_name')
-                    student_birth_date = request.POST.get('guardian_only_student_birth_date')
-                    student_school_year = request.POST.get('guardian_only_student_school_year', '')
-                    student_notes = request.POST.get('guardian_only_student_notes', '')
-                    
-                    guardian_name = request.POST.get('guardian_only_guardian_name')
-                    guardian_email = request.POST.get('guardian_only_guardian_email')
-                    guardian_phone = request.POST.get('guardian_only_guardian_phone', '')
-                    guardian_tax_nr = request.POST.get('guardian_only_guardian_tax_nr', '')
-                    guardian_address = request.POST.get('guardian_only_guardian_address', '')
-                    guardian_invoice = request.POST.get('guardian_only_guardian_invoice') == 'on'
-                    guardian_email_notifications = request.POST.get('guardian_only_guardian_email_notifications') == 'on'
-                    guardian_sms_notifications = request.POST.get('guardian_only_guardian_sms_notifications') == 'on'
-                    
+                    student_name = request.POST.get("guardian_only_student_name")
+                    student_birth_date = request.POST.get("guardian_only_student_birth_date")
+                    student_school_year = request.POST.get("guardian_only_student_school_year", "")
+                    student_notes = request.POST.get("guardian_only_student_notes", "")
+
+                    guardian_name = request.POST.get("guardian_only_guardian_name")
+                    guardian_email = request.POST.get("guardian_only_guardian_email")
+                    guardian_phone = request.POST.get("guardian_only_guardian_phone", "")
+                    guardian_tax_nr = request.POST.get("guardian_only_guardian_tax_nr", "")
+                    guardian_address = request.POST.get("guardian_only_guardian_address", "")
+                    guardian_invoice = request.POST.get("guardian_only_guardian_invoice") == "on"
+                    guardian_email_notifications = (
+                        request.POST.get("guardian_only_guardian_email_notifications") == "on"
+                    )
+                    guardian_sms_notifications = request.POST.get("guardian_only_guardian_sms_notifications") == "on"
+
                     # Validate required fields
                     if not all([student_name, student_birth_date, guardian_name, guardian_email]):
-                        return render(request, 'shared/partials/error_message.html', {
-                            'error': 'Student name, birth date, guardian name and email are required'
-                        })
-                    
+                        return render(
+                            request,
+                            "shared/partials/error_message.html",
+                            {"error": "Student name, birth date, guardian name and email are required"},
+                        )
+
                     # Create or get guardian user
                     try:
                         guardian_user = CustomUser.objects.get(email=guardian_email)
                     except CustomUser.DoesNotExist:
                         guardian_user = CustomUser.objects.create_user(
-                            email=guardian_email,
-                            name=guardian_name,
-                            phone_number=guardian_phone
+                            email=guardian_email, name=guardian_name, phone_number=guardian_phone
                         )
-                    
+
                     # Create guardian profile
                     guardian_profile, _ = GuardianProfile.objects.get_or_create(
                         user=guardian_user,
                         defaults={
-                            'address': guardian_address,
-                            'tax_nr': guardian_tax_nr,
-                            'invoice': guardian_invoice,
-                            'email_notifications_enabled': guardian_email_notifications,
-                            'sms_notifications_enabled': guardian_sms_notifications,
-                        }
+                            "address": guardian_address,
+                            "tax_nr": guardian_tax_nr,
+                            "invoice": guardian_invoice,
+                            "email_notifications_enabled": guardian_email_notifications,
+                            "sms_notifications_enabled": guardian_sms_notifications,
+                        },
                     )
-                    
+
                     # Create student profile WITHOUT a user account (guardian-only)
                     student_profile = StudentProfile.objects.create(
                         user=None,  # No user account for guardian-only students
-                        account_type='GUARDIAN_ONLY',
+                        account_type="GUARDIAN_ONLY",
                         educational_system=educational_system,
                         school_year=student_school_year,
                         birth_date=student_birth_date,
                         guardian=guardian_profile,
                         notes=student_notes,
                     )
-                    
+
                     # Setup permissions for guardian to manage this student
                     PermissionService.setup_permissions_for_student(student_profile)
-                    
+
                     # Add guardian to schools (student placeholder account doesn't need school membership)
                     for school in user_schools:
                         SchoolMembership.objects.get_or_create(
-                            user=guardian_user,
-                            school=school,
-                            defaults={'role': SchoolRole.GUARDIAN}
+                            user=guardian_user, school=school, defaults={"role": SchoolRole.GUARDIAN}
                         )
-                
-                elif account_type == 'separate':
+
+                elif account_type == "separate":
                     # Handle separate guardian scenario
-                    student_name = request.POST.get('student_name')
-                    student_email = request.POST.get('student_email')
-                    student_birth_date = request.POST.get('student_birth_date')
-                    student_school_year = request.POST.get('student_school_year', '')
-                    student_notes = request.POST.get('student_notes', '')
-                    
-                    guardian_name = request.POST.get('guardian_name')
-                    guardian_email = request.POST.get('guardian_email')
-                    guardian_phone = request.POST.get('guardian_phone', '')
-                    guardian_tax_nr = request.POST.get('guardian_tax_nr', '')
-                    guardian_address = request.POST.get('guardian_address', '')
-                    guardian_invoice = request.POST.get('guardian_invoice') == 'on'
-                    guardian_email_notifications = request.POST.get('guardian_email_notifications') == 'on'
-                    guardian_sms_notifications = request.POST.get('guardian_sms_notifications') == 'on'
-                    
+                    student_name = request.POST.get("student_name")
+                    student_email = request.POST.get("student_email")
+                    student_birth_date = request.POST.get("student_birth_date")
+                    student_school_year = request.POST.get("student_school_year", "")
+                    student_notes = request.POST.get("student_notes", "")
+
+                    guardian_name = request.POST.get("guardian_name")
+                    guardian_email = request.POST.get("guardian_email")
+                    guardian_phone = request.POST.get("guardian_phone", "")
+                    guardian_tax_nr = request.POST.get("guardian_tax_nr", "")
+                    guardian_address = request.POST.get("guardian_address", "")
+                    guardian_invoice = request.POST.get("guardian_invoice") == "on"
+                    guardian_email_notifications = request.POST.get("guardian_email_notifications") == "on"
+                    guardian_sms_notifications = request.POST.get("guardian_sms_notifications") == "on"
+
                     # Validate required fields
                     if not all([student_name, student_email, student_birth_date, guardian_name, guardian_email]):
-                        return render(request, 'shared/partials/error_message.html', {
-                            'error': 'Student name, email, birth date, guardian name and email are required'
-                        })
-                    
+                        return render(
+                            request,
+                            "shared/partials/error_message.html",
+                            {"error": "Student name, email, birth date, guardian name and email are required"},
+                        )
+
                     # Create or get student user
                     try:
                         student_user = CustomUser.objects.get(email=student_email)
                     except CustomUser.DoesNotExist:
-                        student_user = CustomUser.objects.create_user(
-                            email=student_email,
-                            name=student_name
-                        )
-                    
+                        student_user = CustomUser.objects.create_user(email=student_email, name=student_name)
+
                     # Create or get guardian user
                     try:
                         guardian_user = CustomUser.objects.get(email=guardian_email)
                     except CustomUser.DoesNotExist:
                         guardian_user = CustomUser.objects.create_user(
-                            email=guardian_email,
-                            name=guardian_name,
-                            phone_number=guardian_phone
+                            email=guardian_email, name=guardian_name, phone_number=guardian_phone
                         )
-                    
+
                     # Create guardian profile
                     guardian_profile, _ = GuardianProfile.objects.get_or_create(
                         user=guardian_user,
                         defaults={
-                            'address': guardian_address,
-                            'tax_nr': guardian_tax_nr,
-                            'invoice': guardian_invoice,
-                            'email_notifications_enabled': guardian_email_notifications,
-                            'sms_notifications_enabled': guardian_sms_notifications,
-                        }
+                            "address": guardian_address,
+                            "tax_nr": guardian_tax_nr,
+                            "invoice": guardian_invoice,
+                            "email_notifications_enabled": guardian_email_notifications,
+                            "sms_notifications_enabled": guardian_sms_notifications,
+                        },
                     )
-                    
+
                     # Create student profile with STUDENT_GUARDIAN account type
                     student_profile, created = StudentProfile.objects.get_or_create(
                         user=student_user,
                         defaults={
-                            'account_type': 'STUDENT_GUARDIAN',
-                            'educational_system': educational_system,
-                            'school_year': student_school_year,
-                            'birth_date': student_birth_date,
-                            'guardian': guardian_profile,
-                            'notes': student_notes,
-                        }
+                            "account_type": "STUDENT_GUARDIAN",
+                            "educational_system": educational_system,
+                            "school_year": student_school_year,
+                            "birth_date": student_birth_date,
+                            "guardian": guardian_profile,
+                            "notes": student_notes,
+                        },
                     )
-                    
+
                     if not created:
-                        student_profile.account_type = 'STUDENT_GUARDIAN'
+                        student_profile.account_type = "STUDENT_GUARDIAN"
                         student_profile.school_year = student_school_year
                         student_profile.birth_date = student_birth_date
                         student_profile.guardian = guardian_profile
                         student_profile.notes = student_notes
                         student_profile.save()
-                    
+
                     # Setup permissions for student-guardian relationship
                     PermissionService.setup_permissions_for_student(student_profile)
-                    
+
                     # Add both users to schools
                     for school in user_schools:
                         # Add student
                         SchoolMembership.objects.get_or_create(
-                            user=student_user,
-                            school=school,
-                            defaults={'role': SchoolRole.STUDENT.value}
+                            user=student_user, school=school, defaults={"role": SchoolRole.STUDENT.value}
                         )
                         # Add guardian
                         SchoolMembership.objects.get_or_create(
-                            user=guardian_user,
-                            school=school,
-                            defaults={'role': SchoolRole.GUARDIAN}
+                            user=guardian_user, school=school, defaults={"role": SchoolRole.GUARDIAN}
                         )
-                
-                elif account_type == 'self':
+
+                elif account_type == "self":
                     # Handle self-guardian scenario (adult student)
-                    name = request.POST.get('self_name')
-                    email = request.POST.get('self_email')
-                    phone = request.POST.get('self_phone', '')
-                    birth_date = request.POST.get('self_birth_date')
-                    school_year = request.POST.get('self_school_year', '')
-                    tax_nr = request.POST.get('self_tax_nr', '')
-                    address = request.POST.get('self_address', '')
-                    notes = request.POST.get('self_notes', '')
-                    invoice = request.POST.get('self_invoice') == 'on'
-                    email_notifications = request.POST.get('self_email_notifications') == 'on'
-                    sms_notifications = request.POST.get('self_sms_notifications') == 'on'
-                    
+                    name = request.POST.get("self_name")
+                    email = request.POST.get("self_email")
+                    phone = request.POST.get("self_phone", "")
+                    birth_date = request.POST.get("self_birth_date")
+                    school_year = request.POST.get("self_school_year", "")
+                    tax_nr = request.POST.get("self_tax_nr", "")
+                    address = request.POST.get("self_address", "")
+                    notes = request.POST.get("self_notes", "")
+                    invoice = request.POST.get("self_invoice") == "on"
+                    email_notifications = request.POST.get("self_email_notifications") == "on"
+                    sms_notifications = request.POST.get("self_sms_notifications") == "on"
+
                     # Validate required fields
                     if not all([name, email, birth_date]):
-                        return render(request, 'shared/partials/error_message.html', {
-                            'error': 'Name, email and birth date are required'
-                        })
-                    
+                        return render(
+                            request,
+                            "shared/partials/error_message.html",
+                            {"error": "Name, email and birth date are required"},
+                        )
+
                     # Create or get user
                     try:
                         user = CustomUser.objects.get(email=email)
                     except CustomUser.DoesNotExist:
-                        user = CustomUser.objects.create_user(
-                            email=email,
-                            name=name,
-                            phone_number=phone
-                        )
-                    
+                        user = CustomUser.objects.create_user(email=email, name=name, phone_number=phone)
+
                     # For adult students, no need for guardian profile
                     # Create student profile with ADULT_STUDENT account type
                     student_profile, created = StudentProfile.objects.get_or_create(
                         user=user,
                         defaults={
-                            'account_type': 'ADULT_STUDENT',
-                            'educational_system': educational_system,
-                            'school_year': school_year,
-                            'birth_date': birth_date,
-                            'guardian': None,  # No guardian for adult students
-                            'notes': notes,
-                            'address': address,
-                            'tax_nr': tax_nr,
-                            'invoice': invoice,
-                            'email_notifications_enabled': email_notifications,
-                            'sms_notifications_enabled': sms_notifications,
-                        }
+                            "account_type": "ADULT_STUDENT",
+                            "educational_system": educational_system,
+                            "school_year": school_year,
+                            "birth_date": birth_date,
+                            "guardian": None,  # No guardian for adult students
+                            "notes": notes,
+                            "address": address,
+                            "tax_nr": tax_nr,
+                            "invoice": invoice,
+                            "email_notifications_enabled": email_notifications,
+                            "sms_notifications_enabled": sms_notifications,
+                        },
                     )
-                    
+
                     if not created:
-                        student_profile.account_type = 'ADULT_STUDENT'
+                        student_profile.account_type = "ADULT_STUDENT"
                         student_profile.school_year = school_year
                         student_profile.birth_date = birth_date
                         student_profile.guardian = None
@@ -868,58 +861,57 @@ class PeopleView(LoginRequiredMixin, View):
                         student_profile.email_notifications_enabled = email_notifications
                         student_profile.sms_notifications_enabled = sms_notifications
                         student_profile.save()
-                    
+
                     # Setup permissions for adult student (full access)
                     PermissionService.setup_permissions_for_student(student_profile)
-                    
+
                     # Add user to schools as student only (they handle their own account)
                     for school in user_schools:
                         SchoolMembership.objects.get_or_create(
-                            user=user,
-                            school=school,
-                            defaults={'role': SchoolRole.STUDENT.value}
+                            user=user, school=school, defaults={"role": SchoolRole.STUDENT.value}
                         )
                 else:
-                    return render(request, 'shared/partials/error_message.html', {
-                        'error': f'Invalid account type: {account_type}. Must be "separate", "guardian_only", or "self"'
-                    })
+                    return render(
+                        request,
+                        "shared/partials/error_message.html",
+                        {
+                            "error": f'Invalid account type: {account_type}. Must be "separate", "guardian_only", or "self"'
+                        },
+                    )
 
             # Return updated students partial
             return self._render_students_partial(request)
 
         except Exception as e:
             logger.exception("Error adding student")
-            return render(request, 'shared/partials/error_message.html', {
-                'error': f'Failed to add student: {e!s}'
-            })
+            return render(request, "shared/partials/error_message.html", {"error": f"Failed to add student: {e!s}"})
 
     def _handle_invite_teacher(self, request):
         """Handle teacher invitation"""
         # TODO: Implement teacher invitation logic
-        return render(request, 'shared/partials/success_message.html', {
-            'message': 'Teacher invitation functionality coming soon'
-        })
+        return render(
+            request, "shared/partials/success_message.html", {"message": "Teacher invitation functionality coming soon"}
+        )
 
     def _render_teachers_partial(self, request):
         """Render teachers list partial for HTMX updates"""
         from accounts.models import School, SchoolMembership
-        from accounts.models.profiles import TeacherProfile
         from accounts.models.enums import SchoolRole
+        from accounts.models.profiles import TeacherProfile
 
         # Get user's schools
         def get_user_schools(user):
             if user.is_staff or user.is_superuser:
                 return School.objects.all()
-            school_ids = SchoolMembership.objects.filter(user=user).values_list('school_id', flat=True)
+            school_ids = SchoolMembership.objects.filter(user=user).values_list("school_id", flat=True)
             return School.objects.filter(id__in=school_ids)
 
         user_schools = get_user_schools(request.user)
 
         # Get teachers data with profiles
         teacher_memberships = SchoolMembership.objects.filter(
-            school__in=user_schools,
-            role=SchoolRole.TEACHER.value
-        ).select_related('user', 'school')
+            school__in=user_schools, role=SchoolRole.TEACHER.value
+        ).select_related("user", "school")
 
         teachers = []
         for membership in teacher_memberships:
@@ -930,58 +922,60 @@ class PeopleView(LoginRequiredMixin, View):
                 specialty = profile.specialty
                 hourly_rate = float(profile.hourly_rate) if profile.hourly_rate else None
             except TeacherProfile.DoesNotExist:
-                bio = ''
-                specialty = ''
+                bio = ""
+                specialty = ""
                 hourly_rate = None
 
-            teachers.append({
-                'id': user.id,
-                'email': user.email,
-                'name': user.name,
-                'full_name': user.get_full_name(),
-                'bio': bio,
-                'specialty': specialty,
-                'hourly_rate': hourly_rate,
-                'school': {
-                    'id': membership.school.id,
-                    'name': membership.school.name
-                },
-                'status': 'active' if user.is_active else 'inactive'
-            })
+            teachers.append(
+                {
+                    "id": user.id,
+                    "email": user.email,
+                    "name": user.name,
+                    "full_name": user.get_full_name(),
+                    "bio": bio,
+                    "specialty": specialty,
+                    "hourly_rate": hourly_rate,
+                    "school": {"id": membership.school.id, "name": membership.school.name},
+                    "status": "active" if user.is_active else "inactive",
+                }
+            )
 
         # Calculate stats
         teacher_stats = {
-            'active': len([t for t in teachers if t['status'] == 'active']),
-            'pending': 0,  # We'll implement this based on invitations later
-            'inactive': len([t for t in teachers if t['status'] == 'inactive']),
-            'total': len(teachers)
+            "active": len([t for t in teachers if t["status"] == "active"]),
+            "pending": 0,  # We'll implement this based on invitations later
+            "inactive": len([t for t in teachers if t["status"] == "inactive"]),
+            "total": len(teachers),
         }
 
-        return render(request, 'dashboard/partials/teachers_list.html', {
-            'teachers': teachers,
-            'teacher_stats': teacher_stats,
-        })
+        return render(
+            request,
+            "dashboard/partials/teachers_list.html",
+            {
+                "teachers": teachers,
+                "teacher_stats": teacher_stats,
+            },
+        )
 
     def _render_students_partial(self, request):
         """Render students list partial for HTMX updates"""
         from accounts.models import School, SchoolMembership
-        from accounts.models.profiles import StudentProfile
         from accounts.models.enums import SchoolRole
+        from accounts.models.profiles import StudentProfile
 
         # Get user's schools
         def get_user_schools(user):
             if user.is_staff or user.is_superuser:
                 return School.objects.all()
-            school_ids = SchoolMembership.objects.filter(user=user).values_list('school_id', flat=True)
+            school_ids = SchoolMembership.objects.filter(user=user).values_list("school_id", flat=True)
             return School.objects.filter(id__in=school_ids)
 
         user_schools = get_user_schools(request.user)
 
         # Get students data with profiles
         student_memberships = SchoolMembership.objects.filter(
-            school__in=user_schools,
-            role=SchoolRole.STUDENT.value
-        ).select_related('user', 'school')
+            school__in=user_schools, role=SchoolRole.STUDENT.value
+        ).select_related("user", "school")
 
         students = []
         for membership in student_memberships:
@@ -990,29 +984,30 @@ class PeopleView(LoginRequiredMixin, View):
                 profile = user.student_profile
                 school_year = profile.school_year
             except (StudentProfile.DoesNotExist, AttributeError):
-                school_year = ''
+                school_year = ""
 
-            students.append({
-                'id': user.id,
-                'email': user.email,
-                'name': user.name,
-                'full_name': user.get_full_name(),
-                'school_year': school_year,
-                'school': {
-                    'id': membership.school.id,
-                    'name': membership.school.name
-                },
-                'status': 'active' if user.is_active else 'inactive'
-            })
+            students.append(
+                {
+                    "id": user.id,
+                    "email": user.email,
+                    "name": user.name,
+                    "full_name": user.get_full_name(),
+                    "school_year": school_year,
+                    "school": {"id": membership.school.id, "name": membership.school.name},
+                    "status": "active" if user.is_active else "inactive",
+                }
+            )
 
-        student_stats = {
-            'total': len(students)
-        }
+        student_stats = {"total": len(students)}
 
-        return render(request, 'dashboard/partials/students_list.html', {
-            'students': students,
-            'student_stats': student_stats,
-        })
+        return render(
+            request,
+            "dashboard/partials/students_list.html",
+            {
+                "students": students,
+                "student_stats": student_stats,
+            },
+        )
 
 
 class TeachersPartialView(View):
@@ -1031,4 +1026,3 @@ class StudentsPartialView(View):
         """Return students partial"""
         people_view = PeopleView()
         return people_view._render_students_partial(request)
-

@@ -6,34 +6,35 @@ Helps identify untranslated strings and generate translation files.
 
 import os
 import sys
+
 import django
 
 # Setup Django
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'aprendecomigo.settings.development')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "aprendecomigo.settings.development")
 django.setup()
 
-from django.core.management import call_command
-from django.conf import settings
+from django.conf import settings  # noqa: E402
+from django.core.management import call_command  # noqa: E402
 
 
 def generate_messages():
     """Generate or update translation files for all configured languages."""
     print("🌍 Generating translation files...")
-    
+
     languages = [lang[0] for lang in settings.LANGUAGES]
-    
+
     for lang in languages:
         print(f"\n📝 Processing {lang}...")
         try:
             # Generate messages without location info for cleaner .po files
             call_command(
-                'makemessages',
+                "makemessages",
                 locale=lang,
                 no_location=True,
                 no_obsolete=True,
                 verbosity=2,
-                ignore=['venv/*', '.venv/*', 'static/*', 'media/*', 'staticfiles/*']
+                ignore=["venv/*", ".venv/*", "static/*", "media/*", "staticfiles/*"],
             )
             print(f"✅ Successfully generated messages for {lang}")
         except Exception as e:
@@ -43,9 +44,9 @@ def generate_messages():
 def compile_messages():
     """Compile all translation files."""
     print("\n🔨 Compiling translation files...")
-    
+
     try:
-        call_command('compilemessages', verbosity=2)
+        call_command("compilemessages", verbosity=2)
         print("✅ Successfully compiled all translation files")
     except Exception as e:
         print(f"❌ Error compiling messages: {e}")
@@ -54,30 +55,30 @@ def compile_messages():
 def check_coverage():
     """Check translation coverage for each language."""
     import polib
-    
+
     print("\n📊 Checking translation coverage...")
-    
+
     languages = [lang[0] for lang in settings.LANGUAGES if lang[0] != settings.LANGUAGE_CODE]
-    
+
     for lang in languages:
-        po_file = os.path.join(settings.BASE_DIR, 'locale', lang, 'LC_MESSAGES', 'django.po')
-        
+        po_file = os.path.join(settings.BASE_DIR, "locale", lang, "LC_MESSAGES", "django.po")
+
         if os.path.exists(po_file):
             po = polib.pofile(po_file)
             total = len(po)
             translated = len(po.translated_entries())
             untranslated = len(po.untranslated_entries())
             fuzzy = len(po.fuzzy_entries())
-            
+
             if total > 0:
                 percentage = (translated / total) * 100
                 print(f"\n{lang}: {percentage:.1f}% complete")
                 print(f"  ✅ Translated: {translated}")
                 print(f"  ❌ Untranslated: {untranslated}")
                 print(f"  ⚠️  Fuzzy: {fuzzy}")
-                
+
                 if untranslated > 0:
-                    print(f"\n  First 5 untranslated strings:")
+                    print("\n  First 5 untranslated strings:")
                     for entry in po.untranslated_entries()[:5]:
                         print(f"    - {entry.msgid[:50]}...")
             else:
@@ -88,24 +89,21 @@ def check_coverage():
 
 def create_translator_package():
     """Create a ZIP package for translators with .po files and instructions."""
-    import zipfile
     from datetime import datetime
-    
+    import zipfile
+
     print("\n📦 Creating translator package...")
-    
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    zip_filename = f'translations_{timestamp}.zip'
-    
-    with zipfile.ZipFile(zip_filename, 'w') as zipf:
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    zip_filename = f"translations_{timestamp}.zip"
+
+    with zipfile.ZipFile(zip_filename, "w") as zipf:
         # Add .po files
         for lang in [lang[0] for lang in settings.LANGUAGES]:
-            po_file = os.path.join('locale', lang, 'LC_MESSAGES', 'django.po')
+            po_file = os.path.join("locale", lang, "LC_MESSAGES", "django.po")
             if os.path.exists(os.path.join(settings.BASE_DIR, po_file)):
-                zipf.write(
-                    os.path.join(settings.BASE_DIR, po_file),
-                    po_file
-                )
-        
+                zipf.write(os.path.join(settings.BASE_DIR, po_file), po_file)
+
         # Add instructions
         instructions = """
 TRANSLATION INSTRUCTIONS FOR APRENDE COMIGO
@@ -136,8 +134,8 @@ IMPORTANT NOTES:
 
 Thank you for your translation work!
 """
-        zipf.writestr('INSTRUCTIONS.txt', instructions)
-    
+        zipf.writestr("INSTRUCTIONS.txt", instructions)
+
     print(f"✅ Translator package created: {zip_filename}")
     return zip_filename
 
@@ -145,27 +143,26 @@ Thank you for your translation work!
 def main():
     """Main function to run translation tasks."""
     import argparse
-    
-    parser = argparse.ArgumentParser(description='Translation helper for Aprende Comigo')
-    parser.add_argument('command', choices=['generate', 'compile', 'check', 'package', 'all'],
-                        help='Command to run')
-    
+
+    parser = argparse.ArgumentParser(description="Translation helper for Aprende Comigo")
+    parser.add_argument("command", choices=["generate", "compile", "check", "package", "all"], help="Command to run")
+
     args = parser.parse_args()
-    
-    if args.command == 'generate':
+
+    if args.command == "generate":
         generate_messages()
-    elif args.command == 'compile':
+    elif args.command == "compile":
         compile_messages()
-    elif args.command == 'check':
+    elif args.command == "check":
         check_coverage()
-    elif args.command == 'package':
+    elif args.command == "package":
         create_translator_package()
-    elif args.command == 'all':
+    elif args.command == "all":
         generate_messages()
         check_coverage()
         compile_messages()
         create_translator_package()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

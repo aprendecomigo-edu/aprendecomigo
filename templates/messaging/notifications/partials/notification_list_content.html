@@ -19,7 +19,7 @@
                         results
                     </p>
                 </div>
-                
+
                 <div class="flex-1 flex justify-between sm:justify-end">
                     {% if page_obj.has_previous %}
                         <button hx-get="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode }}"

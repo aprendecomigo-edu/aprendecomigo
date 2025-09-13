@@ -53,7 +53,7 @@ class TeacherAvailability(models.Model):
         related_name="teacher_availabilities",
         help_text=_("School context for this availability"),
     )
-    day_of_week = models.CharField(_("day of week"), max_length=10, choices=WeekDay.choices)
+    day_of_week = models.CharField(_("day of week"), max_length=10, choices=WeekDay)
     start_time = models.TimeField(_("start time"))
     end_time = models.TimeField(_("end time"))
     is_active = models.BooleanField(_("is active"), default=True)
@@ -155,10 +155,8 @@ class ClassSchedule(models.Model):
     school = models.ForeignKey(School, on_delete=models.CASCADE, related_name="class_schedules")
     title = models.CharField(_("title"), max_length=255)
     description = models.TextField(_("description"), blank=True)
-    class_type = models.CharField(
-        _("class type"), max_length=20, choices=ClassType.choices, default=ClassType.INDIVIDUAL
-    )
-    status = models.CharField(_("status"), max_length=20, choices=ClassStatus.choices, default=ClassStatus.SCHEDULED)
+    class_type = models.CharField(_("class type"), max_length=20, choices=ClassType, default=ClassType.INDIVIDUAL)
+    status = models.CharField(_("status"), max_length=20, choices=ClassStatus, default=ClassStatus.SCHEDULED)
     scheduled_date = models.DateField(_("scheduled date"))
     start_time = models.TimeField(_("start time"))
     end_time = models.TimeField(_("end time"))
@@ -580,18 +578,16 @@ class RecurringClassSchedule(models.Model):
     school = models.ForeignKey(School, on_delete=models.CASCADE, related_name="recurring_schedules")
     title = models.CharField(_("title"), max_length=255)
     description = models.TextField(_("description"), blank=True)
-    class_type = models.CharField(
-        _("class type"), max_length=20, choices=ClassType.choices, default=ClassType.INDIVIDUAL
-    )
+    class_type = models.CharField(_("class type"), max_length=20, choices=ClassType, default=ClassType.INDIVIDUAL)
 
     # Enhanced frequency options
     frequency_type = models.CharField(
-        _("frequency type"), max_length=10, choices=FrequencyType.choices, default=FrequencyType.WEEKLY
+        _("frequency type"), max_length=10, choices=FrequencyType, default=FrequencyType.WEEKLY
     )
 
     # Enhanced status management
     status = models.CharField(
-        _("status"), max_length=10, choices=RecurringClassStatus.choices, default=RecurringClassStatus.ACTIVE
+        _("status"), max_length=10, choices=RecurringClassStatus, default=RecurringClassStatus.ACTIVE
     )
 
     # Group class capacity
@@ -603,7 +599,7 @@ class RecurringClassSchedule(models.Model):
     )
 
     # Recurrence pattern
-    day_of_week = models.CharField(_("day of week"), max_length=10, choices=WeekDay.choices)
+    day_of_week = models.CharField(_("day of week"), max_length=10, choices=WeekDay)
     start_time = models.TimeField(_("start time"))
     end_time = models.TimeField(_("end time"))
     duration_minutes = models.PositiveIntegerField(_("duration in minutes"))
@@ -933,7 +929,6 @@ class RecurringClassSchedule(models.Model):
         return self.generated_instances.filter(scheduled_date__gte=timezone.now().date())
 
 
-
 class ReminderPreference(models.Model):
     """
     User preferences for class reminders.
@@ -1087,7 +1082,7 @@ class ClassReminder(models.Model):
 
     class_schedule = models.ForeignKey(ClassSchedule, on_delete=models.CASCADE, related_name="reminders")
 
-    reminder_type = models.CharField(_("reminder type"), max_length=20, choices=ReminderType.choices)
+    reminder_type = models.CharField(_("reminder type"), max_length=20, choices=ReminderType)
 
     recipient = models.ForeignKey(
         CustomUser,
@@ -1111,13 +1106,11 @@ class ClassReminder(models.Model):
     communication_channel = models.CharField(
         _("communication channel"),
         max_length=20,
-        choices=CommunicationChannel.choices,
+        choices=CommunicationChannel,
         help_text=_("Channel used to send this reminder"),
     )
 
-    status = models.CharField(
-        _("status"), max_length=20, choices=ReminderStatus.choices, default=ReminderStatus.PENDING
-    )
+    status = models.CharField(_("status"), max_length=20, choices=ReminderStatus, default=ReminderStatus.PENDING)
 
     # Timing
     scheduled_for = models.DateTimeField(_("scheduled for"), help_text=_("When this reminder should be sent (UTC)"))

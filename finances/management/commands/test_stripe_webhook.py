@@ -152,7 +152,7 @@ class Command(BaseCommand):
                 self.stdout.write(f"✓ Using existing test student: {test_email}")
 
             # Create or get student account balance
-            balance, created = StudentAccountBalance.objects.get_or_create(
+            _balance, created = StudentAccountBalance.objects.get_or_create(
                 student=student,
                 defaults={
                     "hours_purchased": Decimal("0.00"),

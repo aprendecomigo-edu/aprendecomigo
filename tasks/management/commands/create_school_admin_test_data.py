@@ -159,14 +159,14 @@ class Command(BaseCommand):
                 )
 
             # Create or get teacher profile
-            teacher_profile, created = TeacherProfile.objects.get_or_create(
+            teacher_profile, _created = TeacherProfile.objects.get_or_create(
                 user=user,
                 defaults={
                     "teaching_subjects": teacher_data["subjects"],
                     "bio": teacher_data["bio"],
-                    "hourly_rate": random.randint(15, 35),
+                    "hourly_rate": random.randint(15, 35),  # nosec - test data generation
                     "teaching_experience": {
-                        "years_total": random.randint(3, 20),
+                        "years_total": random.randint(3, 20),  # nosec - test data generation
                         "specializations": teacher_data["subjects"],
                     },
                     "is_profile_complete": True,
@@ -180,7 +180,7 @@ class Command(BaseCommand):
                 defaults={
                     "role": SchoolRole.TEACHER,
                     "is_active": True,
-                    "joined_at": timezone.now() - timedelta(days=random.randint(30, 365)),
+                    "joined_at": timezone.now() - timedelta(days=random.randint(30, 365)),  # nosec - test data generation
                 },
             )
 
@@ -220,7 +220,7 @@ class Command(BaseCommand):
                 defaults={
                     "role": SchoolRole.STUDENT,
                     "is_active": True,
-                    "joined_at": timezone.now() - timedelta(days=random.randint(10, 180)),
+                    "joined_at": timezone.now() - timedelta(days=random.randint(10, 180)),  # nosec - test data generation
                 },
             )
 
@@ -334,13 +334,13 @@ class Command(BaseCommand):
                 continue
 
             # Create 3-4 classes per weekday
-            num_classes = random.randint(3, 4)
+            num_classes = random.randint(3, 4)  # nosec - test data generation
             used_times = set()
 
             for _ in range(num_classes):
                 # Random time between 14:00 and 20:00 (Portuguese school hours)
-                hour = random.randint(14, 19)
-                minute = random.choice([0, 30])
+                hour = random.randint(14, 19)  # nosec - test data generation
+                minute = random.choice([0, 30])  # nosec - test data generation
                 start_time = datetime.strptime(f"{hour}:{minute:02d}", "%H:%M").time()
 
                 # Avoid conflicts
@@ -349,20 +349,20 @@ class Command(BaseCommand):
                 used_times.add(start_time)
 
                 # Calculate end time (45min or 60min classes)
-                duration = random.choice([45, 60])
+                duration = random.choice([45, 60])  # nosec - test data generation
                 end_time = (datetime.combine(scheduled_date, start_time) + timedelta(minutes=duration)).time()
 
                 # Random teacher and student
-                teacher = random.choice(teachers)
-                student = random.choice(students)
+                teacher = random.choice(teachers)  # nosec - test data generation
+                student = random.choice(students)  # nosec - test data generation
                 teacher_subjects = subjects_per_teacher[teachers.index(teacher)]
-                subject = random.choice(teacher_subjects)
+                subject = random.choice(teacher_subjects)  # nosec - test data generation
 
                 # Determine status based on date
                 if scheduled_date < base_date:
-                    status = random.choice([ClassStatus.COMPLETED, ClassStatus.CANCELLED])
+                    status = random.choice([ClassStatus.COMPLETED, ClassStatus.CANCELLED])  # nosec - test data generation
                 elif scheduled_date == base_date:
-                    status = random.choice([ClassStatus.CONFIRMED, ClassStatus.SCHEDULED])
+                    status = random.choice([ClassStatus.CONFIRMED, ClassStatus.SCHEDULED])  # nosec - test data generation
                 else:
                     status = ClassStatus.SCHEDULED
 

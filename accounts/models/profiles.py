@@ -165,12 +165,12 @@ class StudentProfile(models.Model):
     """
 
     user: models.OneToOneField = models.OneToOneField(
-        "CustomUser", 
-        on_delete=models.CASCADE, 
+        "CustomUser",
+        on_delete=models.CASCADE,
         related_name="student_profile",
-        null=True, 
+        null=True,
         blank=True,
-        help_text=_("User account for this student (null if guardian-only management)")
+        help_text=_("User account for this student (null if guardian-only management)"),
     )
     educational_system: models.ForeignKey = models.ForeignKey(
         "EducationalSystem",
@@ -188,12 +188,12 @@ class StudentProfile(models.Model):
         _("account type"),
         max_length=20,
         choices=[
-            ('STUDENT_GUARDIAN', 'Student + Guardian Accounts'),  # Both have accounts
-            ('ADULT_STUDENT', 'Adult Student Only'),               # Student self-manages
-            ('GUARDIAN_ONLY', 'Guardian Manages Student Data'),    # No student account
+            ("STUDENT_GUARDIAN", "Student + Guardian Accounts"),  # Both have accounts
+            ("ADULT_STUDENT", "Adult Student Only"),  # Student self-manages
+            ("GUARDIAN_ONLY", "Guardian Manages Student Data"),  # No student account
         ],
-        default='STUDENT_GUARDIAN',
-        help_text=_("Defines who has accounts and manages this student")
+        default="STUDENT_GUARDIAN",
+        help_text=_("Defines who has accounts and manages this student"),
     )
 
     guardian: models.ForeignKey = models.ForeignKey(
@@ -209,7 +209,7 @@ class StudentProfile(models.Model):
         _("notes"), blank=True, help_text=_("Additional notes about the student, special needs, etc.")
     )
 
-        # Communication preferences
+    # Communication preferences
     email_notifications_enabled: models.BooleanField = models.BooleanField(
         _("email notifications enabled"), default=True, help_text=_("Enable email notifications for student alerts")
     )
@@ -228,7 +228,7 @@ class StudentProfile(models.Model):
         _("invoice"), default=False, help_text=_("Whether to issue invoices (only for adult students)")
     )
 
-    # Audit timestamps  
+    # Audit timestamps
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
     updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
 
@@ -243,7 +243,6 @@ class StudentProfile(models.Model):
     def __str__(self) -> str:
         user_name = self.user.name if hasattr(self.user, "name") else str(self.user)
         return f"Student Profile: {user_name}"
-
 
     def clean(self):
         """Validate that school_year is valid for the selected educational system"""
@@ -268,35 +267,23 @@ class StudentProfile(models.Model):
         # Validate account type consistency
         from django.core.exceptions import ValidationError
 
-        if self.account_type == 'ADULT_STUDENT':
+        if self.account_type == "ADULT_STUDENT":
             if not self.user:
-                raise ValidationError({
-                    'user': _('Adult students must have a user account.')
-                })
+                raise ValidationError({"user": _("Adult students must have a user account.")})
             if self.guardian:
-                raise ValidationError({
-                    'guardian': _('Adult students should not have a guardian assigned.')
-                })
-        elif self.account_type == 'GUARDIAN_ONLY':
+                raise ValidationError({"guardian": _("Adult students should not have a guardian assigned.")})
+        elif self.account_type == "GUARDIAN_ONLY":
             if self.user:
-                raise ValidationError({
-                    'user': _('Guardian-only students should not have a user account.')
-                })
+                raise ValidationError({"user": _("Guardian-only students should not have a user account.")})
             if not self.guardian:
-                raise ValidationError({
-                    'guardian': _('Guardian-only students must have a guardian assigned.')
-                })
-        elif self.account_type == 'STUDENT_GUARDIAN':
+                raise ValidationError({"guardian": _("Guardian-only students must have a guardian assigned.")})
+        elif self.account_type == "STUDENT_GUARDIAN":
             if not self.user:
-                raise ValidationError({
-                    'user': _('Student+Guardian accounts require the student to have a user account.')
-                })
+                raise ValidationError(
+                    {"user": _("Student+Guardian accounts require the student to have a user account.")}
+                )
             if not self.guardian:
-                raise ValidationError({
-                    'guardian': _('Student+Guardian accounts require a guardian to be assigned.')
-                })
-
-
+                raise ValidationError({"guardian": _("Student+Guardian accounts require a guardian to be assigned.")})
 
 
 class GuardianProfile(models.Model):
@@ -333,7 +320,7 @@ class GuardianProfile(models.Model):
     sms_notifications_enabled: models.BooleanField = models.BooleanField(
         _("SMS notifications enabled"), default=False, help_text=_("Enable SMS notifications for guardian alerts")
     )
-        # Sensitive personal data fields
+    # Sensitive personal data fields
     address: models.TextField = models.TextField(
         _("address"), blank=True, help_text=_("Street, number, postal code and location")
     )
@@ -394,7 +381,9 @@ class GuardianStudentRelationship(models.Model):
 
     # Approval settings specific to this guardian-student relationship
     requires_purchase_approval: models.BooleanField = models.BooleanField(
-        _("requires purchase approval"), default=True, help_text=_("Whether guardian approval is required for purchases")
+        _("requires purchase approval"),
+        default=True,
+        help_text=_("Whether guardian approval is required for purchases"),
     )
 
     requires_session_approval: models.BooleanField = models.BooleanField(
@@ -416,7 +405,9 @@ class GuardianStudentRelationship(models.Model):
             models.Index(fields=["student", "is_active"]),
             models.Index(fields=["school", "is_active"]),
         ]
-        constraints = [models.CheckConstraint(condition=~models.Q(guardian=models.F("student")), name="guardian_cannot_be_student")]
+        constraints = [
+            models.CheckConstraint(condition=~models.Q(guardian=models.F("student")), name="guardian_cannot_be_student")
+        ]
 
     def __str__(self) -> str:
         guardian_name = self.guardian.name if hasattr(self.guardian, "name") else str(self.guardian)

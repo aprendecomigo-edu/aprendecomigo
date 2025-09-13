@@ -14,14 +14,16 @@ The actual application uses Uvicorn for WebSocket support in production.
 from channels.db import database_sync_to_async
 from channels.testing import WebsocketCommunicator
 from django.contrib.auth import get_user_model
-from django.test import TestCase, override_settings
+from django.test import TestCase, override_settings, tag
 
 from classroom.consumers import ChatConsumer
-from classroom.models import Channel
+from classroom.models import Channel, Message
+from tests.test_waffle_switches import get_test_password
 
 User = get_user_model()
 
 
+@tag("classroom")
 @override_settings(
     CHANNEL_LAYERS={
         "default": {
@@ -34,10 +36,12 @@ class ChatConsumerBusinessLogicTest(TestCase):
 
     def setUp(self):
         """Set up test data for WebSocket business logic tests."""
-        self.user = User.objects.create_user(email="user@example.com", username="testuser", password="testpass123")
+        self.user = User.objects.create_user(
+            email="user@example.com", username="testuser", password=get_test_password()
+        )
 
         self.other_user = User.objects.create_user(
-            email="other@example.com", username="otheruser", password="testpass123"
+            email="other@example.com", username="otheruser", password=get_test_password()
         )
 
         # Create test channel
@@ -56,7 +60,7 @@ class ChatConsumerBusinessLogicTest(TestCase):
         """Test that authenticated users can connect to channels they participate in."""
         communicator = self.create_test_communicator("test-channel", self.user)
 
-        connected, subprotocol = await communicator.connect()
+        connected, _subprotocol = await communicator.connect()
 
         # This tests the business rule: users can only connect to channels they participate in
         self.assertTrue(connected, "User should connect to channels they participate in")
@@ -67,7 +71,7 @@ class ChatConsumerBusinessLogicTest(TestCase):
         """Test that user online status is tracked correctly for business purposes."""
         communicator = self.create_test_communicator("test-channel", self.user)
 
-        connected, subprotocol = await communicator.connect()
+        connected, _subprotocol = await communicator.connect()
         self.assertTrue(connected)
 
         # Should receive user status message about coming online
@@ -84,7 +88,7 @@ class ChatConsumerBusinessLogicTest(TestCase):
         """Test that message content is preserved correctly during WebSocket transmission."""
         communicator = self.create_test_communicator("test-channel", self.user)
 
-        connected, subprotocol = await communicator.connect()
+        connected, _subprotocol = await communicator.connect()
         self.assertTrue(connected)
 
         # Skip online status message
@@ -148,15 +152,14 @@ class ChatConsumerBusinessLogicTest(TestCase):
         await other_communicator.disconnect()
 
 
+@tag("classroom")
 class ChatConsumerSecurityTest(TestCase):
     """Test security features of WebSocket chat consumer."""
 
     def setUp(self):
         """Set up test data for WebSocket security tests."""
         self.user = User.objects.create_user(
-            email="user@example.com",
-            username="testuser",
-            password="testpass123"
+            email="user@example.com", username="testuser", password=get_test_password()
         )
         self.channel = Channel.objects.create(name="test-channel", is_direct=False)
         self.channel.participants.add(self.user)
@@ -173,22 +176,20 @@ class ChatConsumerSecurityTest(TestCase):
         """Test that unauthenticated users cannot connect."""
         communicator = self.create_test_communicator("test-channel")  # No user
 
-        connected, subprotocol = await communicator.connect()
+        connected, _subprotocol = await communicator.connect()
 
         # Connection should be rejected with 4001 (Unauthorized)
         self.assertFalse(connected)
 
     async def test_user_without_channel_access_rejected(self):
         """Test that users without channel access are rejected."""
-        unauthorized_user = User.objects.create_user(
-            email="unauthorized@example.com",
-            username="unauthorized",
-            password="testpass123"
+        unauthorized_user = await database_sync_to_async(User.objects.create_user)(
+            email="unauthorized@example.com", username="unauthorized", password=get_test_password()
         )
 
         communicator = self.create_test_communicator("test-channel", unauthorized_user)
 
-        connected, subprotocol = await communicator.connect()
+        connected, _subprotocol = await communicator.connect()
 
         # Connection should be rejected with 4003 (Forbidden)
         self.assertFalse(connected)
@@ -197,7 +198,7 @@ class ChatConsumerSecurityTest(TestCase):
         """Test that access to nonexistent channels is rejected."""
         communicator = self.create_test_communicator("nonexistent-channel", self.user)
 
-        connected, subprotocol = await communicator.connect()
+        connected, _subprotocol = await communicator.connect()
 
         # Connection should be rejected
         self.assertFalse(connected)
@@ -206,17 +207,14 @@ class ChatConsumerSecurityTest(TestCase):
         """Test that messages are validated for authenticated users."""
         communicator = self.create_test_communicator("test-channel", self.user)
 
-        connected, subprotocol = await communicator.connect()
+        connected, _subprotocol = await communicator.connect()
         self.assertTrue(connected)
 
         # Skip online status message
         await communicator.receive_json_from()
 
         # Send message with valid format
-        await communicator.send_json_to({
-            "type": "message",
-            "message": "Valid message content"
-        })
+        await communicator.send_json_to({"type": "message", "message": "Valid message content"})
 
         # Should receive broadcasted message
         response = await communicator.receive_json_from()
@@ -229,14 +227,14 @@ class ChatConsumerSecurityTest(TestCase):
         """Test that invalid JSON messages are silently ignored."""
         communicator = self.create_test_communicator("test-channel", self.user)
 
-        connected, subprotocol = await communicator.connect()
+        connected, _subprotocol = await communicator.connect()
         self.assertTrue(connected)
 
         # Skip online status message
         await communicator.receive_json_from()
 
         # Send invalid JSON (this will be handled by the consumer)
-        await communicator.send_text_to("invalid json")
+        await communicator.send_to(text_data="invalid json")
 
         # Connection should remain open (no disconnection)
         # The consumer should silently ignore invalid JSON
@@ -246,26 +244,20 @@ class ChatConsumerSecurityTest(TestCase):
     async def test_reaction_functionality(self):
         """Test adding reactions via WebSocket."""
         # Create a message first
-        message = Message.objects.create(
-            channel=self.channel,
-            sender=self.user,
-            content="Test message for reaction"
+        message = await database_sync_to_async(Message.objects.create)(
+            channel=self.channel, sender=self.user, content="Test message for reaction"
         )
 
         communicator = self.create_test_communicator("test-channel", self.user)
 
-        connected, subprotocol = await communicator.connect()
+        connected, _subprotocol = await communicator.connect()
         self.assertTrue(connected)
 
         # Skip online status message
         await communicator.receive_json_from()
 
         # Send reaction
-        await communicator.send_json_to({
-            "type": "reaction",
-            "message_id": message.id,
-            "emoji": "👍"
-        })
+        await communicator.send_json_to({"type": "reaction", "message_id": message.id, "emoji": "👍"})
 
         # Should receive reaction broadcast
         response = await communicator.receive_json_from()
@@ -279,7 +271,7 @@ class ChatConsumerSecurityTest(TestCase):
         """Test that user online status is properly managed."""
         communicator = self.create_test_communicator("test-channel", self.user)
 
-        connected, subprotocol = await communicator.connect()
+        connected, _subprotocol = await communicator.connect()
         self.assertTrue(connected)
 
         # Should receive online status message
@@ -303,7 +295,7 @@ class ChatConsumerSecurityTest(TestCase):
         # In a real implementation, you might mock the cache or
         # create a controlled scenario to test rate limiting
 
-        connected, subprotocol = await communicator.connect()
+        connected, _subprotocol = await communicator.connect()
 
         # The exact behavior depends on rate limiting implementation
         # This is a placeholder for rate limiting testing
@@ -314,7 +306,7 @@ class ChatConsumerSecurityTest(TestCase):
         """Test that message content with special characters is preserved."""
         communicator = self.create_test_communicator("test-channel", self.user)
 
-        connected, subprotocol = await communicator.connect()
+        connected, _subprotocol = await communicator.connect()
         self.assertTrue(connected)
 
         # Skip online status message
@@ -323,10 +315,7 @@ class ChatConsumerSecurityTest(TestCase):
         # Test message with special characters, HTML, and emojis
         special_content = "Hello! 🎉 This has <b>HTML</b> & special chars: áéíóú"
 
-        await communicator.send_json_to({
-            "type": "message",
-            "message": special_content
-        })
+        await communicator.send_json_to({"type": "message", "message": special_content})
 
         # Should receive message with preserved content
         response = await communicator.receive_json_from()
@@ -372,8 +361,8 @@ class ChatConsumerSecurityTest(TestCase):
     async def test_multiple_channels_isolation(self):
         """Test that messages in different channels are properly isolated."""
         # Create second channel
-        channel2 = Channel.objects.create(name="test-channel-2", is_direct=False)
-        channel2.participants.add(self.user)
+        channel2 = await database_sync_to_async(Channel.objects.create)(name="test-channel-2", is_direct=False)
+        await database_sync_to_async(channel2.participants.add)(self.user)
 
         # Connect to both channels
         comm1 = self.create_test_communicator("test-channel", self.user)
@@ -390,10 +379,7 @@ class ChatConsumerSecurityTest(TestCase):
         await comm2.receive_json_from()
 
         # Send message to first channel
-        await comm1.send_json_to({
-            "type": "message",
-            "message": "Message to channel 1"
-        })
+        await comm1.send_json_to({"type": "message", "message": "Message to channel 1"})
 
         # First channel should receive the message
         response1 = await comm1.receive_json_from()
@@ -406,15 +392,14 @@ class ChatConsumerSecurityTest(TestCase):
         await comm2.disconnect()
 
 
+@tag("classroom")
 class ChatConsumerErrorHandlingTest(TestCase):
     """Test error handling in WebSocket chat consumer."""
 
     def setUp(self):
         """Set up test data for error handling tests."""
         self.user = User.objects.create_user(
-            email="user@example.com",
-            username="testuser",
-            password="testpass123"
+            email="user@example.com", username="testuser", password=get_test_password()
         )
         self.channel = Channel.objects.create(name="test-channel", is_direct=False)
         self.channel.participants.add(self.user)
@@ -431,17 +416,19 @@ class ChatConsumerErrorHandlingTest(TestCase):
         """Test handling of malformed message data."""
         communicator = self.create_test_communicator("test-channel", self.user)
 
-        connected, subprotocol = await communicator.connect()
+        connected, _subprotocol = await communicator.connect()
         self.assertTrue(connected)
 
         # Skip online status message
         await communicator.receive_json_from()
 
         # Send malformed message (missing required fields)
-        await communicator.send_json_to({
-            "type": "message"
-            # Missing "message" field
-        })
+        await communicator.send_json_to(
+            {
+                "type": "message"
+                # Missing "message" field
+            }
+        )
 
         # Consumer should handle this gracefully without crashing
         # Connection should remain open
@@ -452,17 +439,14 @@ class ChatConsumerErrorHandlingTest(TestCase):
         """Test handling of unknown message types."""
         communicator = self.create_test_communicator("test-channel", self.user)
 
-        connected, subprotocol = await communicator.connect()
+        connected, _subprotocol = await communicator.connect()
         self.assertTrue(connected)
 
         # Skip online status message
         await communicator.receive_json_from()
 
         # Send unknown message type
-        await communicator.send_json_to({
-            "type": "unknown_type",
-            "data": "some data"
-        })
+        await communicator.send_json_to({"type": "unknown_type", "data": "some data"})
 
         # Consumer should handle this gracefully
         # Connection should remain open
@@ -473,18 +457,20 @@ class ChatConsumerErrorHandlingTest(TestCase):
         """Test adding reaction to nonexistent message."""
         communicator = self.create_test_communicator("test-channel", self.user)
 
-        connected, subprotocol = await communicator.connect()
+        connected, _subprotocol = await communicator.connect()
         self.assertTrue(connected)
 
         # Skip online status message
         await communicator.receive_json_from()
 
         # Try to react to nonexistent message
-        await communicator.send_json_to({
-            "type": "reaction",
-            "message_id": 99999,  # Nonexistent ID
-            "emoji": "👍"
-        })
+        await communicator.send_json_to(
+            {
+                "type": "reaction",
+                "message_id": 99999,  # Nonexistent ID
+                "emoji": "👍",
+            }
+        )
 
         # Consumer should handle this gracefully without crashing
 

@@ -1,4 +1,6 @@
 .playwright-mcp/
+.claude/
+.ruff_cache/
 
 # Python
 __pycache__/

@@ -2,7 +2,7 @@
 <div class="bg-white rounded-lg shadow-md p-6">
     <div class="flex items-center justify-between mb-4">
         <h2 class="text-xl font-semibold text-gray-800">Current Balance</h2>
-        <button hx-get="{% url 'finances:balance-refresh' %}" 
+        <button hx-get="{% url 'finances:balance-refresh' %}"
                 hx-target="#balance-widget"
                 class="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-50 transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -10,20 +10,20 @@
             </svg>
         </button>
     </div>
-    
+
     <div class="text-center py-6">
         <div class="text-4xl font-bold text-blue-600 mb-2">
             {{ balance.remaining_hours|default:"0.00" }}
         </div>
         <p class="text-gray-600">Tutoring Hours Remaining</p>
-        
+
         {% if balance.last_updated %}
         <p class="text-xs text-gray-500 mt-2">
             Last updated: {{ balance.last_updated|date:"M d, Y H:i" }}
         </p>
         {% endif %}
     </div>
-    
+
     <!-- Balance Status Indicator -->
     <div class="mt-4">
         {% if balance.remaining_hours >= 5 %}
@@ -49,14 +49,14 @@
             </div>
         {% endif %}
     </div>
-    
+
     <!-- Quick Action Buttons -->
     <div class="mt-6 flex space-x-3">
-        <a href="{% url 'finances:payment-form' %}" 
+        <a href="{% url 'finances:payment-form' %}"
            class="flex-1 bg-blue-600 text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
             Add Hours
         </a>
-        <a href="{% url 'finances:transaction-history' %}" 
+        <a href="{% url 'finances:transaction-history' %}"
            class="flex-1 bg-gray-100 text-gray-700 text-center py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium">
             View History
         </a>

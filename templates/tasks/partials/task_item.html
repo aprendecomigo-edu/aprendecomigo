@@ -2,16 +2,16 @@
 
 <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow" id="task-{{ task.id }}">
     <div class="flex items-start justify-between">
-        
+
         <!-- Task Content -->
         <div class="flex-1 min-w-0">
-            
+
             <!-- Title and Status -->
             <div class="flex items-center space-x-3 mb-2">
                 <div class="flex-shrink-0">
                     <!-- Status Checkbox -->
                     {% if task.status == 'completed' %}
-                        <button 
+                        <button
                             hx-post="{% url 'tasks:task_list' %}"
                             hx-vals='{"action": "reopen_task", "task_id": "{{ task.id }}"}'
                             hx-target="#task-{{ task.id }}"
@@ -22,7 +22,7 @@
                             </svg>
                         </button>
                     {% else %}
-                        <button 
+                        <button
                             hx-post="{% url 'tasks:task_list' %}"
                             hx-vals='{"action": "complete_task", "task_id": "{{ task.id }}"}'
                             hx-target="#task-{{ task.id }}"
@@ -31,7 +31,7 @@
                         </button>
                     {% endif %}
                 </div>
-                
+
                 <div class="flex-1 min-w-0">
                     <h3 class="text-sm font-medium text-gray-900 {% if task.status == 'completed' %}line-through text-gray-500{% endif %}">
                         {{ task.title }}
@@ -46,7 +46,7 @@
 
             <!-- Task Metadata -->
             <div class="flex flex-wrap items-center gap-2 text-xs">
-                
+
                 <!-- Priority Badge -->
                 <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
                     {% if task.priority == 'high' %}bg-red-100 text-red-800
@@ -106,9 +106,9 @@
 
         <!-- Action Buttons -->
         <div class="flex items-center space-x-2 ml-4">
-            
+
             <!-- Edit Button -->
-            <button 
+            <button
                 hx-get="{% url 'tasks:task_detail' task.id %}"
                 hx-target="#task-form-modal"
                 hx-trigger="click"
@@ -119,7 +119,7 @@
             </button>
 
             <!-- Delete Button -->
-            <button 
+            <button
                 hx-post="{% url 'tasks:task_list' %}"
                 hx-vals='{"action": "delete_task", "task_id": "{{ task.id }}"}'
                 hx-target="#task-{{ task.id }}"
