@@ -412,18 +412,21 @@
                             <div class="space-y-1">
                                 <label class="block text-sm font-medium text-gray-700">Full Name *</label>
                                 <input type="text" name="student_name" x-model="addStudentForm.student_name" :required="addStudentForm.accountType === 'separate'"
+                                       data-test="student-name-input"
                                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                                        placeholder="Enter student's full name">
                             </div>
                             <div class="space-y-1">
                                 <label class="block text-sm font-medium text-gray-700">Email Address *</label>
                                 <input type="email" name="student_email" x-model="addStudentForm.student_email" :required="addStudentForm.accountType === 'separate'"
+                                       data-test="student-email-input"
                                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                                        placeholder="student@example.com">
                             </div>
                             <div class="space-y-1">
                                 <label class="block text-sm font-medium text-gray-700">Birth Date *</label>
-                                <input type="date" name="student_birth_date" x-model="addStudentForm.student_birth_date" :required="addStudentForm.accountType === 'separate'"
+                                <input type="date" name="birth_date" x-model="addStudentForm.student_birth_date" :required="addStudentForm.accountType === 'separate'"
+                                       data-test="student-birth-date-input"
                                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                             </div>
                             <div class="space-y-1">
@@ -466,12 +469,14 @@
                             <div class="space-y-1">
                                 <label class="block text-sm font-medium text-gray-700">Guardian Name *</label>
                                 <input type="text" name="guardian_name" x-model="addStudentForm.guardian_name" :required="addStudentForm.accountType === 'separate'"
+                                       data-test="guardian-name-input"
                                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
                                        placeholder="Enter guardian's full name">
                             </div>
                             <div class="space-y-1">
                                 <label class="block text-sm font-medium text-gray-700">Guardian Email *</label>
                                 <input type="email" name="guardian_email" x-model="addStudentForm.guardian_email" :required="addStudentForm.accountType === 'separate'"
+                                       data-test="guardian-email-input"
                                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
                                        placeholder="guardian@example.com">
                             </div>
@@ -532,13 +537,15 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="space-y-1">
                                 <label class="block text-sm font-medium text-gray-700">Student Full Name *</label>
-                                <input type="text" name="guardian_only_student_name" x-model="addStudentForm.guardian_only_student_name" :required="addStudentForm.accountType === 'guardian_only'"
+                                <input type="text" name="student_name" x-model="addStudentForm.guardian_only_student_name" :required="addStudentForm.accountType === 'guardian_only'"
+                                       data-test="student-name-input"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                        placeholder="Enter student's full name">
                             </div>
                             <div class="space-y-1">
                                 <label class="block text-sm font-medium text-gray-700">Birth Date *</label>
-                                <input type="date" name="guardian_only_student_birth_date" x-model="addStudentForm.guardian_only_student_birth_date" :required="addStudentForm.accountType === 'guardian_only'"
+                                <input type="date" name="birth_date" x-model="addStudentForm.guardian_only_student_birth_date" :required="addStudentForm.accountType === 'guardian_only'"
+                                       data-test="student-birth-date-input"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             </div>
                             <div class="space-y-1">
@@ -588,13 +595,15 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="space-y-1">
                                 <label class="block text-sm font-medium text-gray-700">Guardian Name *</label>
-                                <input type="text" name="guardian_only_guardian_name" x-model="addStudentForm.guardian_only_guardian_name" :required="addStudentForm.accountType === 'guardian_only'"
+                                <input type="text" name="guardian_name" x-model="addStudentForm.guardian_only_guardian_name" :required="addStudentForm.accountType === 'guardian_only'"
+                                       data-test="guardian-name-input"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                        placeholder="Enter guardian's full name">
                             </div>
                             <div class="space-y-1">
                                 <label class="block text-sm font-medium text-gray-700">Guardian Email *</label>
-                                <input type="email" name="guardian_only_guardian_email" x-model="addStudentForm.guardian_only_guardian_email" :required="addStudentForm.accountType === 'guardian_only'"
+                                <input type="email" name="guardian_email" x-model="addStudentForm.guardian_only_guardian_email" :required="addStudentForm.accountType === 'guardian_only'"
+                                       data-test="guardian-email-input"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                        placeholder="guardian@example.com">
                             </div>
@@ -651,13 +660,15 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="space-y-1">
                                 <label class="block text-sm font-medium text-gray-700">Full Name *</label>
-                                <input type="text" name="self_name" x-model="addStudentForm.self_name" :required="addStudentForm.accountType === 'self'"
+                                <input type="text" name="student_name" x-model="addStudentForm.self_name" :required="addStudentForm.accountType === 'self'"
+                                       data-test="student-name-input"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                        placeholder="Enter your full name">
                             </div>
                             <div class="space-y-1">
                                 <label class="block text-sm font-medium text-gray-700">Email Address *</label>
-                                <input type="email" name="self_email" x-model="addStudentForm.self_email" :required="addStudentForm.accountType === 'self'"
+                                <input type="email" name="student_email" x-model="addStudentForm.self_email" :required="addStudentForm.accountType === 'self'"
+                                       data-test="student-email-input"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                        placeholder="your@email.com">
                             </div>
@@ -669,7 +680,8 @@
                             </div>
                             <div class="space-y-1">
                                 <label class="block text-sm font-medium text-gray-700">Birth Date *</label>
-                                <input type="date" name="self_birth_date" x-model="addStudentForm.self_birth_date" :required="addStudentForm.accountType === 'self'"
+                                <input type="date" name="birth_date" x-model="addStudentForm.self_birth_date" :required="addStudentForm.accountType === 'self'"
+                                       data-test="student-birth-date-input"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             </div>
                             <div class="space-y-1">
@@ -741,7 +753,7 @@
                     <button type="button" @click="showAddStudentModal = false" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         Cancel
                     </button>
-                    <button type="submit" class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center">
+                    <button type="submit" data-test="submit-student-form" class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                         </svg>

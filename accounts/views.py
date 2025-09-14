@@ -168,7 +168,10 @@ class SignInView(View):
             # Generate secure 6-digit OTP code for SMS verification
             otp_code = str(secrets.randbelow(900000) + 100000)
             otp_expires = (timezone.now() + timedelta(minutes=5)).timestamp()
-            logger.info(f"Generated OTP code: {otp_code} for user: {user.email}")
+            logger.info(
+                f"[OTP DEBUG] Generated OTP code: '{otp_code}' (type: {type(otp_code)}, len: {len(otp_code)}) for user: {user.email}"
+            )
+            logger.info(f"[OTP DEBUG] OTP expires at timestamp: {otp_expires}")
 
             try:
                 # Send both magic link and SMS OTP (if phone available)
@@ -197,6 +200,8 @@ class SignInView(View):
                     request.session["verification_otp_code"] = otp_code
                     request.session["verification_otp_expires"] = otp_expires
                     request.session["is_signin"] = True
+                    logger.info(f"[OTP DEBUG] Stored in session - OTP: '{otp_code}' (type: {type(otp_code)})")
+                    logger.info(f"[OTP DEBUG] Session keys stored: {list(request.session.keys())}")
 
                     logger.info(
                         f"Dual verification sent successfully to: {email} and {user.phone_number or 'no phone'}"
@@ -521,6 +526,13 @@ class VerifyOTPView(View):
             # Get user
             user = User.objects.get(id=user_id)
 
+            # DEBUG: Log OTP verification details
+            logger.info(f"[OTP DEBUG] User input: '{otp_code}' (type: {type(otp_code)}, len: {len(otp_code)})")
+            logger.info(f"[OTP DEBUG] Expected OTP: '{expected_otp}' (type: {type(expected_otp)})")
+            logger.info(f"[OTP DEBUG] OTP expires: {otp_expires}")
+            logger.info(f"[OTP DEBUG] Current timestamp: {timezone.now().timestamp()}")
+            logger.info(f"[OTP DEBUG] Comparison result: {otp_code == expected_otp}")
+
             # Verify OTP by comparing with session-stored code
             if otp_code == expected_otp:
                 if is_signup:
@@ -538,17 +550,55 @@ class VerifyOTPView(View):
                     )
 
                 elif is_signin:
+                    # TODO handle verification, account expiration, etc
                     # For signin, SMS OTP is sufficient
                     login(request, user, backend="django.contrib.auth.backends.ModelBackend")
                     logger.info(f"SMS authentication successful for user: {user.email}")
 
+                    # Check if phone needs to be verified before we update it
+                    phone_was_unverified = not user.phone_verified
+
+                    # Mark phone as verified since SMS OTP was successful
+                    if not user.phone_verified:
+                        user.phone_verified = True
+                        user.save(update_fields=["phone_verified"])
+                        logger.info(f"Phone verification completed via SMS OTP for user: {user.email}")
+
+                        # Mark the phone verification task as completed
+                        try:
+                            from tasks.models import Task
+
+                            phone_task = Task.objects.filter(
+                                user=user, title="Verify your phone number", status="pending"
+                            ).first()
+                            if phone_task:
+                                phone_task.status = "completed"
+                                phone_task.save()
+                                logger.info(f"Phone verification task completed for {user.email}")
+                        except Exception as e:
+                            logger.error(f"Failed to update phone verification task: {e}")
+
+                    # Remove unverified session markers
+                    if "is_unverified_user" in request.session:
+                        del request.session["is_unverified_user"]
+                    if "unverified_until" in request.session:
+                        del request.session["unverified_until"]
+
+                    # Reset session expiry to default
+                    request.session.set_expiry(0)  # Use default session length
+
                     # Clear session data
                     self._clear_verification_session(request)
+
+                    # Create success message
+                    success_message = "Welcome back!"
+                    if phone_was_unverified:
+                        success_message = "Welcome back! Your phone number has been verified."
 
                     return render(
                         request,
                         "accounts/partials/verify_success.html",
-                        {"message": "Welcome back!", "redirect_url": reverse("dashboard:dashboard")},
+                        {"message": success_message, "redirect_url": reverse("dashboard:dashboard")},
                     )
 
             else:

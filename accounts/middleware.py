@@ -81,8 +81,9 @@ class ProgressiveVerificationMiddleware:
         if not user.verification_required_after:
             return None
 
-        # Check if grace period has expired
-        if timezone.now() > user.verification_required_after:
+        # TODO: Re-enable after beta - Check if grace period has expired
+        # BETA: Verification deadline enforcement disabled for beta period
+        if False:  # timezone.now() > user.verification_required_after:
             # User must verify if neither email nor phone is verified
             if not user.email_verified and not user.phone_verified:
                 logger.warning(

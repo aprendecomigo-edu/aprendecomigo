@@ -122,6 +122,12 @@ class NotificationDetailView(LoginRequiredMixin, DetailView):
         """Return notifications for the authenticated user only."""
         return Notification.objects.filter(user=self.request.user)
 
+    def get_template_names(self):
+        """Return partial template for HTMX requests."""
+        if self.request.htmx:
+            return ["messaging/notifications/partials/notification_modal_content.html"]
+        return [self.template_name]
+
 
 class NotificationMarkReadView(LoginRequiredMixin, View):
     """

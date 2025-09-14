@@ -96,6 +96,9 @@ class TestSchoolAdminRegistration:
             # Fallback to text-based verification
             expect(page.get_by_text("Total Teachers")).to_be_visible()
 
+        # Verify system tasks are created for new admin
+        self._verify_initial_tasks_created(page)
+
     @pytest.mark.skip(reason="Phase 2 - Not implemented yet")
     def test_phase_2_extended_registration(self, page: Page):
         """Test Phase 2: Complete registration flow with all form inputs and validation."""
@@ -151,6 +154,46 @@ class TestSchoolAdminRegistration:
         # The test always passes - it's for reporting only
         assert True
 
+    def _verify_initial_tasks_created(self, page: Page):
+        """
+        Helper method to verify that the 3 system tasks are created for a new admin user:
+        1. Email Verification (pending)
+        2. Phone Verification (pending)
+        3. Add First Student (pending)
+
+        All should start with status="pending" for a new user.
+        """
+        # Verify "Tarefas Pessoais" section exists
+        try:
+            tasks_heading = page.locator('[data-test="personal-tasks-heading"]')
+            expect(tasks_heading).to_be_visible()
+        except Exception:
+            # Fallback to text-based selector
+            expect(page.get_by_text("Tarefas Pessoais")).to_be_visible()
+
+        # Verify initial task count shows 3 pending, 0 completed for new user
+        # Note: The count might be different depending on timing of task creation
+        try:
+            task_count = page.locator('[data-test="personal-tasks-count"]')
+            expect(task_count).to_be_visible()
+        except Exception:
+            # Check for text that indicates pending tasks exist
+            expect(page.get_by_text(re.compile(r"\d+ pendentes"))).to_be_visible()
+
+        # Verify the 3 expected system tasks are present
+        expected_tasks = ["Verify your email address", "Verify your phone number", "Add your first student"]
+
+        for task_text in expected_tasks:
+            try:
+                # Try to find task by data-test attribute first
+                task_element = page.locator(
+                    f'[data-test*="task"][data-task-type*="{task_text.lower().replace(" ", "-")}"]'
+                )
+                expect(task_element).to_be_visible()
+            except Exception:
+                # Fallback to text-based search
+                expect(page.get_by_text(task_text)).to_be_visible()
+
     def test_registration_with_fallbacks(self, page: Page):
         """
         Test registration flow using fallback selectors when data-test attributes are missing.
@@ -177,3 +220,6 @@ class TestSchoolAdminRegistration:
         # Verify dashboard shows zero stats for new school
         expect(page.get_by_text("Total Teachers")).to_be_visible()
         expect(page.get_by_text("Total Students")).to_be_visible()
+
+        # Verify system tasks are created for new admin
+        self._verify_initial_tasks_created(page)

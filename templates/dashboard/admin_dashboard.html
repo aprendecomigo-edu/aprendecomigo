@@ -1,5 +1,6 @@
 {% extends 'base_with_navs.html' %}
 {% load i18n %}
+{% load waffle_tags %}
 
 {% block page_title %}{% trans "Admin Dashboard" %}{% endblock %}
 
@@ -19,24 +20,6 @@
             </div>
         </div>
 
-        <!-- Warning Banner (if needed) -->
-        {% if total_students == 0 or total_teachers == 0 %}
-        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-            <div class="flex items-start space-x-3">
-                <svg class="w-5 h-5 text-amber-600 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>
-                </svg>
-                <div>
-                    <p class="font-semibold text-amber-900 mb-1">
-                        {% trans "You need to add" %} {% if total_teachers == 0 %}{% trans "teachers" %}{% endif %}{% if total_students == 0 and total_teachers == 0 %} {% trans "and" %} {% endif %}{% if total_students == 0 %}{% trans "students" %}{% endif %} {% trans "to fully activate your account" %}
-                    </p>
-                    <p class="text-amber-700 text-sm">
-                        {% trans "Complete the pending tasks below to get started." %}
-                    </p>
-                </div>
-            </div>
-        </div>
-        {% endif %}
     </div>
 
     <!-- Statistics Cards - Mobile Optimized -->
@@ -198,12 +181,16 @@
                 </div>
                 {% endif %}
 
+                {% switch "schedule_feature" %}
+
                 <div class="mt-6 text-center">
                     <a href="/calendar/" class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
                         Ver Calendário Completo
                     </a>
                 </div>
+                {% endswitch %}
             </div>
+
         </div>
     </div>
 
