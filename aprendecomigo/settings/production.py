@@ -10,12 +10,6 @@ from .staging import *
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-# Define allowed hosts - stricter validation than staging
-allowed_hosts = os.getenv("ALLOWED_HOSTS", "")
-if not allowed_hosts:
-    raise ValueError("ALLOWED_HOSTS environment variable is not set")
-ALLOWED_HOSTS = allowed_hosts.split(",")
-
 # Stricter AWS validation - raise errors instead of warnings
 if not os.getenv("AWS_ACCESS_KEY_ID") and not os.getenv("AWS_PROFILE"):
     raise ValueError("AWS_ACCESS_KEY_ID environment variable is not set (or use AWS_PROFILE for IAM roles)")

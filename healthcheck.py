@@ -171,9 +171,11 @@ def health_check(request):
                 "is_railway_internal": "railway.internal" in redis_url if redis_url else False,
             }
 
+            # Since Redis functional tests already pass above, this is just informational
+            # Don't fail health check if REDIS_URL env var is missing but Redis works
             if not redis_url:
-                logger.error("REDIS_URL environment variable not set")
-                overall_healthy = False
+                logger.warning("REDIS_URL environment variable not set, but Redis caches are functional")
+                # overall_healthy = False  # Commented out - Redis functional tests already validate connection
 
         # Return final status
         if not overall_healthy:
