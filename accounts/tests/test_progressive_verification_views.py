@@ -124,13 +124,8 @@ class SignUpViewTestCase(BaseTestCase):
 
     @patch("accounts.views.send_magic_link_email")
     @patch("accounts.views.send_sms_otp")
-    @patch("tasks.services.TaskService.create_verification_tasks")
-    def test_signup_post_successful_creates_user_with_progressive_verification(
-        self, mock_create_tasks, mock_send_sms, mock_send_email
-    ):
+    def test_signup_post_successful_creates_user_with_progressive_verification(self, mock_send_sms, mock_send_email):
         """Test successful signup creates user with progressive verification settings."""
-        # Mock task creation to return mock tasks
-        mock_create_tasks.return_value = [Mock(), Mock()]
 
         response = self.client.post(self.signup_url, self.valid_signup_data)
 
@@ -164,14 +159,13 @@ class SignUpViewTestCase(BaseTestCase):
         # Check verification methods were called
         mock_send_email.assert_called_once()
         mock_send_sms.assert_called_once()
-        mock_create_tasks.assert_called_once_with(user, user.email, user.phone_number)
+        # System tasks are now created automatically via signal
+        # No explicit task creation call needed in signup flow
 
     @patch("accounts.views.send_magic_link_email")
     @patch("accounts.views.send_sms_otp")
-    @patch("tasks.services.TaskService.create_verification_tasks")
-    def test_signup_post_successful_creates_unverified_session(self, mock_create_tasks, mock_send_sms, mock_send_email):
+    def test_signup_post_successful_creates_unverified_session(self, mock_send_sms, mock_send_email):
         """Test successful signup creates session with unverified user markers."""
-        mock_create_tasks.return_value = [Mock(), Mock()]
 
         response = self.client.post(self.signup_url, self.valid_signup_data)
 
@@ -192,12 +186,8 @@ class SignUpViewTestCase(BaseTestCase):
 
     @patch("accounts.views.send_magic_link_email", side_effect=Exception("Email failed"))
     @patch("accounts.views.send_sms_otp", side_effect=Exception("SMS failed"))
-    @patch("tasks.services.TaskService.create_verification_tasks")
-    def test_signup_post_continues_despite_verification_sending_failures(
-        self, mock_create_tasks, mock_send_sms, mock_send_email
-    ):
+    def test_signup_post_continues_despite_verification_sending_failures(self, mock_send_sms, mock_send_email):
         """Test that signup completes even if verification sending fails."""
-        mock_create_tasks.return_value = [Mock(), Mock()]
 
         response = self.client.post(self.signup_url, self.valid_signup_data)
 
@@ -209,8 +199,7 @@ class SignUpViewTestCase(BaseTestCase):
         user = User.objects.get(email=self.valid_signup_data["email"])
         self.assertIsNotNone(user)
 
-        # Tasks should still be created
-        mock_create_tasks.assert_called_once()
+        # System tasks should still be created automatically via signal
 
     @patch("accounts.views.create_user_school_and_membership", side_effect=Exception("Database error"))
     def test_signup_post_database_error_returns_error_message(self, mock_create_school):
@@ -231,10 +220,7 @@ class SignUpViewTestCase(BaseTestCase):
         with (
             patch("accounts.views.send_magic_link_email"),
             patch("accounts.views.send_sms_otp"),
-            patch("tasks.services.TaskService.create_verification_tasks") as mock_create_tasks,
         ):
-            mock_create_tasks.return_value = [Mock(), Mock()]
-
             response = self.client.post(self.signup_url, data)
 
             self.assertEqual(response.status_code, 200)
@@ -250,10 +236,7 @@ class SignUpViewTestCase(BaseTestCase):
         with (
             patch("accounts.views.send_magic_link_email"),
             patch("accounts.views.send_sms_otp"),
-            patch("tasks.services.TaskService.create_verification_tasks") as mock_create_tasks,
         ):
-            mock_create_tasks.return_value = [Mock(), Mock()]
-
             response = self.client.post(self.signup_url, data)
 
             self.assertEqual(response.status_code, 200)
@@ -512,10 +495,7 @@ class VerificationEdgeCasesTestCase(BaseTestCase):
         with (
             patch("accounts.views.send_magic_link_email"),
             patch("accounts.views.send_sms_otp"),
-            patch("tasks.services.TaskService.create_verification_tasks") as mock_create_tasks,
         ):
-            mock_create_tasks.return_value = [Mock(), Mock()]
-
             data = {
                 "email": "precision@example.com",
                 "full_name": "Precision Test",

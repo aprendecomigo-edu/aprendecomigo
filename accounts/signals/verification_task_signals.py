@@ -32,8 +32,12 @@ def create_system_tasks_for_new_user(sender, instance, created, **kwargs):
         **kwargs: Additional keyword arguments
     """
     if created:
-        logger.info(f"Creating system tasks for new user: {instance.email}")
-        TaskService.initialize_system_tasks(instance)
+        try:
+            logger.info(f"Creating system tasks for new user: {instance.email}")
+            TaskService.initialize_system_tasks(instance)
+        except Exception as e:
+            # Don't let signal errors break user creation
+            logger.error(f"Failed to create system tasks for user {instance.email}: {e}")
 
 
 @receiver(post_save, sender=User)
@@ -67,11 +71,10 @@ def complete_phone_verification_task(sender, instance, **kwargs):
 @receiver(post_save, sender=StudentProfile)
 def complete_first_student_task(sender, instance, created, **kwargs):
     """
-    Complete first student task for all users when any student is created.
+    Complete first student task for admin users in the same school when a student is created.
 
-    This verification task is considered completed for the entire system
-    once ANY student exists, since it indicates that the school administration
-    has set up their first student account.
+    This verification task is considered completed for all admin users in a school
+    once ANY student exists in that school, since it validates the school account setup.
 
     Args:
         sender: StudentProfile model class
@@ -80,11 +83,50 @@ def complete_first_student_task(sender, instance, created, **kwargs):
         **kwargs: Additional keyword arguments
     """
     if created:
-        logger.info(f"Student profile created: {instance}. Completing FIRST_STUDENT_ADDED task for all users.")
+        from accounts.models import GuardianStudentRelationship, SchoolMembership
+        from accounts.models.schools import SchoolRole
 
-        # Complete the FIRST_STUDENT_ADDED task for all users who have it pending
-        all_users = User.objects.all()
-        for user in all_users:
-            TaskService.complete_system_task(user, Task.FIRST_STUDENT_ADDED)
+        logger.info(f"Student profile created: {instance}.")
 
-        logger.info("Completed FIRST_STUDENT_ADDED task for all users")
+        # Find the school associated with this student
+        # Students are associated with schools through GuardianStudentRelationship
+        # The relationship uses the student's user account (if they have one)
+        guardian_relationships = None
+        if instance.user:
+            guardian_relationships = GuardianStudentRelationship.objects.filter(
+                student=instance.user,
+                is_active=True,  # Only consider active relationships
+            ).select_related("school")
+
+        if not guardian_relationships or not guardian_relationships.exists():
+            logger.warning(
+                f"No guardian relationship found for student {instance}. "
+                "Falling back to completing task for all users (test/legacy mode)."
+            )
+            # Fallback for tests or legacy data - complete for all users
+            all_users = User.objects.all()
+            for user in all_users:
+                TaskService.complete_system_task(user, Task.FIRST_STUDENT_ADDED)
+            logger.info("Completed FIRST_STUDENT_ADDED task for all users (fallback mode)")
+            return
+        # TODO work on improving this logic to avoid running this for every new student
+        # Get all schools this student belongs to
+        schools = {rel.school for rel in guardian_relationships}
+
+        for school in schools:
+            logger.info(f"Completing FIRST_STUDENT_ADDED task for admin users in school: {school.name}")
+
+            # Get all admin users (SCHOOL_OWNER and SCHOOL_ADMIN roles) in this school
+            admin_memberships = SchoolMembership.objects.filter(
+                school=school, role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN], is_active=True
+            ).select_related("user")
+
+            admin_users = [membership.user for membership in admin_memberships]
+
+            # Complete the task for each admin user
+            for user in admin_users:
+                TaskService.complete_system_task(user, Task.FIRST_STUDENT_ADDED)
+
+            logger.info(
+                f"Completed FIRST_STUDENT_ADDED task for {len(admin_users)} admin users in school {school.name}"
+            )

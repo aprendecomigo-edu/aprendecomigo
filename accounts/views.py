@@ -402,10 +402,8 @@ class SignUpView(View):
                     # Don't block signup if verification sending fails
                     logger.error(f"Failed to send verifications for {email}: {e}")
 
-                # Create verification tasks using the task service
-                from tasks.services import TaskService
-
-                TaskService.create_verification_tasks(user, email, phone_number)
+                # System tasks are created automatically via signal when user is created
+                # No need for explicit task creation here
 
             # Return success with redirect to dashboard
             return render(
