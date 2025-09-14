@@ -86,15 +86,11 @@ WHITENOISE_COMPRESS_OFFLINE = True
 WHITENOISE_USE_FINDERS = False
 WHITENOISE_AUTOREFRESH = False
 
-# Production security - enable SSL redirect
-SECURE_SSL_REDIRECT = True
+SECURE_SSL_REDIRECT = False  # Railway handles HTTPS at the edge
 
 # Logging Configuration inherited from staging.py
-# Both staging and production use stdout/stderr for Railway log aggregation
-
-# Production-specific logging overrides (if needed)
-# For now, we use the same configuration as staging
-# LOGGING['handlers']['console']['level'] = 'INFO'  # Example override
+# Production-specific logging overrides
+LOGGING["handlers"]["console"]["level"] = "INFO"  # Example override
 
 # Production overrides (can be overridden)
 REMINDER_MOCK_MODE = False
