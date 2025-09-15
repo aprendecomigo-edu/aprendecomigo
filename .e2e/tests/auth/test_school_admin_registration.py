@@ -1,8 +1,8 @@
 """
 E2E Tests for School Admin Registration Flow
 
-Tests based on GitHub issue #217 and following data-test conventions
-from data-test-conventions.md and data-test-implementation.md
+Tests following data-test conventions
+from data-test-conventions.md
 """
 
 import re
