@@ -402,6 +402,9 @@ LOGOUT_REDIRECT_URL = "/signin/"
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 DEFAULT_FROM_EMAIL = "noreply@aprendecomigo.com"
 
+# SMS backend - default to console backend, override in environment-specific settings
+SMS_BACKEND = "messaging.services.sms_backends.ConsoleSMSBackend"
+
 # For production, use SMTP
 if not DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
@@ -808,10 +811,12 @@ TAILWIND_APP_NAME = "theme"
 # Configure switches (not flags) for feature toggles
 # Switches are simple on/off settings like DEBUG - configured at deployment/environment level
 
-# Default switch state - matches DEBUG setting
-# Development: DEBUG=True → switches enabled by default
-# Production: DEBUG=False → switches disabled by default
-WAFFLE_SWITCH_DEFAULT = DEBUG
+# Default switch state - configurable per environment
+# Use WAFFLE_DEFAULT_STATE environment variable to control default switch behavior
+# Production: should be "True" (features on by default)
+# Staging: should be "False" (features off by default)
+# Development: configurable via env var for testing both states
+WAFFLE_SWITCH_DEFAULT = os.getenv("WAFFLE_DEFAULT_STATE", str(DEBUG)).lower() == "true"
 
 # Individual switch configurations (optional overrides)
 # Use environment variables to override specific switches in production

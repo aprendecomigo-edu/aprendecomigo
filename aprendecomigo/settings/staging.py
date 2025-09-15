@@ -18,6 +18,11 @@ SECRET_KEY = str(secret_key)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "True") == "True"  # Railway docs recommend DEBUG=True for staging
+
+# Waffle feature switches - OFF by default in staging for safer testing
+# Override with WAFFLE_DEFAULT_STATE=true to enable all new switches
+WAFFLE_DEFAULT_STATE = os.getenv("WAFFLE_DEFAULT_STATE", "false")
+
 ALLOWED_HOSTS = ["*"]  # railway settings
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
@@ -49,6 +54,9 @@ else:
 
 # Email configuration - Amazon SES via django-anymail
 EMAIL_BACKEND = "anymail.backends.amazon_ses.EmailBackend"
+
+# SMS configuration - Amazon SNS via custom backend
+SMS_BACKEND = "messaging.services.sms_backends.SNSSMSBackend"
 
 # Amazon SES configuration
 ANYMAIL = {

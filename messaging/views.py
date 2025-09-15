@@ -45,29 +45,25 @@ logger = logging.getLogger(__name__)
 
 class NotificationListView(LoginRequiredMixin, ListView):
     """
-    List notifications for the authenticated user with pagination and filtering.
+    HTMX-only view for modal notifications.
 
-    GET /notifications/
-    GET /notifications/?notification_type=low_balance
-    GET /notifications/?is_read=false
-
-    HTMX: Returns partial template for dynamic updates
+    Returns notification content for modal display with filtering and pagination.
     """
 
     model = Notification
-    template_name = "messaging/notifications/notification_list.html"
     context_object_name = "notifications"
-    paginate_by = 20
+    paginate_by = 10
+    template_name = "messaging/notifications/partials/notification_modal_content.html"
 
     def get_queryset(self):
-        """Return notifications for the authenticated user with filtering support."""
+        """Return recent notifications for the authenticated user with filtering."""
         queryset = (
             Notification.objects.filter(user=self.request.user)
             .select_related("related_transaction")
             .order_by("-created_at")
         )
 
-        # Apply filters based on query parameters
+        # Apply filters
         notification_type = self.request.GET.get("notification_type")
         if notification_type:
             queryset = queryset.filter(notification_type=notification_type)
@@ -78,55 +74,6 @@ class NotificationListView(LoginRequiredMixin, ListView):
             queryset = queryset.filter(is_read=is_read_bool)
 
         return queryset
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-
-        # Add filter options for template
-        context["notification_types"] = [
-            ("low_balance", "Low Balance"),
-            ("package_expiring", "Package Expiring"),
-            ("balance_depleted", "Balance Depleted"),
-        ]
-
-        # Current filter values
-        context["current_type"] = self.request.GET.get("notification_type", "")
-        context["current_read_status"] = self.request.GET.get("is_read", "")
-
-        # Unread count for badge
-        context["unread_count"] = Notification.objects.filter(user=self.request.user, is_read=False).count()
-
-        return context
-
-    def get_template_names(self):
-        """Return partial template for HTMX requests."""
-        if self.request.htmx:
-            return ["messaging/notifications/partials/notification_list_content.html"]
-        return [self.template_name]
-
-
-class NotificationDetailView(LoginRequiredMixin, DetailView):
-    """
-    Get detailed information about a specific notification.
-
-    GET /notifications/{id}/
-
-    Users can only access their own notifications.
-    """
-
-    model = Notification
-    template_name = "messaging/notifications/notification_detail.html"
-    context_object_name = "notification"
-
-    def get_queryset(self):
-        """Return notifications for the authenticated user only."""
-        return Notification.objects.filter(user=self.request.user)
-
-    def get_template_names(self):
-        """Return partial template for HTMX requests."""
-        if self.request.htmx:
-            return ["messaging/notifications/partials/notification_modal_content.html"]
-        return [self.template_name]
 
 
 class NotificationMarkReadView(LoginRequiredMixin, View):
@@ -146,12 +93,10 @@ class NotificationMarkReadView(LoginRequiredMixin, View):
         if not notification.is_read:
             notification.mark_as_read()
 
-        # Return appropriate response based on request type
+        # Return success response - HTMX will handle UI updates
         if request.htmx:
-            # Return updated notification item for HTMX
-            return render(
-                request, "messaging/notifications/partials/notification_item.html", {"notification": notification}
-            )
+            # Return empty response, let HTMX handle the update via targeting
+            return JsonResponse({"success": True, "message": "Notification marked as read"})
         else:
             return JsonResponse({"success": True, "message": "Notification marked as read"})
 

@@ -1,6 +1,8 @@
-<!-- Unread Notifications Count Badge -->
+<!-- DaisyUI Indicator Pattern - Only show when count > 0 -->
 {% if unread_count > 0 %}
-    <span id="notification-badge" class="bg-red-100 text-red-600 text-xs font-medium px-2 py-1 rounded-full">{{ unread_count }}</span>
+    <span id="notification-badge" class="indicator-item badge badge-error text-xs">{{ unread_count }}</span>
+    <span id="mobile-notification-badge" class="indicator-item badge badge-error text-xs">{{ unread_count }}</span>
 {% else %}
-    <span id="notification-badge" class="bg-gray-100 text-gray-600 text-xs font-medium px-2 py-1 rounded-full">0</span>
+    <span id="notification-badge" class="hidden"></span>
+    <span id="mobile-notification-badge" class="hidden"></span>
 {% endif %}

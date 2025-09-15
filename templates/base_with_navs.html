@@ -2,6 +2,7 @@
 {% load waffle_tags %}
 
 {% block content %}
+<!-- School Settings - Link to active school TODO: test this for users with multiple schools -->
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50" x-data="{
     sidebarOpen: false,
     sidebarCollapsed: false,
@@ -44,21 +45,6 @@
             priority: 1
         },
         {% endswitch %}
-        {
-            id: 'notifications',
-            label: 'Notifications',
-            desktopLabel: 'Notifications',
-            url: '/messaging/notifications/',
-            icon: 'bell',
-            priority: 2,
-            badge: { count: 0, color: 'red' },
-            htmx: {
-                get: '/messaging/notifications/unread-count/',
-                trigger: 'every 30s',
-                target: '#notification-badge',
-                swap: 'outerHTML'
-            }
-        },
         {% if user.school_memberships.exists %}
         {
             id: 'settings',
@@ -69,14 +55,6 @@
             priority: 3
         },
         {% endif %}
-        {
-            id: 'profile',
-            label: 'Profile',
-            desktopLabel: 'My Profile',
-            url: '{% url 'accounts:profile' %}',
-            icon: 'user',
-            priority: 3
-        },
     ],
 
     isActive(itemId) {
@@ -107,8 +85,43 @@
                 lucide.createIcons();
             }
         });
+
+        // Watch for HTMX updates to notification badge and update Alpine.js data
+        this.updateNotificationCount();
+
+        // Listen for HTMX afterSwap event
+        document.addEventListener('htmx:afterSwap', (event) => {
+            if (event.detail.target.id === 'notification-badge') {
+                this.updateNotificationCount();
+            }
+        });
+    },
+
+    updateNotificationCount() {
+        const badge = document.getElementById('notification-badge');
+        if (badge && !badge.classList.contains('hidden')) {
+            const count = parseInt(badge.textContent) || 0;
+            const notificationItem = this.navigation.find(item => item.id === 'notifications');
+            if (notificationItem && notificationItem.badge) {
+                notificationItem.badge.count = count;
+            }
+        } else {
+            // Badge is hidden, set count to 0
+            const notificationItem = this.navigation.find(item => item.id === 'notifications');
+            if (notificationItem && notificationItem.badge) {
+                notificationItem.badge.count = 0;
+            }
+        }
     }
 }">
+
+    <!-- Hidden HTMX notification count updater -->
+    <div id="notification-count-updater"
+         hx-get="/messaging/notifications/unread-count/"
+         hx-trigger="every 30s"
+         hx-target="#notification-badge, #mobile-notification-badge"
+         hx-swap="outerHTML"
+         class="hidden"></div>
 
     <!-- Mobile Header -->
     <header class="lg:hidden bg-white/90 backdrop-blur-sm border-b border-gray-200 px-4 py-3 fixed top-0 left-0 right-0 z-40">
@@ -123,10 +136,18 @@
                 </div>
             </div>
             <div class="flex items-center space-x-3">
-                {% include 'includes/language_switcher.html' %}
-                <div class="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center">
-                    <span class="text-white font-medium text-sm">{{ user.first_name.0|upper|default:"A" }}</span>
+                <!-- Mobile Notification Bell -->
+                <div class="indicator">
+                    <span id="mobile-notification-badge" class="hidden"></span>
+                    <button class="btn btn-ghost btn-circle btn-sm"
+                            onclick="document.getElementById('notification-modal').showModal()"
+                            hx-get="/messaging/notifications/?modal=true"
+                            hx-target="#notification-modal-content"
+                            hx-trigger="click">
+                        <i data-lucide="bell" class="h-4 w-4"></i>
+                    </button>
                 </div>
+                {% include 'includes/avatar_dropdown.html' with dropdown_id='mobile' %}
             </div>
         </div>
     </header>
@@ -166,34 +187,25 @@
                                } : {}">
 
                                 <div class="flex items-center" :class="sidebarCollapsed ? 'justify-center' : 'gap-x-3'">
-                                    <i :data-lucide="item.icon"
+                                    <!-- Use DaisyUI indicator pattern -->
+                                    <div class="indicator" x-show="item.badge && item.badge.count && item.badge.count > 0 && !sidebarCollapsed">
+                                        <span :id="item.id === 'notifications' ? 'notification-badge' : ''"
+                                              class="indicator-item badge badge-error text-xs"
+                                              x-text="item.badge ? item.badge.count : ''"></span>
+                                        <i :data-lucide="item.icon"
+                                           class="h-5 w-5 shrink-0"
+                                           :class="isActive(item.id) ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'"></i>
+                                    </div>
+                                    <!-- Icon without indicator when no badge or collapsed -->
+                                    <i x-show="!item.badge || !item.badge.count || item.badge.count === 0 || sidebarCollapsed"
+                                       :data-lucide="item.icon"
                                        class="h-5 w-5 shrink-0"
                                        :class="isActive(item.id) ? 'text-white' : 'text-gray-500 group-hover:text-blue-600'"></i>
                                     <span x-text="item.desktopLabel" x-show="!sidebarCollapsed"></span>
                                 </div>
-
-                                <template x-if="item.badge && !sidebarCollapsed">
-                                    <span :id="item.id === 'notifications' ? 'notification-badge' : ''"
-                                          :class="getBadgeClasses(item.badge.color)"
-                                          class="text-xs font-medium px-2 py-1 rounded-full"
-                                          x-show="item.badge.count > 0 || item.id === 'notifications'"
-                                          x-text="item.badge.count"></span>
-                                </template>
                             </a>
                         </li>
                     </template>
-                    <li x-show="!sidebarCollapsed" class="px-3 mb-2">
-                        {% include 'includes/language_switcher.html' %}
-                    </li>
-                    <li class="mt-auto">
-                        <a href="{% url 'accounts:logout' %}"
-                           class="group flex rounded-xl p-3 text-sm leading-6 font-semibold text-red-600 hover:bg-red-50 transition-colors"
-                           :class="sidebarCollapsed ? 'justify-center' : 'gap-x-3'"
-                           :title="sidebarCollapsed ? 'Logout' : ''">
-                            <i data-lucide="log-out" class="h-5 w-5 shrink-0 text-red-500 group-hover:text-red-700"></i>
-                            <span x-show="!sidebarCollapsed">Logout</span>
-                        </a>
-                    </li>
                 </ul>
             </nav>
         </div>
@@ -204,18 +216,17 @@
         <div class="flex items-center justify-around py-2">
             <template x-for="item in getMobileNavItems()" :key="item.id">
                 <a :href="item.url"
-                   class="flex flex-col items-center py-2 px-3 rounded-lg transition-colors relative"
+                   class="flex flex-col items-center py-2 px-3 rounded-lg transition-colors"
                    :class="isActive(item.id) ? 'text-blue-600' : 'text-gray-500'"
                    :data-test="'navigate-' + item.id">
-                    <i :data-lucide="item.icon" class="w-5 h-5"></i>
+                    <!-- Use DaisyUI indicator pattern for mobile -->
+                    <div class="indicator" x-show="item.badge && item.badge.count && item.badge.count > 0">
+                        <span class="indicator-item badge badge-error text-xs" x-text="item.badge ? item.badge.count : ''"></span>
+                        <i :data-lucide="item.icon" class="w-5 h-5"></i>
+                    </div>
+                    <!-- Icon without indicator when no badge -->
+                    <i x-show="!item.badge || !item.badge.count || item.badge.count === 0" :data-lucide="item.icon" class="w-5 h-5"></i>
                     <span class="text-xs font-medium mt-1" x-text="item.label"></span>
-
-                    <template x-if="item.badge">
-                        <span class="absolute -top-1 -right-1 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center"
-                              :class="item.badge.color === 'purple' ? 'bg-purple-500' : 'bg-red-500'"
-                              x-show="item.badge.count > 0"
-                              x-text="item.badge.count"></span>
-                    </template>
                 </a>
             </template>
         </div>
@@ -234,58 +245,18 @@
                     </div>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <!-- Avatar Dropdown -->
-                    <div class="relative" x-data="{ open: false }">
-                        <button @click="open = !open" @click.away="open = false" class="avatar cursor-pointer">
-                            <div class="w-8 rounded-full ring ring-primary ring-offset-base-100 ring-offset-1 hover:ring-2 transition-all">
-                                <div class="bg-gradient-primary rounded-full flex items-center justify-center w-full h-full">
-                                    <span class="text-white font-medium text-sm">{{ user_first_name.0|upper|default:"A" }}</span>
-                                </div>
-                            </div>
+                    <!-- Notification Bell -->
+                    <div class="indicator">
+                        <span id="notification-badge" class="hidden"></span>
+                        <button class="btn btn-ghost btn-circle"
+                                onclick="document.getElementById('notification-modal').showModal()"
+                                hx-get="/messaging/notifications/?modal=true"
+                                hx-target="#notification-modal-content"
+                                hx-trigger="click">
+                            <i data-lucide="bell" class="h-5 w-5"></i>
                         </button>
-
-                        <!-- Dropdown Menu -->
-                        <div x-show="open"
-                             x-transition:enter="transition ease-out duration-100"
-                             x-transition:enter-start="transform opacity-0 scale-95"
-                             x-transition:enter-end="transform opacity-100 scale-100"
-                             x-transition:leave="transition ease-in duration-75"
-                             x-transition:leave-start="transform opacity-100 scale-100"
-                             x-transition:leave-end="transform opacity-0 scale-95"
-                             class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-
-                            <!-- User Info -->
-                            <div class="px-4 py-3 border-b border-gray-100">
-                                <p class="text-sm font-medium text-gray-900">{{ user.name|default:user.first_name }}</p>
-                                <p class="text-xs text-gray-500">{{ user.email }}</p>
-                            </div>
-
-                            <!-- Menu Items -->
-                            <a href="{% url 'accounts:profile' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                <i data-lucide="user" class="h-4 w-4 mr-3 text-gray-500"></i>
-                                My Profile
-                            </a>
-
-                            {% if user.school_memberships.exists %}
-                            <a href="{% url 'accounts:school_settings' pk=user.school_memberships.first.school.pk %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                <i data-lucide="settings" class="h-4 w-4 mr-3 text-gray-500"></i>
-                                School Settings
-                            </a>
-                            {% endif %}
-
-                            <a href="/messaging/notifications/" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                <i data-lucide="bell" class="h-4 w-4 mr-3 text-gray-500"></i>
-                                Notifications
-                            </a>
-
-                            <div class="border-t border-gray-100 mt-1">
-                                <a href="{% url 'accounts:logout' %}" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
-                                    <i data-lucide="log-out" class="h-4 w-4 mr-3 text-red-500"></i>
-                                    Sign Out
-                                </a>
-                            </div>
-                        </div>
                     </div>
+                    {% include 'includes/avatar_dropdown.html' with dropdown_id='desktop' %}
                 </div>
             </div>
         </div>
@@ -295,6 +266,9 @@
             {% block dashboard_content %}{% endblock %}
         </div>
     </main>
+
+    <!-- Notification Modal -->
+    {% include 'messaging/notifications/partials/notification_modal.html' %}
 </div>
 
 {% block dashboard_scripts %}
