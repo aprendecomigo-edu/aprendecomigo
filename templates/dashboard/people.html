@@ -1,4 +1,5 @@
 {% extends 'base_with_navs.html' %}
+{% load waffle_tags %}
 
 {% block page_title %}People{% endblock %}
 
@@ -19,28 +20,7 @@
     <!-- Tab Navigation -->
     <div class="mb-8">
         <div class="flex space-x-1 bg-white rounded-lg border border-gray-200 p-1">
-            <button
-                @click="activeTab = 'teachers'"
-                :class="[
-                    'flex-1 py-3 px-4 rounded-md font-medium text-sm transition-colors',
-                    activeTab === 'teachers'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-transparent text-gray-700 hover:text-gray-900'
-                ]"
-                class="flex items-center justify-center space-x-2"
-            >
-                <span>Professores</span>
-                <span
-                    :class="[
-                        'text-xs px-2 py-0.5 rounded-full',
-                        activeTab === 'teachers'
-                            ? 'bg-white text-blue-600'
-                            : 'bg-gray-100 text-gray-600'
-                    ]"
-                >
-                    {{ teacher_stats.total }}
-                </span>
-            </button>
+            <!-- Students Tab - Always first and enabled -->
             <button
                 @click="activeTab = 'students'"
                 :class="[
@@ -63,7 +43,47 @@
                     {{ student_stats.total }}
                 </span>
             </button>
+
+            <!-- Teachers Tab - Controlled by teacher_management waffle switch -->
             <button
+                {% switch "teacher_management" %}
+                @click="activeTab = 'teachers'"
+                :class="[
+                    'flex-1 py-3 px-4 rounded-md font-medium text-sm transition-colors',
+                    activeTab === 'teachers'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-transparent text-gray-700 hover:text-gray-900'
+                ]"
+                {% else %}
+                :class="[
+                    'flex-1 py-3 px-4 rounded-md font-medium text-sm transition-colors cursor-not-allowed',
+                    'bg-gray-100 text-gray-400'
+                ]"
+                disabled
+                title="Feature não disponível"
+                {% endswitch %}
+                class="flex items-center justify-center space-x-2"
+            >
+                <span>Professores</span>
+                <span
+                    :class="[
+                        'text-xs px-2 py-0.5 rounded-full',
+                        {% switch "teacher_management" %}
+                        activeTab === 'teachers'
+                            ? 'bg-white text-blue-600'
+                            : 'bg-gray-100 text-gray-600'
+                        {% else %}
+                        'bg-gray-200 text-gray-400'
+                        {% endswitch %}
+                    ]"
+                >
+                    {{ teacher_stats.total }}
+                </span>
+            </button>
+
+            <!-- Staff Tab - Controlled by staff_management waffle switch -->
+            <button
+                {% switch "staff_management" %}
                 @click="activeTab = 'staff'"
                 :class="[
                     'flex-1 py-3 px-4 rounded-md font-medium text-sm transition-colors',
@@ -71,15 +91,27 @@
                         ? 'bg-blue-600 text-white'
                         : 'bg-transparent text-gray-700 hover:text-gray-900'
                 ]"
+                {% else %}
+                :class="[
+                    'flex-1 py-3 px-4 rounded-md font-medium text-sm transition-colors cursor-not-allowed',
+                    'bg-gray-100 text-gray-400'
+                ]"
+                disabled
+                title="Feature não disponível"
+                {% endswitch %}
                 class="flex items-center justify-center space-x-2"
             >
                 <span>Funcionários</span>
                 <span
                     :class="[
                         'text-xs px-2 py-0.5 rounded-full',
+                        {% switch "staff_management" %}
                         activeTab === 'staff'
                             ? 'bg-white text-blue-600'
                             : 'bg-gray-100 text-gray-600'
+                        {% else %}
+                        'bg-gray-200 text-gray-400'
+                        {% endswitch %}
                     ]"
                 >
                     0
@@ -90,7 +122,29 @@
 
     <!-- Tab Content -->
     <div class="space-y-6">
-        <!-- Teachers Tab -->
+        <!-- Students Tab - Always first and enabled -->
+        <div x-show="activeTab === 'students'">
+            <!-- Actions Row -->
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex space-x-3">
+                    <button
+                        @click="openModal('addStudent')"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        <span>Adicionar Aluno</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Students List - Server-side rendered -->
+            {% include 'dashboard/partials/students_list.html' %}
+        </div>
+
+        <!-- Teachers Tab - Controlled by teacher_management waffle switch -->
+        {% switch "teacher_management" %}
         <div x-show="activeTab === 'teachers'">
             <!-- Actions Row -->
             <div class="flex justify-between items-center mb-6">
@@ -132,38 +186,10 @@
             <!-- Teachers List - Server-side rendered -->
             {% include 'dashboard/partials/teachers_list.html' %}
         </div>
+        {% endswitch %}
 
-        <!-- Students Tab -->
-        <div x-show="activeTab === 'students'">
-            <!-- Actions Row -->
-            <div class="flex justify-between items-center mb-6">
-                <div class="flex space-x-3">
-                    <button
-                        @click="openModal('addStudent')"
-                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
-                    >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                        </svg>
-                        <span>Adicionar Aluno</span>
-                    </button>
-                    <button
-                        @click="openModal('bulkImport')"
-                        class="border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg flex items-center space-x-2"
-                    >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
-                        </svg>
-                        <span>Importar em Lote</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Students List - Server-side rendered -->
-            {% include 'dashboard/partials/students_list.html' %}
-        </div>
-
-        <!-- Staff Tab -->
+        <!-- Staff Tab - Controlled by staff_management waffle switch -->
+        {% switch "staff_management" %}
         <div x-show="activeTab === 'staff'">
             <div class="bg-white rounded-lg border border-gray-200 p-12">
                 <div class="text-center">
@@ -175,10 +201,13 @@
                 </div>
             </div>
         </div>
+        {% endswitch %}
     </div>
 
     <!-- Modals -->
 
+    <!-- Teacher Management Modals - Only show when teacher_management is enabled -->
+    {% switch "teacher_management" %}
     <!-- Add Teacher Modal -->
     <div x-show="showAddTeacherModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
         <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
@@ -301,6 +330,7 @@
             </div>
         </div>
     </div>
+    {% endswitch %}
 
     <!-- Add Student Modal -->
     <div x-show="showAddStudentModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
@@ -823,7 +853,7 @@
 function peopleManager() {
     return {
         // UI State only (no server data)
-        activeTab: 'teachers',
+        activeTab: 'students',
         error: null,
         successMessage: null,
 
@@ -965,10 +995,6 @@ function peopleManager() {
                     break;
                 case 'addStudent':
                     this.showAddStudentModal = true;
-                    break;
-                case 'bulkImport':
-                    // TODO: Implement bulk import modal
-                    alert('Bulk import functionality coming soon');
                     break;
             }
         },
