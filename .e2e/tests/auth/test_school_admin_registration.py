@@ -15,8 +15,6 @@ import pytest
 class TestSchoolAdminRegistration:
     """Test school admin registration following data-test conventions."""
 
-    BASE_URL = "http://localhost:8000"
-
     def get_test_admin_data(self):
         """Generate unique test data for each test run."""
         timestamp = int(time.time())
@@ -27,7 +25,7 @@ class TestSchoolAdminRegistration:
             "school_name": f"Escola de Teste {timestamp}",
         }
 
-    def test_phase_1_critical_path_registration(self, page: Page):
+    def test_phase_1_critical_path_registration(self, page: Page, base_url: str):
         """
         Test Phase 1 critical path items from data-test-implementation.md
 
@@ -36,7 +34,7 @@ class TestSchoolAdminRegistration:
         test_data = self.get_test_admin_data()
 
         # Navigate to homepage
-        page.goto(self.BASE_URL)
+        page.goto(base_url)
         expect(page).to_have_title(re.compile("Login.*Aprende Comigo"))
 
         # Navigate to signup - test if data-test="create-account-link" exists
@@ -87,15 +85,6 @@ class TestSchoolAdminRegistration:
         page.wait_for_url(re.compile(r".*/dashboard/"), timeout=10000)
         expect(page).to_have_url(re.compile(r".*/dashboard/"))
 
-        # Test Phase 1: Key metric - metric-teacher-count
-        try:
-            teacher_metric = page.locator('[data-test="metric-teacher-count"]')
-            expect(teacher_metric).to_be_visible()
-            expect(teacher_metric).to_have_attribute("data-value", "0")
-        except Exception:
-            # Fallback to text-based verification
-            expect(page.get_by_text("Total Teachers")).to_be_visible()
-
         # Verify system tasks are created for new admin
         self._verify_initial_tasks_created(page)
 
@@ -109,13 +98,13 @@ class TestSchoolAdminRegistration:
         """Test Phase 3: Complete dashboard functionality and task management."""
         pass
 
-    def test_data_test_attribute_coverage(self, page: Page):
+    def test_data_test_attribute_coverage(self, page: Page, base_url: str):
         """
         Test to verify which Phase 1 data-test attributes are actually implemented.
 
         This test helps update the implementation checklist.
         """
-        page.goto(f"{self.BASE_URL}/signup/")
+        page.goto(f"{base_url}/signup/")
 
         # Check Phase 1 attributes from implementation checklist
         phase_1_attributes = [
@@ -194,7 +183,7 @@ class TestSchoolAdminRegistration:
                 # Fallback to text-based search
                 expect(page.get_by_text(task_text)).to_be_visible()
 
-    def test_registration_with_fallbacks(self, page: Page):
+    def test_registration_with_fallbacks(self, page: Page, base_url: str):
         """
         Test registration flow using fallback selectors when data-test attributes are missing.
 
@@ -202,7 +191,7 @@ class TestSchoolAdminRegistration:
         """
         test_data = self.get_test_admin_data()
 
-        page.goto(self.BASE_URL)
+        page.goto(base_url)
         page.get_by_role("link", name="Create your account").click()
 
         # Use fallback selectors

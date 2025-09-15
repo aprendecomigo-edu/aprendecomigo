@@ -6,6 +6,36 @@ from playwright.sync_api import Page
 import pytest
 
 
+def pytest_addoption(parser):
+    """Add custom command line options for pytest."""
+    parser.addoption(
+        "--env",
+        action="store",
+        default="local",
+        help="Environment to run tests against: local, staging",
+        choices=["local", "staging"],
+    )
+
+
+def pytest_configure(config):
+    """Configure pytest with environment-specific settings."""
+    env = config.getoption("--env")
+
+    # Set environment-specific URLs
+    if env == "local":
+        config.base_url = "http://localhost:8000"
+    elif env == "staging":
+        config.base_url = "https://aprendecomigo-staging.up.railway.app"
+
+    print(f"\n🌍 Running E2E tests against: {env.upper()} ({config.base_url})")
+
+
+@pytest.fixture(scope="session")
+def base_url(request):
+    """Provide the base URL for the current test environment."""
+    return request.config.base_url
+
+
 @pytest.fixture(scope="session")
 def browser_context_args(browser_context_args):
     """Configure browser context for all tests."""
@@ -42,7 +72,7 @@ def test_school_data():
 
 
 @pytest.fixture(autouse=True)
-def setup_test_environment(page: Page):
+def setup_test_environment(page: Page, base_url: str):
     """
     Auto-use fixture to set up test environment before each test.
 
@@ -57,7 +87,7 @@ def setup_test_environment(page: Page):
     # Cleanup: Logout and clear any test sessions
     try:
         # Try to logout if user is logged in
-        page.goto("http://localhost:8000/logout/", timeout=5000)
+        page.goto(f"{base_url}/logout/", timeout=5000)
     except Exception:
         # If logout fails, just clear cookies
         page.context.clear_cookies()
