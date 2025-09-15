@@ -820,8 +820,13 @@ WAFFLE_SWITCH_DEFAULT = os.getenv("WAFFLE_DEFAULT_STATE", str(DEBUG)).lower() ==
 
 # Individual switch configurations (optional overrides)
 # Use environment variables to override specific switches in production
-WAFFLE_SWITCH_SCHEDULE_FEATURE = os.getenv("WAFFLE_SWITCH_SCHEDULE_FEATURE", str(DEBUG)).lower() == "true"
-WAFFLE_SWITCH_CHAT_FEATURE = os.getenv("WAFFLE_SWITCH_CHAT_FEATURE", str(DEBUG)).lower() == "true"
+# Defaults to WAFFLE_DEFAULT_STATE if not explicitly set
+WAFFLE_SWITCH_SCHEDULE_FEATURE = (
+    os.getenv("WAFFLE_SWITCH_SCHEDULE_FEATURE", os.getenv("WAFFLE_DEFAULT_STATE", str(DEBUG))).lower() == "true"
+)
+WAFFLE_SWITCH_CHAT_FEATURE = (
+    os.getenv("WAFFLE_SWITCH_CHAT_FEATURE", os.getenv("WAFFLE_DEFAULT_STATE", str(DEBUG))).lower() == "true"
+)
 
 # Alternative: Use WAFFLE_CREATE_MISSING_SWITCHES to automatically create switches
 # WAFFLE_CREATE_MISSING_SWITCHES = True  # Creates switches in database if they don't exist
