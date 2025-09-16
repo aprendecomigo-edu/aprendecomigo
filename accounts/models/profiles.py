@@ -172,6 +172,15 @@ class StudentProfile(models.Model):
         blank=True,
         help_text=_("User account for this student (null if guardian-only management)"),
     )
+    name: models.CharField = models.CharField(
+        _("student name"),
+        max_length=150,
+        blank=False,
+        null=False,
+        help_text=_(
+            "Student's full name (required for all students, especially guardian-only students without user accounts)"
+        ),
+    )
     educational_system: models.ForeignKey = models.ForeignKey(
         "EducationalSystem",
         on_delete=models.CASCADE,
@@ -241,8 +250,12 @@ class StudentProfile(models.Model):
         ]
 
     def __str__(self) -> str:
-        user_name = self.user.name if hasattr(self.user, "name") else str(self.user)
-        return f"Student Profile: {user_name}"
+        if self.user and hasattr(self.user, "name"):
+            return f"Student Profile: {self.user.name}"
+        elif self.name:
+            return f"Student Profile: {self.name}"
+        else:
+            return f"Student Profile: {self.user or 'Unknown'}"
 
     def clean(self):
         """Validate that school_year is valid for the selected educational system"""

@@ -543,6 +543,29 @@ class PeopleView(LoginRequiredMixin, View):
                 }
             )
 
+        # Add Guardian-Only students (no user accounts)
+        guardian_only_profiles = StudentProfile.objects.filter(
+            user=None,  # Guardian-Only students have no user account
+            account_type="GUARDIAN_ONLY",
+        ).select_related("guardian")
+
+        for profile in guardian_only_profiles:
+            # Use the first school from user_schools for display (admin can manage across schools)
+            school = user_schools.first() if user_schools.exists() else None
+            guardian_user = profile.guardian.user if profile.guardian else None
+
+            students.append(
+                {
+                    "id": f"guardian_only_{profile.id}",  # Unique ID for guardian-only students
+                    "email": guardian_user.email if guardian_user else "",
+                    "name": profile.name,  # Use the name field from StudentProfile
+                    "full_name": profile.name,
+                    "school_year": profile.school_year,
+                    "school": {"id": school.id, "name": school.name} if school else {"id": 0, "name": "Unknown"},
+                    "status": "active",  # Guardian-Only students are always "active"
+                }
+            )
+
         # Calculate stats
         teacher_stats = {
             "active": len([t for t in teachers if t["status"] == "active"]),
@@ -577,6 +600,10 @@ class PeopleView(LoginRequiredMixin, View):
             return self._handle_add_student(request)
         elif action == "invite_teacher":
             return self._handle_invite_teacher(request)
+        elif action == "search_students":
+            return self._handle_search_students(request)
+        elif action == "get_student_detail":
+            return self._handle_get_student_detail(request)
         else:
             return JsonResponse({"error": "Invalid action"}, status=400)
 
@@ -700,7 +727,7 @@ class PeopleView(LoginRequiredMixin, View):
                     # Handle guardian-only scenario (young student without login)
                     # Sanitize all text inputs to prevent XSS
                     student_name = escape(request.POST.get("student_name", "").strip())
-                    student_birth_date = request.POST.get("student_birth_date")
+                    student_birth_date = request.POST.get("birth_date")
                     student_school_year = escape(request.POST.get("guardian_only_student_school_year", "").strip())
                     student_notes = escape(request.POST.get("guardian_only_student_notes", "").strip())
 
@@ -771,6 +798,7 @@ class PeopleView(LoginRequiredMixin, View):
                     # Create student profile WITHOUT a user account (guardian-only)
                     student_profile = StudentProfile.objects.create(
                         user=None,  # No user account for guardian-only students
+                        name=student_name,  # Store student name directly
                         account_type="GUARDIAN_ONLY",
                         educational_system=educational_system,
                         school_year=student_school_year,
@@ -793,7 +821,7 @@ class PeopleView(LoginRequiredMixin, View):
                     # Sanitize all text inputs to prevent XSS
                     student_name = escape(request.POST.get("student_name", "").strip())
                     student_email_raw = request.POST.get("student_email", "").strip()
-                    student_birth_date = request.POST.get("student_birth_date")
+                    student_birth_date = request.POST.get("birth_date")
                     student_school_year = escape(request.POST.get("student_school_year", "").strip())
                     student_notes = escape(request.POST.get("student_notes", "").strip())
 
@@ -872,6 +900,7 @@ class PeopleView(LoginRequiredMixin, View):
                     student_profile, created = StudentProfile.objects.get_or_create(
                         user=student_user,
                         defaults={
+                            "name": student_name,
                             "account_type": "STUDENT_GUARDIAN",
                             "educational_system": educational_system,
                             "school_year": student_school_year,
@@ -882,6 +911,7 @@ class PeopleView(LoginRequiredMixin, View):
                     )
 
                     if not created:
+                        student_profile.name = student_name
                         student_profile.account_type = "STUDENT_GUARDIAN"
                         student_profile.school_year = student_school_year
                         student_profile.birth_date = student_birth_date
@@ -909,7 +939,7 @@ class PeopleView(LoginRequiredMixin, View):
                     name = escape(request.POST.get("student_name", "").strip())
                     email_raw = request.POST.get("student_email", "").strip()
                     phone = escape(request.POST.get("self_phone", "").strip())
-                    birth_date = request.POST.get("student_birth_date")
+                    birth_date = request.POST.get("birth_date")
                     school_year = escape(request.POST.get("self_school_year", "").strip())
                     tax_nr = escape(request.POST.get("self_tax_nr", "").strip())
                     address = escape(request.POST.get("self_address", "").strip())
@@ -960,6 +990,7 @@ class PeopleView(LoginRequiredMixin, View):
                     student_profile, created = StudentProfile.objects.get_or_create(
                         user=user,
                         defaults={
+                            "name": name,
                             "account_type": "ADULT_STUDENT",
                             "educational_system": educational_system,
                             "school_year": school_year,
@@ -975,6 +1006,7 @@ class PeopleView(LoginRequiredMixin, View):
                     )
 
                     if not created:
+                        student_profile.name = name
                         student_profile.account_type = "ADULT_STUDENT"
                         student_profile.school_year = school_year
                         student_profile.birth_date = birth_date
@@ -1028,6 +1060,81 @@ class PeopleView(LoginRequiredMixin, View):
         return render(
             request, "shared/partials/success_message.html", {"message": "Teacher invitation functionality coming soon"}
         )
+
+    def _handle_search_students(self, request):
+        """Handle student search requests"""
+        search_query = request.POST.get("search", "").strip()
+        return self._render_students_partial(request, search_query=search_query)
+
+    def _handle_get_student_detail(self, request):
+        """Handle student detail requests"""
+
+        try:
+            student_id = request.POST.get("student_id")
+            if not student_id:
+                return render(request, "shared/partials/error_message.html", {"error": "Student ID is required"})
+
+            # Get student with all related data
+            student = CustomUser.objects.select_related(
+                "student_profile", "student_profile__guardian", "student_profile__educational_system"
+            ).get(id=student_id)
+
+            # Get school membership
+            membership = (
+                SchoolMembership.objects.filter(user=student, role=SchoolRole.STUDENT.value)
+                .select_related("school")
+                .first()
+            )
+
+            # Prepare student detail data
+            student_detail = {
+                "id": student.id,
+                "email": student.email,
+                "name": student.name,
+                "full_name": student.get_full_name(),
+                "phone_number": student.phone_number or "",
+                "is_active": student.is_active,
+                "date_joined": student.date_joined,
+                "last_login": student.last_login,
+                "school": {"name": membership.school.name, "id": membership.school.id} if membership else None,
+            }
+
+            # Add student profile data if exists
+            if hasattr(student, "student_profile"):
+                profile = student.student_profile
+                student_detail.update(
+                    {
+                        "school_year": profile.school_year or "",
+                        "birth_date": profile.birth_date,
+                        "account_type": profile.account_type or "",
+                        "notes": profile.notes or "",
+                        "educational_system": profile.educational_system.name if profile.educational_system else "",
+                    }
+                )
+
+                # Add guardian data if exists
+                if profile.guardian:
+                    guardian = profile.guardian
+                    student_detail["guardian"] = {
+                        "id": guardian.id,
+                        "name": guardian.user.get_full_name() if guardian.user else "",
+                        "email": guardian.user.email if guardian.user else "",
+                        "phone_number": guardian.user.phone_number if guardian.user else "",
+                        "tax_number": guardian.tax_nr or "",
+                        "address": guardian.address or "",
+                        "invoice": guardian.invoice,
+                        "email_notifications_enabled": guardian.email_notifications_enabled,
+                        "sms_notifications_enabled": guardian.sms_notifications_enabled,
+                    }
+
+            return render(request, "dashboard/partials/student_detail_modal_content.html", {"student": student_detail})
+
+        except CustomUser.DoesNotExist:
+            return render(request, "shared/partials/error_message.html", {"error": "Student not found"})
+        except Exception as e:
+            return render(
+                request, "shared/partials/error_message.html", {"error": f"Error fetching student details: {e!s}"}
+            )
 
     def _render_teachers_partial(self, request):
         """Render teachers list partial for HTMX updates"""
@@ -1093,8 +1200,10 @@ class PeopleView(LoginRequiredMixin, View):
             },
         )
 
-    def _render_students_partial(self, request):
+    def _render_students_partial(self, request, search_query=None):
         """Render students list partial for HTMX updates"""
+        from django.db.models import Q
+
         from accounts.models import School, SchoolMembership
         from accounts.models.enums import SchoolRole
         from accounts.models.profiles import StudentProfile
@@ -1113,26 +1222,75 @@ class PeopleView(LoginRequiredMixin, View):
             school__in=user_schools, role=SchoolRole.STUDENT.value
         ).select_related("user", "school")
 
+        # Apply search filter if provided
+        if search_query:
+            # Search across student and guardian fields
+            student_memberships = student_memberships.filter(
+                Q(user__name__icontains=search_query)
+                | Q(user__email__icontains=search_query)
+                | Q(user__student_profile__school_year__icontains=search_query)
+            )
+
         students = []
         for membership in student_memberships:
             user = membership.user
             try:
                 profile = user.student_profile
                 school_year = profile.school_year
+                account_type = profile.account_type
+                created_at = profile.created_at  # Use StudentProfile.created_at
+
+                # Get guardian info if exists
+                guardian_info = None
+                if profile.guardian:
+                    guardian_profile = profile.guardian
+                    guardian_info = {
+                        "name": guardian_profile.user.get_full_name() if guardian_profile.user else "",
+                        "email": guardian_profile.user.email if guardian_profile.user else "",
+                        "phone": guardian_profile.user.phone_number if guardian_profile.user else "",
+                    }
             except (StudentProfile.DoesNotExist, AttributeError):
                 school_year = ""
+                account_type = ""
+                guardian_info = None
+                created_at = user.date_joined  # Fallback to user creation date if no profile
 
-            students.append(
-                {
-                    "id": user.id,
-                    "email": user.email,
-                    "name": user.name,
-                    "full_name": user.get_full_name(),
-                    "school_year": school_year,
-                    "school": {"id": membership.school.id, "name": membership.school.name},
-                    "status": "active" if user.is_active else "inactive",
-                }
-            )
+            # Include guardian info in search
+            student_data = {
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "full_name": user.get_full_name(),
+                "school_year": school_year,
+                "account_type": account_type,
+                "guardian": guardian_info,
+                "school": {"id": membership.school.id, "name": membership.school.name},
+                "status": "active" if user.is_active else "inactive",
+                "date_joined": created_at,
+            }
+
+            # Add student to results if no search or if search matches
+            if not search_query:
+                students.append(student_data)
+            else:
+                # Check if search matches any student field
+                student_matches = any(
+                    search_query.lower() in str(value).lower() for value in [user.name, user.email, school_year]
+                )
+
+                # Check if search matches guardian fields
+                guardian_matches = False
+                if guardian_info:
+                    guardian_matches = any(
+                        search_query.lower() in str(value).lower()
+                        for value in [guardian_info.get("name", ""), guardian_info.get("email", "")]
+                    )
+
+                if student_matches or guardian_matches:
+                    students.append(student_data)
+
+        # Sort students by newest first (by created_at date)
+        students.sort(key=lambda x: x["date_joined"], reverse=True)
 
         student_stats = {"total": len(students)}
 
