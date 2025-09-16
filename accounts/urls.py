@@ -15,6 +15,10 @@ from .views import (
     SchoolSettingsView,
     SignInView,
     SignUpView,
+    StudentAdultCreateView,
+    StudentGuardianOnlyCreateView,
+    # Student creation views
+    StudentSeparateCreateView,
     TeacherInvitationCreateView,
     TeacherInvitationDetailView,
     TeacherInvitationListView,
@@ -61,6 +65,12 @@ urlpatterns = [
     # School Management
     path("schools/<int:pk>/settings/", SchoolSettingsView.as_view(), name="school_settings"),
     path("schools/<int:school_pk>/members/", SchoolMemberListView.as_view(), name="school_members"),
+    # Student Creation (Account Management)
+    path("students/create/separate/", StudentSeparateCreateView.as_view(), name="student_create_separate"),
+    path(
+        "students/create/guardian-only/", StudentGuardianOnlyCreateView.as_view(), name="student_create_guardian_only"
+    ),
+    path("students/create/adult/", StudentAdultCreateView.as_view(), name="student_create_adult"),
     # Internationalization
     path("set-language/", set_language, name="set_language"),
 ]

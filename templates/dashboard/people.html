@@ -407,458 +407,64 @@
                 </button>
             </div>
 
-            <!-- Account Type Selection -->
-            <div class="py-6 border-b border-gray-100">
+            <!-- DaisyUI Tabs for Account Types -->
+            <div class="py-6">
                 <h4 class="text-lg font-medium text-gray-900 mb-2">Account Type</h4>
                 <p class="text-sm text-gray-600 mb-6">Choose how the student will access the platform and who manages the account</p>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="flex items-start space-x-3 p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                               :class="addStudentForm.account_type === 'separate' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'">
-                            <input type="radio" name="account_type" value="separate" x-model="addStudentForm.account_type"
-                                   data-test="account-type-separate"
-                                   class="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300" />
-                            <div>
-                                <div class="flex items-center space-x-2">
-                                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                    </svg>
-                                    <span class="font-medium text-gray-900">Student with Guardian</span>
+
+                <div class="tabs tabs-bordered w-full">
+                    <!-- Tab 1: Student + Guardian -->
+                    <input type="radio" name="student_account_tabs" class="tab" aria-label="Student + Guardian" checked />
+                    <div class="tab-content bg-base-100 border-base-300 rounded-box p-6">
+                        <div class="mb-4 p-4 border border-blue-200 rounded-lg bg-blue-50">
+                            <div class="flex items-start space-x-2">
+                                <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                </svg>
+                                <div>
+                                    <p class="font-medium text-blue-800">Student with Guardian</p>
+                                    <p class="text-sm text-blue-700">Both can login - student manages classes, guardian handles payments</p>
                                 </div>
-                                <p class="text-sm text-gray-500 mt-1">Both can login - student manages classes, guardian handles payments</p>
                             </div>
-                        </label>
+                        </div>
+                        {% include 'dashboard/forms/student_separate_form.html' %}
                     </div>
-                    <div>
-                        <label class="flex items-start space-x-3 p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                               :class="addStudentForm.account_type === 'guardian_only' ? 'border-orange-500 bg-orange-50' : 'border-gray-200'">
-                            <input type="radio" name="account_type" value="guardian_only" x-model="addStudentForm.account_type"
-                                   data-test="account-type-guardian-only"
-                                   class="mt-1 h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300" />
-                            <div>
-                                <div class="flex items-center space-x-2">
-                                    <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                                    </svg>
-                                    <span class="font-medium text-gray-900">Guardian-Only Account</span>
+
+                    <!-- Tab 2: Guardian Only -->
+                    <input type="radio" name="student_account_tabs" class="tab" aria-label="Guardian Only" />
+                    <div class="tab-content bg-base-100 border-base-300 rounded-box p-6">
+                        <div class="mb-4 p-4 border border-orange-200 rounded-lg bg-orange-50">
+                            <div class="flex items-start space-x-2">
+                                <svg class="w-5 h-5 text-orange-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                </svg>
+                                <div>
+                                    <p class="font-medium text-orange-800">Guardian-Only Account</p>
+                                    <p class="text-sm text-orange-700">Only guardian can login - manages everything for child</p>
                                 </div>
-                                <p class="text-sm text-gray-500 mt-1">Only guardian can login - manages everything for child</p>
                             </div>
-                        </label>
+                        </div>
+                        {% include 'dashboard/forms/student_guardian_only_form.html' %}
                     </div>
-                    <div>
-                        <label class="flex items-start space-x-3 p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                               :class="addStudentForm.account_type === 'self' ? 'border-green-500 bg-green-50' : 'border-gray-200'">
-                            <input type="radio" name="account_type" value="self" x-model="addStudentForm.account_type"
-                                   data-test="account-type-self"
-                                   class="mt-1 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300" />
-                            <div>
-                                <div class="flex items-center space-x-2">
-                                    <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                    </svg>
-                                    <span class="font-medium text-gray-900">Adult Student</span>
+
+                    <!-- Tab 3: Adult Student -->
+                    <input type="radio" name="student_account_tabs" class="tab" aria-label="Adult Student" />
+                    <div class="tab-content bg-base-100 border-base-300 rounded-box p-6">
+                        <div class="mb-4 p-4 border border-green-200 rounded-lg bg-green-50">
+                            <div class="flex items-start space-x-2">
+                                <svg class="w-5 h-5 text-green-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                                <div>
+                                    <p class="font-medium text-green-800">Adult Student</p>
+                                    <p class="text-sm text-green-700">Single account - student manages everything independently</p>
                                 </div>
-                                <p class="text-sm text-gray-500 mt-1">Single account - student manages everything independently</p>
                             </div>
-                        </label>
+                        </div>
+                        {% include 'dashboard/forms/student_adult_form.html' %}
                     </div>
                 </div>
             </div>
-
-            <!-- Form Content -->
-            <form hx-post="/people/"
-                  hx-target="#message-area"
-                  hx-swap="innerHTML"
-                  hx-trigger="submit"
-                  class="py-6"
-                  @htmx:after-request="handleFormResponse(event)">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="add_student">
-                <input type="hidden" name="account_type" x-model="addStudentForm.account_type">
-
-                <!-- Student with Separate Guardian -->
-                <template x-if="addStudentForm.account_type === 'separate'">
-                <div class="space-y-8">
-                    <!-- Student Information Section -->
-                    <div class="bg-blue-50 rounded-lg p-6">
-                        <h5 class="text-lg font-medium text-blue-900 mb-4 flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                            </svg>
-                            Student Information
-                        </h5>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Full Name *</label>
-                                <input type="text" name="student_name" required
-                                       data-test="student-name-input"
-                                       x-model="addStudentForm.student_name"
-                                       class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="Enter student's full name">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Email Address *</label>
-                                <input type="email" name="student_email" required
-                                       data-test="student-email-input"
-                                       x-model="addStudentForm.student_email"
-                                       class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="student@example.com">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Birth Date *</label>
-                                <input type="date" name="birth_date" required
-                                       data-test="student-birth-date-input"
-                                       x-model="addStudentForm.birth_date"
-                                       class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">School Year</label>
-                                <select name="student_school_year" x-model="addStudentForm.student_school_year"
-                                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="">Select school year</option>
-                                    <option value="1">1º ano</option>
-                                    <option value="2">2º ano</option>
-                                    <option value="3">3º ano</option>
-                                    <option value="4">4º ano</option>
-                                    <option value="5">5º ano</option>
-                                    <option value="6">6º ano</option>
-                                    <option value="7">7º ano</option>
-                                    <option value="8">8º ano</option>
-                                    <option value="9">9º ano</option>
-                                    <option value="10">10º ano</option>
-                                    <option value="11">11º ano</option>
-                                    <option value="12">12º ano</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="mt-4 space-y-1">
-                            <label class="block text-sm font-medium text-gray-700">Notes</label>
-                            <textarea name="student_notes" x-model="addStudentForm.student_notes"
-                                      class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                      rows="2" placeholder="Special needs, preferences, or other relevant information..."></textarea>
-                        </div>
-                    </div>
-
-                    <!-- Guardian Information Section -->
-                    <div class="bg-green-50 rounded-lg p-6">
-                        <h5 class="text-lg font-medium text-green-900 mb-4 flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                            </svg>
-                            Guardian/Parent Information
-                        </h5>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Guardian Name *</label>
-                                <input type="text" name="guardian_name" required
-                                       data-test="guardian-name-input"
-                                       x-model="addStudentForm.guardian_name"
-                                       class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
-                                       placeholder="Enter guardian's full name">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Guardian Email *</label>
-                                <input type="email" name="guardian_email" required
-                                       data-test="guardian-email-input"
-                                       x-model="addStudentForm.guardian_email"
-                                       class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
-                                       placeholder="guardian@example.com">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Phone Number</label>
-                                <input type="tel" name="guardian_phone" x-model="addStudentForm.guardian_phone"
-                                       class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
-                                       placeholder="+351 912 345 678">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Tax Number</label>
-                                <input type="text" name="guardian_tax_nr" x-model="addStudentForm.guardian_tax_nr"
-                                       class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
-                                       placeholder="123456789">
-                            </div>
-                        </div>
-                        <div class="mt-4 space-y-1">
-                            <label class="block text-sm font-medium text-gray-700">Address</label>
-                            <textarea name="guardian_address" x-model="addStudentForm.guardian_address"
-                                      class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
-                                      rows="2" placeholder="Street address, postal code, city..."></textarea>
-                        </div>
-                        <div class="flex flex-wrap gap-6 mt-4">
-                            <label class="flex items-center space-x-2 cursor-pointer">
-                                <input type="checkbox" name="guardian_invoice" x-model="addStudentForm.guardian_invoice" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
-                                <span class="text-sm text-gray-700">Issue invoices</span>
-                            </label>
-                            <label class="flex items-center space-x-2 cursor-pointer">
-                                <input type="checkbox" name="guardian_email_notifications" x-model="addStudentForm.guardian_email_notifications" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" checked />
-                                <span class="text-sm text-gray-700">Email notifications</span>
-                            </label>
-                            <label class="flex items-center space-x-2 cursor-pointer">
-                                <input type="checkbox" name="guardian_sms_notifications" x-model="addStudentForm.guardian_sms_notifications" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
-                                <span class="text-sm text-gray-700">SMS notifications</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                </template>
-
-                <!-- Guardian-Only Account (Young Student) -->
-                <template x-if="addStudentForm.account_type === 'guardian_only'">
-                <div class="space-y-8">
-                    <!-- Student Basic Information Section -->
-                    <div class="bg-orange-50 rounded-lg p-6">
-                        <h5 class="text-lg font-medium text-orange-900 mb-4 flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                            </svg>
-                            Student Information
-                        </h5>
-                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                            <div class="flex items-start space-x-2">
-                                <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                <span class="text-blue-700 text-sm">Student profile without login credentials. Guardian manages everything through their account.</span>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Student Full Name *</label>
-                                <input type="text" name="student_name" required
-                                       data-test="student-name-input"
-                                       x-model="addStudentForm.student_name"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="Enter student's full name">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Birth Date *</label>
-                                <input type="date" name="birth_date" required
-                                       data-test="student-birth-date-input"
-                                       x-model="addStudentForm.birth_date"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">School Year</label>
-                                <select name="guardian_only_student_school_year" x-model="addStudentForm.guardian_only_student_school_year"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="">Select school year</option>
-                                    <option value="1">1º ano</option>
-                                    <option value="2">2º ano</option>
-                                    <option value="3">3º ano</option>
-                                    <option value="4">4º ano</option>
-                                    <option value="5">5º ano</option>
-                                    <option value="6">6º ano</option>
-                                    <option value="7">7º ano</option>
-                                    <option value="8">8º ano</option>
-                                    <option value="9">9º ano</option>
-                                    <option value="10">10º ano</option>
-                                    <option value="11">11º ano</option>
-                                    <option value="12">12º ano</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="space-y-1 mt-4">
-                            <label class="block text-sm font-medium text-gray-700">Notes</label>
-                            <textarea name="guardian_only_student_notes" x-model="addStudentForm.guardian_only_student_notes"
-                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                      rows="2" placeholder="Special needs, preferences, or other relevant information..."></textarea>
-                        </div>
-                    </div>
-
-                    <!-- Guardian Information Section -->
-                    <div class="bg-green-50 rounded-lg p-6">
-                        <h5 class="text-lg font-medium text-green-900 mb-4 flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                            </svg>
-                            Guardian Account & Information
-                        </h5>
-                        <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
-                            <div class="flex items-start space-x-2">
-                                <svg class="w-5 h-5 text-orange-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>
-                                </svg>
-                                <span class="text-orange-700 text-sm">Guardian will have full access to manage the student's account, bookings, and payments.</span>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Guardian Name *</label>
-                                <input type="text" name="guardian_name" required
-                                       data-test="guardian-name-input"
-                                       x-model="addStudentForm.guardian_name"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="Enter guardian's full name">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Guardian Email *</label>
-                                <input type="email" name="guardian_email" required
-                                       data-test="guardian-email-input"
-                                       x-model="addStudentForm.guardian_email"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="guardian@example.com">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Phone Number</label>
-                                <input type="tel" name="guardian_only_guardian_phone" x-model="addStudentForm.guardian_only_guardian_phone"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="+351 912 345 678">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Tax Number</label>
-                                <input type="text" name="guardian_only_guardian_tax_nr" x-model="addStudentForm.guardian_only_guardian_tax_nr"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="123456789">
-                            </div>
-                        </div>
-                        <div class="space-y-1 mt-4">
-                            <label class="block text-sm font-medium text-gray-700">Address</label>
-                            <textarea name="guardian_only_guardian_address" x-model="addStudentForm.guardian_only_guardian_address"
-                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                      rows="2" placeholder="Street address, postal code, city..."></textarea>
-                        </div>
-                        <div class="flex flex-wrap gap-4 mt-4">
-                            <div class="flex items-center space-x-2">
-                                <input type="checkbox" name="guardian_only_guardian_invoice" x-model="addStudentForm.guardian_only_guardian_invoice"
-                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
-                                <label class="text-sm text-gray-700 cursor-pointer">Issue invoices</label>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <input type="checkbox" name="guardian_only_guardian_email_notifications" x-model="addStudentForm.guardian_only_guardian_email_notifications"
-                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" checked />
-                                <label class="text-sm text-gray-700 cursor-pointer">Email notifications</label>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <input type="checkbox" name="guardian_only_guardian_sms_notifications" x-model="addStudentForm.guardian_only_guardian_sms_notifications"
-                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
-                                <label class="text-sm text-gray-700 cursor-pointer">SMS notifications</label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                </template>
-
-                <!-- Adult Student (Self-Guardian) -->
-                <template x-if="addStudentForm.account_type === 'self'">
-                <div class="space-y-6">
-                    <div class="bg-gradient-to-br from-green-50 to-blue-50 rounded-lg p-6">
-                        <h5 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                            </svg>
-                            Student Information
-                        </h5>
-
-                        <!-- Personal Information -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Full Name *</label>
-                                <input type="text" name="student_name" required
-                                       data-test="student-name-input"
-                                       x-model="addStudentForm.student_name"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="Enter your full name">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Email Address *</label>
-                                <input type="email" name="student_email" required
-                                       data-test="student-email-input"
-                                       x-model="addStudentForm.student_email"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="your@email.com">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Phone Number</label>
-                                <input type="tel" name="self_phone"
-                                       x-model="addStudentForm.self_phone"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="+351 912 345 678">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Birth Date *</label>
-                                <input type="date" name="birth_date" required
-                                       data-test="student-birth-date-input"
-                                       x-model="addStudentForm.birth_date"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">School Year</label>
-                                <select name="self_school_year" x-model="addStudentForm.self_school_year"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="">Select school year</option>
-                                    <option value="1">1º ano</option>
-                                    <option value="2">2º ano</option>
-                                    <option value="3">3º ano</option>
-                                    <option value="4">4º ano</option>
-                                    <option value="5">5º ano</option>
-                                    <option value="6">6º ano</option>
-                                    <option value="7">7º ano</option>
-                                    <option value="8">8º ano</option>
-                                    <option value="9">9º ano</option>
-                                    <option value="10">10º ano</option>
-                                    <option value="11">11º ano</option>
-                                    <option value="12">12º ano</option>
-                                </select>
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Tax Number</label>
-                                <input type="text" name="self_tax_nr" x-model="addStudentForm.self_tax_nr"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="123456789">
-                            </div>
-                        </div>
-
-                        <!-- Address -->
-                        <div class="space-y-1 mt-4">
-                            <label class="block text-sm font-medium text-gray-700">Address</label>
-                            <textarea name="self_address" x-model="addStudentForm.self_address"
-                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                      rows="2" placeholder="Street address, postal code, city..."></textarea>
-                        </div>
-
-                        <!-- Additional Information -->
-                        <div class="space-y-1 mt-4">
-                            <label class="block text-sm font-medium text-gray-700">Notes</label>
-                            <textarea name="self_notes" x-model="addStudentForm.self_notes"
-                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                      rows="2" placeholder="Special needs, preferences, or other relevant information..."></textarea>
-                        </div>
-
-                        <!-- Preferences -->
-                        <div class="flex flex-wrap gap-4 mt-4">
-                            <div class="flex items-center space-x-2">
-                                <input type="checkbox" name="self_invoice" x-model="addStudentForm.self_invoice"
-                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
-                                <label class="text-sm text-gray-700 cursor-pointer">Issue invoices</label>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <input type="checkbox" name="self_email_notifications" x-model="addStudentForm.self_email_notifications"
-                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" checked />
-                                <label class="text-sm text-gray-700 cursor-pointer">Email notifications</label>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <input type="checkbox" name="self_sms_notifications" x-model="addStudentForm.self_sms_notifications"
-                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
-                                <label class="text-sm text-gray-700 cursor-pointer">SMS notifications</label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                </template>
-
-                <!-- Form Actions -->
-                <div class="flex justify-end gap-3 pt-6 border-t border-gray-200">
-                    <button type="button" @click="showAddStudentModal = false" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        Cancel
-                    </button>
-                    <button type="submit" data-test="submit-student-form" class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                        </svg>
-                        Add Student
-                    </button>
-                </div>
-            </form>
             </div>
         </div>
     </div>
@@ -987,15 +593,15 @@ function peopleManager() {
             send_email: true
         },
 
-        addStudentForm: {
-            account_type: 'separate', // Default to separate guardian
-            // Shared fields (used by all account types)
-            student_name: '',
-            student_email: '',
+        // Clean form state objects for each account type
+        separateForm: {
+            // Student fields
+            name: '',
+            email: '',
             birth_date: '',
-            // Separate Guardian fields
-            student_school_year: '',
-            student_notes: '',
+            school_year: '',
+            notes: '',
+            // Guardian fields
             guardian_name: '',
             guardian_email: '',
             guardian_phone: '',
@@ -1003,77 +609,44 @@ function peopleManager() {
             guardian_address: '',
             guardian_invoice: false,
             guardian_email_notifications: true,
-            guardian_sms_notifications: false,
-            // Guardian-Only fields
-            guardian_only_student_name: '',
-            guardian_only_student_birth_date: '',
-            guardian_only_student_school_year: '',
-            guardian_only_student_notes: '',
-            guardian_only_guardian_name: '',
-            guardian_only_guardian_email: '',
-            guardian_only_guardian_phone: '',
-            guardian_only_guardian_tax_nr: '',
-            guardian_only_guardian_address: '',
-            guardian_only_guardian_invoice: false,
-            guardian_only_guardian_email_notifications: true,
-            guardian_only_guardian_sms_notifications: false,
-            // Self Guardian fields
-            self_name: '',
-            self_email: '',
-            self_phone: '',
-            self_birth_date: '',
-            self_school_year: '',
-            self_tax_nr: '',
-            self_address: '',
-            self_notes: '',
-            self_invoice: false,
-            self_email_notifications: true,
-            self_sms_notifications: false
+            guardian_sms_notifications: false
         },
 
-        // Watch for account type changes to update form validation
+        guardianOnlyForm: {
+            // Student profile fields
+            name: '',
+            birth_date: '',
+            school_year: '',
+            notes: '',
+            // Guardian account fields
+            guardian_name: '',
+            guardian_email: '',
+            guardian_phone: '',
+            guardian_tax_nr: '',
+            guardian_address: '',
+            guardian_invoice: false,
+            guardian_email_notifications: true,
+            guardian_sms_notifications: false
+        },
+
+        adultForm: {
+            // Adult student fields
+            name: '',
+            email: '',
+            birth_date: '',
+            phone: '',
+            school_year: '',
+            tax_nr: '',
+            address: '',
+            notes: '',
+            invoice: false,
+            email_notifications: true,
+            sms_notifications: false
+        },
+
+        // Initialize component
         init() {
-            this.$watch('addStudentForm.account_type', (value) => {
-                this.updateFormValidation(value);
-            });
-        },
-
-        updateFormValidation(accountType) {
-            // Remove all required attributes first
-            document.querySelectorAll('#addStudentModal [required]').forEach(field => {
-                field.removeAttribute('required');
-            });
-
-            // Add required attributes based on account type
-            if (accountType === 'separate') {
-                // Student fields
-                const studentFields = ['student_name', 'student_email', 'birth_date'];
-                studentFields.forEach(fieldName => {
-                    const field = document.querySelector(`#addStudentModal [name="${fieldName}"]`);
-                    if (field) field.setAttribute('required', 'required');
-                });
-
-                // Guardian fields
-                const guardianFields = ['guardian_name', 'guardian_email'];
-                guardianFields.forEach(fieldName => {
-                    const field = document.querySelector(`#addStudentModal [name="${fieldName}"]`);
-                    if (field) field.setAttribute('required', 'required');
-                });
-            } else if (accountType === 'guardian_only') {
-                // Student basic info
-                const fields = ['student_name', 'birth_date', 'guardian_name', 'guardian_email'];
-                fields.forEach(fieldName => {
-                    const field = document.querySelector(`#addStudentModal [name="${fieldName}"]`);
-                    if (field) field.setAttribute('required', 'required');
-                });
-            } else if (accountType === 'self') {
-                // Adult student fields
-                const fields = ['student_name', 'student_email', 'birth_date'];
-                fields.forEach(fieldName => {
-                    const field = document.querySelector(`#addStudentModal [name="${fieldName}"]`);
-                    if (field) field.setAttribute('required', 'required');
-                });
-            }
+            // No complex form validation needed - each separate form handles its own validation
         },
 
         // Helper methods for UI state
@@ -1088,48 +661,20 @@ function peopleManager() {
                 school_id: 1,
                 send_email: true
             };
-            this.addStudentForm = {
-                account_type: 'separate',
-                // Shared fields (used by all account types)
-                student_name: '',
-                student_email: '',
-                birth_date: '',
-                // Separate Guardian fields
-                student_school_year: '',
-                student_notes: '',
-                guardian_name: '',
-                guardian_email: '',
-                guardian_phone: '',
-                guardian_tax_nr: '',
-                guardian_address: '',
-                guardian_invoice: false,
-                guardian_email_notifications: true,
-                guardian_sms_notifications: false,
-                // Guardian-Only fields
-                guardian_only_student_name: '',
-                guardian_only_student_birth_date: '',
-                guardian_only_student_school_year: '',
-                guardian_only_student_notes: '',
-                guardian_only_guardian_name: '',
-                guardian_only_guardian_email: '',
-                guardian_only_guardian_phone: '',
-                guardian_only_guardian_tax_nr: '',
-                guardian_only_guardian_address: '',
-                guardian_only_guardian_invoice: false,
-                guardian_only_guardian_email_notifications: true,
-                guardian_only_guardian_sms_notifications: false,
-                // Self Guardian fields
-                self_name: '',
-                self_email: '',
-                self_phone: '',
-                self_birth_date: '',
-                self_school_year: '',
-                self_tax_nr: '',
-                self_address: '',
-                self_notes: '',
-                self_invoice: false,
-                self_email_notifications: true,
-                self_sms_notifications: false
+            // Reset clean form state objects
+            this.separateForm = {
+                name: '', email: '', birth_date: '', school_year: '', notes: '',
+                guardian_name: '', guardian_email: '', guardian_phone: '', guardian_tax_nr: '', guardian_address: '',
+                guardian_invoice: false, guardian_email_notifications: true, guardian_sms_notifications: false
+            };
+            this.guardianOnlyForm = {
+                name: '', birth_date: '', school_year: '', notes: '',
+                guardian_name: '', guardian_email: '', guardian_phone: '', guardian_tax_nr: '', guardian_address: '',
+                guardian_invoice: false, guardian_email_notifications: true, guardian_sms_notifications: false
+            };
+            this.adultForm = {
+                name: '', email: '', birth_date: '', phone: '', school_year: '', tax_nr: '', address: '', notes: '',
+                invoice: false, email_notifications: true, sms_notifications: false
             };
         },
 

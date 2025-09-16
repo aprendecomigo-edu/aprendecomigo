@@ -24,12 +24,14 @@ from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.validators import validate_email
 from django.db import transaction
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
+from django.utils.html import escape
 from django.utils.translation import gettext as _
 from django.views import View
 from django.views.decorators.csrf import csrf_protect
@@ -41,6 +43,8 @@ from messaging.services import send_magic_link_email, send_sms_otp
 
 from .db_queries import create_user_school_and_membership, get_user_by_email, user_exists
 from .models import School, SchoolMembership, SchoolSettings, TeacherInvitation
+from .models.profiles import StudentProfile
+from .models.schools import SchoolRole
 from .permissions import IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin
 
 User = get_user_model()
@@ -1453,3 +1457,380 @@ def root_redirect(request):
         return HttpResponseRedirect(reverse("dashboard:dashboard"))
     else:
         return HttpResponseRedirect(reverse("accounts:signin"))
+
+
+# ==========================================
+# Student Creation Views (Refactored from dashboard.views.PeopleView)
+# ==========================================
+
+
+class BaseStudentCreateView(LoginRequiredMixin, View):
+    """Base class for student creation views with common functionality."""
+
+    def _validate_email_format(self, email):
+        """Validate and return clean email or raise ValidationError"""
+        if not email:
+            raise ValidationError("Email is required")
+        try:
+            validate_email(email)
+            return email.lower()
+        except ValidationError:
+            raise ValidationError(f"Invalid email format: {email}")
+
+    def _get_user_schools(self, user):
+        """Get schools accessible to the current user"""
+        if user.is_staff or user.is_superuser:
+            return School.objects.all()
+        school_ids = SchoolMembership.objects.filter(user=user).values_list("school_id", flat=True)
+        return School.objects.filter(id__in=school_ids)
+
+    def _get_educational_system(self):
+        """Get default educational system (Portugal)"""
+        from accounts.models.educational import EducationalSystem
+
+        educational_system = EducationalSystem.objects.filter(code="pt").first()
+        if not educational_system:
+            educational_system = EducationalSystem.objects.first()
+        return educational_system
+
+    def _render_error(self, request, error_message):
+        """Render error message template"""
+        logger.error(f"Student creation error: {error_message}")
+        return render(
+            request,
+            "shared/partials/error_message.html",
+            {"error": error_message},
+        )
+
+    def _render_success(self, request, success_message):
+        """Render success message template"""
+        logger.info(f"Student creation success: {success_message}")
+        return render(
+            request,
+            "shared/partials/success_message.html",
+            {"message": success_message},
+        )
+
+
+@method_decorator(csrf_protect, name="dispatch")
+class StudentSeparateCreateView(BaseStudentCreateView):
+    """Create both student and guardian user accounts (separate logins)."""
+
+    def post(self, request):
+        """Handle Student + Guardian account creation"""
+        from django.db import transaction
+
+        from accounts.models.profiles import GuardianProfile
+        from accounts.permissions import PermissionService
+
+        try:
+            # Sanitize and extract form data
+            student_name = escape(request.POST.get("name", "").strip())
+            student_email_raw = request.POST.get("email", "").strip()
+            student_birth_date = request.POST.get("birth_date")
+            student_school_year = escape(request.POST.get("school_year", "").strip())
+            student_notes = escape(request.POST.get("notes", "").strip())
+
+            guardian_name = escape(request.POST.get("guardian_name", "").strip())
+            guardian_email_raw = request.POST.get("guardian_email", "").strip()
+            guardian_phone = escape(request.POST.get("guardian_phone", "").strip())
+            guardian_tax_nr = escape(request.POST.get("guardian_tax_nr", "").strip())
+            guardian_address = escape(request.POST.get("guardian_address", "").strip())
+            guardian_invoice = request.POST.get("guardian_invoice") == "on"
+            guardian_email_notifications = request.POST.get("guardian_email_notifications") == "on"
+            guardian_sms_notifications = request.POST.get("guardian_sms_notifications") == "on"
+
+            # Log form data for debugging
+            logger.info(f"Processing separate student creation: student={student_name}, guardian={guardian_name}")
+
+            # Validate and sanitize emails
+            try:
+                student_email = self._validate_email_format(student_email_raw)
+                guardian_email = self._validate_email_format(guardian_email_raw)
+            except ValidationError as e:
+                return self._render_error(request, str(e))
+
+            # Validate required fields
+            if not all([student_name, student_email, student_birth_date, guardian_name, guardian_email]):
+                missing_fields = []
+                if not student_name:
+                    missing_fields.append("student name")
+                if not student_email:
+                    missing_fields.append("student email")
+                if not student_birth_date:
+                    missing_fields.append("student birth date")
+                if not guardian_name:
+                    missing_fields.append("guardian name")
+                if not guardian_email:
+                    missing_fields.append("guardian email")
+
+                error_msg = f"Missing required fields: {', '.join(missing_fields)}"
+                return self._render_error(request, error_msg)
+
+            # Get user's schools and educational system
+            user_schools = self._get_user_schools(request.user)
+            educational_system = self._get_educational_system()
+
+            with transaction.atomic():
+                # Create or get student user
+                try:
+                    student_user = User.objects.get(email=student_email)
+                except User.DoesNotExist:
+                    student_user = User.objects.create_user(email=student_email, name=student_name)
+
+                # Create or get guardian user
+                try:
+                    guardian_user = User.objects.get(email=guardian_email)
+                except User.DoesNotExist:
+                    guardian_user = User.objects.create_user(
+                        email=guardian_email, name=guardian_name, phone_number=guardian_phone
+                    )
+
+                # Create guardian profile
+                guardian_profile, _ = GuardianProfile.objects.get_or_create(
+                    user=guardian_user,
+                    defaults={
+                        "address": guardian_address,
+                        "tax_nr": guardian_tax_nr,
+                        "invoice": guardian_invoice,
+                        "email_notifications_enabled": guardian_email_notifications,
+                        "sms_notifications_enabled": guardian_sms_notifications,
+                    },
+                )
+
+                # Create student profile
+                student_profile = StudentProfile.objects.create(
+                    user=student_user,
+                    name=student_name,
+                    account_type="STUDENT_GUARDIAN",
+                    educational_system=educational_system,
+                    school_year=student_school_year,
+                    birth_date=student_birth_date,
+                    guardian=guardian_profile,
+                    notes=student_notes,
+                )
+
+                # Setup permissions
+                PermissionService.setup_permissions_for_student(student_profile)
+
+                # Add both users to schools
+                for school in user_schools:
+                    SchoolMembership.objects.get_or_create(
+                        user=student_user, school=school, defaults={"role": SchoolRole.STUDENT}
+                    )
+                    SchoolMembership.objects.get_or_create(
+                        user=guardian_user, school=school, defaults={"role": SchoolRole.GUARDIAN}
+                    )
+
+            success_message = f"Successfully created student account for {student_name} and guardian account for {guardian_name}. Both can now login independently."
+            return self._render_success(request, success_message)
+
+        except Exception as e:
+            logger.error(f"Unexpected error in separate student creation: {e}", exc_info=True)
+            return self._render_error(request, "An unexpected error occurred. Please try again.")
+
+
+@method_decorator(csrf_protect, name="dispatch")
+class StudentGuardianOnlyCreateView(BaseStudentCreateView):
+    """Create guardian account only, with student profile managed by guardian."""
+
+    def post(self, request):
+        """Handle Guardian-Only account creation"""
+        from django.db import transaction
+
+        from accounts.models.profiles import GuardianProfile
+        from accounts.permissions import PermissionService
+
+        try:
+            # Sanitize and extract form data
+            student_name = escape(request.POST.get("name", "").strip())
+            student_birth_date = request.POST.get("birth_date")
+            student_school_year = escape(request.POST.get("school_year", "").strip())
+            student_notes = escape(request.POST.get("notes", "").strip())
+
+            guardian_name = escape(request.POST.get("guardian_name", "").strip())
+            guardian_email_raw = request.POST.get("guardian_email", "").strip()
+            guardian_phone = escape(request.POST.get("guardian_phone", "").strip())
+            guardian_tax_nr = escape(request.POST.get("guardian_tax_nr", "").strip())
+            guardian_address = escape(request.POST.get("guardian_address", "").strip())
+            guardian_invoice = request.POST.get("guardian_invoice") == "on"
+            guardian_email_notifications = request.POST.get("guardian_email_notifications") == "on"
+            guardian_sms_notifications = request.POST.get("guardian_sms_notifications") == "on"
+
+            # Log form data for debugging
+            logger.info(f"Processing guardian-only creation: student={student_name}, guardian={guardian_name}")
+
+            # Validate and sanitize email
+            try:
+                guardian_email = self._validate_email_format(guardian_email_raw)
+            except ValidationError as e:
+                return self._render_error(request, str(e))
+
+            # Validate required fields
+            if not all([student_name, student_birth_date, guardian_name, guardian_email]):
+                missing_fields = []
+                if not student_name:
+                    missing_fields.append("student name")
+                if not student_birth_date:
+                    missing_fields.append("student birth date")
+                if not guardian_name:
+                    missing_fields.append("guardian name")
+                if not guardian_email:
+                    missing_fields.append("guardian email")
+
+                error_msg = f"Missing required fields: {', '.join(missing_fields)}"
+                return self._render_error(request, error_msg)
+
+            # Get user's schools and educational system
+            user_schools = self._get_user_schools(request.user)
+            educational_system = self._get_educational_system()
+
+            with transaction.atomic():
+                # Create or get guardian user
+                try:
+                    guardian_user = User.objects.get(email=guardian_email)
+                except User.DoesNotExist:
+                    guardian_user = User.objects.create_user(
+                        email=guardian_email, name=guardian_name, phone_number=guardian_phone
+                    )
+
+                # Create guardian profile
+                guardian_profile, _ = GuardianProfile.objects.get_or_create(
+                    user=guardian_user,
+                    defaults={
+                        "address": guardian_address,
+                        "tax_nr": guardian_tax_nr,
+                        "invoice": guardian_invoice,
+                        "email_notifications_enabled": guardian_email_notifications,
+                        "sms_notifications_enabled": guardian_sms_notifications,
+                    },
+                )
+
+                # Create student profile WITHOUT a user account (guardian-only)
+                student_profile = StudentProfile.objects.create(
+                    user=None,  # No user account for guardian-only students
+                    name=student_name,  # Store student name directly
+                    account_type="GUARDIAN_ONLY",
+                    educational_system=educational_system,
+                    school_year=student_school_year,
+                    birth_date=student_birth_date,
+                    guardian=guardian_profile,
+                    notes=student_notes,
+                )
+
+                # Setup permissions
+                PermissionService.setup_permissions_for_student(student_profile)
+
+                # Add guardian to schools
+                for school in user_schools:
+                    SchoolMembership.objects.get_or_create(
+                        user=guardian_user, school=school, defaults={"role": SchoolRole.GUARDIAN}
+                    )
+
+            success_message = f"Successfully created guardian account for {guardian_name} who will manage {student_name}'s profile. Only the guardian can login."
+            return self._render_success(request, success_message)
+
+        except Exception as e:
+            logger.error(f"Unexpected error in guardian-only creation: {e}", exc_info=True)
+            return self._render_error(request, "An unexpected error occurred. Please try again.")
+
+
+@method_decorator(csrf_protect, name="dispatch")
+class StudentAdultCreateView(BaseStudentCreateView):
+    """Create adult student account (self-managed)."""
+
+    def post(self, request):
+        """Handle Adult Student account creation"""
+        from django.db import transaction
+
+        from accounts.models.profiles import GuardianProfile
+        from accounts.permissions import PermissionService
+
+        try:
+            # Sanitize and extract form data
+            student_name = escape(request.POST.get("name", "").strip())
+            student_email_raw = request.POST.get("email", "").strip()
+            student_birth_date = request.POST.get("birth_date")
+            student_phone = escape(request.POST.get("phone", "").strip())
+            student_school_year = escape(request.POST.get("school_year", "").strip())
+            student_tax_nr = escape(request.POST.get("tax_nr", "").strip())
+            student_address = escape(request.POST.get("address", "").strip())
+            student_notes = escape(request.POST.get("notes", "").strip())
+            student_invoice = request.POST.get("invoice") == "on"
+            student_email_notifications = request.POST.get("email_notifications") == "on"
+            student_sms_notifications = request.POST.get("sms_notifications") == "on"
+
+            # Log form data for debugging
+            logger.info(f"Processing adult student creation: student={student_name}")
+
+            # Validate and sanitize email
+            try:
+                student_email = self._validate_email_format(student_email_raw)
+            except ValidationError as e:
+                return self._render_error(request, str(e))
+
+            # Validate required fields
+            if not all([student_name, student_email, student_birth_date]):
+                missing_fields = []
+                if not student_name:
+                    missing_fields.append("student name")
+                if not student_email:
+                    missing_fields.append("student email")
+                if not student_birth_date:
+                    missing_fields.append("student birth date")
+
+                error_msg = f"Missing required fields: {', '.join(missing_fields)}"
+                return self._render_error(request, error_msg)
+
+            # Get user's schools and educational system
+            user_schools = self._get_user_schools(request.user)
+            educational_system = self._get_educational_system()
+
+            with transaction.atomic():
+                # Create or get student user
+                try:
+                    student_user = User.objects.get(email=student_email)
+                except User.DoesNotExist:
+                    student_user = User.objects.create_user(
+                        email=student_email, name=student_name, phone_number=student_phone
+                    )
+
+                # Create or update guardian profile for self (adult students are their own guardian)
+                guardian_profile, _ = GuardianProfile.objects.get_or_create(
+                    user=student_user,
+                    defaults={
+                        "address": student_address,
+                        "tax_nr": student_tax_nr,
+                        "invoice": student_invoice,
+                        "email_notifications_enabled": student_email_notifications,
+                        "sms_notifications_enabled": student_sms_notifications,
+                    },
+                )
+
+                # Create student profile
+                student_profile = StudentProfile.objects.create(
+                    user=student_user,
+                    name=student_name,
+                    account_type="SELF",
+                    educational_system=educational_system,
+                    school_year=student_school_year,
+                    birth_date=student_birth_date,
+                    guardian=guardian_profile,  # Adult student is their own guardian
+                    notes=student_notes,
+                )
+
+                # Setup permissions
+                PermissionService.setup_permissions_for_student(student_profile)
+
+                # Add student to schools
+                for school in user_schools:
+                    SchoolMembership.objects.get_or_create(
+                        user=student_user, school=school, defaults={"role": SchoolRole.STUDENT}
+                    )
+
+            success_message = f"Successfully created adult student account for {student_name}. They can now login and manage their own account."
+            return self._render_success(request, success_message)
+
+        except Exception as e:
+            logger.error(f"Unexpected error in adult student creation: {e}", exc_info=True)
+            return self._render_error(request, "An unexpected error occurred. Please try again.")

@@ -33,6 +33,7 @@ class SchoolRole(models.TextChoices):
     TEACHER = "teacher", _("Teacher")  # Can manage classes and students
     STUDENT = "student", _("Student")  # Access to assigned classes
     PARENT = "parent", _("Parent")  # Can manage child accounts and approve purchases
+    GUARDIAN = "guardian", _("Guardian")  # Can manage child accounts and approve purchases
 
 
 class School(models.Model):

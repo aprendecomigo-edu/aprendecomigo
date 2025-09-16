@@ -67,7 +67,7 @@ class HTMXAddStudentIntegrationTests(BaseTestCase):
             "account_type": "separate",
             "student_name": "HTMX Student",
             "student_email": "htmx.student@test.com",
-            "student_birth_date": "2008-01-15",
+            "birth_date": "2008-01-15",
             "student_school_year": "10",
             "guardian_name": "HTMX Guardian",
             "guardian_email": "htmx.guardian@test.com",
@@ -120,7 +120,7 @@ class HTMXAddStudentIntegrationTests(BaseTestCase):
             "account_type": "separate",
             "student_name": "Test Student",
             "student_email": "test@example.com",
-            "student_birth_date": "2008-01-15",
+            "birth_date": "2008-01-15",
             "guardian_name": "Test Guardian",
             "guardian_email": "guardian@example.com",
         }
@@ -152,7 +152,7 @@ class HTMXAddStudentIntegrationTests(BaseTestCase):
             "action": "add_student",
             "account_type": "guardian_only",
             "student_name": "Young Student",
-            "student_birth_date": "2015-01-01",
+            "birth_date": "2015-01-01",
             "guardian_name": "Guardian",
             "guardian_email": "guardian@test.com",
         }
@@ -195,7 +195,7 @@ class FieldValidationEdgeCaseTests(BaseTestCase):
             "account_type": "self",
             "student_name": "Young Adult Student",
             "student_email": "young.adult@test.com",
-            "student_birth_date": sixteen_years_ago.strftime("%Y-%m-%d"),
+            "birth_date": sixteen_years_ago.strftime("%Y-%m-%d"),
         }
 
         with patch("accounts.permissions.PermissionService.setup_permissions_for_student"):
@@ -212,7 +212,7 @@ class FieldValidationEdgeCaseTests(BaseTestCase):
 
         # Test creating ADULT_STUDENT for an 18-year-old (also valid)
         eighteen_years_ago = today.replace(year=today.year - 18)
-        form_data["student_birth_date"] = eighteen_years_ago.strftime("%Y-%m-%d")
+        form_data["birth_date"] = eighteen_years_ago.strftime("%Y-%m-%d")
         form_data["student_email"] = "adult@test.com"
         form_data["student_name"] = "Adult Student"
 
@@ -247,7 +247,7 @@ class FieldValidationEdgeCaseTests(BaseTestCase):
                 "account_type": "self",
                 "student_name": "Test Student",
                 "student_email": invalid_email,
-                "student_birth_date": "1995-01-01",
+                "birth_date": "1995-01-01",
             }
 
             response = self.client.post(self.people_url, form_data)
@@ -272,7 +272,7 @@ class FieldValidationEdgeCaseTests(BaseTestCase):
                 "action": "add_student",
                 "account_type": "guardian_only",
                 "student_name": f"Student {case_name}",
-                "student_birth_date": birth_date,
+                "birth_date": birth_date,
                 "guardian_name": "Guardian",
                 "guardian_email": f"guardian.{case_name.lower().replace(' ', '.')}@test.com",
             }
@@ -297,7 +297,7 @@ class FieldValidationEdgeCaseTests(BaseTestCase):
                 "account_type": "self",
                 "student_name": f"Student Year {year}",
                 "student_email": f"student.year.{year}@test.com",
-                "student_birth_date": "1995-01-01",
+                "birth_date": "1995-01-01",
                 "self_school_year": year,
             }
 
@@ -326,7 +326,7 @@ class FieldValidationEdgeCaseTests(BaseTestCase):
                 "account_type": "self",
                 "student_name": name,
                 "student_email": f"test.{case_desc.lower().replace(' ', '.')}@test.com",
-                "student_birth_date": "1995-01-01",
+                "birth_date": "1995-01-01",
             }
 
             response = self.client.post(self.people_url, form_data)
@@ -372,7 +372,7 @@ class DataIntegrityConstraintTests(TransactionTestCase):
             "account_type": "self",
             "student_name": "First Student",
             "student_email": "duplicate@test.com",
-            "student_birth_date": "1995-01-01",
+            "birth_date": "1995-01-01",
         }
 
         with patch("accounts.permissions.PermissionService.setup_permissions_for_student"):
@@ -386,7 +386,7 @@ class DataIntegrityConstraintTests(TransactionTestCase):
             "account_type": "separate",
             "student_name": "Second Student",
             "student_email": "duplicate@test.com",  # Same email
-            "student_birth_date": "2008-01-01",
+            "birth_date": "2008-01-01",
             "guardian_name": "Guardian",
             "guardian_email": "guardian@test.com",
         }
@@ -480,7 +480,7 @@ class MultiTenantBehaviorTests(BaseTestCase):
             "account_type": "self",
             "student_name": "Cross School Student",
             "student_email": "cross.school@test.com",
-            "student_birth_date": "1995-01-01",
+            "birth_date": "1995-01-01",
         }
 
         with patch("accounts.permissions.PermissionService.setup_permissions_for_student"):
@@ -510,7 +510,7 @@ class MultiTenantBehaviorTests(BaseTestCase):
             "action": "add_student",
             "account_type": "guardian_only",
             "student_name": "Student in School 1",
-            "student_birth_date": "2015-01-01",
+            "birth_date": "2015-01-01",
             "guardian_name": "Multi Guardian",
             "guardian_email": "multi.guardian@test.com",
         }
@@ -527,7 +527,7 @@ class MultiTenantBehaviorTests(BaseTestCase):
             "action": "add_student",
             "account_type": "guardian_only",
             "student_name": "Student in School 2",
-            "student_birth_date": "2016-01-01",
+            "birth_date": "2016-01-01",
             "guardian_name": "Multi Guardian",
             "guardian_email": "multi.guardian@test.com",
         }
@@ -555,7 +555,7 @@ class MultiTenantBehaviorTests(BaseTestCase):
             "account_type": "self",
             "student_name": "Superuser Student",
             "student_email": "super.student@test.com",
-            "student_birth_date": "1995-01-01",
+            "birth_date": "1995-01-01",
         }
 
         with patch("accounts.permissions.PermissionService.setup_permissions_for_student"):
@@ -594,7 +594,7 @@ class FormSecurityTests(BaseTestCase):
             "account_type": "self",
             "student_name": f"Student {xss_payload}",
             "student_email": "xss.test@example.com",
-            "student_birth_date": "1995-01-01",
+            "birth_date": "1995-01-01",
             "self_notes": f"Notes with {xss_payload}",
         }
 
@@ -622,7 +622,7 @@ class FormSecurityTests(BaseTestCase):
             "account_type": "self",
             "student_name": "Student Name",
             "student_email": f"sql{sql_payload}@test.com",
-            "student_birth_date": "1995-01-01",
+            "birth_date": "1995-01-01",
         }
 
         # Should not cause SQL injection
@@ -646,7 +646,7 @@ class FormSecurityTests(BaseTestCase):
             "account_type": "self",
             "student_name": "CSRF Test Student",
             "student_email": "csrf@test.com",
-            "student_birth_date": "1995-01-01",
+            "birth_date": "1995-01-01",
         }
 
         # Submit without CSRF token - should be blocked
@@ -681,7 +681,7 @@ class ErrorHandlingIntegrationTests(BaseTestCase):
             "account_type": "self",
             "student_name": "Permission Fail Student",
             "student_email": "permission.fail@test.com",
-            "student_birth_date": "1995-01-01",
+            "birth_date": "1995-01-01",
         }
 
         with patch(
@@ -710,7 +710,7 @@ class ErrorHandlingIntegrationTests(BaseTestCase):
             "account_type": "self",
             "student_name": "No System Student",
             "student_email": "no.system@test.com",
-            "student_birth_date": "1995-01-01",
+            "birth_date": "1995-01-01",
         }
 
         with patch("accounts.permissions.PermissionService.setup_permissions_for_student"):
@@ -728,7 +728,7 @@ class ErrorHandlingIntegrationTests(BaseTestCase):
             "account_type": "separate",
             "student_name": "Concurrent Student",
             "student_email": "concurrent@test.com",
-            "student_birth_date": "2008-01-01",
+            "birth_date": "2008-01-01",
             "guardian_name": "Concurrent Guardian",
             "guardian_email": "concurrent.guardian@test.com",
         }
@@ -756,7 +756,7 @@ class ErrorHandlingIntegrationTests(BaseTestCase):
             "account_type": "self",
             "student_name": 12345,  # Number instead of string
             "student_email": "invalid@test.com",
-            "student_birth_date": "not-a-date",  # Invalid date format
+            "birth_date": "not-a-date",  # Invalid date format
             "self_school_year": "invalid-year",  # Invalid school year
         }
 
@@ -780,7 +780,7 @@ class ErrorHandlingIntegrationTests(BaseTestCase):
             "account_type": "self",
             "student_name": "Constraint Test",
             "student_email": "constraint@test.com",  # Duplicate email
-            "student_birth_date": "1995-01-01",
+            "birth_date": "1995-01-01",
         }
 
         with patch("accounts.permissions.PermissionService.setup_permissions_for_student"):
@@ -821,7 +821,7 @@ class BusinessLogicValidationTests(BaseTestCase):
             "account_type": "separate",
             "student_name": "Self Guardian Student",
             "student_email": "same.person@test.com",
-            "student_birth_date": "2008-01-01",
+            "birth_date": "2008-01-01",
             "guardian_name": "Self Guardian",
             "guardian_email": "same.person@test.com",  # Same as student
         }
@@ -842,7 +842,7 @@ class BusinessLogicValidationTests(BaseTestCase):
             "account_type": "self",  # Adult student
             "student_name": "Adult With Guardian Data",
             "student_email": "adult.with.guardian@test.com",
-            "student_birth_date": "1995-01-01",
+            "birth_date": "1995-01-01",
             # These should be ignored for adult students
             "guardian_name": "Ignored Guardian",
             "guardian_email": "ignored@test.com",
@@ -869,7 +869,7 @@ class BusinessLogicValidationTests(BaseTestCase):
             "account_type": "self",
             "student_name": "Valid Year Student",
             "student_email": "valid.year@test.com",
-            "student_birth_date": "1995-01-01",
+            "birth_date": "1995-01-01",
             "self_school_year": "12",  # Valid for Portugal
         }
 
@@ -896,7 +896,7 @@ class BusinessLogicValidationTests(BaseTestCase):
             "account_type": "self",  # ADULT_STUDENT type
             "student_name": "Minor Adult Student",
             "student_email": "minor.adult@test.com",
-            "student_birth_date": minor_birth_date.strftime("%Y-%m-%d"),
+            "birth_date": minor_birth_date.strftime("%Y-%m-%d"),
         }
 
         with patch("accounts.permissions.PermissionService.setup_permissions_for_student"):
@@ -916,7 +916,7 @@ class BusinessLogicValidationTests(BaseTestCase):
             "account_type": "separate",  # STUDENT_GUARDIAN type
             "student_name": "Minor With Guardian",
             "student_email": "minor.guardian@test.com",
-            "student_birth_date": minor_birth_date.strftime("%Y-%m-%d"),
+            "birth_date": minor_birth_date.strftime("%Y-%m-%d"),
             "guardian_name": "Parent Guardian",
             "guardian_email": "parent@test.com",
         }
@@ -937,7 +937,7 @@ class BusinessLogicValidationTests(BaseTestCase):
             "action": "add_student",
             "account_type": "guardian_only",  # GUARDIAN_ONLY type
             "student_name": "Minor Guardian Only",
-            "student_birth_date": minor_birth_date.strftime("%Y-%m-%d"),
+            "birth_date": minor_birth_date.strftime("%Y-%m-%d"),
             "guardian_name": "Solo Guardian",
             "guardian_email": "solo.guardian@test.com",
         }
