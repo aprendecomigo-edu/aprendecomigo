@@ -70,7 +70,7 @@ class PeopleViewTestCase(BaseTestCase):
             "account_type": "separate",
             "student_name": "Test Student",
             "student_email": "test.student@school.com",
-            "student_birth_date": "2008-01-15",
+            "birth_date": "2008-01-15",
             "student_school_year": "10",
             "student_notes": "Test notes",
             "guardian_name": "Test Guardian",
@@ -88,10 +88,10 @@ class PeopleViewTestCase(BaseTestCase):
         return {
             "action": "add_student",
             "account_type": "self",
-            "self_name": "Adult Student",
-            "self_email": "adult.student@school.com",
+            "student_name": "Adult Student",
+            "student_email": "adult.student@school.com",
             "self_phone": "+351987654321",
-            "self_birth_date": "1995-05-20",
+            "birth_date": "1995-05-20",
             "self_school_year": "12",
             "self_tax_nr": "987654321",
             "self_address": "Adult Address, Porto",
@@ -106,12 +106,12 @@ class PeopleViewTestCase(BaseTestCase):
         return {
             "action": "add_student",
             "account_type": "guardian_only",
-            "guardian_only_student_name": "Young Student",
-            "guardian_only_student_birth_date": "2012-03-10",
+            "student_name": "Young Student",
+            "birth_date": "2012-03-10",
             "guardian_only_student_school_year": "6",
             "guardian_only_student_notes": "Young student notes",
-            "guardian_only_guardian_name": "Managing Guardian",
-            "guardian_only_guardian_email": "managing.guardian@family.com",
+            "guardian_name": "Managing Guardian",
+            "guardian_email": "managing.guardian@family.com",
             "guardian_only_guardian_phone": "+351123456789",
             "guardian_only_guardian_tax_nr": "111222333",
             "guardian_only_guardian_address": "Guardian Address, Coimbra",
@@ -465,7 +465,7 @@ class PeopleViewGuardianOnlyTests(PeopleViewTestCase):
         form_data = {
             "action": "add_student",
             "account_type": "guardian_only",
-            "guardian_only_student_name": "Young Student",
+            "student_name": "Young Student",
             # Missing other required fields
         }
 

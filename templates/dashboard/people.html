@@ -10,7 +10,12 @@
 </style>
 
 <!-- People Management Component with Alpine.js -->
-<div x-data="peopleManager()" class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+<div x-data="peopleManager()"
+     class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50"
+     hx-trigger="refreshStudents from:body"
+     hx-get="/people/students/"
+     hx-target="#students-content"
+     hx-swap="outerHTML">
     <!-- Page Header -->
     <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900 mb-2">Gestão de Pessoas</h1>
@@ -333,7 +338,8 @@
     {% endswitch %}
 
     <!-- Add Student Modal -->
-    <div x-show="showAddStudentModal"
+    <div id="addStudentModal"
+         x-show="showAddStudentModal"
          x-cloak
          class="fixed inset-0 z-50 overflow-y-auto"
          aria-labelledby="modal-title"
@@ -425,18 +431,18 @@
 
             <!-- Form Content -->
             <form hx-post="/people/"
-                  hx-target="#students-content"
-                  hx-swap="outerHTML"
+                  hx-target="#message-area"
+                  hx-swap="innerHTML"
                   hx-trigger="submit"
                   class="py-6"
-                  @submit="syncFormValues"
                   @htmx:after-request="handleFormResponse(event)">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="add_student">
-                <!-- Remove conflicting hidden account_type field - radio buttons already handle this -->
+                <input type="hidden" name="account_type" x-model="addStudentForm.account_type">
 
                 <!-- Student with Separate Guardian -->
-                <div x-show="addStudentForm.account_type === 'separate'" class="space-y-8">
+                <template x-if="addStudentForm.account_type === 'separate'">
+                <div class="space-y-8">
                     <!-- Student Information Section -->
                     <div class="bg-blue-50 rounded-lg p-6">
                         <h5 class="text-lg font-medium text-blue-900 mb-4 flex items-center">
@@ -448,21 +454,21 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="space-y-1">
                                 <label class="block text-sm font-medium text-gray-700">Full Name *</label>
-                                <input type="text" name="student_name" x-model="addStudentForm.student_name" :required="addStudentForm.account_type === 'separate'"
+                                <input type="text" name="student_name" required
                                        data-test="student-name-input"
                                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                                        placeholder="Enter student's full name">
                             </div>
                             <div class="space-y-1">
                                 <label class="block text-sm font-medium text-gray-700">Email Address *</label>
-                                <input type="email" name="student_email" x-model="addStudentForm.student_email" :required="addStudentForm.account_type === 'separate'"
+                                <input type="email" name="student_email" required
                                        data-test="student-email-input"
                                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                                        placeholder="student@example.com">
                             </div>
                             <div class="space-y-1">
                                 <label class="block text-sm font-medium text-gray-700">Birth Date *</label>
-                                <input type="date" name="birth_date" x-model="addStudentForm.student_birth_date" :required="addStudentForm.account_type === 'separate'"
+                                <input type="date" name="student_birth_date" required
                                        data-test="student-birth-date-input"
                                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                             </div>
@@ -505,14 +511,14 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="space-y-1">
                                 <label class="block text-sm font-medium text-gray-700">Guardian Name *</label>
-                                <input type="text" name="guardian_name" x-model="addStudentForm.guardian_name" :required="addStudentForm.account_type === 'separate'"
+                                <input type="text" name="guardian_name" required
                                        data-test="guardian-name-input"
                                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
                                        placeholder="Enter guardian's full name">
                             </div>
                             <div class="space-y-1">
                                 <label class="block text-sm font-medium text-gray-700">Guardian Email *</label>
-                                <input type="email" name="guardian_email" x-model="addStudentForm.guardian_email" :required="addStudentForm.account_type === 'separate'"
+                                <input type="email" name="guardian_email" required
                                        data-test="guardian-email-input"
                                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
                                        placeholder="guardian@example.com">
@@ -552,9 +558,11 @@
                         </div>
                     </div>
                 </div>
+                </template>
 
                 <!-- Guardian-Only Account (Young Student) -->
-                <div x-show="addStudentForm.account_type === 'guardian_only'" class="space-y-8">
+                <template x-if="addStudentForm.account_type === 'guardian_only'">
+                <div class="space-y-8">
                     <!-- Student Basic Information Section -->
                     <div class="bg-orange-50 rounded-lg p-6">
                         <h5 class="text-lg font-medium text-orange-900 mb-4 flex items-center">
@@ -574,14 +582,14 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="space-y-1">
                                 <label class="block text-sm font-medium text-gray-700">Student Full Name *</label>
-                                <input type="text" name="student_name" x-model="addStudentForm.guardian_only_student_name" :required="addStudentForm.account_type === 'guardian_only'"
+                                <input type="text" name="student_name" required
                                        data-test="student-name-input"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                        placeholder="Enter student's full name">
                             </div>
                             <div class="space-y-1">
                                 <label class="block text-sm font-medium text-gray-700">Birth Date *</label>
-                                <input type="date" name="birth_date" x-model="addStudentForm.guardian_only_student_birth_date" :required="addStudentForm.account_type === 'guardian_only'"
+                                <input type="date" name="student_birth_date" required
                                        data-test="student-birth-date-input"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             </div>
@@ -632,14 +640,14 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="space-y-1">
                                 <label class="block text-sm font-medium text-gray-700">Guardian Name *</label>
-                                <input type="text" name="guardian_name" x-model="addStudentForm.guardian_only_guardian_name" :required="addStudentForm.account_type === 'guardian_only'"
+                                <input type="text" name="guardian_name" required
                                        data-test="guardian-name-input"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                        placeholder="Enter guardian's full name">
                             </div>
                             <div class="space-y-1">
                                 <label class="block text-sm font-medium text-gray-700">Guardian Email *</label>
-                                <input type="email" name="guardian_email" x-model="addStudentForm.guardian_only_guardian_email" :required="addStudentForm.account_type === 'guardian_only'"
+                                <input type="email" name="guardian_email" required
                                        data-test="guardian-email-input"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                        placeholder="guardian@example.com">
@@ -682,9 +690,11 @@
                         </div>
                     </div>
                 </div>
+                </template>
 
                 <!-- Adult Student (Self-Guardian) -->
-                <div x-show="addStudentForm.account_type === 'self'" class="space-y-6">
+                <template x-if="addStudentForm.account_type === 'self'">
+                <div class="space-y-6">
                     <div class="bg-gradient-to-br from-green-50 to-blue-50 rounded-lg p-6">
                         <h5 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -697,27 +707,27 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="space-y-1">
                                 <label class="block text-sm font-medium text-gray-700">Full Name *</label>
-                                <input type="text" name="student_name" x-model="addStudentForm.self_name" :required="addStudentForm.account_type === 'self'"
+                                <input type="text" name="student_name" required
                                        data-test="student-name-input"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                        placeholder="Enter your full name">
                             </div>
                             <div class="space-y-1">
                                 <label class="block text-sm font-medium text-gray-700">Email Address *</label>
-                                <input type="email" name="student_email" x-model="addStudentForm.self_email" :required="addStudentForm.account_type === 'self'"
+                                <input type="email" name="student_email" required
                                        data-test="student-email-input"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                        placeholder="your@email.com">
                             </div>
                             <div class="space-y-1">
                                 <label class="block text-sm font-medium text-gray-700">Phone Number</label>
-                                <input type="tel" name="self_phone" x-model="addStudentForm.self_phone"
+                                <input type="tel" name="self_phone"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                        placeholder="+351 912 345 678">
                             </div>
                             <div class="space-y-1">
                                 <label class="block text-sm font-medium text-gray-700">Birth Date *</label>
-                                <input type="date" name="birth_date" x-model="addStudentForm.self_birth_date" :required="addStudentForm.account_type === 'self'"
+                                <input type="date" name="student_birth_date" required
                                        data-test="student-birth-date-input"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             </div>
@@ -784,6 +794,7 @@
                         </div>
                     </div>
                 </div>
+                </template>
 
                 <!-- Form Actions -->
                 <div class="flex justify-end gap-3 pt-6 border-t border-gray-200">
@@ -925,6 +936,51 @@ function peopleManager() {
             self_sms_notifications: false
         },
 
+        // Watch for account type changes to update form validation
+        init() {
+            this.$watch('addStudentForm.account_type', (value) => {
+                this.updateFormValidation(value);
+            });
+        },
+
+        updateFormValidation(accountType) {
+            // Remove all required attributes first
+            document.querySelectorAll('#addStudentModal [required]').forEach(field => {
+                field.removeAttribute('required');
+            });
+
+            // Add required attributes based on account type
+            if (accountType === 'separate') {
+                // Student fields
+                const studentFields = ['student_name', 'student_email', 'student_birth_date'];
+                studentFields.forEach(fieldName => {
+                    const field = document.querySelector(`#addStudentModal [name="${fieldName}"]`);
+                    if (field) field.setAttribute('required', 'required');
+                });
+
+                // Guardian fields
+                const guardianFields = ['guardian_name', 'guardian_email'];
+                guardianFields.forEach(fieldName => {
+                    const field = document.querySelector(`#addStudentModal [name="${fieldName}"]`);
+                    if (field) field.setAttribute('required', 'required');
+                });
+            } else if (accountType === 'guardian_only') {
+                // Student basic info
+                const fields = ['student_name', 'student_birth_date', 'guardian_name', 'guardian_email'];
+                fields.forEach(fieldName => {
+                    const field = document.querySelector(`#addStudentModal [name="${fieldName}"]`);
+                    if (field) field.setAttribute('required', 'required');
+                });
+            } else if (accountType === 'self') {
+                // Adult student fields
+                const fields = ['student_name', 'student_email', 'student_birth_date'];
+                fields.forEach(fieldName => {
+                    const field = document.querySelector(`#addStudentModal [name="${fieldName}"]`);
+                    if (field) field.setAttribute('required', 'required');
+                });
+            }
+        },
+
         // Helper methods for UI state
         resetForms() {
             this.addTeacherForm = {
@@ -1002,6 +1058,8 @@ function peopleManager() {
                     break;
                 case 'addStudent':
                     this.showAddStudentModal = true;
+                    // Setup initial validation after modal is shown
+                    setTimeout(() => this.updateFormValidation(this.addStudentForm.account_type), 100);
                     break;
             }
         },
@@ -1018,65 +1076,6 @@ function peopleManager() {
             this.error = message;
         },
 
-        // Sync Alpine.js form state to actual form field values before submission
-        syncFormValues(event) {
-            const form = event.target;
-            const accountType = this.addStudentForm.account_type;
-
-            // Ensure all visible form fields have their values set from Alpine.js state
-            if (accountType === 'separate') {
-                this.setFormFieldValue(form, 'student_name', this.addStudentForm.student_name);
-                this.setFormFieldValue(form, 'student_email', this.addStudentForm.student_email);
-                this.setFormFieldValue(form, 'birth_date', this.addStudentForm.student_birth_date);
-                this.setFormFieldValue(form, 'student_school_year', this.addStudentForm.student_school_year);
-                this.setFormFieldValue(form, 'student_notes', this.addStudentForm.student_notes);
-                this.setFormFieldValue(form, 'guardian_name', this.addStudentForm.guardian_name);
-                this.setFormFieldValue(form, 'guardian_email', this.addStudentForm.guardian_email);
-                this.setFormFieldValue(form, 'guardian_phone', this.addStudentForm.guardian_phone);
-                this.setFormFieldValue(form, 'guardian_tax_nr', this.addStudentForm.guardian_tax_nr);
-                this.setFormFieldValue(form, 'guardian_address', this.addStudentForm.guardian_address);
-                this.setFormFieldValue(form, 'guardian_invoice', this.addStudentForm.guardian_invoice ? 'on' : '');
-                this.setFormFieldValue(form, 'guardian_email_notifications', this.addStudentForm.guardian_email_notifications ? 'on' : '');
-                this.setFormFieldValue(form, 'guardian_sms_notifications', this.addStudentForm.guardian_sms_notifications ? 'on' : '');
-            } else if (accountType === 'guardian_only') {
-                this.setFormFieldValue(form, 'student_name', this.addStudentForm.guardian_only_student_name);
-                this.setFormFieldValue(form, 'birth_date', this.addStudentForm.guardian_only_student_birth_date);
-                this.setFormFieldValue(form, 'guardian_only_student_school_year', this.addStudentForm.guardian_only_student_school_year);
-                this.setFormFieldValue(form, 'guardian_only_student_notes', this.addStudentForm.guardian_only_student_notes);
-                this.setFormFieldValue(form, 'guardian_name', this.addStudentForm.guardian_only_guardian_name);
-                this.setFormFieldValue(form, 'guardian_email', this.addStudentForm.guardian_only_guardian_email);
-                this.setFormFieldValue(form, 'guardian_only_guardian_phone', this.addStudentForm.guardian_only_guardian_phone);
-                this.setFormFieldValue(form, 'guardian_only_guardian_tax_nr', this.addStudentForm.guardian_only_guardian_tax_nr);
-                this.setFormFieldValue(form, 'guardian_only_guardian_address', this.addStudentForm.guardian_only_guardian_address);
-                this.setFormFieldValue(form, 'guardian_only_guardian_invoice', this.addStudentForm.guardian_only_guardian_invoice ? 'on' : '');
-                this.setFormFieldValue(form, 'guardian_only_guardian_email_notifications', this.addStudentForm.guardian_only_guardian_email_notifications ? 'on' : '');
-                this.setFormFieldValue(form, 'guardian_only_guardian_sms_notifications', this.addStudentForm.guardian_only_guardian_sms_notifications ? 'on' : '');
-            } else if (accountType === 'self') {
-                this.setFormFieldValue(form, 'student_name', this.addStudentForm.self_name);
-                this.setFormFieldValue(form, 'student_email', this.addStudentForm.self_email);
-                this.setFormFieldValue(form, 'self_phone', this.addStudentForm.self_phone);
-                this.setFormFieldValue(form, 'birth_date', this.addStudentForm.self_birth_date);
-                this.setFormFieldValue(form, 'self_school_year', this.addStudentForm.self_school_year);
-                this.setFormFieldValue(form, 'self_tax_nr', this.addStudentForm.self_tax_nr);
-                this.setFormFieldValue(form, 'self_address', this.addStudentForm.self_address);
-                this.setFormFieldValue(form, 'self_notes', this.addStudentForm.self_notes);
-                this.setFormFieldValue(form, 'self_invoice', this.addStudentForm.self_invoice ? 'on' : '');
-                this.setFormFieldValue(form, 'self_email_notifications', this.addStudentForm.self_email_notifications ? 'on' : '');
-                this.setFormFieldValue(form, 'self_sms_notifications', this.addStudentForm.self_sms_notifications ? 'on' : '');
-            }
-        },
-
-        // Helper method to set form field value
-        setFormFieldValue(form, fieldName, value) {
-            const field = form.querySelector(`[name="${fieldName}"]`);
-            if (field) {
-                if (field.type === 'checkbox') {
-                    field.checked = value === 'on' || value === true;
-                } else {
-                    field.value = value || '';
-                }
-            }
-        },
 
         // Handle HTMX form response properly
         handleFormResponse(event) {
@@ -1086,12 +1085,12 @@ function peopleManager() {
             if (isSuccess) {
                 // Check if response contains error content (backend validation failure)
                 const responseText = xhr.responseText;
-                if (responseText && responseText.includes('error')) {
+                if (responseText && (responseText.includes('error') || responseText.includes('Missing required fields'))) {
                     // This is actually an error response from backend validation
                     return; // Let HTMX handle the error display, don't show success
                 }
 
-                // True success - close modal and show success message
+                // True success - close modal, show success message, and refresh the list
                 this.showAddStudentModal = false;
                 this.handleSuccess('Student added successfully!');
                 this.resetForms();

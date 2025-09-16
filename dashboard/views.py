@@ -8,11 +8,16 @@ import logging
 from uuid import uuid4
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.db import models
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.utils.html import escape
 from django.views import View
+from django.views.decorators.csrf import csrf_protect
 
 from accounts.models import CustomUser, InvitationStatus, School, SchoolMembership, TeacherInvitation
 from accounts.models.enums import SchoolRole
@@ -24,6 +29,7 @@ from tasks.models import Task
 logger = logging.getLogger("accounts.auth")
 
 
+@method_decorator(csrf_protect, name="dispatch")
 class DashboardView(LoginRequiredMixin, View):
     """Main dashboard view that renders appropriate template based on user role"""
 
@@ -463,6 +469,7 @@ class InvitationsView(LoginRequiredMixin, View):
         )
 
 
+@method_decorator(csrf_protect, name="dispatch")
 class PeopleView(LoginRequiredMixin, View):
     """Unified people management page with tabs for teachers, students, staff"""
 
@@ -623,6 +630,38 @@ class PeopleView(LoginRequiredMixin, View):
         except Exception as e:
             return render(request, "shared/partials/error_message.html", {"error": f"Failed to add teacher: {e!s}"})
 
+    def _validate_email_format(self, email):
+        """Validate email format and return sanitized email or raise ValidationError"""
+        if not email:
+            return ""
+
+        # Strip whitespace first
+        email = email.strip()
+
+        # Check for basic format requirements
+        if " " in email:
+            raise ValidationError(f"Email cannot contain spaces: {email}")
+
+        if "@" not in email:
+            raise ValidationError(f"Email must contain @: {email}")
+
+        if email.startswith("@") or email.endswith("@"):
+            raise ValidationError(f"Invalid email format: {email}")
+
+        # Reject emails with non-ASCII characters (internationalized domains)
+        # This matches the test expectation for stricter validation
+        try:
+            email.encode("ascii")
+        except UnicodeEncodeError:
+            raise ValidationError(f"Email must contain only ASCII characters: {email}")
+
+        # Use Django's built-in validator
+        try:
+            validate_email(email)
+            return escape(email)
+        except ValidationError:
+            raise ValidationError(f"Invalid email format: {email}")
+
     def _handle_add_student(self, request):
         """Handle adding a new student with the three account type scenarios"""
 
@@ -634,6 +673,13 @@ class PeopleView(LoginRequiredMixin, View):
 
         try:
             account_type = request.POST.get("account_type", "separate")
+            logger.info(f"Processing student registration with account_type: {account_type}")
+
+            # Log all form data for debugging
+            form_data = dict(request.POST.items())
+            # Remove CSRF token from logs for security
+            form_data.pop("csrfmiddlewaretoken", None)
+            logger.debug(f"Form data received: {form_data}")
 
             # Get user's schools
             def get_user_schools(user):
@@ -652,28 +698,54 @@ class PeopleView(LoginRequiredMixin, View):
             with transaction.atomic():
                 if account_type == "guardian_only":
                     # Handle guardian-only scenario (young student without login)
-                    student_name = request.POST.get("guardian_only_student_name")
-                    student_birth_date = request.POST.get("guardian_only_student_birth_date")
-                    student_school_year = request.POST.get("guardian_only_student_school_year", "")
-                    student_notes = request.POST.get("guardian_only_student_notes", "")
+                    # Sanitize all text inputs to prevent XSS
+                    student_name = escape(request.POST.get("student_name", "").strip())
+                    student_birth_date = request.POST.get("student_birth_date")
+                    student_school_year = escape(request.POST.get("guardian_only_student_school_year", "").strip())
+                    student_notes = escape(request.POST.get("guardian_only_student_notes", "").strip())
 
-                    guardian_name = request.POST.get("guardian_only_guardian_name")
-                    guardian_email = request.POST.get("guardian_only_guardian_email")
-                    guardian_phone = request.POST.get("guardian_only_guardian_phone", "")
-                    guardian_tax_nr = request.POST.get("guardian_only_guardian_tax_nr", "")
-                    guardian_address = request.POST.get("guardian_only_guardian_address", "")
+                    guardian_name = escape(request.POST.get("guardian_name", "").strip())
+                    guardian_email_raw = request.POST.get("guardian_email", "").strip()
+                    guardian_phone = escape(request.POST.get("guardian_only_guardian_phone", "").strip())
+                    guardian_tax_nr = escape(request.POST.get("guardian_only_guardian_tax_nr", "").strip())
+                    guardian_address = escape(request.POST.get("guardian_only_guardian_address", "").strip())
                     guardian_invoice = request.POST.get("guardian_only_guardian_invoice") == "on"
                     guardian_email_notifications = (
                         request.POST.get("guardian_only_guardian_email_notifications") == "on"
                     )
                     guardian_sms_notifications = request.POST.get("guardian_only_guardian_sms_notifications") == "on"
 
-                    # Validate required fields
-                    if not all([student_name, student_birth_date, guardian_name, guardian_email]):
+                    # Validate and sanitize email
+                    try:
+                        guardian_email = self._validate_email_format(guardian_email_raw)
+                    except ValidationError as e:
+                        logger.error(f"Guardian email validation failed: {e}")
                         return render(
                             request,
                             "shared/partials/error_message.html",
-                            {"error": "Student name, birth date, guardian name and email are required"},
+                            {"error": str(e)},
+                        )
+
+                    # Validate required fields for guardian-only account
+                    if not all([student_name, student_birth_date, guardian_name, guardian_email]):
+                        missing_fields = []
+                        if not student_name:
+                            missing_fields.append("student name")
+                        if not student_birth_date:
+                            missing_fields.append("student birth date")
+                        if not guardian_name:
+                            missing_fields.append("guardian name")
+                        if not guardian_email:
+                            missing_fields.append("guardian email")
+
+                        error_msg = f"Missing required fields: {', '.join(missing_fields)}"
+                        logger.error(
+                            f"Guardian-only validation failed: {error_msg}. Received data: student_name={student_name}, student_birth_date={student_birth_date}, guardian_name={guardian_name}, guardian_email={guardian_email}"
+                        )
+                        return render(
+                            request,
+                            "shared/partials/error_message.html",
+                            {"error": error_msg},
                         )
 
                     # Create or get guardian user
@@ -717,28 +789,57 @@ class PeopleView(LoginRequiredMixin, View):
                         )
 
                 elif account_type == "separate":
-                    # Handle separate guardian scenario
-                    student_name = request.POST.get("student_name")
-                    student_email = request.POST.get("student_email")
+                    # Handle separate guardian scenario (STUDENT_GUARDIAN)
+                    # Sanitize all text inputs to prevent XSS
+                    student_name = escape(request.POST.get("student_name", "").strip())
+                    student_email_raw = request.POST.get("student_email", "").strip()
                     student_birth_date = request.POST.get("student_birth_date")
-                    student_school_year = request.POST.get("student_school_year", "")
-                    student_notes = request.POST.get("student_notes", "")
+                    student_school_year = escape(request.POST.get("student_school_year", "").strip())
+                    student_notes = escape(request.POST.get("student_notes", "").strip())
 
-                    guardian_name = request.POST.get("guardian_name")
-                    guardian_email = request.POST.get("guardian_email")
-                    guardian_phone = request.POST.get("guardian_phone", "")
-                    guardian_tax_nr = request.POST.get("guardian_tax_nr", "")
-                    guardian_address = request.POST.get("guardian_address", "")
+                    guardian_name = escape(request.POST.get("guardian_name", "").strip())
+                    guardian_email_raw = request.POST.get("guardian_email", "").strip()
+                    guardian_phone = escape(request.POST.get("guardian_phone", "").strip())
+                    guardian_tax_nr = escape(request.POST.get("guardian_tax_nr", "").strip())
+                    guardian_address = escape(request.POST.get("guardian_address", "").strip())
                     guardian_invoice = request.POST.get("guardian_invoice") == "on"
                     guardian_email_notifications = request.POST.get("guardian_email_notifications") == "on"
                     guardian_sms_notifications = request.POST.get("guardian_sms_notifications") == "on"
 
-                    # Validate required fields
-                    if not all([student_name, student_email, student_birth_date, guardian_name, guardian_email]):
+                    # Validate and sanitize emails
+                    try:
+                        student_email = self._validate_email_format(student_email_raw)
+                        guardian_email = self._validate_email_format(guardian_email_raw)
+                    except ValidationError as e:
+                        logger.error(f"Email validation failed: {e}")
                         return render(
                             request,
                             "shared/partials/error_message.html",
-                            {"error": "Student name, email, birth date, guardian name and email are required"},
+                            {"error": str(e)},
+                        )
+
+                    # Validate required fields for student+guardian account
+                    if not all([student_name, student_email, student_birth_date, guardian_name, guardian_email]):
+                        missing_fields = []
+                        if not student_name:
+                            missing_fields.append("student name")
+                        if not student_email:
+                            missing_fields.append("student email")
+                        if not student_birth_date:
+                            missing_fields.append("student birth date")
+                        if not guardian_name:
+                            missing_fields.append("guardian name")
+                        if not guardian_email:
+                            missing_fields.append("guardian email")
+
+                        error_msg = f"Missing required fields: {', '.join(missing_fields)}"
+                        logger.error(
+                            f"Student+Guardian validation failed: {error_msg}. Received data: student_name={student_name}, student_email={student_email}, student_birth_date={student_birth_date}, guardian_name={guardian_name}, guardian_email={guardian_email}"
+                        )
+                        return render(
+                            request,
+                            "shared/partials/error_message.html",
+                            {"error": error_msg},
                         )
 
                     # Create or get student user
@@ -804,24 +905,48 @@ class PeopleView(LoginRequiredMixin, View):
 
                 elif account_type == "self":
                     # Handle self-guardian scenario (adult student)
-                    name = request.POST.get("self_name")
-                    email = request.POST.get("self_email")
-                    phone = request.POST.get("self_phone", "")
-                    birth_date = request.POST.get("self_birth_date")
-                    school_year = request.POST.get("self_school_year", "")
-                    tax_nr = request.POST.get("self_tax_nr", "")
-                    address = request.POST.get("self_address", "")
-                    notes = request.POST.get("self_notes", "")
+                    # Sanitize all text inputs to prevent XSS
+                    name = escape(request.POST.get("student_name", "").strip())
+                    email_raw = request.POST.get("student_email", "").strip()
+                    phone = escape(request.POST.get("self_phone", "").strip())
+                    birth_date = request.POST.get("student_birth_date")
+                    school_year = escape(request.POST.get("self_school_year", "").strip())
+                    tax_nr = escape(request.POST.get("self_tax_nr", "").strip())
+                    address = escape(request.POST.get("self_address", "").strip())
+                    notes = escape(request.POST.get("self_notes", "").strip())
                     invoice = request.POST.get("self_invoice") == "on"
                     email_notifications = request.POST.get("self_email_notifications") == "on"
                     sms_notifications = request.POST.get("self_sms_notifications") == "on"
 
-                    # Validate required fields
-                    if not all([name, email, birth_date]):
+                    # Validate and sanitize email
+                    try:
+                        email = self._validate_email_format(email_raw)
+                    except ValidationError as e:
+                        logger.error(f"Student email validation failed: {e}")
                         return render(
                             request,
                             "shared/partials/error_message.html",
-                            {"error": "Name, email and birth date are required"},
+                            {"error": str(e)},
+                        )
+
+                    # Validate required fields for adult student account
+                    if not all([name, email, birth_date]):
+                        missing_fields = []
+                        if not name:
+                            missing_fields.append("student name")
+                        if not email:
+                            missing_fields.append("student email")
+                        if not birth_date:
+                            missing_fields.append("student birth date")
+
+                        error_msg = f"Missing required fields: {', '.join(missing_fields)}"
+                        logger.error(
+                            f"Adult student validation failed: {error_msg}. Received data: name={name}, email={email}, birth_date={birth_date}"
+                        )
+                        return render(
+                            request,
+                            "shared/partials/error_message.html",
+                            {"error": error_msg},
                         )
 
                     # Create or get user
@@ -871,6 +996,7 @@ class PeopleView(LoginRequiredMixin, View):
                             user=user, school=school, defaults={"role": SchoolRole.STUDENT.value}
                         )
                 else:
+                    logger.error(f"Invalid account type received: {account_type}")
                     return render(
                         request,
                         "shared/partials/error_message.html",
@@ -879,8 +1005,18 @@ class PeopleView(LoginRequiredMixin, View):
                         },
                     )
 
-            # Return updated students partial
-            return self._render_students_partial(request)
+            logger.info(f"Successfully created student with account_type: {account_type}")
+
+            # Return success response with HTMX trigger to refresh the student list
+            response = render(
+                request,
+                "shared/partials/success_message.html",
+                {"message": "Student added successfully!"},
+            )
+            # Only set HTMX trigger for HTMX requests
+            if request.headers.get("HX-Request"):
+                response["HX-Trigger"] = "refreshStudents"
+            return response
 
         except Exception as e:
             logger.exception("Error adding student")

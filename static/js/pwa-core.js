@@ -4,10 +4,10 @@
  */
 
 // Production logging utility
-const DEBUG = false; // Set to false for production
-const log = DEBUG ? console.log.bind(console, '[PWA]') : () => {};
-const warn = DEBUG ? console.warn.bind(console, '[PWA]') : () => {};
-const error = console.error.bind(console, '[PWA]'); // Always log errors
+const PWA_DEBUG = false; // Set to false for production
+const pwaLog = PWA_DEBUG ? console.log.bind(console, '[PWA]') : () => {};
+const pwaWarn = PWA_DEBUG ? console.warn.bind(console, '[PWA]') : () => {};
+const pwaError = console.error.bind(console, '[PWA]'); // Always log errors
 
 class PWACore {
     constructor() {
@@ -22,15 +22,15 @@ class PWACore {
         // Service Worker Registration
         if ('serviceWorker' in navigator) {
             try {
-                this.serviceWorker = await navigator.serviceWorker.register('/sw.js');
-                log('Service Worker registered successfully');
+                this.serviceWorker = await navigator.serviceWorker.register('/static/js/service-worker.js');
+                pwaLog('Service Worker registered successfully');
 
                 // Listen for service worker updates
                 this.serviceWorker.addEventListener('updatefound', () => {
                     this.handleServiceWorkerUpdate();
                 });
             } catch (error) {
-                error('Service Worker registration failed:', error);
+                pwaError('Service Worker registration failed:', error);
             }
         }
 
@@ -100,7 +100,7 @@ class PWACore {
             const result = await this.installPrompt.userChoice;
 
             if (result.outcome === 'accepted') {
-                log('PWA installation accepted');
+                pwaLog('PWA installation accepted');
             }
 
             this.installPrompt = null;
@@ -133,7 +133,7 @@ class PWACore {
             }
 
         } catch (error) {
-            error('Data sync failed:', error);
+            pwaError('Data sync failed:', error);
         }
     }
 
@@ -168,7 +168,7 @@ class PWACore {
                 this.showNotification('Data synced successfully', 'success');
             }
         } catch (error) {
-            error('Failed to submit cached form:', error);
+            pwaError('Failed to submit cached form:', error);
         }
     }
 
