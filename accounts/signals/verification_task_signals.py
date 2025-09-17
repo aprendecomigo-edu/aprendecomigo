@@ -103,6 +103,23 @@ def complete_first_student_task(sender, instance, created, **kwargs):
                 if TaskService._is_school_admin_or_owner(guardian_user):
                     TaskService.complete_system_task(guardian_user, Task.FIRST_STUDENT_ADDED)
                     logger.info(f"Completed FIRST_STUDENT_ADDED task for guardian {guardian_user.email}")
+            else:
+                # Fallback: No guardian assigned - complete task for all admin users
+                logger.info(
+                    f"GUARDIAN_ONLY student {instance} has no guardian - falling back to complete tasks for all admin users"
+                )
+                all_admin_memberships = SchoolMembership.objects.filter(
+                    role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN], is_active=True
+                ).select_related("user", "school")
+
+                # Filter out personal schools and complete tasks for real school admins
+                for membership in all_admin_memberships:
+                    school_name = membership.school.name
+                    if not (school_name.startswith("Personal School -") or school_name.endswith("'s School")):
+                        TaskService.complete_system_task(membership.user, Task.FIRST_STUDENT_ADDED)
+                        logger.info(
+                            f"Completed FIRST_STUDENT_ADDED task for admin {membership.user.email} (GUARDIAN_ONLY fallback mode)"
+                        )
             return
 
         elif instance.account_type == "STUDENT_GUARDIAN":
@@ -117,7 +134,22 @@ def complete_first_student_task(sender, instance, created, **kwargs):
             ).select_related("school", "guardian")
 
             if not guardian_relationships.exists():
-                logger.info(f"No guardian relationships found for student {instance} - no admin task completion")
+                logger.info(
+                    f"No guardian relationships found for student {instance} - falling back to complete tasks for all admin users"
+                )
+                # Fallback: Complete task for ALL admin users when no guardian relationships exist
+                all_admin_memberships = SchoolMembership.objects.filter(
+                    role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN], is_active=True
+                ).select_related("user", "school")
+
+                # Filter out personal schools and complete tasks for real school admins
+                for membership in all_admin_memberships:
+                    school_name = membership.school.name
+                    if not (school_name.startswith("Personal School -") or school_name.endswith("'s School")):
+                        TaskService.complete_system_task(membership.user, Task.FIRST_STUDENT_ADDED)
+                        logger.info(
+                            f"Completed FIRST_STUDENT_ADDED task for admin {membership.user.email} (fallback mode)"
+                        )
                 return
 
             # Complete task for school admins in the schools where this student has relationships

@@ -28,9 +28,9 @@ class SystemTaskManagerRealBehaviorTest(TestCase):
         self.user2 = User.objects.create_user(email="user2@example.com", name="User Two")
 
         # DON'T delete signal-created tasks - work with the real system!
-        # Verify signals created the expected system tasks
-        self.assertEqual(Task.system_tasks.for_user(self.user1).count(), 3)
-        self.assertEqual(Task.system_tasks.for_user(self.user2).count(), 3)
+        # Verify signals created the expected system tasks (regular users get 2 tasks: email + phone)
+        self.assertEqual(Task.system_tasks.for_user(self.user1).count(), 2)
+        self.assertEqual(Task.system_tasks.for_user(self.user2).count(), 2)
 
         # Create some additional user tasks for testing isolation
         self.personal_task = Task.objects.create(
@@ -52,8 +52,8 @@ class SystemTaskManagerRealBehaviorTest(TestCase):
         """Test that SystemTaskManager only returns system tasks."""
         system_tasks = Task.system_tasks.all()
 
-        # Should return system tasks from both users (6 total)
-        self.assertEqual(system_tasks.count(), 6)
+        # Should return system tasks from both users (4 total: 2 per user)
+        self.assertEqual(system_tasks.count(), 4)
 
         # Verify all returned tasks are system tasks
         for task in system_tasks:
@@ -71,9 +71,9 @@ class SystemTaskManagerRealBehaviorTest(TestCase):
         user1_tasks = Task.system_tasks.for_user(self.user1)
         user2_tasks = Task.system_tasks.for_user(self.user2)
 
-        # Each user should have 3 system tasks from signals
-        self.assertEqual(user1_tasks.count(), 3)
-        self.assertEqual(user2_tasks.count(), 3)
+        # Each user should have 2 system tasks from signals (email + phone verification)
+        self.assertEqual(user1_tasks.count(), 2)
+        self.assertEqual(user2_tasks.count(), 2)
 
         # Verify tasks are properly isolated by user
         user1_task_users = {task.user for task in user1_tasks}
@@ -82,8 +82,8 @@ class SystemTaskManagerRealBehaviorTest(TestCase):
         self.assertEqual(user1_task_users, {self.user1})
         self.assertEqual(user2_task_users, {self.user2})
 
-        # Verify all expected system codes exist for each user
-        expected_codes = {Task.EMAIL_VERIFICATION, Task.PHONE_VERIFICATION, Task.FIRST_STUDENT_ADDED}
+        # Verify all expected system codes exist for each user (regular users don't get FIRST_STUDENT_ADDED)
+        expected_codes = {Task.EMAIL_VERIFICATION, Task.PHONE_VERIFICATION}
 
         user1_codes = {task.system_code for task in user1_tasks}
         user2_codes = {task.system_code for task in user2_tasks}
@@ -110,35 +110,34 @@ class SystemTaskManagerRealBehaviorTest(TestCase):
 
     def test_pending_for_user_method(self):
         """Test pending_for_user method with system tasks."""
-        # Initially all 3 tasks should be pending
+        # Initially all 2 tasks should be pending
         pending_tasks = Task.system_tasks.pending_for_user(self.user1)
-        self.assertEqual(pending_tasks.count(), 3)
+        self.assertEqual(pending_tasks.count(), 2)
 
         # Complete one system task
         TaskService.complete_system_task(self.user1, Task.EMAIL_VERIFICATION)
 
-        # Now should have 2 pending tasks
+        # Now should have 1 pending task
         pending_tasks = Task.system_tasks.pending_for_user(self.user1)
-        self.assertEqual(pending_tasks.count(), 2)
+        self.assertEqual(pending_tasks.count(), 1)
 
         pending_codes = {task.system_code for task in pending_tasks}
-        expected_pending_codes = {Task.PHONE_VERIFICATION, Task.FIRST_STUDENT_ADDED}
+        expected_pending_codes = {Task.PHONE_VERIFICATION}
         self.assertEqual(pending_codes, expected_pending_codes)
 
     def test_by_system_code_method_with_signal_tasks(self):
         """Test by_system_code method with signal-created tasks."""
-        # Test each system code exists
+        # Test each system code exists (regular users don't get FIRST_STUDENT_ADDED)
         email_task = Task.system_tasks.by_system_code(self.user1, Task.EMAIL_VERIFICATION).first()
         phone_task = Task.system_tasks.by_system_code(self.user1, Task.PHONE_VERIFICATION).first()
         student_task = Task.system_tasks.by_system_code(self.user1, Task.FIRST_STUDENT_ADDED).first()
 
         self.assertIsNotNone(email_task)
         self.assertIsNotNone(phone_task)
-        self.assertIsNotNone(student_task)
+        self.assertIsNone(student_task)  # Regular users don't get this task
 
         self.assertEqual(email_task.system_code, Task.EMAIL_VERIFICATION)
         self.assertEqual(phone_task.system_code, Task.PHONE_VERIFICATION)
-        self.assertEqual(student_task.system_code, Task.FIRST_STUDENT_ADDED)
 
     def test_by_system_code_method_user_isolation(self):
         """Test by_system_code method properly isolates users."""
@@ -232,7 +231,7 @@ class UserTaskManagerRealBehaviorTest(TestCase):
         user1_system_tasks = Task.system_tasks.for_user(self.user1)
 
         self.assertGreater(user1_all_tasks.count(), user1_user_tasks.count())
-        self.assertEqual(user1_system_tasks.count(), 3)  # Should have 3 system tasks
+        self.assertEqual(user1_system_tasks.count(), 2)  # Should have 2 system tasks
 
     def test_completed_for_user_method(self):
         """Test completed_for_user method returns only completed user tasks."""
@@ -275,9 +274,9 @@ class ManagerIntegrationWithSignalsTest(TestCase):
         user_tasks = set(Task.user_tasks.for_user(self.user))
         onboarding_tasks = set(Task.onboarding_tasks.for_user(self.user))
 
-        # Should have 5 total tasks: 3 system (from signals) + 2 user-created
-        self.assertEqual(len(all_tasks), 5)
-        self.assertEqual(len(system_tasks), 3)  # From signals
+        # Should have 4 total tasks: 2 system (from signals) + 2 user-created
+        self.assertEqual(len(all_tasks), 4)
+        self.assertEqual(len(system_tasks), 2)  # From signals
         self.assertEqual(len(user_tasks), 2)  # User-created personal + onboarding
         self.assertEqual(len(onboarding_tasks), 1)  # Only user-created onboarding
 
@@ -331,7 +330,7 @@ class ManagerIntegrationWithSignalsTest(TestCase):
         user_tasks = list(Task.user_tasks.for_user(self.user))
 
         # Verify we get the expected counts
-        self.assertEqual(len(system_tasks), 3)
+        self.assertEqual(len(system_tasks), 2)
         self.assertEqual(len(user_tasks), 2)
 
         # Verify proper filtering
@@ -390,3 +389,85 @@ class ManagerErrorHandlingTest(TestCase):
         # UserTaskManager should exclude system-type tasks regardless of is_system_generated
         user_task_ids = [task.id for task in user_tasks]
         self.assertNotIn(inconsistent_task.id, user_task_ids)
+
+
+class SchoolAdminTaskCreationTest(TestCase):
+    """Test that school administrators get all 3 system tasks including FIRST_STUDENT_ADDED."""
+
+    def setUp(self):
+        """Set up test data with a school admin user."""
+        from accounts.models import School, SchoolMembership
+        from accounts.models.schools import SchoolRole
+
+        # Create a real school (not a personal school)
+        self.school = School.objects.create(name="Real Test School", address="123 Test St")
+
+        # Create admin user
+        self.admin_user = User.objects.create_user(email="admin@testschool.com", name="School Admin")
+
+        # Create admin membership
+        SchoolMembership.objects.create(
+            user=self.admin_user, school=self.school, role=SchoolRole.SCHOOL_ADMIN, is_active=True
+        )
+
+        # Initialize system tasks for the admin user
+        from tasks.services import TaskService
+
+        TaskService.initialize_system_tasks(self.admin_user)
+
+    def test_admin_user_gets_all_three_system_tasks(self):
+        """Test that school admin users get all 3 system tasks including FIRST_STUDENT_ADDED."""
+        admin_system_tasks = Task.system_tasks.for_user(self.admin_user)
+
+        # Admin should have 3 system tasks: email + phone + first student
+        self.assertEqual(admin_system_tasks.count(), 3)
+
+        # Verify all expected system codes exist for admin user
+        expected_codes = {Task.EMAIL_VERIFICATION, Task.PHONE_VERIFICATION, Task.FIRST_STUDENT_ADDED}
+        admin_codes = {task.system_code for task in admin_system_tasks}
+        self.assertEqual(admin_codes, expected_codes)
+
+    def test_admin_user_can_complete_first_student_added_task(self):
+        """Test that admin users can complete the FIRST_STUDENT_ADDED task."""
+        # Initially all 3 tasks should be pending
+        pending_tasks = Task.system_tasks.pending_for_user(self.admin_user)
+        self.assertEqual(pending_tasks.count(), 3)
+
+        # Complete the FIRST_STUDENT_ADDED task
+        from tasks.services import TaskService
+
+        TaskService.complete_system_task(self.admin_user, Task.FIRST_STUDENT_ADDED)
+
+        # Now should have 2 pending tasks
+        pending_tasks = Task.system_tasks.pending_for_user(self.admin_user)
+        self.assertEqual(pending_tasks.count(), 2)
+
+        # Verify the FIRST_STUDENT_ADDED task is completed
+        completed_tasks = Task.system_tasks.completed_for_user(self.admin_user)
+        self.assertEqual(completed_tasks.count(), 1)
+
+        completed_task = completed_tasks.first()
+        self.assertEqual(completed_task.system_code, Task.FIRST_STUDENT_ADDED)
+        self.assertEqual(completed_task.status, "completed")
+
+    def test_regular_vs_admin_user_task_difference(self):
+        """Test the difference between regular users and admin users for system tasks."""
+        # Create a regular user for comparison
+        regular_user = User.objects.create_user(email="regular@example.com", name="Regular User")
+
+        # Regular users get 2 tasks, admin users get 3
+        regular_system_tasks = Task.system_tasks.for_user(regular_user)
+        admin_system_tasks = Task.system_tasks.for_user(self.admin_user)
+
+        self.assertEqual(regular_system_tasks.count(), 2)
+        self.assertEqual(admin_system_tasks.count(), 3)
+
+        # Regular user shouldn't have FIRST_STUDENT_ADDED task
+        regular_codes = {task.system_code for task in regular_system_tasks}
+        admin_codes = {task.system_code for task in admin_system_tasks}
+
+        expected_regular_codes = {Task.EMAIL_VERIFICATION, Task.PHONE_VERIFICATION}
+        expected_admin_codes = {Task.EMAIL_VERIFICATION, Task.PHONE_VERIFICATION, Task.FIRST_STUDENT_ADDED}
+
+        self.assertEqual(regular_codes, expected_regular_codes)
+        self.assertEqual(admin_codes, expected_admin_codes)

@@ -280,23 +280,22 @@ class SchoolTaskIsolationTest(TestCase):
         )
         # No GuardianStudentRelationship created - triggers fallback
 
-        # Verify ALL users have tasks completed (fallback behavior)
-        all_users = [
-            self.admin_a,
-            self.teacher_a,
-            self.guardian_a,
-            self.admin_b,
-            self.teacher_b,
-            self.guardian_b,
-            student_user,
-        ]
+        # Verify ONLY admin users have tasks completed (fallback behavior)
+        admin_users = [self.admin_a, self.admin_b]
+        non_admin_users = [self.teacher_a, self.guardian_a, self.teacher_b, self.guardian_b, student_user]
 
-        for user in all_users:
-            user_task = Task.system_tasks.by_system_code(user, Task.FIRST_STUDENT_ADDED).first()
+        # Admin users should have their tasks completed
+        for admin_user in admin_users:
+            admin_task = Task.system_tasks.by_system_code(admin_user, Task.FIRST_STUDENT_ADDED).first()
             self.assertEqual(
-                user_task.status, "completed", f"Task should be completed for {user.name} in fallback mode"
+                admin_task.status, "completed", f"Task should be completed for admin {admin_user.name} in fallback mode"
             )
-            self.assertIsNotNone(user_task.completed_at)
+            self.assertIsNotNone(admin_task.completed_at)
+
+        # Non-admin users should NOT have FIRST_STUDENT_ADDED tasks (per business logic)
+        for user in non_admin_users:
+            user_task = Task.system_tasks.by_system_code(user, Task.FIRST_STUDENT_ADDED).first()
+            self.assertIsNone(user_task, f"Non-admin {user.name} should NOT have FIRST_STUDENT_ADDED task")
 
     def test_student_without_user_account_with_guardian_relationship(self):
         """Test student profile without user account but with guardian relationships."""
@@ -313,16 +312,23 @@ class SchoolTaskIsolationTest(TestCase):
         # So this tests the edge case where the signal handles None user gracefully
         # and falls back to completing tasks for all users
 
-        # Verify ALL users have tasks completed (fallback because student.user is None)
-        all_users = [self.admin_a, self.teacher_a, self.guardian_a, self.admin_b, self.teacher_b, self.guardian_b]
+        # Verify ONLY admin users have tasks completed (fallback because student.user is None)
+        admin_users = [self.admin_a, self.admin_b]
+        non_admin_users = [self.teacher_a, self.guardian_a, self.teacher_b, self.guardian_b]
 
-        for user in all_users:
-            user_task = Task.system_tasks.by_system_code(user, Task.FIRST_STUDENT_ADDED).first()
+        # Admin users should have their tasks completed
+        for admin_user in admin_users:
+            admin_task = Task.system_tasks.by_system_code(admin_user, Task.FIRST_STUDENT_ADDED).first()
             self.assertEqual(
-                user_task.status,
+                admin_task.status,
                 "completed",
-                f"Task should be completed for {user.name} when student has no user account",
+                f"Task should be completed for admin {admin_user.name} when student has no user account",
             )
+
+        # Non-admin users should NOT have FIRST_STUDENT_ADDED tasks (per business logic)
+        for user in non_admin_users:
+            user_task = Task.system_tasks.by_system_code(user, Task.FIRST_STUDENT_ADDED).first()
+            self.assertIsNone(user_task, f"Non-admin {user.name} should NOT have FIRST_STUDENT_ADDED task")
 
     def test_cross_school_contamination_prevention(self):
         """Test that task completion for one school absolutely cannot affect another school."""
@@ -516,14 +522,15 @@ class TaskCompletionEdgeCaseTest(TestCase):
             user=student_user, educational_system=self.educational_system, birth_date="2010-01-01", school_year="5"
         )
 
-        # Should fall back to completing tasks for all users (no active guardian relationships)
+        # Should fall back to completing tasks for admin users only (no active guardian relationships)
         admin_task = Task.system_tasks.by_system_code(admin_user, Task.FIRST_STUDENT_ADDED).first()
         student_task = Task.system_tasks.by_system_code(student_user, Task.FIRST_STUDENT_ADDED).first()
         guardian_task = Task.system_tasks.by_system_code(guardian_user, Task.FIRST_STUDENT_ADDED).first()
 
         self.assertEqual(admin_task.status, "completed", "Admin task should be completed (fallback)")
-        self.assertEqual(student_task.status, "completed", "Student task should be completed (fallback)")
-        self.assertEqual(guardian_task.status, "completed", "Guardian task should be completed (fallback)")
+        # Non-admin users should NOT have FIRST_STUDENT_ADDED tasks (per business logic)
+        self.assertIsNone(student_task, "Student should NOT have FIRST_STUDENT_ADDED task")
+        self.assertIsNone(guardian_task, "Guardian should NOT have FIRST_STUDENT_ADDED task")
 
     def test_multiple_students_same_school_task_completion_idempotency(self):
         """Test that multiple students added to same school don't cause duplicate task completions."""

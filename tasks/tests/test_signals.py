@@ -28,13 +28,13 @@ class UserCreationSignalTest(TestCase):
         # Create user (should trigger signal)
         user = User.objects.create_user(email="newuser@example.com", name="New User")
 
-        # Verify system tasks were created
+        # Verify system tasks were created (regular users get 2 tasks: email + phone verification)
         system_tasks = Task.system_tasks.for_user(user)
-        self.assertEqual(system_tasks.count(), 3)
+        self.assertEqual(system_tasks.count(), 2)
 
-        # Verify all expected system codes exist
+        # Verify all expected system codes exist (regular users don't get FIRST_STUDENT_ADDED)
         system_codes = {task.system_code for task in system_tasks}
-        expected_codes = {Task.EMAIL_VERIFICATION, Task.PHONE_VERIFICATION, Task.FIRST_STUDENT_ADDED}
+        expected_codes = {Task.EMAIL_VERIFICATION, Task.PHONE_VERIFICATION}
         self.assertEqual(system_codes, expected_codes)
 
     def test_existing_user_update_no_new_tasks_created(self):
@@ -42,9 +42,9 @@ class UserCreationSignalTest(TestCase):
         # Create user (triggers signal)
         user = User.objects.create_user(email="existing@example.com", name="Existing User")
 
-        # Verify initial task count
+        # Verify initial task count (regular users get 2 tasks: email + phone verification)
         initial_count = Task.system_tasks.for_user(user).count()
-        self.assertEqual(initial_count, 3)
+        self.assertEqual(initial_count, 2)
 
         # Update user (should not create new tasks)
         user.name = "Updated Name"
@@ -75,7 +75,7 @@ class UserCreationSignalTest(TestCase):
         # Each user should have their own system tasks
         for user in users:
             system_tasks = Task.system_tasks.for_user(user)
-            self.assertEqual(system_tasks.count(), 3)
+            self.assertEqual(system_tasks.count(), 2)  # Regular users get 2 tasks: email + phone verification
 
 
 class EmailVerificationSignalTest(TestCase):
@@ -193,17 +193,41 @@ class StudentProfileSignalTest(TestCase):
 
     def setUp(self):
         """Set up test data."""
+        from accounts.models import School, SchoolMembership
+        from accounts.models.schools import SchoolRole
+
         self.educational_system = EducationalSystem.objects.create(
             name="Test System", code="test", description="Test educational system"
         )
-        # Create multiple users to test fallback behavior
-        self.user1 = User.objects.create_user(email="user1@example.com", name="User 1")
-        self.user2 = User.objects.create_user(email="user2@example.com", name="User 2")
-        self.user3 = User.objects.create_user(email="user3@example.com", name="User 3")
 
-    def test_first_student_creation_completes_all_user_tasks(self):
-        """Test that creating first student completes task for ALL users (fallback mode)."""
-        # Verify all users have pending student tasks
+        # Create a real school (not personal)
+        self.school = School.objects.create(name="Test Signal School", address="123 Test St")
+
+        # Create multiple admin users to test fallback behavior (only admins get FIRST_STUDENT_ADDED tasks)
+        self.user1 = User.objects.create_user(email="admin1@example.com", name="Admin 1")
+        self.user2 = User.objects.create_user(email="admin2@example.com", name="Admin 2")
+        self.user3 = User.objects.create_user(email="admin3@example.com", name="Admin 3")
+
+        # Make them all school admins
+        SchoolMembership.objects.create(
+            user=self.user1, school=self.school, role=SchoolRole.SCHOOL_ADMIN, is_active=True
+        )
+        SchoolMembership.objects.create(
+            user=self.user2, school=self.school, role=SchoolRole.SCHOOL_ADMIN, is_active=True
+        )
+        SchoolMembership.objects.create(
+            user=self.user3, school=self.school, role=SchoolRole.SCHOOL_ADMIN, is_active=True
+        )
+
+        # Initialize system tasks for admin users
+        from tasks.services import TaskService
+
+        for user in [self.user1, self.user2, self.user3]:
+            TaskService.initialize_system_tasks(user)
+
+    def test_first_student_creation_completes_all_admin_tasks(self):
+        """Test that creating first student completes task for ALL admin users (fallback mode)."""
+        # Verify all admin users have pending student tasks
         for user in [self.user1, self.user2, self.user3]:
             student_task = Task.system_tasks.by_system_code(user, Task.FIRST_STUDENT_ADDED).first()
             self.assertEqual(student_task.status, "pending")
@@ -214,11 +238,15 @@ class StudentProfileSignalTest(TestCase):
             user=student_user, educational_system=self.educational_system, birth_date="2010-01-01", school_year="5"
         )
 
-        # All users should now have completed tasks (fallback mode)
-        for user in [self.user1, self.user2, self.user3, student_user]:
+        # All admin users should now have completed tasks (fallback mode)
+        for user in [self.user1, self.user2, self.user3]:
             student_task = Task.system_tasks.by_system_code(user, Task.FIRST_STUDENT_ADDED).first()
             self.assertEqual(student_task.status, "completed")
             self.assertIsNotNone(student_task.completed_at)
+
+        # Regular student user should NOT have FIRST_STUDENT_ADDED task (per business logic)
+        student_task = Task.system_tasks.by_system_code(student_user, Task.FIRST_STUDENT_ADDED).first()
+        self.assertIsNone(student_task)
 
     def test_student_without_user_account(self):
         """Test creating student profile without user account (fallback mode)."""
@@ -228,9 +256,10 @@ class StudentProfileSignalTest(TestCase):
             educational_system=self.educational_system,
             birth_date="2010-01-01",
             school_year="5",
+            account_type="GUARDIAN_ONLY",  # Correct account type for no user account
         )
 
-        # All existing users should have completed tasks (fallback mode)
+        # All existing admin users should have completed tasks (fallback mode)
         for user in [self.user1, self.user2, self.user3]:
             student_task = Task.system_tasks.by_system_code(user, Task.FIRST_STUDENT_ADDED).first()
             self.assertEqual(student_task.status, "completed")
@@ -249,29 +278,27 @@ class StudentProfileSignalTest(TestCase):
             user=student_user, educational_system=self.educational_system, birth_date="2010-01-01", school_year="5"
         )
 
-        # Verify logging occurred (3 info logs: user creation, student profile creation, completion)
-        self.assertEqual(mock_logger.info.call_count, 3)
-        self.assertEqual(mock_logger.warning.call_count, 1)  # Warning about no guardian relationship
+        # Verify logging occurred (at least 6 info logs)
+        self.assertGreaterEqual(mock_logger.info.call_count, 6)
+        self.assertEqual(mock_logger.warning.call_count, 0)  # No warnings in this scenario
 
-        # Check user creation log (from creating student_user)
-        user_creation_log = mock_logger.info.call_args_list[0][0][0]
-        self.assertIn("Creating system tasks for new user", user_creation_log)
+        # Check that required log messages are present somewhere in the logs
+        all_logs = [call[0][0] for call in mock_logger.info.call_args_list]
 
-        # Check student profile creation log
-        creation_log = mock_logger.info.call_args_list[1][0][0]
-        self.assertIn("Student profile created", creation_log)
+        # Should have student user creation log
+        user_creation_logs = [log for log in all_logs if "Creating system tasks for new user" in log]
+        self.assertTrue(len(user_creation_logs) >= 1)
 
-        # Check warning log
-        warning_log = mock_logger.warning.call_args_list[0][0][0]
-        self.assertIn("No guardian relationship found", warning_log)
-        self.assertIn("Falling back", warning_log)
+        # Should have student profile creation log
+        profile_creation_logs = [log for log in all_logs if "Student profile created" in log]
+        self.assertTrue(len(profile_creation_logs) >= 1)
 
-        # Check completion log
-        completion_log = mock_logger.info.call_args_list[2][0][0]
-        self.assertIn("Completed FIRST_STUDENT_ADDED task for all users (fallback mode)", completion_log)
+        # Should have fallback log
+        fallback_logs = [log for log in all_logs if "No guardian relationships found" in log and "falling back" in log]
+        self.assertTrue(len(fallback_logs) >= 1)
 
-        # Verify TaskService was called for all users (4 users total)
-        self.assertEqual(mock_complete.call_count, 4)
+        # Verify TaskService was called for all admin users (3 admin users total)
+        self.assertEqual(mock_complete.call_count, 3)
 
 
 class SignalErrorHandlingTest(TestCase):
@@ -314,6 +341,6 @@ class SignalDisconnectionTest(TestCase):
         # Create another user with signal reconnected
         user2 = User.objects.create_user(email="reconnected@example.com", name="Reconnected User")
 
-        # Tasks should be created
+        # Tasks should be created (regular users get 2 tasks: email + phone verification)
         system_tasks = Task.system_tasks.for_user(user2)
-        self.assertEqual(system_tasks.count(), 3)
+        self.assertEqual(system_tasks.count(), 2)

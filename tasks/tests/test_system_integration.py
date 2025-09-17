@@ -31,13 +31,13 @@ class SystemTaskCreationIntegrationTest(TestCase):
         # Create user (should trigger signal that creates system tasks)
         user = User.objects.create_user(email="newuser@example.com", name="New User")
 
-        # Verify system tasks were automatically created
+        # Verify system tasks were automatically created (regular users get 2 tasks: email + phone verification)
         system_tasks = Task.system_tasks.for_user(user)
-        self.assertEqual(system_tasks.count(), 3, "Should create exactly 3 system tasks")
+        self.assertEqual(system_tasks.count(), 2, "Should create exactly 2 system tasks")
 
-        # Verify all expected system codes exist
+        # Verify all expected system codes exist (regular users don't get FIRST_STUDENT_ADDED)
         system_codes = {task.system_code for task in system_tasks}
-        expected_codes = {Task.EMAIL_VERIFICATION, Task.PHONE_VERIFICATION, Task.FIRST_STUDENT_ADDED}
+        expected_codes = {Task.EMAIL_VERIFICATION, Task.PHONE_VERIFICATION}
         self.assertEqual(system_codes, expected_codes, "Should create all expected system task types")
 
         # Verify all tasks are initially pending
@@ -68,8 +68,8 @@ class TaskBooleanFieldSynchronizationTest(TestCase):
         """Set up test user with real signal-created tasks."""
         self.user = User.objects.create_user(email="synctest@example.com", name="Sync Test User")
         # DON'T delete tasks - test the real system!
-        # Verify we have the expected system tasks
-        self.assertEqual(Task.system_tasks.for_user(self.user).count(), 3)
+        # Verify we have the expected system tasks (regular users get 2 tasks: email + phone verification)
+        self.assertEqual(Task.system_tasks.for_user(self.user).count(), 2)
 
     def test_complete_email_task_syncs_boolean_field(self):
         """Test that completing email verification task updates boolean field."""
@@ -111,9 +111,21 @@ class TaskBooleanFieldSynchronizationTest(TestCase):
         self.assertTrue(self.user.phone_verified, "Boolean field should be synced to True")
 
     def test_complete_first_student_task_no_boolean_field(self):
-        """Test that completing first student task works without boolean field sync."""
+        """Test that completing first student task works without boolean field sync (admin users only)."""
+        # Regular users don't have FIRST_STUDENT_ADDED tasks - skip this test or make user admin
+        # For this test, let's make the user an admin so they have the task
+        from accounts.models import School, SchoolMembership
+        from accounts.models.schools import SchoolRole
+
+        school = School.objects.create(name="Test Admin School", address="123 Test St")
+        SchoolMembership.objects.create(user=self.user, school=school, role=SchoolRole.SCHOOL_ADMIN, is_active=True)
+
+        # Initialize admin tasks
+        TaskService.initialize_system_tasks(self.user)
+
         # No boolean field for first_student_added - task system is primary
         student_task = Task.system_tasks.by_system_code(self.user, Task.FIRST_STUDENT_ADDED).first()
+        self.assertIsNotNone(student_task, "Admin users should have FIRST_STUDENT_ADDED task")
         self.assertEqual(student_task.status, "pending")
 
         # Complete the system task
@@ -158,8 +170,8 @@ class BooleanFieldToTaskSynchronizationTest(TestCase):
         self.user = User.objects.create_user(
             email="bool2task@example.com", name="Bool to Task User", email_verified=False, phone_verified=False
         )
-        # Test with real signal-created tasks
-        self.assertEqual(Task.system_tasks.for_user(self.user).count(), 3)
+        # Test with real signal-created tasks (regular users get 2 tasks: email + phone verification)
+        self.assertEqual(Task.system_tasks.for_user(self.user).count(), 2)
 
     def test_setting_email_verified_true_completes_task(self):
         """Test that setting email_verified=True completes the email verification task."""
@@ -196,22 +208,41 @@ class StudentCreationSystemTaskTest(TestCase):
     """Test the first student added system task behavior."""
 
     def setUp(self):
-        """Set up test users and educational system."""
+        """Set up test admin users and educational system."""
+        from accounts.models import School, SchoolMembership
+        from accounts.models.schools import SchoolRole
+
         self.educational_system = EducationalSystem.objects.create(
             name="Test System", code="test", description="Test educational system"
         )
 
-        # Create multiple users
-        self.user1 = User.objects.create_user(email="user1@example.com", name="User One")
-        self.user2 = User.objects.create_user(email="user2@example.com", name="User Two")
+        # Create a real school (not personal)
+        self.school = School.objects.create(name="Test Integration School", address="123 Test St")
 
-        # Verify all users have pending first student tasks
+        # Create multiple admin users (only admins get FIRST_STUDENT_ADDED tasks)
+        self.user1 = User.objects.create_user(email="admin1@example.com", name="Admin One")
+        self.user2 = User.objects.create_user(email="admin2@example.com", name="Admin Two")
+
+        # Make them school admins
+        SchoolMembership.objects.create(
+            user=self.user1, school=self.school, role=SchoolRole.SCHOOL_ADMIN, is_active=True
+        )
+        SchoolMembership.objects.create(
+            user=self.user2, school=self.school, role=SchoolRole.SCHOOL_ADMIN, is_active=True
+        )
+
+        # Initialize system tasks for admin users
+        TaskService.initialize_system_tasks(self.user1)
+        TaskService.initialize_system_tasks(self.user2)
+
+        # Verify all admin users have pending first student tasks
         for user in [self.user1, self.user2]:
             student_task = Task.system_tasks.by_system_code(user, Task.FIRST_STUDENT_ADDED).first()
+            self.assertIsNotNone(student_task, f"Admin {user.name} should have FIRST_STUDENT_ADDED task")
             self.assertEqual(student_task.status, "pending")
 
-    def test_creating_student_completes_first_student_task_for_all_users(self):
-        """Test that creating ANY student completes first student task for ALL users."""
+    def test_creating_student_completes_first_student_task_for_admin_users(self):
+        """Test that creating ANY student completes first student task for admin users (fallback mode)."""
         # Create a student user
         student_user = User.objects.create_user(email="student@example.com", name="Student User")
 
@@ -220,15 +251,19 @@ class StudentCreationSystemTaskTest(TestCase):
             user=student_user, educational_system=self.educational_system, birth_date="2010-01-01", school_year="5"
         )
 
-        # Verify ALL users' first student tasks are completed
-        for user in [self.user1, self.user2, student_user]:
+        # Verify admin users' first student tasks are completed (fallback mode)
+        for user in [self.user1, self.user2]:
             student_task = Task.system_tasks.by_system_code(user, Task.FIRST_STUDENT_ADDED).first()
             self.assertEqual(
-                student_task.status, "completed", f"User {user.email} should have completed first student task"
+                student_task.status, "completed", f"Admin {user.email} should have completed first student task"
             )
             self.assertIsNotNone(student_task.completed_at)
 
-            # Note: No boolean field for first_student_added - task system is primary
+        # Regular student user should NOT have FIRST_STUDENT_ADDED task (per business logic)
+        student_task = Task.system_tasks.by_system_code(student_user, Task.FIRST_STUDENT_ADDED).first()
+        self.assertIsNone(student_task, "Regular student users should NOT have FIRST_STUDENT_ADDED task")
+
+        # Note: No boolean field for first_student_added - task system is primary
 
 
 class EndToEndWorkflowTest(TestCase):
@@ -255,6 +290,7 @@ class EndToEndWorkflowTest(TestCase):
         status = TaskService.get_verification_status(user)
         self.assertFalse(status["email_verified"])
         self.assertFalse(status["phone_verified"])
+        self.assertFalse(status["first_student_added"])  # Regular users don't have FIRST_STUDENT_ADDED tasks
 
         # Step 1: Complete email verification via TaskService
         email_result = TaskService.complete_system_task(user, Task.EMAIL_VERIFICATION)
@@ -289,7 +325,7 @@ class EndToEndWorkflowTest(TestCase):
         status = TaskService.get_verification_status(user)
         self.assertTrue(status["email_verified"])
         self.assertTrue(status["phone_verified"])
-        self.assertTrue(status["first_student_added"])
+        self.assertFalse(status["first_student_added"])  # Regular users don't have FIRST_STUDENT_ADDED tasks
 
         # Verify boolean fields are synced (where they exist)
         user.refresh_from_db()
@@ -347,7 +383,7 @@ class PerformanceTest(TestCase):
         # Each user should have their system tasks
         for user in users:
             system_tasks = Task.system_tasks.for_user(user)
-            self.assertEqual(system_tasks.count(), 3)
+            self.assertEqual(system_tasks.count(), 2)  # Regular users get 2 tasks: email + phone verification
 
 
 class ErrorHandlingTest(TestCase):
