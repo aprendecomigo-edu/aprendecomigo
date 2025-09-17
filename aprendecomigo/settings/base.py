@@ -81,7 +81,8 @@ MIDDLEWARE = [
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",  # MUST BE BEFORE SessionManagementMiddleware
+    "accounts.middleware.SessionManagementMiddleware",  # PWA detection and session management - MOVED AFTER AuthenticationMiddleware
     "django.contrib.messages.middleware.MessageMiddleware",  # Must come before custom middleware that uses messages
     "sesame.middleware.AuthenticationMiddleware",  # Magic link authentication - must come after AuthenticationMiddleware
     "accounts.middleware.ProgressiveVerificationMiddleware",  # Progressive verification - must come after auth and messages
@@ -418,6 +419,9 @@ if not DEBUG:
 SESSION_COOKIE_SECURE = True  # Ensures the cookie is sent only with HTTPS requests
 CSRF_COOKIE_SECURE = True  # Ensures the CSRF cookie is sent only with HTTPS requests
 SESSION_COOKIE_HTTPONLY = True  # Prevents JavaScript from accessing the session cookie
+
+# Session serialization - use JSON for compatibility with PWA session metadata
+SESSION_SERIALIZER = "django.contrib.sessions.serializers.JSONSerializer"
 # For even more security in production:
 if not DEBUG:
     # HTTP Strict Transport Security
@@ -790,6 +794,9 @@ PWA_APP_ICONS = [
     {"src": "/static/images/icon-512.png", "sizes": "512x512"},
 ]
 PWA_SERVICE_WORKER_PATH = os.path.join(BASE_DIR, "static", "js", "service-worker.js")
+
+# APPEND_SLASH Configuration - Temporary fix for sesame query parameter issue
+APPEND_SLASH = False  # Disable to prevent query parameter stripping during redirects
 
 # Sesame Configuration (Magic Links)
 SESAME_MAX_AGE = 900  # 15 minutes for better user experience

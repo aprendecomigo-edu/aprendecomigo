@@ -1,3 +1,41 @@
+{% if show_delivery_choice %}
+<!-- Delivery Choice UI -->
+<div class="w-full space-y-6">
+    <div class="form-control">
+        <label class="label">
+            <span class="label-text font-primary font-medium">Email: {{ email }}</span>
+        </label>
+    </div>
+
+    <!-- Email Option -->
+    <form hx-post="{% url 'accounts:send_otp_email' %}"
+          hx-target="#signin-form-container"
+          hx-swap="innerHTML"
+          class="w-full">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary w-full bg-gradient-primary glass-light">
+            Send Code via Email
+        </button>
+    </form>
+
+    <!-- SMS Option (Disabled for now) -->
+    <button class="btn btn-neutral w-full glass-light" disabled>
+        Send Code via SMS (Coming Soon)
+    </button>
+
+    <!-- Back to edit email -->
+    <div class="text-center">
+        <button hx-get="{% url 'accounts:signin' %}"
+                hx-target="#signin-form-container"
+                hx-swap="innerHTML"
+                class="link link-neutral text-sm">
+            Change email address
+        </button>
+    </div>
+</div>
+
+{% else %}
+<!-- Email Input Form -->
 <form hx-post="{% url 'accounts:signin' %}"
       hx-target="#signin-form-container"
       hx-swap="innerHTML"
@@ -35,7 +73,7 @@
                 </div>
 
                 <button type="submit" class="btn btn-neutral join-item bg-gradient-primary glass-light shrink-0">
-                    Send Code
+                    Continue
                 </button>
             </div>
 
@@ -46,3 +84,4 @@
         </div>
     </div>
 </form>
+{% endif %}

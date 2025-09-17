@@ -176,7 +176,7 @@ class SignupIntegrationTestCase(BaseTestCase):
 
         # Assert: Error response
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "An account with this email already exists")
+        self.assertContains(response, "Account with this email or phone already exists")
 
         # Assert: Only original user exists, no new school created
         users = User.objects.filter(email=self.valid_signup_data["email"])

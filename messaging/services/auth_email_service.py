@@ -150,3 +150,102 @@ If you didn't request this code, please ignore this message."""
             "phone_number": phone_number,
             "sent_at": datetime.now().isoformat(),
         }
+
+
+def send_verification_sms(phone_number: str, magic_link: str, user_name: str | None = None) -> dict[str, Any]:
+    """
+    Send SMS with magic link for phone verification
+
+    Args:
+        phone_number: The phone number to send SMS to
+        magic_link: The magic link URL for verification
+        user_name: Optional user name for personalization
+
+    Returns:
+        dict with success status and details
+    """
+    greeting = f"Hello {user_name}" if user_name else "Hello"
+
+    message = f"""{greeting},
+
+Welcome to Aprende Comigo! Verify your phone number by tapping this link:
+
+{magic_link}
+
+This verification link will expire in 24 hours.
+
+If you didn't create an account, please ignore this message.
+
+- Aprende Comigo Team"""
+
+    try:
+        result = send_sms(to=phone_number, message=message)
+
+        # Add additional metadata for verification context
+        result.update(
+            {
+                "phone_number": phone_number,
+                "sent_at": datetime.now().isoformat(),
+                "service": "phone_verification",
+            }
+        )
+
+        if result["success"]:
+            logger.info(f"SMS verification link sent successfully to {phone_number}: {result.get('message_id', 'N/A')}")
+        else:
+            logger.error(f"SMS verification failed for {phone_number}: {result.get('error', 'Unknown error')}")
+
+        return result
+
+    except Exception as e:
+        logger.error(f"SMS verification error for {phone_number}: {e!s}")
+        return {
+            "success": False,
+            "error": f"SMS service error: {e!s}",
+            "phone_number": phone_number,
+            "sent_at": datetime.now().isoformat(),
+        }
+
+
+def send_otp_email_message(email, otp_code, user_name):
+    """
+    Send OTP code via email for signin.
+
+    Args:
+        email: Recipient email address
+        otp_code: 6-digit OTP code
+        user_name: User's display name
+
+    Returns:
+        dict: {"success": bool, "message": str}
+    """
+    try:
+        subject = "Your Aprende Comigo Sign-In Code"
+        greeting = f"Hello {user_name}" if user_name else "Hello"
+
+        message_text = f"""{greeting},
+
+Your sign-in verification code is: {otp_code}
+
+This code will expire in 10 minutes. If you didn't request this code, please ignore this email.
+
+Best regards,
+Aprende Comigo Team"""
+
+        send_mail(
+            subject=subject,
+            message=message_text,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+
+        logger.info(f"OTP email sent successfully to {email}")
+        return {
+            "success": True,
+            "email": email,
+            "sent_at": datetime.now().isoformat(),
+        }
+    except Exception as e:
+        logger.error(f"Failed to send OTP email to {email}: {e}")
+        return {"success": False, "message": str(e)}

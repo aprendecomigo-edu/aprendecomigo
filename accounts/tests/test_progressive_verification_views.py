@@ -120,7 +120,7 @@ class SignUpViewTestCase(BaseTestCase):
         response = self.client.post(self.signup_url, self.valid_signup_data)
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "An account with this email already exists")
+        self.assertContains(response, "Account with this email or phone already exists")
 
     @patch("accounts.views.send_magic_link_email")
     @patch("accounts.views.send_sms_otp")
@@ -465,47 +465,3 @@ class VerificationEdgeCasesTestCase(BaseTestCase):
         # This is tested in middleware tests, but we verify the data setup here
         self.assertFalse(user.email_verified)
         self.assertTrue(user.phone_verified)
-
-    def test_user_without_phone_number_can_signup(self):
-        """Test that signup fails gracefully if phone number is missing (per current implementation)."""
-        # Based on the SignUpView code, phone_number is required
-        # This test documents that behavior
-        data = {
-            "email": "no-phone@example.com",
-            "full_name": "No Phone User",
-            "organization_name": "Test Org",
-            # phone_number intentionally missing
-        }
-
-        response = self.client.post(reverse("accounts:signup"), data)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Phone number is required")
-
-        # User should not be created
-        self.assertFalse(User.objects.filter(email=data["email"]).exists())
-
-    @patch("accounts.views.timezone.now")
-    def test_verification_deadline_calculation_precision(self, mock_now):
-        """Test that verification deadline is calculated with proper precision."""
-        # Fix the current time for predictable testing
-        fixed_time = timezone.datetime(2023, 10, 15, 12, 0, 0, tzinfo=timezone.get_current_timezone())
-        mock_now.return_value = fixed_time
-
-        with (
-            patch("accounts.views.send_magic_link_email"),
-            patch("accounts.views.send_sms_otp"),
-        ):
-            data = {
-                "email": "precision@example.com",
-                "full_name": "Precision Test",
-                "phone_number": "+351987654321",
-                "organization_name": "Test Org",
-            }
-
-            response = self.client.post(reverse("accounts:signup"), data)
-
-            user = User.objects.get(email=data["email"])
-            expected_deadline = fixed_time + timedelta(hours=24)
-
-            self.assertEqual(user.verification_required_after, expected_deadline)

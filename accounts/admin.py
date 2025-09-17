@@ -11,7 +11,7 @@ from .models import (
     StudentProfile,
     TeacherCourse,
     TeacherProfile,
-    VerificationCode,
+    VerificationToken,
 )
 
 
@@ -180,11 +180,17 @@ class SchoolMembershipAdmin(admin.ModelAdmin):
     fieldsets = ((None, {"fields": ("user", "school", "role", "is_active")}),)
 
 
-@admin.register(VerificationCode)
-class VerificationCodeAdmin(admin.ModelAdmin):
-    list_display = ("email", "secret_key", "created_at", "is_used", "failed_attempts")
-    search_fields = ("email", "secret_key")
-    fieldsets = ((None, {"fields": ("email", "secret_key", "created_at", "is_used", "failed_attempts")}),)
+@admin.register(VerificationToken)
+class VerificationTokenAdmin(admin.ModelAdmin):
+    list_display = ("user", "token_type", "expires_at", "used_at", "attempts", "created_at")
+    list_filter = ("token_type", "used_at", "expires_at", "created_at")
+    search_fields = ("user__email", "user__name", "token_type")
+    readonly_fields = ("created_at", "used_at")
+    fieldsets = (
+        (None, {"fields": ("user", "token_type", "token_value")}),
+        ("Expiry & Usage", {"fields": ("expires_at", "used_at", "attempts", "max_attempts")}),
+        ("Timestamps", {"fields": ("created_at",), "classes": ("collapse",)}),
+    )
 
 
 @admin.register(Course)

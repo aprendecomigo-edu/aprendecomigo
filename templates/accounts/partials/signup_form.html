@@ -111,6 +111,7 @@
             <input type="text"
                    name="organization_name"
                    :placeholder="accountType === 'tutor' ? 'Your practice name' : 'Your school name'"
+                   value="{{ organization_name|default:'' }}"
                    class="input input-lg w-full glass-light p-4 rounded-xl"
                    autocomplete="organization"
                    data-test="input-school-name"

@@ -6,7 +6,9 @@ from .views import (
     AcceptTeacherInvitationView,
     # Authentication views
     CustomMagicLoginView,
+    EmailVerificationView,
     LogoutView,
+    PhoneVerificationView,
     # Profile management views
     ProfileEditView,
     ProfileView,
@@ -27,6 +29,8 @@ from .views import (
     resend_code,
     resend_teacher_invitation,
     root_redirect,
+    send_otp_email,
+    send_otp_sms,
     send_verification_email,
     send_verification_sms,
 )
@@ -43,11 +47,15 @@ urlpatterns = [
     path("signup/", SignUpView.as_view(), name="signup"),
     path("logout/", LogoutView.as_view(), name="logout"),
     path("verify-otp/", VerifyOTPView.as_view(), name="verify_otp"),
+    path("send-otp-email/", send_otp_email, name="send_otp_email"),
+    path("send-otp-sms/", send_otp_sms, name="send_otp_sms"),
     path("resend-code/", resend_code, name="resend_code"),
-    # Magic link authentication using custom view with better error handling
+    # Email verification using NEW view with verification completion
+    path("verify-email/", EmailVerificationView.as_view(), name="verify_email"),
+    # Phone verification using NEW view with verification completion
+    path("verify-phone/", PhoneVerificationView.as_view(), name="verify_phone"),
+    # Magic link authentication using existing view (for signin, not verification)
     path("magic-login/", CustomMagicLoginView.as_view(), name="magic_login"),
-    # Email verification using magic link (progressive verification)
-    path("verify-email/", CustomMagicLoginView.as_view(), name="verify_email"),
     # Verification actions from profile page
     path("send-verification-email/", send_verification_email, name="send_verification_email"),
     path("send-verification-sms/", send_verification_sms, name="send_verification_sms"),
