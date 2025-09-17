@@ -4,9 +4,9 @@
  */
 
 // Production logging utility
-const DEBUG = false; // Set to false for production
-const log = DEBUG ? console.log.bind(console, '[SW]') : () => {};
-const warn = DEBUG ? console.warn.bind(console, '[SW]') : () => {};
+const SW_DEBUG = false; // Set to false for production
+const log = SW_DEBUG ? console.log.bind(console, '[SW]') : () => {};
+const warn = SW_DEBUG ? console.warn.bind(console, '[SW]') : () => {};
 const error = console.error.bind(console, '[SW]'); // Always log errors
 
 const CACHE_VERSION = 'v1.0.0';

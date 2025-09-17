@@ -12,27 +12,38 @@
 <meta name="msapplication-config" content="/static/browserconfig.xml">
 
 <!-- iOS Icons -->
-<link rel="apple-touch-icon" href="/static/images/icon-180x180.png">
+<link rel="apple-touch-icon" href="/static/images/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/static/images/icon-180x180.png">
 <link rel="apple-touch-icon" sizes="152x152" href="/static/images/icon-152x152.png">
 <link rel="apple-touch-icon" sizes="144x144" href="/static/images/icon-144x144.png">
 <link rel="apple-touch-icon" sizes="120x120" href="/static/images/icon-120x120.png">
 <link rel="apple-touch-icon" sizes="114x114" href="/static/images/icon-114x114.png">
-<link rel="apple-touch-icon" sizes="76x76" href="/static/images/icon-76x76.png">
 <link rel="apple-touch-icon" sizes="72x72" href="/static/images/icon-72x72.png">
 <link rel="apple-touch-icon" sizes="60x60" href="/static/images/icon-60x60.png">
 <link rel="apple-touch-icon" sizes="57x57" href="/static/images/icon-57x57.png">
 
 <!-- Favicon -->
-<link rel="icon" type="image/png" sizes="32x32" href="/static/images/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/static/images/favicon-16x16.png">
-<link rel="shortcut icon" href="/static/images/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/images/icon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/static/images/icon-16x16.png">
+<link rel="shortcut icon" href="/static/images/favicon.png">
 
-<!-- PWA Core JavaScript -->
+<!-- PWA Core JavaScript - Load globally for all pages -->
 <script src="/static/js/pwa-core.js" defer></script>
 <script src="/static/js/push-notifications.js" defer></script>
 
-<!-- PWA UI Components -->
-<div id="pwa-components">
+<script>
+    // PWA UI components configuration
+    document.addEventListener('DOMContentLoaded', function() {
+        // PWA features should be available everywhere, including auth pages
+        // This ensures offline detection, session caching, and faster logins work properly
+
+        // PWA scripts are already loaded via script tags above, no need to load again
+        // UI components are shown by default - they provide useful feedback on all pages
+    });
+</script>
+
+<!-- PWA UI Components - Available on all pages -->
+<div id="pwa-components" class="pwa-ui-components">
     <!-- Offline Indicator -->
     <div id="offline-indicator" class="fixed top-0 left-0 right-0 bg-yellow-500 text-white text-center py-2 px-4 z-50" style="display: none;">
         <div class="flex items-center justify-center">
@@ -44,7 +55,7 @@
     </div>
 
     <!-- Update Available Banner -->
-    <div id="update-banner" class="fixed top-0 left-0 right-0 bg-blue-600 text-white text-center py-3 px-4 z-50" style="display: none;">
+    <!-- <div id="update-banner" class="fixed top-0 left-0 right-0 bg-blue-600 text-white text-center py-3 px-4 z-50" style="display: none;">
         <div class="flex items-center justify-center space-x-4">
             <span>A new version is available!</span>
             <button onclick="window.pwaCore.refreshApp()"
@@ -58,7 +69,7 @@
                 </svg>
             </button>
         </div>
-    </div>
+    </div> -->
 
     <!-- PWA Install Button -->
     <div id="pwa-install-button" class="fixed bottom-4 right-4 z-40" style="display: none;">
@@ -181,22 +192,32 @@
 
 <!-- Enhanced HTMX Configuration for PWA -->
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Configure HTMX for PWA
-        htmx.config.globalViewTransitions = true;
-        htmx.config.useTemplateFragments = true;
+    // Wait for HTMX to be fully loaded before configuring
+    document.addEventListener('htmx:load', function() {
+        // PROPER FIX: Don't use global HTMX config changes that break redirects
+        // Instead, add hx-swap="transition:true" to specific elements that need it
+        // This preserves authentication form redirects while enabling animations elsewhere
 
-        // Enhanced HTMX error handling for offline scenarios
+        // DON'T DO THIS - it breaks forms expecting redirects:
+        // htmx.config.globalViewTransitions = true;
+        // htmx.config.useTemplateFragments = true;
+
+        // Instead, use per-element configuration for specific features:
+        // Example: <div hx-get="/api/data" hx-swap="innerHTML transition:true">
+        // This way authentication forms work normally while other elements can have transitions
+
+        // Enhanced HTMX error handling for offline scenarios (only when truly offline)
         htmx.on('htmx:sendError', function(event) {
-            if (!navigator.onLine) {
-                // Cache form submission for later sync
+            // Only intervene if we're actually offline AND it's a network error
+            if (!navigator.onLine && event.detail.xhr.status === 0) {
                 const form = event.detail.elt;
+                // Cache ALL forms when offline (including auth forms for retry)
                 if (form && form.tagName === 'FORM') {
                     const formData = new FormData(form);
                     const url = form.action || window.location.href;
                     const method = form.method || 'POST';
 
-                    // Attempt to cache for background sync
+                    // Attempt to cache for background sync (non-auth forms only)
                     if (window.pwaCore) {
                         const headers = { 'X-Requested-With': 'XMLHttpRequest' };
                         if (document.querySelector('[name=csrfmiddlewaretoken]')) {
@@ -214,7 +235,7 @@
             }
         });
 
-        // Enhanced loading indicators
+        // Enhanced loading indicators (safe for all pages)
         htmx.on('htmx:beforeRequest', function(event) {
             if (event.detail.elt.hasAttribute('data-loading-disable')) {
                 event.detail.elt.disabled = true;

@@ -4,9 +4,9 @@
  */
 
 // Production logging utility
-const DEBUG = false; // Set to false for production
-const log = DEBUG ? console.log.bind(console, '[SW]') : () => {};
-const warn = DEBUG ? console.warn.bind(console, '[SW]') : () => {};
+const SERVICE_WORKER_DEBUG = false; // Set to false for production
+const log = SERVICE_WORKER_DEBUG ? console.log.bind(console, '[SW]') : () => {};
+const warn = SERVICE_WORKER_DEBUG ? console.warn.bind(console, '[SW]') : () => {};
 const error = console.error.bind(console, '[SW]'); // Always log errors
 
 const CACHE_NAME = 'aprende-comigo-v1';
@@ -90,13 +90,19 @@ self.addEventListener('fetch', (event) => {
               return response;
             }
 
-            // Clone response before caching
-            const responseToCache = response.clone();
+            // Only cache GET requests (POST, PUT, DELETE requests cannot be cached)
+            if (event.request.method === 'GET') {
+              // Clone response before caching
+              const responseToCache = response.clone();
 
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
+              caches.open(CACHE_NAME)
+                .then((cache) => {
+                  cache.put(event.request, responseToCache);
+                })
+                .catch((cacheError) => {
+                  error('Service Worker: Failed to cache request:', cacheError);
+                });
+            }
 
             return response;
           })

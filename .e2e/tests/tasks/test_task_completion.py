@@ -20,8 +20,6 @@ import pytest
 class TestTaskCompletion:
     """Test system task completion flows."""
 
-    BASE_URL = "http://localhost:8000"
-
     def get_test_admin_data(self):
         """Generate unique test data for each test run."""
         timestamp = int(time.time())
@@ -32,7 +30,7 @@ class TestTaskCompletion:
             "school_name": f"Task Test School {timestamp}",
         }
 
-    def _create_admin_user_with_pending_tasks(self, page: Page):
+    def _create_admin_user_with_pending_tasks(self, page: Page, base_url: str):
         """
         Helper method to create a new admin user with pending system tasks.
         Returns the test data used for registration.
@@ -40,7 +38,7 @@ class TestTaskCompletion:
         test_data = self.get_test_admin_data()
 
         # Register new admin user
-        page.goto(self.BASE_URL)
+        page.goto(base_url)
         page.get_by_role("link", name="Create your account").click()
         page.get_by_role("tab", name="School Admin").click()
 
@@ -61,7 +59,7 @@ class TestTaskCompletion:
 
         return test_data
 
-    def _verify_task_status_change(self, page: Page, task_text: str, expected_section: str):
+    def _verify_task_status_change(self, page: Page, base_url: str, task_text: str, expected_section: str):
         """
         Helper method to verify a task appears in the expected section (Pendentes or Concluídas).
 
@@ -71,7 +69,7 @@ class TestTaskCompletion:
             expected_section: Either "Pendentes" or "Concluídas"
         """
         # Navigate to dashboard to refresh task status
-        page.goto(f"{self.BASE_URL}/dashboard/")
+        page.goto(f"{base_url}/dashboard/")
         page.wait_for_load_state("networkidle")
 
         # Find the section heading specifically (not in count text)
@@ -92,7 +90,7 @@ class TestTaskCompletion:
             expect(page.get_by_text(re.compile(r"\d+ concluídas"))).to_be_visible()
 
     @pytest.mark.skip(reason="Email verification flow not yet implemented in E2E")
-    def test_email_verification_task_completion(self, page: Page):
+    def test_email_verification_task_completion(self, page: Page, base_url: str):
         """
         Test that the email verification task is marked completed when user verifies email.
 
@@ -103,7 +101,7 @@ class TestTaskCompletion:
         4. Verify task count updates appropriately
         """
         # Create user with pending tasks
-        test_data = self._create_admin_user_with_pending_tasks(page)
+        test_data = self._create_admin_user_with_pending_tasks(page, base_url)
 
         # TODO: Implement email verification flow
         # This would involve:
@@ -112,10 +110,10 @@ class TestTaskCompletion:
         # - Returning to dashboard
 
         # Verify task completion
-        self._verify_task_status_change(page, "Verify your email address", "Concluídas")
+        self._verify_task_status_change(page, base_url, "Verify your email address", "Concluídas")
 
     @pytest.mark.skip(reason="Phone verification flow not yet implemented in E2E")
-    def test_phone_verification_task_completion(self, page: Page):
+    def test_phone_verification_task_completion(self, page: Page, base_url: str):
         """
         Test that the phone verification task is marked completed when user verifies phone.
 
@@ -126,7 +124,7 @@ class TestTaskCompletion:
         4. Verify task count updates appropriately
         """
         # Create user with pending tasks
-        test_data = self._create_admin_user_with_pending_tasks(page)
+        test_data = self._create_admin_user_with_pending_tasks(page, base_url)
 
         # TODO: Implement phone verification flow
         # This would involve:
@@ -136,9 +134,9 @@ class TestTaskCompletion:
         # - Returning to dashboard
 
         # Verify task completion
-        self._verify_task_status_change(page, "Verify your phone number", "Concluídas")
+        self._verify_task_status_change(page, base_url, "Verify your phone number", "Concluídas")
 
-    def test_first_student_added_task_completion(self, page: Page):
+    def test_first_student_added_task_completion(self, page: Page, base_url: str):
         """
         Test that the "Add first student" task is marked completed when user adds a student.
 
@@ -149,7 +147,7 @@ class TestTaskCompletion:
         4. Verify task count updates appropriately
         """
         # Create user with pending tasks
-        test_data = self._create_admin_user_with_pending_tasks(page)
+        test_data = self._create_admin_user_with_pending_tasks(page, base_url)
 
         # Verify "Add your first student" task is initially pending
         expect(page.get_by_text("Add your first student")).to_be_visible()
@@ -202,7 +200,7 @@ class TestTaskCompletion:
         # Also verify that we can still see the original task (it should exist somewhere)
         expect(page.get_by_text("Add your first student")).to_be_visible()
 
-    def test_task_count_updates_correctly(self, page: Page):
+    def test_task_count_updates_correctly(self, page: Page, base_url: str):
         """
         Test that the task count in the "Tarefas Pessoais" header updates correctly
         as tasks move from pending to completed.
@@ -210,7 +208,7 @@ class TestTaskCompletion:
         This test creates a user and verifies the counting mechanism.
         """
         # Create user with pending tasks
-        test_data = self._create_admin_user_with_pending_tasks(page)
+        test_data = self._create_admin_user_with_pending_tasks(page, base_url)
 
         # Extract initial counts using flexible approach
         try:

@@ -32,8 +32,7 @@ urlpatterns = [
     path("health/", health_check, name="health_check"),
     # Admin route
     path("admin/", admin.site.urls),
-    # PWA infrastructure (django-pwa)
-    path("", include("pwa.urls")),
+    # PWA infrastructure is handled by custom service worker
     # Authentication and dashboard routes (HTML interface)
     path("", include("accounts.urls", namespace="accounts")),
     # Clean dashboard routes at root level
