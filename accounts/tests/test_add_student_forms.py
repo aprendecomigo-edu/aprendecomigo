@@ -264,9 +264,9 @@ class AddStudentFormFieldDisplayTest(BaseTestCase):
         self.assertContains(response, "Adult Student")  # Tab label
 
         # Check that form submission endpoints exist in the forms
-        self.assertContains(response, "/accounts/students/create/separate/")
-        self.assertContains(response, "/accounts/students/create/guardian-only/")
-        self.assertContains(response, "/accounts/students/create/adult/")
+        self.assertContains(response, "/students/create/separate/")
+        self.assertContains(response, "/students/create/guardian-only/")
+        self.assertContains(response, "/students/create/adult/")
 
 
 class AddStudentFormValidationTest(BaseTestCase):
