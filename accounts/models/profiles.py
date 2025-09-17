@@ -184,7 +184,7 @@ class StudentProfile(models.Model):
     educational_system: models.CharField = models.CharField(
         _("educational system"),
         max_length=20,
-        choices=[("pt", "Portugal"), ("custom", "Custom")],  # Simple choices for now
+        choices=[("pt", "Portugal"), ("custom", "Custom")],
         default="pt",  # Portugal system as default
         help_text=_("Educational system this student belongs to"),
     )

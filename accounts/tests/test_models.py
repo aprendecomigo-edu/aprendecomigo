@@ -116,7 +116,7 @@ class StudentProfileTests(TestCase):
         # Create profile with required fields
         profile = StudentProfile.objects.create(
             user=self.user,
-            educational_system=self.educational_system,
+            educational_system="pt",  # Use string code, not model instance
             birth_date=datetime.date(2008, 1, 1),
             school_year="10",
         )
@@ -137,7 +137,7 @@ class StudentProfileTests(TestCase):
         """Test that student profile has proper string representation."""
         profile = StudentProfile.objects.create(
             user=self.user,
-            educational_system=self.educational_system,
+            educational_system="pt",  # Use string code, not model instance
             birth_date=datetime.date(2008, 1, 1),
             school_year="10",
         )

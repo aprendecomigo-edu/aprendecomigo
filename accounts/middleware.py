@@ -308,10 +308,20 @@ class SessionManagementMiddleware:
         current_pwa_session = request.session.get("is_pwa_session")
 
         # Check if we need to update session configuration
+        current_duration = request.session.get("session_duration_set")
+
+        # Debug logging for tests
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(
+                f"Session config check - PWA: {is_pwa}, current_pwa: {current_pwa_session}, "
+                f"current_duration: {current_duration}, expected_duration: {session_duration}"
+            )
+
         should_update_session = (
             current_pwa_session is None  # First time configuration
             or current_pwa_session != is_pwa  # Client type changed
-            or not request.session.get("session_duration_set")  # Missing configuration
+            or not current_duration  # Missing configuration
+            or current_duration != session_duration  # Duration changed
         )
 
         if should_update_session:
