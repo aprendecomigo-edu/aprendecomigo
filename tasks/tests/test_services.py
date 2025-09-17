@@ -36,17 +36,17 @@ class TaskServiceInitializationTest(TestCase):
         # Create a fresh user for this test
         user = User.objects.create_user(email="init_test@example.com", name="Init Test User")
 
-        # Signals should have already created 3 system tasks
+        # Signals should have already created 2 system tasks for regular users (per business logic)
         system_tasks = Task.system_tasks.for_user(user)
-        self.assertEqual(system_tasks.count(), 3, "Signals should create 3 system tasks")
+        self.assertEqual(system_tasks.count(), 2, "Signals should create 2 system tasks for regular users")
 
         # Calling initialize again should be idempotent (no new tasks created)
         created_tasks = TaskService.initialize_system_tasks(user)
         self.assertEqual(len(created_tasks), 0, "Should not create duplicate tasks")
 
-        # Total should still be 3
+        # Total should still be 2
         system_tasks = Task.system_tasks.for_user(user)
-        self.assertEqual(system_tasks.count(), 3)
+        self.assertEqual(system_tasks.count(), 2)
 
         # Verify specific system codes exist
         email_task = system_tasks.filter(system_code=Task.EMAIL_VERIFICATION).first()
@@ -55,7 +55,8 @@ class TaskServiceInitializationTest(TestCase):
 
         self.assertIsNotNone(email_task)
         self.assertIsNotNone(phone_task)
-        self.assertIsNotNone(student_task)
+        # Regular users should NOT have FIRST_STUDENT_ADDED task (per business logic)
+        self.assertIsNone(student_task)
 
     def test_initialize_system_tasks_creates_correct_properties(self):
         """Test that system tasks are created with correct properties."""
@@ -84,16 +85,16 @@ class TaskServiceInitializationTest(TestCase):
         self.assertEqual(email_task.priority, "high")
         self.assertEqual(phone_task.priority, "high")
 
-        # First student should be medium priority
+        # Regular users should NOT have FIRST_STUDENT_ADDED task (per business logic)
         student_task = Task.system_tasks.by_system_code(user, Task.FIRST_STUDENT_ADDED).first()
-        self.assertEqual(student_task.priority, "medium")
+        self.assertIsNone(student_task)
 
     def test_initialize_system_tasks_is_idempotent(self):
         """Test that calling initialize_system_tasks multiple times doesn't create duplicates."""
         user = User.objects.create_user(email="idempotent_test@example.com", name="Idempotent Test User")
 
-        # Signals should have created 3 tasks
-        self.assertEqual(Task.system_tasks.for_user(user).count(), 3)
+        # Signals should have created 2 tasks for regular users
+        self.assertEqual(Task.system_tasks.for_user(user).count(), 2)
 
         # First call should not create new tasks (they already exist)
         first_call_tasks = TaskService.initialize_system_tasks(user)
@@ -103,9 +104,9 @@ class TaskServiceInitializationTest(TestCase):
         second_call_tasks = TaskService.initialize_system_tasks(user)
         self.assertEqual(len(second_call_tasks), 0)
 
-        # Total tasks should still be 3
+        # Total tasks should still be 2 for regular users
         system_tasks = Task.system_tasks.for_user(user)
-        self.assertEqual(system_tasks.count(), 3)
+        self.assertEqual(system_tasks.count(), 2)
 
     def test_initialize_system_tasks_with_partial_existing_tasks(self):
         """Test initialization when some system tasks already exist."""
@@ -121,12 +122,12 @@ class TaskServiceInitializationTest(TestCase):
         # Initialize system tasks
         created_tasks = TaskService.initialize_system_tasks(self.user)
 
-        # Should only create 2 new tasks (phone and student)
-        self.assertEqual(len(created_tasks), 2)
+        # Should only create 1 new task (phone) for regular users
+        self.assertEqual(len(created_tasks), 1)
 
-        # Total should be 3
+        # Total should be 2 for regular users
         system_tasks = Task.system_tasks.for_user(self.user)
-        self.assertEqual(system_tasks.count(), 3)
+        self.assertEqual(system_tasks.count(), 2)
 
         # Existing task should still exist
         self.assertTrue(Task.objects.filter(id=existing_task.id).exists())
@@ -136,8 +137,8 @@ class TaskServiceInitializationTest(TestCase):
         """Test that task creation is logged."""
         TaskService.initialize_system_tasks(self.user)
 
-        # Should have logged creation of 3 tasks
-        self.assertEqual(mock_logger.info.call_count, 3)
+        # Should have logged creation of 2 tasks for regular users
+        self.assertEqual(mock_logger.info.call_count, 2)
 
         # Verify log messages contain expected information
         log_calls = mock_logger.info.call_args_list
@@ -154,8 +155,8 @@ class TaskServiceCompletionTest(TestCase):
         """Set up test data."""
         self.user = User.objects.create_user(email="completion_test@example.com", name="Completion Test User")
         # DON'T delete signal-created tasks - test the real system!
-        # Verify we have the expected system tasks
-        self.assertEqual(Task.system_tasks.for_user(self.user).count(), 3)
+        # Verify we have the expected system tasks for regular users
+        self.assertEqual(Task.system_tasks.for_user(self.user).count(), 2)
 
     def test_complete_system_task_marks_task_completed(self):
         """Test that complete_system_task marks task as completed."""
@@ -280,18 +281,18 @@ class TaskServiceVerificationStatusTest(TestCase):
         self.assertEqual(status, expected)
 
     def test_get_verification_status_all_completed(self):
-        """Test verification status when all tasks are completed."""
-        # Complete all tasks
+        """Test verification status when all available tasks are completed."""
+        # Complete all tasks available to regular users
         TaskService.complete_system_task(self.user, Task.EMAIL_VERIFICATION)
         TaskService.complete_system_task(self.user, Task.PHONE_VERIFICATION)
-        TaskService.complete_system_task(self.user, Task.FIRST_STUDENT_ADDED)
+        # Note: Regular users don't have FIRST_STUDENT_ADDED task per business logic
 
         status = TaskService.get_verification_status(self.user)
 
         expected = {
             "email_verified": True,
             "phone_verified": True,
-            "first_student_added": True,
+            "first_student_added": False,  # Regular users don't have this task
         }
 
         self.assertEqual(status, expected)
@@ -335,8 +336,8 @@ class TaskServiceBooleanFieldSyncTest(TestCase):
     def setUp(self):
         """Set up test data."""
         self.user = User.objects.create_user(email="sync_test@example.com", name="Sync Test User")
-        # Work with real signal-created tasks
-        self.assertEqual(Task.system_tasks.for_user(self.user).count(), 3)
+        # Work with real signal-created tasks for regular users
+        self.assertEqual(Task.system_tasks.for_user(self.user).count(), 2)
 
     def test_complete_email_task_syncs_boolean_field(self):
         """Test that completing email verification task updates user.email_verified."""
@@ -434,7 +435,7 @@ class TaskServiceIntegrationTest(TestCase):
         """Test complete verification workflow for a user."""
         # Initialize system tasks
         created_tasks = TaskService.initialize_system_tasks(self.user1)
-        self.assertEqual(len(created_tasks), 3)
+        self.assertEqual(len(created_tasks), 2)
 
         # Check initial status
         status = TaskService.get_verification_status(self.user1)
@@ -454,14 +455,13 @@ class TaskServiceIntegrationTest(TestCase):
         phone_task = TaskService.complete_system_task(self.user1, Task.PHONE_VERIFICATION)
         self.assertIsNotNone(phone_task)
 
-        # Complete first student
-        student_task = TaskService.complete_system_task(self.user1, Task.FIRST_STUDENT_ADDED)
-        self.assertIsNotNone(student_task)
+        # Note: Regular users don't have FIRST_STUDENT_ADDED task per business logic
 
         # Check final status
         status = TaskService.get_verification_status(self.user1)
         self.assertTrue(status["email_verified"])
         self.assertTrue(status["phone_verified"])
+        self.assertFalse(status["first_student_added"])  # Regular users don't have this task
 
     def test_multi_user_isolation(self):
         """Test that system tasks are properly isolated between users."""
@@ -522,7 +522,7 @@ class TaskServiceIntegrationTest(TestCase):
         """Test that service works correctly even when logging is disabled."""
         # Should work normally even without logging
         created_tasks = TaskService.initialize_system_tasks(self.user1)
-        self.assertEqual(len(created_tasks), 3)
+        self.assertEqual(len(created_tasks), 2)
 
         result = TaskService.complete_system_task(self.user1, Task.EMAIL_VERIFICATION)
         self.assertIsNotNone(result)

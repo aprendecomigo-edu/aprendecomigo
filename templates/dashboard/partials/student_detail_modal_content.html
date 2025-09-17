@@ -1,3 +1,4 @@
+{% load i18n %}
 <!-- Student Detail Modal Content - Loaded via HTMX -->
 {% if student %}
 <div class="space-y-6">
@@ -31,7 +32,7 @@
                 {% if student.school_year %}
                 <div class="flex justify-between">
                     <dt class="text-sm font-medium text-blue-700">School Year:</dt>
-                    <dd class="text-sm text-blue-900">{{ student.school_year }}º ano</dd>
+                    <dd class="text-sm text-blue-900">{% blocktrans with year=student.school_year %}Year {{ year }}{% endblocktrans %}</dd>
                 </div>
                 {% endif %}
                 {% if student.birth_date %}

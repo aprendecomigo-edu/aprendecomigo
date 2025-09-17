@@ -14,27 +14,27 @@ from django.utils.translation import gettext_lazy as _
 class PortugueseSchoolYear(models.TextChoices):
     """School years for Portuguese education system"""
 
-    FIRST = "1", _("1º ano")
-    SECOND = "2", _("2º ano")
-    THIRD = "3", _("3º ano")
-    FOURTH = "4", _("4º ano")
-    FIFTH = "5", _("5º ano")
-    SIXTH = "6", _("6º ano")
-    SEVENTH = "7", _("7º ano")
-    EIGHTH = "8", _("8º ano")
-    NINTH = "9", _("9º ano")
-    TENTH = "10", _("10º ano")
-    ELEVENTH = "11", _("11º ano")
-    TWELFTH = "12", _("12º ano")
+    FIRST = "1", _("Year 1")
+    SECOND = "2", _("Year 2")
+    THIRD = "3", _("Year 3")
+    FOURTH = "4", _("Year 4")
+    FIFTH = "5", _("Year 5")
+    SIXTH = "6", _("Year 6")
+    SEVENTH = "7", _("Year 7")
+    EIGHTH = "8", _("Year 8")
+    NINTH = "9", _("Year 9")
+    TENTH = "10", _("Year 10")
+    ELEVENTH = "11", _("Year 11")
+    TWELFTH = "12", _("Year 12")
 
 
 class PortugueseEducationLevel(models.TextChoices):
     """Education levels for Portuguese system"""
 
-    BASIC_1ST_CYCLE = "ensino_basico_1_ciclo", _("Ensino Básico 1º Ciclo")
-    BASIC_2ND_CYCLE = "ensino_basico_2_ciclo", _("Ensino Básico 2º Ciclo")
-    BASIC_3RD_CYCLE = "ensino_basico_3_ciclo", _("Ensino Básico 3º Ciclo")
-    SECONDARY = "ensino_secundario", _("Ensino Secundário")
+    BASIC_1ST_CYCLE = "ensino_basico_1_ciclo", _("Basic Education 1st Cycle")
+    BASIC_2ND_CYCLE = "ensino_basico_2_ciclo", _("Basic Education 2nd Cycle")
+    BASIC_3RD_CYCLE = "ensino_basico_3_ciclo", _("Basic Education 3rd Cycle")
+    SECONDARY = "ensino_secundario", _("Secondary Education")
 
 
 class CustomSchoolYear(models.TextChoices):

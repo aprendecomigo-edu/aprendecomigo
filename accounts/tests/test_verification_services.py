@@ -16,7 +16,7 @@ from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.test import TestCase
+from django.test import RequestFactory, TestCase
 from django.utils import timezone
 
 from accounts.models import VerificationToken
@@ -503,6 +503,22 @@ class EmailVerificationServiceTest(BaseTestCase):
         self.user = User.objects.create_user(
             email=get_unique_email("test"), name="Test User", phone_number=get_unique_phone_number()
         )
+        # Create a request factory for testing views
+        from django.test import RequestFactory
+
+        self.factory = RequestFactory()
+
+    def _create_request_for_user(self, user):
+        """Helper to create an authenticated request for a user"""
+        from django.contrib.sessions.middleware import SessionMiddleware
+
+        request = self.factory.post("/send-verification-email/")
+        request.user = user
+        # Add session support
+        middleware = SessionMiddleware(lambda x: None)
+        middleware.process_request(request)
+        request.session.save()
+        return request
 
     @patch("accounts.views.send_magic_link_email")
     def test_send_verification_email_success(self, mock_send_email):
@@ -511,9 +527,11 @@ class EmailVerificationServiceTest(BaseTestCase):
 
         from accounts.views import send_verification_email
 
-        result = send_verification_email(self.user)
+        request = self._create_request_for_user(self.user)
+        result = send_verification_email(request)
 
-        self.assertTrue(result["success"])
+        # Should return success response
+        self.assertEqual(result.status_code, 200)
         # Check that send_magic_link_email was called with correct parameters
         mock_send_email.assert_called_once()
         call_args = mock_send_email.call_args[0]
@@ -529,10 +547,12 @@ class EmailVerificationServiceTest(BaseTestCase):
         """Test email verification sending failure handling"""
         from accounts.views import send_verification_email
 
-        result = send_verification_email(self.user)
+        request = self._create_request_for_user(self.user)
+        result = send_verification_email(request)
 
-        self.assertFalse(result["success"])
-        self.assertIn("error", result)
+        # Should return error response due to exception
+        self.assertEqual(result.status_code, 200)
+        self.assertIn("error", result.content.decode())
 
     def test_multiple_verification_emails_allowed(self):
         """Test that multiple verification emails can be sent"""
@@ -542,12 +562,14 @@ class EmailVerificationServiceTest(BaseTestCase):
             from accounts.views import send_verification_email
 
             # Send first email
-            result1 = send_verification_email(self.user)
-            self.assertTrue(result1["success"])
+            request1 = self._create_request_for_user(self.user)
+            result1 = send_verification_email(request1)
+            self.assertEqual(result1.status_code, 200)
 
             # Send second email immediately
-            result2 = send_verification_email(self.user)
-            self.assertTrue(result2["success"])
+            request2 = self._create_request_for_user(self.user)
+            result2 = send_verification_email(request2)
+            self.assertEqual(result2.status_code, 200)
 
             # Both calls should succeed
             self.assertEqual(mock_send_email.call_count, 2)
@@ -561,11 +583,14 @@ class EmailVerificationServiceTest(BaseTestCase):
         with patch("accounts.views.send_magic_link_email") as mock_send_email:
             from accounts.views import send_verification_email
 
-            result = send_verification_email(self.user)
+            request = self._create_request_for_user(self.user)
+            result = send_verification_email(request)
 
-            # Should still succeed (user can re-verify)
-            self.assertTrue(result["success"])
-            mock_send_email.assert_called_once()
+            # Should return message indicating already verified
+            self.assertEqual(result.status_code, 200)
+            self.assertIn("already verified", result.content.decode())
+            # Should not call send_magic_link_email for already verified users
+            mock_send_email.assert_not_called()
 
 
 class SMSVerificationServiceTest(BaseTestCase):
@@ -576,6 +601,18 @@ class SMSVerificationServiceTest(BaseTestCase):
             email=get_unique_email("test"), name="Test User", phone_number=get_unique_phone_number()
         )
 
+    def _create_request_for_user(self, user):
+        """Helper to create a request object for the given user"""
+        from django.contrib.sessions.middleware import SessionMiddleware
+
+        request = RequestFactory().post("/verify-sms/")
+        request.user = user
+        # Add session support
+        middleware = SessionMiddleware(lambda x: None)
+        middleware.process_request(request)
+        request.session.save()
+        return request
+
     @patch("accounts.views.send_sms_otp")
     def test_send_verification_sms_success(self, mock_send_sms):
         """Test successful SMS verification sending"""
@@ -583,9 +620,11 @@ class SMSVerificationServiceTest(BaseTestCase):
 
         from accounts.views import send_verification_sms
 
-        result = send_verification_sms(self.user)
+        request = self._create_request_for_user(self.user)
+        response = send_verification_sms(request)
 
-        self.assertTrue(result["success"])
+        self.assertEqual(response.status_code, 200)
+
         # Check that send_sms_otp was called with correct parameters
         mock_send_sms.assert_called_once()
         call_args = mock_send_sms.call_args[0]
@@ -596,41 +635,55 @@ class SMSVerificationServiceTest(BaseTestCase):
         call_kwargs = mock_send_sms.call_args[1]
         self.assertTrue(call_kwargs.get("is_verification", False))
 
+        # Check response contains success message
+        self.assertContains(response, f"Verification code sent to {self.user.phone_number}!")
+
     @patch("accounts.views.send_sms_otp", side_effect=Exception("SMS service error"))
     def test_send_verification_sms_failure(self, mock_send_sms):
         """Test SMS verification sending failure handling"""
         from accounts.views import send_verification_sms
 
-        result = send_verification_sms(self.user)
+        request = self._create_request_for_user(self.user)
+        response = send_verification_sms(request)
 
-        self.assertFalse(result["success"])
-        self.assertIn("error", result)
+        # Should return an error response but still be a valid HTTP response
+        self.assertIn(response.status_code, [200, 400])
+        self.assertContains(response, "error", status_code=response.status_code)
 
     def test_send_verification_sms_no_phone_number(self):
         """Test SMS verification for user without phone number"""
-        self.user.phone_number = ""
-        self.user.save()
+        # Update phone number directly in database to bypass validation
+        User = get_user_model()
+        User.objects.filter(pk=self.user.pk).update(phone_number="")
+        self.user.refresh_from_db()
 
         from accounts.views import send_verification_sms
 
-        result = send_verification_sms(self.user)
+        request = self._create_request_for_user(self.user)
+        response = send_verification_sms(request)
 
-        self.assertFalse(result["success"])
-        self.assertIn("phone", result["error"])
+        # Should return error response
+        self.assertIn(response.status_code, [200, 400])
+        self.assertContains(response, "phone", status_code=response.status_code)
 
     def test_send_verification_sms_invalid_phone_number(self):
         """Test SMS verification with invalid phone number"""
-        self.user.phone_number = "invalid"
-        self.user.save()
+        # Bypass model validation by updating directly in database
+        User = get_user_model()
+        User.objects.filter(pk=self.user.pk).update(phone_number="invalid")
+        self.user.refresh_from_db()
 
         with patch("accounts.views.send_sms_otp") as mock_send_sms:
             mock_send_sms.side_effect = ValidationError("Invalid phone number")
 
             from accounts.views import send_verification_sms
 
-            result = send_verification_sms(self.user)
+            request = self._create_request_for_user(self.user)
+            response = send_verification_sms(request)
 
-            self.assertFalse(result["success"])
+            # Should return error response
+            self.assertIn(response.status_code, [200, 400])
+            self.assertContains(response, "error", status_code=response.status_code)
 
     @patch("accounts.views.send_sms_otp")
     def test_sms_verification_generates_otp_session(self, mock_send_sms):

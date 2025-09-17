@@ -1,3 +1,4 @@
+{% load i18n %}
 <!-- Teachers List Partial - for HTMX updates -->
 <div id="teachers-content">
     <!-- Teachers List -->
@@ -30,13 +31,13 @@
             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
             </svg>
-            <h3 class="mt-2 text-lg font-semibold text-gray-700">Nenhum professor encontrado</h3>
-            <p class="text-gray-600">Adicione professores à sua escola para começar.</p>
+            <h3 class="mt-2 text-lg font-semibold text-gray-700">{% trans "No teachers found" %}</h3>
+            <p class="text-gray-600">{% trans "Add teachers to your school to get started." %}</p>
             <button
                 @click="openModal('addTeacher')"
                 class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
             >
-                Adicionar Primeiro Professor
+                {% trans "Add First Teacher" %}
             </button>
         </div>
     {% endif %}

@@ -1,14 +1,15 @@
 {% extends 'base_with_navs.html' %}
+{% load i18n %}
 
-{% block page_title %}Teacher Dashboard{% endblock %}
+{% block page_title %}{% trans "Teacher Dashboard" %}{% endblock %}
 
 {% block dashboard_content %}
 <!-- Teacher Dashboard Content -->
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
     <!-- Page Header -->
     <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">Teacher Dashboard</h1>
-        <p class="text-gray-600">Manage your teaching activities and connect with students</p>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">{% trans "Teacher Dashboard" %}</h1>
+        <p class="text-gray-600">{% trans "Manage your teaching activities and connect with students" %}</p>
     </div>
 
     <!-- Teacher Stats -->
@@ -21,7 +22,7 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-500">Active Students</p>
+                    <p class="text-sm font-medium text-gray-500">{% trans "Active Students" %}</p>
                     <p class="text-2xl font-semibold text-gray-900">8</p>
                 </div>
             </div>

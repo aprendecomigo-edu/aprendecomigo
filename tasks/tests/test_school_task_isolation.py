@@ -77,11 +77,23 @@ class SchoolTaskIsolationTest(TestCase):
             user=self.guardian_b, school=self.school_b, role=SchoolRole.PARENT, is_active=True
         )
 
-        # Verify all users have pending first student tasks
+        # Initialize system tasks for all users
         all_users = [self.admin_a, self.teacher_a, self.guardian_a, self.admin_b, self.teacher_b, self.guardian_b]
         for user in all_users:
+            TaskService.initialize_system_tasks(user)
+
+        # Verify only admin users have pending first student tasks (per business logic)
+        admin_users = [self.admin_a, self.admin_b]
+        for admin_user in admin_users:
+            student_task = Task.system_tasks.by_system_code(admin_user, Task.FIRST_STUDENT_ADDED).first()
+            self.assertIsNotNone(student_task, f"Admin {admin_user.name} should have FIRST_STUDENT_ADDED task")
+            self.assertEqual(student_task.status, "pending", f"Task should be pending for admin {admin_user.name}")
+
+        # Verify non-admin users do NOT have first student tasks (per business logic)
+        non_admin_users = [self.teacher_a, self.guardian_a, self.teacher_b, self.guardian_b]
+        for user in non_admin_users:
             student_task = Task.system_tasks.by_system_code(user, Task.FIRST_STUDENT_ADDED).first()
-            self.assertEqual(student_task.status, "pending", f"Task should be pending for {user.name}")
+            self.assertIsNone(student_task, f"Non-admin {user.name} should NOT have FIRST_STUDENT_ADDED task")
 
     def test_task_completion_isolated_by_school(self):
         """Test that adding a student to School A only affects School A admin users."""
@@ -113,13 +125,13 @@ class SchoolTaskIsolationTest(TestCase):
         self.assertEqual(admin_b_task.status, "pending", "School B admin task should remain pending")
         self.assertIsNone(admin_b_task.completed_at)
 
-        # Verify School A teacher does NOT have task completed (role-based filtering)
+        # Verify School A teacher does NOT have FIRST_STUDENT_ADDED task (per business logic)
         teacher_a_task = Task.system_tasks.by_system_code(self.teacher_a, Task.FIRST_STUDENT_ADDED).first()
-        self.assertEqual(teacher_a_task.status, "pending", "School A teacher task should remain pending")
+        self.assertIsNone(teacher_a_task, "School A teacher should NOT have FIRST_STUDENT_ADDED task")
 
-        # Verify School B teacher still has pending task
+        # Verify School B teacher does NOT have FIRST_STUDENT_ADDED task (per business logic)
         teacher_b_task = Task.system_tasks.by_system_code(self.teacher_b, Task.FIRST_STUDENT_ADDED).first()
-        self.assertEqual(teacher_b_task.status, "pending", "School B teacher task should remain pending")
+        self.assertIsNone(teacher_b_task, "School B teacher should NOT have FIRST_STUDENT_ADDED task")
 
     def test_only_admin_roles_get_tasks_completed(self):
         """Test that only SCHOOL_OWNER and SCHOOL_ADMIN roles have tasks completed."""
@@ -133,6 +145,10 @@ class SchoolTaskIsolationTest(TestCase):
         SchoolMembership.objects.create(
             user=school_admin2, school=self.school_a, role=SchoolRole.SCHOOL_ADMIN, is_active=True
         )
+
+        # Initialize system tasks for the new admin users
+        TaskService.initialize_system_tasks(school_owner)
+        TaskService.initialize_system_tasks(school_admin2)
 
         # Create student and link to School A
         student_user = User.objects.create_user(email="student@school-a.com", name="Student A")
@@ -160,17 +176,17 @@ class SchoolTaskIsolationTest(TestCase):
         self.assertEqual(admin1_task.status, "completed", "School admin 1 task should be completed")
         self.assertEqual(admin2_task.status, "completed", "School admin 2 task should be completed")
 
-        # Verify TEACHER does NOT have task completed
+        # Verify TEACHER does NOT have FIRST_STUDENT_ADDED task (per business logic)
         teacher_task = Task.system_tasks.by_system_code(self.teacher_a, Task.FIRST_STUDENT_ADDED).first()
-        self.assertEqual(teacher_task.status, "pending", "Teacher task should remain pending")
+        self.assertIsNone(teacher_task, "Teacher should NOT have FIRST_STUDENT_ADDED task")
 
-        # Verify GUARDIAN does NOT have task completed
+        # Verify GUARDIAN does NOT have FIRST_STUDENT_ADDED task (per business logic)
         guardian_task = Task.system_tasks.by_system_code(self.guardian_a, Task.FIRST_STUDENT_ADDED).first()
-        self.assertEqual(guardian_task.status, "pending", "Guardian task should remain pending")
+        self.assertIsNone(guardian_task, "Guardian should NOT have FIRST_STUDENT_ADDED task")
 
-        # Verify STUDENT does NOT have task completed
+        # Verify STUDENT does NOT have FIRST_STUDENT_ADDED task (per business logic)
         student_task = Task.system_tasks.by_system_code(student_user, Task.FIRST_STUDENT_ADDED).first()
-        self.assertEqual(student_task.status, "pending", "Student task should remain pending")
+        self.assertIsNone(student_task, "Student should NOT have FIRST_STUDENT_ADDED task")
 
     def test_multi_school_student_completes_tasks_in_all_schools(self):
         """Test that a student belonging to multiple schools completes tasks for admins in ALL schools."""
@@ -210,12 +226,12 @@ class SchoolTaskIsolationTest(TestCase):
         self.assertIsNotNone(admin_a_task.completed_at)
         self.assertIsNotNone(admin_b_task.completed_at)
 
-        # Verify teachers in both schools still have pending tasks (role-based filtering)
+        # Verify teachers in both schools do NOT have FIRST_STUDENT_ADDED tasks (per business logic)
         teacher_a_task = Task.system_tasks.by_system_code(self.teacher_a, Task.FIRST_STUDENT_ADDED).first()
         teacher_b_task = Task.system_tasks.by_system_code(self.teacher_b, Task.FIRST_STUDENT_ADDED).first()
 
-        self.assertEqual(teacher_a_task.status, "pending", "School A teacher task should remain pending")
-        self.assertEqual(teacher_b_task.status, "pending", "School B teacher task should remain pending")
+        self.assertIsNone(teacher_a_task, "School A teacher should NOT have FIRST_STUDENT_ADDED task")
+        self.assertIsNone(teacher_b_task, "School B teacher should NOT have FIRST_STUDENT_ADDED task")
 
     def test_inactive_memberships_do_not_get_tasks_completed(self):
         """Test that inactive school memberships are excluded from task completion."""
@@ -227,6 +243,8 @@ class SchoolTaskIsolationTest(TestCase):
             role=SchoolRole.SCHOOL_ADMIN,
             is_active=False,  # Inactive membership
         )
+        # Initialize system tasks for the inactive admin
+        TaskService.initialize_system_tasks(inactive_admin)
 
         # Create student and link to School A
         student_user = User.objects.create_user(email="student@school-a.com", name="Student A")
@@ -248,9 +266,9 @@ class SchoolTaskIsolationTest(TestCase):
         active_admin_task = Task.system_tasks.by_system_code(self.admin_a, Task.FIRST_STUDENT_ADDED).first()
         self.assertEqual(active_admin_task.status, "completed", "Active admin task should be completed")
 
-        # Verify inactive admin does NOT have task completed
+        # Verify inactive admin does NOT have FIRST_STUDENT_ADDED task (inactive membership)
         inactive_admin_task = Task.system_tasks.by_system_code(inactive_admin, Task.FIRST_STUDENT_ADDED).first()
-        self.assertEqual(inactive_admin_task.status, "pending", "Inactive admin task should remain pending")
+        self.assertIsNone(inactive_admin_task, "Inactive admin should NOT have FIRST_STUDENT_ADDED task")
 
     def test_no_guardian_relationship_falls_back_to_all_users(self):
         """Test fallback behavior when no guardian relationship exists."""
@@ -316,6 +334,10 @@ class SchoolTaskIsolationTest(TestCase):
         SchoolMembership.objects.create(user=admin_c, school=school_c, role=SchoolRole.SCHOOL_ADMIN, is_active=True)
         SchoolMembership.objects.create(user=teacher_c, school=school_c, role=SchoolRole.TEACHER, is_active=True)
 
+        # Initialize system tasks for new users
+        TaskService.initialize_system_tasks(admin_c)
+        TaskService.initialize_system_tasks(teacher_c)
+
         # Add student to School A only
         student_a = User.objects.create_user(email="student-a@school-a.com", name="Student A Only")
         SchoolMembership.objects.create(user=student_a, school=self.school_a, role=SchoolRole.STUDENT, is_active=True)
@@ -349,14 +371,14 @@ class SchoolTaskIsolationTest(TestCase):
         self.assertEqual(admin_b_task.status, "completed", "School B admin should be completed")
         self.assertEqual(admin_c_task.status, "pending", "School C admin should remain pending")
 
-        # Verify no cross-contamination at teacher level
+        # Verify teachers do NOT have FIRST_STUDENT_ADDED tasks (per business logic)
         teacher_a_task = Task.system_tasks.by_system_code(self.teacher_a, Task.FIRST_STUDENT_ADDED).first()
         teacher_b_task = Task.system_tasks.by_system_code(self.teacher_b, Task.FIRST_STUDENT_ADDED).first()
         teacher_c_task = Task.system_tasks.by_system_code(teacher_c, Task.FIRST_STUDENT_ADDED).first()
 
-        self.assertEqual(teacher_a_task.status, "pending", "All teachers should remain pending")
-        self.assertEqual(teacher_b_task.status, "pending", "All teachers should remain pending")
-        self.assertEqual(teacher_c_task.status, "pending", "All teachers should remain pending")
+        self.assertIsNone(teacher_a_task, "Teachers should NOT have FIRST_STUDENT_ADDED task")
+        self.assertIsNone(teacher_b_task, "Teachers should NOT have FIRST_STUDENT_ADDED task")
+        self.assertIsNone(teacher_c_task, "Teachers should NOT have FIRST_STUDENT_ADDED task")
 
     def test_user_with_multiple_roles_in_same_school(self):
         """Test user with multiple admin roles in the same school."""
@@ -370,6 +392,9 @@ class SchoolTaskIsolationTest(TestCase):
         SchoolMembership.objects.create(
             user=multi_role_user, school=self.school_a, role=SchoolRole.SCHOOL_ADMIN, is_active=True
         )
+
+        # Initialize system tasks for multi-role user
+        TaskService.initialize_system_tasks(multi_role_user)
 
         # Add student to trigger task completion
         student_user = User.objects.create_user(email="student@school-a.com", name="Student A")
@@ -452,14 +477,14 @@ class TaskCompletionEdgeCaseTest(TestCase):
             user=student_user, educational_system=self.educational_system, birth_date="2010-01-01", school_year="5"
         )
 
-        # Verify no tasks are completed (no admin users in school)
+        # Verify non-admin users do NOT have FIRST_STUDENT_ADDED tasks (per business logic)
         teacher_task = Task.system_tasks.by_system_code(teacher, Task.FIRST_STUDENT_ADDED).first()
         student_task = Task.system_tasks.by_system_code(student_user, Task.FIRST_STUDENT_ADDED).first()
         guardian_task = Task.system_tasks.by_system_code(guardian_user, Task.FIRST_STUDENT_ADDED).first()
 
-        self.assertEqual(teacher_task.status, "pending", "Teacher task should remain pending")
-        self.assertEqual(student_task.status, "pending", "Student task should remain pending")
-        self.assertEqual(guardian_task.status, "pending", "Guardian task should remain pending")
+        self.assertIsNone(teacher_task, "Teacher should NOT have FIRST_STUDENT_ADDED task")
+        self.assertIsNone(student_task, "Student should NOT have FIRST_STUDENT_ADDED task")
+        self.assertIsNone(guardian_task, "Guardian should NOT have FIRST_STUDENT_ADDED task")
 
     def test_task_completion_with_inactive_guardian_relationship(self):
         """Test that inactive guardian relationships are ignored."""
@@ -468,6 +493,8 @@ class TaskCompletionEdgeCaseTest(TestCase):
         SchoolMembership.objects.create(
             user=admin_user, school=self.school, role=SchoolRole.SCHOOL_ADMIN, is_active=True
         )
+        # Initialize system tasks for admin user
+        TaskService.initialize_system_tasks(admin_user)
 
         # Create student and guardian
         student_user = User.objects.create_user(email="student@edge.com", name="Student")
@@ -508,6 +535,9 @@ class TaskCompletionEdgeCaseTest(TestCase):
             user=admin_user, school=self.school, role=SchoolRole.SCHOOL_ADMIN, is_active=True
         )
         SchoolMembership.objects.create(user=guardian_user, school=self.school, role=SchoolRole.PARENT, is_active=True)
+
+        # Initialize system tasks for admin user
+        TaskService.initialize_system_tasks(admin_user)
 
         # Add first student
         student1 = User.objects.create_user(email="student1@edge.com", name="Student 1")

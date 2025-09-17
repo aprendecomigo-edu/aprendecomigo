@@ -117,8 +117,8 @@
                     <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                     </svg>
-                    <p class="text-lg font-medium text-gray-600 mb-1">Nenhuma aula agendada</p>
-                    <p class="text-sm text-gray-500">As aulas aparecerão aqui quando professores e alunos agendarem sessões</p>
+                    <p class="text-lg font-medium text-gray-600 mb-1">{% trans "No classes scheduled" %}</p>
+                    <p class="text-sm text-gray-500">{% trans "Classes will appear here when teachers and students schedule sessions" %}</p>
                 </div>
                 {% endif %}
 
@@ -242,7 +242,7 @@
                             @click="addTask()"
                             :disabled="!newTask.title.trim()"
                             class="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                            Adicionar
+                            {% trans "Add" %}
                         </button>
                     </div>
                 </div>
@@ -313,7 +313,7 @@
                         <svg class="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
-                        <p class="text-sm font-medium text-gray-600 mb-1">Nenhuma tarefa</p>
+                        <p class="text-sm font-medium text-gray-600 mb-1">{% trans "No tasks" %}</p>
                         <button
                             @click="showAddForm = true"
                             class="text-xs font-medium text-blue-600 hover:text-blue-700">

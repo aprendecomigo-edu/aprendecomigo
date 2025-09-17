@@ -1,4 +1,5 @@
 {% extends 'base_with_navs.html' %}
+{% load i18n %}
 {% load waffle_tags %}
 
 {% block page_title %}People{% endblock %}
@@ -18,7 +19,7 @@
      hx-swap="outerHTML">
     <!-- Page Header -->
     <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">Gestão de Pessoas</h1>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">{% trans "People Management" %}</h1>
         <p class="text-gray-600">Gerir professores, alunos e funcionários da sua escola</p>
     </div>
 
@@ -106,7 +107,7 @@
                 {% endswitch %}
                 class="flex items-center justify-center space-x-2"
             >
-                <span>Funcionários</span>
+                <span>{% trans "Staff" %}</span>
                 <span
                     :class="[
                         'text-xs px-2 py-0.5 rounded-full',
@@ -141,7 +142,7 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                         </svg>
-                        <span>Adicionar Aluno</span>
+                        <span>{% trans "Add Student" %}</span>
                     </button>
                 </div>
 
@@ -195,7 +196,7 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                         </svg>
-                        <span>Adicionar Professor</span>
+                        <span>{% trans "Add Teacher" %}</span>
                     </button>
                     <button
                         @click="openModal('inviteTeacher')"
@@ -235,8 +236,8 @@
                     <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                     </svg>
-                    <h3 class="mt-2 text-lg font-semibold text-gray-700">Gestão de Funcionários</h3>
-                    <p class="text-gray-600">Funcionalidade de gestão de funcionários em breve.</p>
+                    <h3 class="mt-2 text-lg font-semibold text-gray-700">{% trans "Staff Management" %}</h3>
+                    <p class="text-gray-600">{% trans "Staff management functionality coming soon." %}</p>
                 </div>
             </div>
         </div>

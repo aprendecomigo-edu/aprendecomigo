@@ -1,18 +1,19 @@
 {% extends 'base_with_navs.html' %}
+{% load i18n %}
 {% load static %}
 
-{% block page_title %}Invitations{% endblock %}
+{% block page_title %}{% trans "Invitations" %}{% endblock %}
 
 {% block dashboard_content %}
 <div x-data="invitationsManager()" class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
     <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">Teacher Invitations</h1>
-        <p class="text-gray-600">Invite teachers to join your school and manage existing invitations</p>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">{% trans "Teacher Invitations" %}</h1>
+        <p class="text-gray-600">{% trans "Invite teachers to join your school and manage existing invitations" %}</p>
     </div>
 
     <!-- Invite New Teacher Form -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-        <h2 class="text-xl font-semibold text-gray-900 mb-4">Invite New Teacher</h2>
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">{% trans "Invite New Teacher" %}</h2>
 
         <form hx-post="{% url 'invitations' %}"
               hx-target="#message-area"
