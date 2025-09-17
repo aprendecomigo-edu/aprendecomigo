@@ -1,5 +1,5 @@
 <!-- Adult Student (Self-Managed) Form -->
-<form hx-post="/accounts/students/create/adult/"
+<form hx-post="{% url 'accounts:student_create_adult' %}"
       hx-target="#message-area"
       hx-swap="innerHTML"
       hx-trigger="submit"

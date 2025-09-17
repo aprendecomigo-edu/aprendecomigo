@@ -1,5 +1,5 @@
 <!-- Student + Guardian (Separate Accounts) Form -->
-<form hx-post="/accounts/students/create/separate/"
+<form hx-post="{% url 'accounts:student_create_separate' %}"
       hx-target="#message-area"
       hx-swap="innerHTML"
       hx-trigger="submit"

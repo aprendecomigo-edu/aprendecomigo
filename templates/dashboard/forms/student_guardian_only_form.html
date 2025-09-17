@@ -1,5 +1,5 @@
 <!-- Guardian-Only Account (Child Profile) Form -->
-<form hx-post="/accounts/students/create/guardian-only/"
+<form hx-post="{% url 'accounts:student_create_guardian_only' %}"
       hx-target="#message-area"
       hx-swap="innerHTML"
       hx-trigger="submit"
