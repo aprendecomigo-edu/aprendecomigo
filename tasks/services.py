@@ -78,21 +78,34 @@ class TaskService:
     @staticmethod
     def _is_school_admin_or_owner(user):
         """
-        Check if the user is a school admin or owner.
+        Check if the user is a school admin or owner of a real school.
+
+        Excludes personal schools that are automatically created for all users.
+        Only returns True for users who are admins/owners of actual schools.
 
         Args:
             user: The user to check
 
         Returns:
-            Boolean indicating if user has admin/owner role
+            Boolean indicating if user has admin/owner role in a real school
         """
         try:
             from accounts.models import SchoolMembership
             from accounts.models.schools import SchoolRole
 
-            return SchoolMembership.objects.filter(
+            # Get all admin/owner memberships for this user
+            admin_memberships = SchoolMembership.objects.filter(
                 user=user, role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN], is_active=True
-            ).exists()
+            ).select_related("school")
+
+            # Check if any of these memberships are for real schools (not personal schools)
+            for membership in admin_memberships:
+                school_name = membership.school.name
+                # Exclude personal schools created automatically
+                if not school_name.startswith("Personal School -") and not school_name.endswith("'s School"):
+                    return True
+
+            return False
         except Exception as e:
             logger.warning(f"Could not check admin status for user {user.email}: {e}")
             return False

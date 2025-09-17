@@ -180,7 +180,7 @@ class AddStudentFormDataTransmissionTest(BaseTestCase):
             self.assertEqual(student_user.name, "Adult Student Name")
 
             student_profile = StudentProfile.objects.get(user=student_user)
-            self.assertEqual(student_profile.account_type, "SELF")
+            self.assertEqual(student_profile.account_type, "ADULT_STUDENT")
             self.assertEqual(student_profile.school_year, "12")
             # Adult student is their own guardian
             self.assertIsNotNone(student_profile.guardian)
@@ -487,7 +487,7 @@ class AddStudentAccountCreationTest(BaseTestCase):
 
         # Student profile should exist with student as their own guardian
         student_profile = StudentProfile.objects.get(user=student_user)
-        self.assertEqual(student_profile.account_type, "SELF")
+        self.assertEqual(student_profile.account_type, "ADULT_STUDENT")
         # Adult student is their own guardian
         self.assertIsNotNone(student_profile.guardian)
         self.assertEqual(student_profile.guardian.user, student_user)
@@ -729,7 +729,7 @@ class AddStudentIntegrationTest(BaseTestCase):
         # Verify all types exist
         student_guardian = StudentProfile.objects.get(account_type="STUDENT_GUARDIAN")
         guardian_only = StudentProfile.objects.get(account_type="GUARDIAN_ONLY")
-        adult_student = StudentProfile.objects.get(account_type="SELF")
+        adult_student = StudentProfile.objects.get(account_type="ADULT_STUDENT")
 
         # Verify different account type characteristics
         self.assertIsNotNone(student_guardian.user)
