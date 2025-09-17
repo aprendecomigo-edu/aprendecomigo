@@ -28,6 +28,7 @@ class TaskService:
         Returns:
             List of created Task objects
         """
+        # Basic tasks for all users
         system_tasks = [
             {
                 "system_code": Task.EMAIL_VERIFICATION,
@@ -41,13 +42,18 @@ class TaskService:
                 "description": _("Enter the SMS code to verify your phone"),
                 "priority": "high",
             },
-            {
-                "system_code": Task.FIRST_STUDENT_ADDED,
-                "title": _("Add your first student"),
-                "description": _("Add a student to start using the platform"),
-                "priority": "medium",
-            },
         ]
+
+        # Only add FIRST_STUDENT_ADDED task for school admins/owners
+        if TaskService._is_school_admin_or_owner(user):
+            system_tasks.append(
+                {
+                    "system_code": Task.FIRST_STUDENT_ADDED,
+                    "title": _("Add your first student"),
+                    "description": _("Add a student to start using the platform"),
+                    "priority": "medium",
+                }
+            )
 
         created_tasks = []
         for task_data in system_tasks:
@@ -68,6 +74,41 @@ class TaskService:
                 logger.info(f"Created system task {task_data['system_code']} for user {user.email}")
 
         return created_tasks
+
+    @staticmethod
+    def _is_school_admin_or_owner(user):
+        """
+        Check if the user is a school admin or owner of a real school.
+
+        Excludes personal schools that are automatically created for all users.
+        Only returns True for users who are admins/owners of actual schools.
+
+        Args:
+            user: The user to check
+
+        Returns:
+            Boolean indicating if user has admin/owner role in a real school
+        """
+        try:
+            from accounts.models import SchoolMembership
+            from accounts.models.schools import SchoolRole
+
+            # Get all admin/owner memberships for this user
+            admin_memberships = SchoolMembership.objects.filter(
+                user=user, role__in=[SchoolRole.SCHOOL_OWNER, SchoolRole.SCHOOL_ADMIN], is_active=True
+            ).select_related("school")
+
+            # Check if any of these memberships are for real schools (not personal schools)
+            for membership in admin_memberships:
+                school_name = membership.school.name
+                # Exclude personal schools created automatically
+                if not school_name.startswith("Personal School -") and not school_name.endswith("'s School"):
+                    return True
+
+            return False
+        except Exception as e:
+            logger.warning(f"Could not check admin status for user {user.email}: {e}")
+            return False
 
     @staticmethod
     def complete_system_task(user, system_code):
