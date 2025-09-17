@@ -199,18 +199,6 @@ def send_otp_email(request):
     try:
         user = User.objects.get(id=user_id, email=email)
 
-        # Check if email is verified
-        if not user.email_verified:
-            return render(
-                request,
-                "accounts/partials/delivery_choice.html",
-                {
-                    "error": "Email not verified. Please choose SMS or verify your email first.",
-                    "email": email,
-                    "available_methods": ["sms"] if user.phone_verified else [],
-                },
-            )
-
         # Generate OTP
         otp_code, token_id = OTPService.generate_otp(user, "email")
 
@@ -225,17 +213,22 @@ def send_otp_email(request):
             logger.info(f"OTP sent via email to: {email}")
             return render(
                 request,
-                "accounts/partials/otp_input.html",
-                {"delivery_method": "email", "masked_contact": f"{email[:3]}***{email[email.index('@') :]}"},
+                "accounts/partials/signin_success_with_verify.html",
+                {
+                    "delivery_method": "email",
+                    "masked_contact": f"{email[:3]}***{email[email.index('@') :]}",
+                    "email": email,
+                },
             )
         else:
             return render(
                 request,
-                "accounts/partials/delivery_choice.html",
+                "accounts/partials/signin_form.html",
                 {
-                    "error": "Failed to send email. Please try SMS or try again later.",
+                    "error": "Failed to send email. Please try again later.",
                     "email": email,
-                    "available_methods": ["email", "sms"] if user.phone_verified else ["email"],
+                    "show_delivery_choice": True,
+                    "phone_available": bool(user.phone_number),
                 },
             )
 
@@ -247,8 +240,13 @@ def send_otp_email(request):
         logger.error(f"Error sending OTP email to {email}: {e}")
         return render(
             request,
-            "accounts/partials/delivery_choice.html",
-            {"error": "Failed to send code. Please try again.", "email": email},
+            "accounts/partials/signin_form.html",
+            {
+                "error": "Failed to send code. Please try again.",
+                "email": email,
+                "show_delivery_choice": True,
+                "phone_available": False,
+            },
         )
 
 
@@ -542,240 +540,166 @@ class VerifyOTPView(View):
     @method_decorator(csrf_protect)
     def post(self, request: HttpRequest) -> HttpResponse:
         """
-        Handle OTP verification for both signup and signin flows.
-
-        Validates the SMS OTP code against session data and:
-        - For signup: Creates school and membership, then logs in user
-        - For signin: Logs in existing user
+        Handle OTP verification for signin flows using OTPService.
 
         Returns: HTMX partial template with success or error message
         """
+        from .services.otp_service import OTPService
+
         otp_code = request.POST.get("verification_code", "").strip()
 
-        # Get session data
-        user_id = request.session.get("verification_user_id")
-        expected_otp = request.session.get("verification_otp_code")
-        otp_expires = request.session.get("verification_otp_expires")
-        phone = request.session.get("verification_phone")
-        email = request.session.get("verification_email")  # Get email for combined template
-        is_signup = request.session.get("is_signup", False)
-        is_signin = request.session.get("is_signin", False)
+        # Get session data for signin flow
+        token_id = request.session.get("otp_token_id")
+        email = request.session.get("signin_email")
+        delivery_method = request.session.get("otp_delivery_method")
 
-        if not all([user_id, expected_otp, phone, otp_code]):
+        if not token_id or not otp_code:
             return render(
                 request,
                 "accounts/partials/signin_success_with_verify.html",
                 {
                     "error": "Please enter the verification code.",
                     "email": email,
-                    "phone_number": phone,
+                    "delivery_method": delivery_method,
                 },
             )
 
-        # Check if OTP has expired
-        if otp_expires and timezone.now().timestamp() > otp_expires:
+        # Verify OTP using OTPService
+        success, result = OTPService.verify_otp(token_id, otp_code)
+
+        if success:
+            user = result
+            # Log user in for signin flow
+            login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+            logger.info(f"OTP authentication successful for user: {user.email}")
+
+            # Mark email as verified if using email delivery
+            if delivery_method == "email" and not user.email_verified:
+                user.email_verified = True
+                user.save(update_fields=["email_verified"])
+                logger.info(f"Email verification completed via OTP for user: {user.email}")
+
+                # Mark the email verification task as completed
+                try:
+                    from tasks.models import Task
+
+                    email_task = Task.objects.filter(
+                        user=user, title="Verify your email address", status="pending"
+                    ).first()
+                    if email_task:
+                        email_task.status = "completed"
+                        email_task.save()
+                        logger.info(f"Email verification task completed for {user.email}")
+                except Exception as e:
+                    logger.error(f"Failed to update email verification task: {e}")
+
+            # Clean up session
+            if "otp_token_id" in request.session:
+                del request.session["otp_token_id"]
+            if "otp_delivery_method" in request.session:
+                del request.session["otp_delivery_method"]
+            if "signin_email" in request.session:
+                del request.session["signin_email"]
+            if "signin_user_id" in request.session:
+                del request.session["signin_user_id"]
+
+            # Redirect to dashboard
+            return HttpResponse(
+                status=200,
+                headers={"HX-Redirect": reverse("dashboard:dashboard")},
+            )
+        else:
+            # Verification failed
+            error_message = result
             return render(
                 request,
                 "accounts/partials/signin_success_with_verify.html",
                 {
-                    "error": "Verification code has expired. Please request a new one.",
+                    "error": error_message,
                     "email": email,
-                    "phone_number": phone,
+                    "delivery_method": delivery_method,
                 },
             )
-
-        try:
-            # Get user
-            user = User.objects.get(id=user_id)
-
-            # DEBUG: Log OTP verification details
-            logger.info(f"[OTP DEBUG] User input: '{otp_code}' (type: {type(otp_code)}, len: {len(otp_code)})")
-            logger.info(f"[OTP DEBUG] Expected OTP: '{expected_otp}' (type: {type(expected_otp)})")
-            logger.info(f"[OTP DEBUG] OTP expires: {otp_expires}")
-            logger.info(f"[OTP DEBUG] Current timestamp: {timezone.now().timestamp()}")
-            logger.info(f"[OTP DEBUG] Comparison result: {otp_code == expected_otp}")
-
-            # Verify OTP by comparing with session-stored code
-            if otp_code == expected_otp:
-                if is_signup:
-                    # Signup now happens immediately, no OTP verification needed
-                    logger.warning(f"Unexpected signup OTP verification for user: {user.email}")
-                    self._clear_verification_session(request)
-                    return render(
-                        request,
-                        "accounts/partials/signin_success_with_verify.html",
-                        {
-                            "error": "Signup process has changed. Please sign up again.",
-                            "email": email,
-                            "phone_number": phone,
-                        },
-                    )
-
-                elif is_signin:
-                    # TODO handle verification, account expiration, etc
-                    # For signin, SMS OTP is sufficient
-                    login(request, user, backend="django.contrib.auth.backends.ModelBackend")
-                    logger.info(f"SMS authentication successful for user: {user.email}")
-
-                    # Check if phone needs to be verified before we update it
-                    phone_was_unverified = not user.phone_verified
-
-                    # Mark phone as verified since SMS OTP was successful
-                    if not user.phone_verified:
-                        user.phone_verified = True
-                        user.save(update_fields=["phone_verified"])
-                        logger.info(f"Phone verification completed via SMS OTP for user: {user.email}")
-
-                        # Mark the phone verification task as completed
-                        try:
-                            from tasks.models import Task
-
-                            phone_task = Task.objects.filter(
-                                user=user, title="Verify your phone number", status="pending"
-                            ).first()
-                            if phone_task:
-                                phone_task.status = "completed"
-                                phone_task.save()
-                                logger.info(f"Phone verification task completed for {user.email}")
-                        except Exception as e:
-                            logger.error(f"Failed to update phone verification task: {e}")
-
-                    # Remove unverified session markers
-                    if "is_unverified_user" in request.session:
-                        del request.session["is_unverified_user"]
-                    if "unverified_until" in request.session:
-                        del request.session["unverified_until"]
-
-                    # Reset session expiry to default
-                    request.session.set_expiry(0)  # Use default session length
-
-                    # Clear session data
-                    self._clear_verification_session(request)
-
-                    # Create success message
-                    success_message = "Welcome back!"
-                    if phone_was_unverified:
-                        success_message = "Welcome back! Your phone number has been verified."
-
-                    return render(
-                        request,
-                        "accounts/partials/verify_success.html",
-                        {"message": success_message, "redirect_url": reverse("dashboard:dashboard")},
-                    )
-
-            else:
-                return render(
-                    request,
-                    "accounts/partials/signin_success_with_verify.html",
-                    {
-                        "error": "Invalid verification code. Please try again.",
-                        "email": email,
-                        "phone_number": phone,
-                    },
-                )
-
-        except Exception as e:
-            logger.error(f"OTP verification error: {e}")
-            return render(
-                request,
-                "accounts/partials/signin_success_with_verify.html",
-                {
-                    "error": "There was an issue verifying your code. Please try again.",
-                    "email": email,
-                    "phone_number": phone,
-                },
-            )
-
-    def _clear_verification_session(self, request: HttpRequest) -> None:
-        """
-        Clear all verification-related session data.
-
-        Removes all session keys used during the verification process
-        to prevent data leakage and ensure clean session state.
-
-        Args:
-            request: HTTP request containing session data to clear
-        """
-        keys_to_clear = [
-            "verification_email",
-            "verification_phone",
-            "verification_user_id",
-            "verification_otp_code",
-            "verification_otp_expires",
-            "is_signup",
-            "is_signin",
-            "signup_school_name",
-        ]
-        for key in keys_to_clear:
-            request.session.pop(key, None)
 
 
 # Function for resending verification code via HTMX
 @csrf_protect
 def resend_code(request: HttpRequest) -> HttpResponse:
     """
-    Resend magic link verification email via HTMX.
-
-    Retrieves email from session, validates user exists, generates new magic link,
-    and sends it via email. Used when users need a new verification link.
+    Resend OTP code via email or SMS using OTPService.
 
     Args:
-        request: HTTP request with session containing verification_email
+        request: HTTP request with session containing signin data
 
     Returns:
-        HttpResponse: HTMX partial with success or error message
+        HttpResponse: HTMX partial with new OTP form or error message
     """
-    email = request.session.get("verification_email")
+    from .services.otp_service import OTPService
+    from .utils.notifications import send_otp_email_message
 
-    if not email:
+    email = request.session.get("signin_email")
+    user_id = request.session.get("signin_user_id")
+    delivery_method = request.session.get("otp_delivery_method", "email")
+
+    if not email or not user_id:
         return render(
-            request, "accounts/partials/resend_error.html", {"error": "Session expired. Please try signing in again."}
+            request,
+            "accounts/partials/signin_form.html",
+            {"error": "Session expired. Please sign in again.", "email": ""},
         )
 
     try:
-        # Check if user exists and generate new magic link
-        if not user_exists(email):
-            return render(
-                request, "accounts/partials/resend_error.html", {"error": "No account found with this email address."}
-            )
+        user = User.objects.get(id=user_id, email=email)
 
-        logger.info(f"Resending magic link for: {email}")
-        user = get_user_by_email(email)
-        login_url = reverse("accounts:magic_login")
-        magic_link = request.build_absolute_uri(login_url) + get_query_string(user)
-        logger.info(f"Regenerated magic link for {email}: {login_url} (token length: {len(get_query_string(user))})")
+        # Generate new OTP
+        otp_code, token_id = OTPService.generate_otp(user, delivery_method)
 
-        try:
-            send_magic_link_email(email, magic_link, user.name or user.first_name)
-            logger.info(f"Magic link resent successfully to: {email}")
+        # Send OTP based on delivery method
+        if delivery_method == "email":
+            result = send_otp_email_message(user.email, otp_code, user.first_name)
+        else:
+            # SMS sending would go here
+            result = {"success": False, "error": "SMS not yet implemented"}
 
-            # Log email confirmation resent for development environment
-            token = magic_link.split("sesame=")[-1] if "sesame=" in magic_link else "generated"
-            log_email_confirmation_resent(email, token[:8] + "...")  # Show partial token for security
+        if result.get("success"):
+            # Update session with new token
+            request.session["otp_token_id"] = token_id
+            logger.info(f"OTP resent successfully via {delivery_method} to: {email}")
 
+            # Return the OTP input form again
             return render(
                 request,
-                "accounts/partials/resend_success.html",
-                {"email": email, "message": "A new login link has been sent to your email."},
+                "accounts/partials/signin_success_with_verify.html",
+                {
+                    "delivery_method": delivery_method,
+                    "masked_contact": f"{email[:3]}***{email[email.index('@') :]}",
+                    "email": email,
+                    "message": "A new verification code has been sent.",
+                },
             )
-
-        except Exception as email_error:
-            logger.error(f"Failed to resend magic link to {email}: {email_error}")
-            # Log email confirmation failure for development environment
-            log_email_confirmation_failure(email, f"Resend failed: {email_error!s}")
-
+        else:
+            error_msg = result.get("error", "Failed to resend verification code.")
+            logger.error(f"Failed to resend OTP to {email}: {error_msg}")
             return render(
                 request,
-                "accounts/partials/resend_error.html",
-                {"error": "There was an issue resending the login link. Please try again."},
+                "accounts/partials/signin_success_with_verify.html",
+                {
+                    "error": error_msg,
+                    "email": email,
+                    "delivery_method": delivery_method,
+                },
             )
 
     except Exception as e:
         logger.error(f"Resend code error for {email}: {e}")
         return render(
             request,
-            "accounts/partials/resend_error.html",
-            {"error": "There was an issue resending the login link. Please try again."},
+            "accounts/partials/signin_success_with_verify.html",
+            {
+                "error": "There was an issue resending the verification code. Please try again.",
+                "email": email,
+                "delivery_method": delivery_method,
+            },
         )
 
 
