@@ -385,7 +385,7 @@
             <div class="fixed inset-0 bg-black/30 transition-opacity backdrop-blur-sm" aria-hidden="true" @click="showAddStudentModal = false"></div>
 
             <!-- Modal panel -->
-            <div class="relative z-10 inline-block px-6 pt-6 pb-6 overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full"
+            <div class="relative z-10 inline-block px-6 pt-6 pb-6 overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
             <!-- Modal Header -->
             <div class="flex items-center justify-between pb-4 border-b border-gray-200">
                 <div class="flex items-center space-x-3">
@@ -414,7 +414,7 @@
 
                 <div class="tabs tabs-bordered w-full">
                     <!-- Tab 1: Student + Guardian -->
-                    <input type="radio" name="student_account_tabs" class="tab" aria-label="Student + Guardian" checked />
+                    <input type="radio" name="student_account_tabs" id="tab-separate" class="tab" aria-label="Student + Guardian" checked />
                     <div class="tab-content bg-base-100 border-base-300 rounded-box p-6">
                         <div class="mb-4 p-4 border border-blue-200 rounded-lg bg-blue-50">
                             <div class="flex items-start space-x-2">
@@ -431,7 +431,7 @@
                     </div>
 
                     <!-- Tab 2: Guardian Only -->
-                    <input type="radio" name="student_account_tabs" class="tab" aria-label="Guardian Only" />
+                    <input type="radio" name="student_account_tabs" id="tab-guardian-only" class="tab" aria-label="Guardian Only" />
                     <div class="tab-content bg-base-100 border-base-300 rounded-box p-6">
                         <div class="mb-4 p-4 border border-orange-200 rounded-lg bg-orange-50">
                             <div class="flex items-start space-x-2">
@@ -448,7 +448,7 @@
                     </div>
 
                     <!-- Tab 3: Adult Student -->
-                    <input type="radio" name="student_account_tabs" class="tab" aria-label="Adult Student" />
+                    <input type="radio" name="student_account_tabs" id="tab-adult" class="tab" aria-label="Adult Student" />
                     <div class="tab-content bg-base-100 border-base-300 rounded-box p-6">
                         <div class="mb-4 p-4 border border-green-200 rounded-lg bg-green-50">
                             <div class="flex items-start space-x-2">
