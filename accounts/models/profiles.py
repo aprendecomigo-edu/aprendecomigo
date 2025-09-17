@@ -181,12 +181,12 @@ class StudentProfile(models.Model):
             "Student's full name (required for all students, especially guardian-only students without user accounts)"
         ),
     )
-    educational_system: models.ForeignKey = models.ForeignKey(
-        "EducationalSystem",
-        on_delete=models.CASCADE,
-        related_name="students",
+    educational_system: models.CharField = models.CharField(
+        _("educational system"),
+        max_length=20,
+        choices=[("pt", "Portugal"), ("custom", "Custom")],  # Simple choices for now
+        default="pt",  # Portugal system as default
         help_text=_("Educational system this student belongs to"),
-        default=1,  # Portugal system as default
     )
     school_year: models.CharField = models.CharField(
         _("school year"), max_length=50, help_text=_("School year within the educational system")
@@ -261,22 +261,8 @@ class StudentProfile(models.Model):
         """Validate that school_year is valid for the selected educational system"""
         super().clean()
 
-        # Validate school year
-        if (
-            self.educational_system
-            and self.school_year
-            and not self.educational_system.validate_school_year(self.school_year)
-        ):
-            from django.core.exceptions import ValidationError
-
-            valid_years = dict(self.educational_system.school_year_choices)
-            raise ValidationError(
-                {
-                    "school_year": f"School year '{self.school_year}' is not valid for "
-                    f"educational system '{self.educational_system.name}'. "
-                    f"Valid options: {list(valid_years.keys())}"
-                }
-            )
+        # For now, we're only supporting Portuguese system
+        # School year validation can be added later if needed
         # Validate account type consistency
         from django.core.exceptions import ValidationError
 

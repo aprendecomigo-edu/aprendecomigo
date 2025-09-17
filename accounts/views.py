@@ -1484,15 +1484,6 @@ class BaseStudentCreateView(LoginRequiredMixin, View):
         school_ids = SchoolMembership.objects.filter(user=user).values_list("school_id", flat=True)
         return School.objects.filter(id__in=school_ids)
 
-    def _get_educational_system(self):
-        """Get default educational system (Portugal)"""
-        from accounts.models.educational import EducationalSystem
-
-        educational_system = EducationalSystem.objects.filter(code="pt").first()
-        if not educational_system:
-            educational_system = EducationalSystem.objects.first()
-        return educational_system
-
     def _render_error(self, request, error_message):
         """Render error message template"""
         logger.error(f"Student creation error: {error_message}")
@@ -1569,8 +1560,6 @@ class StudentSeparateCreateView(BaseStudentCreateView):
 
             # Get user's schools and educational system
             user_schools = self._get_user_schools(request.user)
-            educational_system = self._get_educational_system()
-
             with transaction.atomic():
                 # Temporarily disconnect the task creation signal to prevent orphaned tasks
                 from django.db.models.signals import post_save
@@ -1615,7 +1604,6 @@ class StudentSeparateCreateView(BaseStudentCreateView):
                         user=student_user,
                         name=student_name,
                         account_type="STUDENT_GUARDIAN",
-                        educational_system=educational_system,
                         school_year=student_school_year,
                         birth_date=student_birth_date,
                         guardian=guardian_profile,
@@ -1707,8 +1695,6 @@ class StudentGuardianOnlyCreateView(BaseStudentCreateView):
 
             # Get user's schools and educational system
             user_schools = self._get_user_schools(request.user)
-            educational_system = self._get_educational_system()
-
             with transaction.atomic():
                 # Temporarily disconnect the task creation signal to prevent orphaned tasks
                 from django.db.models.signals import post_save
@@ -1745,7 +1731,6 @@ class StudentGuardianOnlyCreateView(BaseStudentCreateView):
                         user=None,  # No user account for guardian-only students
                         name=student_name,  # Store student name directly
                         account_type="GUARDIAN_ONLY",
-                        educational_system=educational_system,
                         school_year=student_school_year,
                         birth_date=student_birth_date,
                         guardian=guardian_profile,
@@ -1828,8 +1813,6 @@ class StudentAdultCreateView(BaseStudentCreateView):
 
             # Get user's schools and educational system
             user_schools = self._get_user_schools(request.user)
-            educational_system = self._get_educational_system()
-
             with transaction.atomic():
                 # Temporarily disconnect the task creation signal to prevent orphaned tasks
                 from django.db.models.signals import post_save
@@ -1866,7 +1849,6 @@ class StudentAdultCreateView(BaseStudentCreateView):
                         user=student_user,
                         name=student_name,
                         account_type="ADULT_STUDENT",
-                        educational_system=educational_system,
                         school_year=student_school_year,
                         birth_date=student_birth_date,
                         guardian=guardian_profile,  # Adult student is their own guardian
