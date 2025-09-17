@@ -39,12 +39,12 @@ class BaseE2ETest:
 
     def _create_or_get_admin_user(self, email: str):
         """Create admin user via Django management if needed"""
-        import subprocess
+        import subprocess  # nosec B404 - test environment only
         import sys
 
         try:
             # Create school admin user with Django management command
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603 - test environment with trusted input
                 [
                     sys.executable,
                     "manage.py",
@@ -124,12 +124,12 @@ except CustomUser.DoesNotExist:
 
     def _set_django_session(self, page: Page, email: str):
         """Set Django session cookie for the user"""
-        import subprocess
+        import subprocess  # nosec B404 - test environment only
         import sys
 
         try:
             # Get session key by logging in the user programmatically using proper Django login
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603 - test environment with trusted input
                 [
                     sys.executable,
                     "manage.py",

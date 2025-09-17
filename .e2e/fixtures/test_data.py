@@ -14,13 +14,13 @@ class StudentTestData:
     def generate_unique_email(base: str) -> str:
         """Generate a unique email for testing"""
         timestamp = int(datetime.now().timestamp())
-        random_num = random.randint(1000, 9999)
+        random_num = random.randint(1000, 9999)  # nosec B311 - test data only
         return f"{base}.{timestamp}.{random_num}@e2e.test"
 
     @staticmethod
     def generate_phone() -> str:
         """Generate a test phone number"""
-        return f"+351 9{random.randint(10000000, 99999999)}"
+        return f"+351 9{random.randint(10000000, 99999999)}"  # nosec B311 - test data only
 
     @classmethod
     def student_with_guardian_data(cls) -> dict[str, Any]:

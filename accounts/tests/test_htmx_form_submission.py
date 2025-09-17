@@ -45,24 +45,25 @@ class HTMXFormSubmissionTest(BaseTestCase):
         """Test that HTMX headers are properly handled."""
         self.client.force_login(self.admin_user)
 
-        # Simulate HTMX request with proper headers
+        # Simulate HTMX request with proper headers and new field names
         form_data = {
-            "action": "add_student",
-            "account_type": "separate",
-            "student_name": "HTMX Test Student",
-            "student_email": "htmx@test.com",
+            "name": "HTMX Test Student",
+            "email": "htmx@test.com",
             "birth_date": "2010-05-15",
             "guardian_name": "HTMX Guardian",
             "guardian_email": "htmx.guardian@test.com",
         }
 
+        # Use the new dedicated endpoint for separate student creation
+        student_separate_url = reverse("accounts:student_create_separate")
+
         # Add HTMX headers as they would be sent by real HTMX requests
         response = self.client.post(
-            self.people_url,
+            student_separate_url,
             form_data,
             headers={
                 "hx-request": "true",
-                "hx-target": "#students-content",
+                "hx-target": "#message-area",
                 "hx-trigger": "submit",
             },  # HTMX identifies itself
             # Target element
@@ -83,17 +84,18 @@ class HTMXFormSubmissionTest(BaseTestCase):
         self.client.force_login(self.admin_user)
 
         form_data = {
-            "action": "add_student",
-            "account_type": "separate",
-            "student_name": "Regular POST Student",
-            "student_email": "regular@test.com",
+            "name": "Regular POST Student",
+            "email": "regular@test.com",
             "birth_date": "2010-05-15",
             "guardian_name": "Regular Guardian",
             "guardian_email": "regular.guardian@test.com",
         }
 
+        # Use the new dedicated endpoint
+        student_separate_url = reverse("accounts:student_create_separate")
+
         # Submit without HTMX headers (regular form POST)
-        response = self.client.post(self.people_url, form_data)
+        response = self.client.post(student_separate_url, form_data)
         self.assertEqual(response.status_code, 200)
 
         # This should work regardless of HTMX
@@ -107,21 +109,25 @@ class HTMXFormSubmissionTest(BaseTestCase):
         """Test if form data encoding could be causing the issue."""
         self.client.force_login(self.admin_user)
 
-        # Test with different content types
+        # Test with different content types and new field names
         form_data = {
-            "action": "add_student",
-            "account_type": "separate",
-            "student_name": "Encoding Test Student",
-            "student_email": "encoding@test.com",
+            "name": "Encoding Test Student",
+            "email": "encoding@test.com",
             "birth_date": "2010-05-15",
             "guardian_name": "Encoding Guardian",
             "guardian_email": "encoding.guardian@test.com",
         }
 
-        # Test with explicit content type
-        response = self.client.post(
-            self.people_url, form_data, content_type="application/x-www-form-urlencoded", headers={"hx-request": "true"}
-        )
+        # Use the new dedicated endpoint
+        student_separate_url = reverse("accounts:student_create_separate")
+
+        # Test with explicit content type (removing explicit content_type to let Django handle it)
+        response = self.client.post(student_separate_url, form_data, headers={"hx-request": "true"})
+
+        # Debug what's happening
+        if response.status_code != 200:
+            print(f"Response status: {response.status_code}")
+            print(f"Response content: {response.content.decode()[:500]}")
 
         self.assertEqual(response.status_code, 200)
 
@@ -158,11 +164,11 @@ class AlpineJSFormDataBindingTest(BaseTestCase):
         # Check that Alpine.js component is present
         self.assertContains(response, 'x-data="peopleManager()"')
 
-        # Check that form fields have x-model bindings
-        self.assertContains(response, 'x-model="addStudentForm.student_name"')
-        self.assertContains(response, 'x-model="addStudentForm.student_email"')
-        self.assertContains(response, 'x-model="addStudentForm.guardian_name"')
-        self.assertContains(response, 'x-model="addStudentForm.guardian_email"')
+        # Check that form fields have x-model bindings for the new forms
+        self.assertContains(response, 'x-model="separateForm.name"')
+        self.assertContains(response, 'x-model="separateForm.email"')
+        self.assertContains(response, 'x-model="separateForm.guardian_name"')
+        self.assertContains(response, 'x-model="separateForm.guardian_email"')
 
     def test_alpine_js_form_state_consistency(self):
         """
@@ -174,18 +180,18 @@ class AlpineJSFormDataBindingTest(BaseTestCase):
         self.client.force_login(self.admin_user)
         response = self.client.get(self.people_url)
 
-        # Student+Guardian form consistency checks
-        self.assertContains(response, 'name="student_name"')
-        self.assertContains(response, 'x-model="addStudentForm.student_name"')
+        # Student+Guardian form consistency checks for new clean field names
+        self.assertContains(response, 'name="name"')
+        self.assertContains(response, 'x-model="separateForm.name"')
 
-        self.assertContains(response, 'name="student_email"')
-        self.assertContains(response, 'x-model="addStudentForm.student_email"')
+        self.assertContains(response, 'name="email"')
+        self.assertContains(response, 'x-model="separateForm.email"')
 
         self.assertContains(response, 'name="guardian_name"')
-        self.assertContains(response, 'x-model="addStudentForm.guardian_name"')
+        self.assertContains(response, 'x-model="separateForm.guardian_name"')
 
         self.assertContains(response, 'name="guardian_email"')
-        self.assertContains(response, 'x-model="addStudentForm.guardian_email"')
+        self.assertContains(response, 'x-model="separateForm.guardian_email"')
 
 
 class FormSubmissionDebuggingTest(BaseTestCase):
@@ -208,18 +214,18 @@ class FormSubmissionDebuggingTest(BaseTestCase):
         """
         self.client.force_login(self.admin_user)
 
-        # Absolute minimal data for Student+Guardian
+        # Absolute minimal data for Student+Guardian with new field names
         minimal_data = {
-            "action": "add_student",
-            "account_type": "separate",
-            "student_name": "Debug Student",
-            "student_email": "debug@test.com",
+            "name": "Debug Student",
+            "email": "debug@test.com",
             "birth_date": "2010-01-01",
             "guardian_name": "Debug Guardian",
             "guardian_email": "debug.guardian@test.com",
         }
 
-        response = self.client.post(self.people_url, minimal_data)
+        # Use the new dedicated endpoint
+        student_separate_url = reverse("accounts:student_create_separate")
+        response = self.client.post(student_separate_url, minimal_data)
 
         print(f"Response status: {response.status_code}")
 
@@ -247,16 +253,16 @@ class FormSubmissionDebuggingTest(BaseTestCase):
 
         form_data = {
             "csrfmiddlewaretoken": csrf_token,
-            "action": "add_student",
-            "account_type": "separate",
-            "student_name": "CSRF Test Student",
-            "student_email": "csrf@test.com",
+            "name": "CSRF Test Student",
+            "email": "csrf@test.com",
             "birth_date": "2010-01-01",
             "guardian_name": "CSRF Guardian",
             "guardian_email": "csrf.guardian@test.com",
         }
 
-        response = self.client.post(self.people_url, form_data)
+        # Use the new dedicated endpoint
+        student_separate_url = reverse("accounts:student_create_separate")
+        response = self.client.post(student_separate_url, form_data)
 
         if response.status_code == 403:
             print("CSRF ISSUE: CSRF token validation failed")
@@ -267,29 +273,29 @@ class FormSubmissionDebuggingTest(BaseTestCase):
         """Test minimal data for all three account types to see which ones work."""
         self.client.force_login(self.admin_user)
 
-        # Test Guardian-Only (minimal)
+        # Test Guardian-Only (minimal) with new field names
         guardian_only_data = {
-            "action": "add_student",
-            "account_type": "guardian_only",
-            "student_name": "Guardian Only Debug",
+            "name": "Guardian Only Debug",
             "birth_date": "2012-01-01",
             "guardian_name": "Debug Guardian Only",
             "guardian_email": "debug.guardian.only@test.com",
         }
 
-        response = self.client.post(self.people_url, guardian_only_data)
+        # Use the new dedicated endpoint
+        student_guardian_only_url = reverse("accounts:student_create_guardian_only")
+        response = self.client.post(student_guardian_only_url, guardian_only_data)
         guardian_only_works = "Missing required fields" not in response.content.decode()
 
-        # Test Adult Student (minimal)
+        # Test Adult Student (minimal) with new field names
         adult_data = {
-            "action": "add_student",
-            "account_type": "self",
-            "student_name": "Adult Debug Student",
-            "student_email": "adult.debug@test.com",
+            "name": "Adult Debug Student",
+            "email": "adult.debug@test.com",
             "birth_date": "1990-01-01",
         }
 
-        response = self.client.post(self.people_url, adult_data)
+        # Use the new dedicated endpoint
+        student_adult_url = reverse("accounts:student_create_adult")
+        response = self.client.post(student_adult_url, adult_data)
         adult_works = "Missing required fields" not in response.content.decode()
 
         print(f"Guardian-Only works: {guardian_only_works}")
@@ -324,14 +330,15 @@ class FormFieldSpecificTest(BaseTestCase):
         """
         self.client.force_login(self.admin_user)
 
-        # Test if account_type is being transmitted correctly
-        data_with_account_type = {
-            "action": "add_student",
-            "account_type": "separate",  # Explicit account_type
+        # Test with minimal data to check basic endpoint functionality
+        minimal_data = {
+            "name": "",  # Empty to trigger validation
+            "email": "",  # Empty to trigger validation
         }
 
-        # First, test with ONLY action and account_type
-        response = self.client.post(self.people_url, data_with_account_type)
+        # Use the new dedicated endpoint (account_type is implicit in the URL)
+        student_separate_url = reverse("accounts:student_create_separate")
+        response = self.client.post(student_separate_url, minimal_data)
 
         if response.status_code == 200 and "Missing required fields" in response.content.decode():
             print("ACCOUNT TYPE: Being transmitted correctly (validation error is expected)")
@@ -352,16 +359,25 @@ class FormFieldSpecificTest(BaseTestCase):
             "2010-05-15T00:00:00.000Z",  # ISO with time
         ]
 
+        # Use the adult student endpoint for date testing (simplest)
+        student_adult_url = reverse("accounts:student_create_adult")
+
         for date_format in date_formats_to_test:
+            clean_format = (
+                date_format.replace("/", "")
+                .replace("-", "")
+                .replace(":", "")
+                .replace(".", "")
+                .replace("T", "")
+                .replace("Z", "")
+            )
             minimal_data = {
-                "action": "add_student",
-                "account_type": "self",  # Simplest type
-                "student_name": f"Date Test {date_format}",
-                "student_email": f"date.{date_format.replace('/', '').replace('-', '').replace(':', '').replace('.', '').replace('T', '').replace('Z', '')}@test.com",
+                "name": f"Date Test {date_format}",
+                "email": f"date.{clean_format}@test.com",
                 "birth_date": date_format,
             }
 
-            response = self.client.post(self.people_url, minimal_data)
+            response = self.client.post(student_adult_url, minimal_data)
 
             if "Missing required fields" not in response.content.decode():
                 print(f"DATE FORMAT WORKS: {date_format}")

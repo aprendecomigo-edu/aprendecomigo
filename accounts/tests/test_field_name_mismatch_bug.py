@@ -189,10 +189,12 @@ class TemplateBugAnalysisTest(BaseTestCase):
         # Verify the old camelCase field names are gone
         self.assertNotContains(response, 'name="accountType"')  # Should be gone
 
-        # Verify consistent snake_case naming is used
-        self.assertContains(response, 'name="account_type"')  # Should exist consistently
+        # Verify DaisyUI tabs structure is used instead of hidden account_type field
+        self.assertContains(response, "Student with Guardian")  # DaisyUI tab label
+        self.assertContains(response, "Guardian-Only Account")  # DaisyUI tab label
+        self.assertContains(response, "Adult Student")  # DaisyUI tab label
 
-        print("TEMPLATE FIX CONFIRMED: Only 'account_type' field names exist now")
+        print("TEMPLATE FIX CONFIRMED: DaisyUI tabs structure replaced account_type fields")
 
     def test_other_field_name_consistencies(self):
         """Check for other potential field name inconsistencies."""
