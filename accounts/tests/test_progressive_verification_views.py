@@ -20,6 +20,7 @@ from django.utils import timezone
 
 from accounts.models import School, SchoolMembership, SchoolRole
 from accounts.tests.test_base import BaseTestCase
+from accounts.tests.test_utils import get_unique_email, get_unique_phone_number
 from accounts.views import SignUpView, send_verification_email, send_verification_sms
 from tasks.models import Task
 
@@ -35,9 +36,9 @@ class SignUpViewTestCase(BaseTestCase):
         self.factory = RequestFactory()
 
         self.valid_signup_data = {
-            "email": "test@example.com",
+            "email": get_unique_email("test"),
             "full_name": "John Doe",
-            "phone_number": "+351987654321",
+            "phone_number": get_unique_phone_number(),
             "organization_name": "Test School",
         }
 
@@ -123,7 +124,7 @@ class SignUpViewTestCase(BaseTestCase):
         self.assertContains(response, "Account with this email or phone already exists")
 
     @patch("accounts.views.send_magic_link_email")
-    @patch("accounts.views.send_sms_otp")
+    @patch("messaging.services.send_verification_sms")
     def test_signup_post_successful_creates_user_with_progressive_verification(self, mock_send_sms, mock_send_email):
         """Test successful signup creates user with progressive verification settings."""
 
@@ -253,7 +254,9 @@ class VerificationHTMXEndpointsTestCase(BaseTestCase):
         self.factory = RequestFactory()
 
         # Create a test user
-        self.user = User.objects.create_user(email="test@example.com", name="Test User", phone_number="+351987654321")
+        self.user = User.objects.create_user(
+            email=get_unique_email("test"), name="Test User", phone_number=get_unique_phone_number()
+        )
 
         self.send_email_url = reverse("accounts:send_verification_email")
         self.send_sms_url = reverse("accounts:send_verification_sms")
@@ -413,7 +416,7 @@ class VerificationEdgeCasesTestCase(BaseTestCase):
 
         # Create user with verification deadline in the past
         self.expired_user = User.objects.create_user(
-            email="expired@example.com", name="Expired User", phone_number="+351987654321"
+            email=get_unique_email("expired"), name="Expired User", phone_number=get_unique_phone_number()
         )
         self.expired_user.email_verified = False
         self.expired_user.phone_verified = False
@@ -422,7 +425,7 @@ class VerificationEdgeCasesTestCase(BaseTestCase):
 
         # Create user with verification deadline in the future
         self.grace_period_user = User.objects.create_user(
-            email="grace@example.com", name="Grace User", phone_number="+351987654321"
+            email=get_unique_email("grace"), name="Grace User", phone_number=get_unique_phone_number()
         )
         self.grace_period_user.email_verified = False
         self.grace_period_user.phone_verified = False
@@ -440,7 +443,9 @@ class VerificationEdgeCasesTestCase(BaseTestCase):
 
     def test_partially_verified_user_email_only(self):
         """Test user with only email verified."""
-        user = User.objects.create_user(email="partial@example.com", name="Partial User", phone_number="+351987654321")
+        user = User.objects.create_user(
+            email=get_unique_email("partial"), name="Partial User", phone_number=get_unique_phone_number()
+        )
         user.email_verified = True
         user.phone_verified = False
         user.verification_required_after = timezone.now() - timedelta(hours=1)
@@ -454,7 +459,7 @@ class VerificationEdgeCasesTestCase(BaseTestCase):
     def test_partially_verified_user_phone_only(self):
         """Test user with only phone verified."""
         user = User.objects.create_user(
-            email="partial2@example.com", name="Partial User 2", phone_number="+351987654321"
+            email=get_unique_email("partial2"), name="Partial User 2", phone_number=get_unique_phone_number()
         )
         user.email_verified = False
         user.phone_verified = True

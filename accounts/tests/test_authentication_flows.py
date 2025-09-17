@@ -27,6 +27,7 @@ from accounts.models import School, SchoolMembership, SchoolRole, VerificationTo
 from accounts.services.otp_service import OTPService
 from accounts.services.phone_validation import PhoneValidationService
 from accounts.tests.test_base import BaseTestCase
+from accounts.tests.test_utils import get_unique_email, get_unique_phone_number
 
 User = get_user_model()
 
@@ -41,7 +42,7 @@ class CompleteSignupFlowTest(BaseTestCase):
         self.valid_signup_data = {
             "email": "newuser@example.com",
             "full_name": "Jane Smith",
-            "phone_number": "+351987654321",
+            "phone_number": get_unique_phone_number(),
             "organization_name": "Jane's School",
         }
 
@@ -184,7 +185,10 @@ class EmailVerificationFlowTest(BaseTestCase):
     def setUp(self):
         self.client = Client()
         self.user = User.objects.create_user(
-            email="test@example.com", name="Test User", phone_number="+351987654321", password="testpass123"
+            email=get_unique_email("test"),
+            name="Test User",
+            phone_number=get_unique_phone_number(),
+            password="testpass123",
         )
         self.user.email_verified = False
         self.user.email_verified_at = None
@@ -272,7 +276,9 @@ class PhoneVerificationFlowTest(BaseTestCase):
 
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(email="test@example.com", name="Test User", phone_number="+351987654321")
+        self.user = User.objects.create_user(
+            email=get_unique_email("test"), name="Test User", phone_number=get_unique_phone_number()
+        )
         self.user.phone_verified = False
         self.user.phone_verified_at = None
         self.user.save()
@@ -343,7 +349,7 @@ class OTPSigninFlowTest(BaseTestCase):
 
         # Create verified user
         self.verified_user = User.objects.create_user(
-            email="verified@example.com", name="Verified User", phone_number="+351987654321"
+            email=get_unique_email("verified"), name="Verified User", phone_number=get_unique_phone_number()
         )
         self.verified_user.email_verified = True
         self.verified_user.phone_verified = True
@@ -351,7 +357,7 @@ class OTPSigninFlowTest(BaseTestCase):
 
         # Create user with only email verified
         self.email_only_user = User.objects.create_user(
-            email="emailonly@example.com", name="Email Only User", phone_number="+351987654322"
+            email=get_unique_email("emailonly"), name="Email Only User", phone_number=get_unique_phone_number()
         )
         self.email_only_user.email_verified = True
         self.email_only_user.phone_verified = False
@@ -359,7 +365,7 @@ class OTPSigninFlowTest(BaseTestCase):
 
         # Create unverified user
         self.unverified_user = User.objects.create_user(
-            email="unverified@example.com", name="Unverified User", phone_number="+351987654323"
+            email=get_unique_email("unverified"), name="Unverified User", phone_number=get_unique_phone_number()
         )
         self.unverified_user.email_verified = False
         self.unverified_user.phone_verified = False
@@ -494,7 +500,7 @@ class ProgressiveVerificationFlowTest(BaseTestCase):
 
         # Create user in grace period (24h after signup)
         self.grace_user = User.objects.create_user(
-            email="grace@example.com", name="Grace User", phone_number="+351987654321"
+            email=get_unique_email("grace"), name="Grace User", phone_number=get_unique_phone_number()
         )
         self.grace_user.email_verified = False
         self.grace_user.phone_verified = False

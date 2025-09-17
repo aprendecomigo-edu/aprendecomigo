@@ -23,6 +23,7 @@ from accounts.models import VerificationToken
 from accounts.services.otp_service import OTPService
 from accounts.services.phone_validation import PhoneValidationService
 from accounts.tests.test_base import BaseTestCase
+from accounts.tests.test_utils import get_unique_email, get_unique_phone_number
 
 User = get_user_model()
 
@@ -31,11 +32,13 @@ class OTPServiceTest(BaseTestCase):
     """Test OTPService for secure OTP generation and verification"""
 
     def setUp(self):
-        self.user = User.objects.create_user(email="test@example.com", name="Test User", phone_number="+351987654321")
+        self.user = User.objects.create_user(
+            email=get_unique_email("test"), name="Test User", phone_number=get_unique_phone_number()
+        )
 
     def test_generate_otp_creates_6_digit_code(self):
         """Test OTP generation creates proper 6-digit code"""
-        otp_code, token_id = OTPService.generate_otp(self.user, "email")
+        otp_code, _token_id = OTPService.generate_otp(self.user, "email")
 
         # Verify format: exactly 6 digits
         self.assertRegex(otp_code, r"^\d{6}$")
@@ -64,7 +67,7 @@ class OTPServiceTest(BaseTestCase):
     def test_generate_otp_sets_10_minute_expiry(self):
         """Test OTP expires after exactly 10 minutes"""
         before_time = timezone.now()
-        otp_code, token_id = OTPService.generate_otp(self.user, "email")
+        _otp_code, token_id = OTPService.generate_otp(self.user, "email")
         after_time = timezone.now()
 
         token = VerificationToken.objects.get(id=token_id)
@@ -79,13 +82,13 @@ class OTPServiceTest(BaseTestCase):
     def test_generate_otp_clears_existing_signin_otps(self):
         """Test generating new OTP clears existing unused signin OTPs"""
         # Generate first OTP
-        otp_code1, token_id1 = OTPService.generate_otp(self.user, "email")
+        _otp_code1, token_id1 = OTPService.generate_otp(self.user, "email")
 
         # Verify first token exists
         self.assertTrue(VerificationToken.objects.filter(id=token_id1).exists())
 
         # Generate second OTP
-        otp_code2, token_id2 = OTPService.generate_otp(self.user, "sms")
+        _otp_code2, token_id2 = OTPService.generate_otp(self.user, "sms")
 
         # First token should be deleted
         self.assertFalse(VerificationToken.objects.filter(id=token_id1).exists())
@@ -104,7 +107,7 @@ class OTPServiceTest(BaseTestCase):
         )
 
         # Generate signin OTP
-        otp_code, token_id = OTPService.generate_otp(self.user, "email")
+        _otp_code, _token_id = OTPService.generate_otp(self.user, "email")
 
         # Other token should still exist
         self.assertTrue(VerificationToken.objects.filter(id=other_token.id).exists())
@@ -153,7 +156,7 @@ class OTPServiceTest(BaseTestCase):
 
     def test_verify_otp_failure_with_invalid_code(self):
         """Test OTP verification fails with invalid code"""
-        otp_code, token_id = OTPService.generate_otp(self.user, "email")
+        _otp_code, token_id = OTPService.generate_otp(self.user, "email")
 
         success, result = OTPService.verify_otp(token_id, "000000")
 
@@ -188,7 +191,7 @@ class OTPServiceTest(BaseTestCase):
 
     def test_verify_otp_tracks_failed_attempts(self):
         """Test OTP verification tracks failed attempts correctly"""
-        otp_code, token_id = OTPService.generate_otp(self.user, "email")
+        _otp_code, token_id = OTPService.generate_otp(self.user, "email")
 
         # Make 3 failed attempts
         for i in range(3):
@@ -250,7 +253,7 @@ class OTPServiceTest(BaseTestCase):
         )
 
         # Create non-expired token for main user
-        otp_code, active_token_id = OTPService.generate_otp(self.user, "email")
+        _otp_code, active_token_id = OTPService.generate_otp(self.user, "email")
 
         # Create non-OTP token (should not be affected)
         other_token = VerificationToken.objects.create(
@@ -497,7 +500,9 @@ class EmailVerificationServiceTest(BaseTestCase):
     """Test email verification workflows and edge cases"""
 
     def setUp(self):
-        self.user = User.objects.create_user(email="test@example.com", name="Test User", phone_number="+351987654321")
+        self.user = User.objects.create_user(
+            email=get_unique_email("test"), name="Test User", phone_number=get_unique_phone_number()
+        )
 
     @patch("accounts.views.send_magic_link_email")
     def test_send_verification_email_success(self, mock_send_email):
@@ -509,7 +514,15 @@ class EmailVerificationServiceTest(BaseTestCase):
         result = send_verification_email(self.user)
 
         self.assertTrue(result["success"])
-        mock_send_email.assert_called_once_with(self.user)
+        # Check that send_magic_link_email was called with correct parameters
+        mock_send_email.assert_called_once()
+        call_args = mock_send_email.call_args[0]
+        self.assertEqual(call_args[0], self.user.email)  # email
+        # call_args[1] is the magic_link (generated dynamically)
+        self.assertEqual(call_args[2], self.user.first_name)  # user_name
+        # Check is_verification=True in kwargs
+        call_kwargs = mock_send_email.call_args[1]
+        self.assertTrue(call_kwargs.get("is_verification", False))
 
     @patch("accounts.views.send_magic_link_email", side_effect=Exception("SMTP error"))
     def test_send_verification_email_failure(self, mock_send_email):
@@ -559,7 +572,9 @@ class SMSVerificationServiceTest(BaseTestCase):
     """Test SMS/OTP verification workflows"""
 
     def setUp(self):
-        self.user = User.objects.create_user(email="test@example.com", name="Test User", phone_number="+351987654321")
+        self.user = User.objects.create_user(
+            email=get_unique_email("test"), name="Test User", phone_number=get_unique_phone_number()
+        )
 
     @patch("accounts.views.send_sms_otp")
     def test_send_verification_sms_success(self, mock_send_sms):
@@ -571,7 +586,15 @@ class SMSVerificationServiceTest(BaseTestCase):
         result = send_verification_sms(self.user)
 
         self.assertTrue(result["success"])
-        mock_send_sms.assert_called_once_with(self.user)
+        # Check that send_sms_otp was called with correct parameters
+        mock_send_sms.assert_called_once()
+        call_args = mock_send_sms.call_args[0]
+        self.assertEqual(call_args[0], self.user.phone_number)  # phone_number
+        self.assertRegex(call_args[1], r"^\d{6}$")  # otp_code is 6 digits
+        self.assertEqual(call_args[2], self.user.first_name)  # user_name
+        # Check is_verification=True in kwargs
+        call_kwargs = mock_send_sms.call_args[1]
+        self.assertTrue(call_kwargs.get("is_verification", False))
 
     @patch("accounts.views.send_sms_otp", side_effect=Exception("SMS service error"))
     def test_send_verification_sms_failure(self, mock_send_sms):

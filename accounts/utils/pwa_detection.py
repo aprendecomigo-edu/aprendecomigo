@@ -63,9 +63,10 @@ class PWADetector:
             bool: True if request is from PWA, False for web browser
         """
         # Strategy 1: Check custom PWA headers (highest priority)
-        if cls._check_pwa_headers(request):
-            logger.debug("PWA detected via custom headers")
-            return True
+        has_explicit_header, is_pwa_header = cls._check_pwa_headers(request)
+        if has_explicit_header:
+            logger.debug(f"PWA {'detected' if is_pwa_header else 'explicitly excluded'} via custom headers")
+            return is_pwa_header
 
         # Strategy 2: Check PWA mode cookie (client-side JS detection)
         if cls._check_pwa_cookie(request):
@@ -105,31 +106,37 @@ class PWADetector:
             return cls.WEB_SESSION_DURATION
 
     @classmethod
-    def _check_pwa_headers(cls, request: HttpRequest) -> bool:
+    def _check_pwa_headers(cls, request: HttpRequest) -> tuple[bool, bool]:
         """
         Check for custom PWA headers set by client-side JavaScript.
 
         Headers checked:
-        - X-PWA-Mode: 'standalone' indicates PWA
-        - X-Standalone-Mode: '1' or 'true' indicates PWA
+        - X-PWA-Mode: 'standalone' indicates PWA, 'browser' indicates not PWA
+        - X-Standalone-Mode: '1' or 'true' indicates PWA, '0' or 'false' indicates not PWA
 
         Args:
             request: Django HttpRequest object
 
         Returns:
-            bool: True if PWA headers detected
+            tuple: (has_explicit_header, is_pwa) where:
+                   - has_explicit_header: True if a definitive header was found
+                   - is_pwa: True if PWA headers detected (only valid if has_explicit_header is True)
         """
         # Check X-PWA-Mode header
         pwa_mode = request.headers.get("x-pwa-mode", "").lower()
         if pwa_mode == "standalone":
-            return True
+            return True, True
+        elif pwa_mode == "browser":
+            return True, False
 
         # Check X-Standalone-Mode header
         standalone_mode = request.headers.get("x-standalone-mode", "").lower()
         if standalone_mode in ["1", "true"]:
-            return True
+            return True, True
+        elif standalone_mode in ["0", "false"]:
+            return True, False
 
-        return False
+        return False, False
 
     @classmethod
     def _check_pwa_cookie(cls, request: HttpRequest) -> bool:
@@ -219,11 +226,12 @@ class PWADetector:
         Returns:
             dict: Detailed detection information
         """
+        has_explicit_header, is_pwa_header = cls._check_pwa_headers(request)
         return {
             "is_pwa": cls.is_pwa_request(request),
             "session_duration": cls.get_session_duration(request),
             "detection_methods": {
-                "pwa_headers": cls._check_pwa_headers(request),
+                "pwa_headers": is_pwa_header if has_explicit_header else None,
                 "pwa_cookie": cls._check_pwa_cookie(request),
                 "user_agent": cls._check_user_agent(request),
                 "request_characteristics": cls._check_request_characteristics(request),
