@@ -160,6 +160,15 @@ class SignInView(View):
 
             user = get_user_by_email(email)
 
+            # Check if user has at least one verified contact method
+            if not (user.email_verified or user.phone_verified):
+                logger.warning(f"Signin attempt by unverified user: {email}")
+                return render(
+                    request,
+                    "accounts/partials/signin_form.html",
+                    {"error": "Please verify your email or phone number before signing in", "email": email},
+                )
+
             # Store email in session for OTP delivery
             request.session["signin_email"] = email
             request.session["signin_user_id"] = user.id

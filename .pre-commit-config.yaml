@@ -58,7 +58,7 @@ repos:
               manage\.py
           )$
 
-  # Pre-push hook for running tests (temporarily disabled while fixing remaining test failures)
+  # Pre-push hook for running tests (temporarily disabled due to other unrelated test failures)
   # - repo: local
   #   hooks:
   #     - id: django-tests
