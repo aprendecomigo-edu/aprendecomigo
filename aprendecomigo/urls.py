@@ -17,6 +17,7 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import include, path
+from django.views.generic import TemplateView
 
 # Dashboard views
 from dashboard.views import InvitationsView, PeopleView, StudentsView, TeachersView
@@ -32,6 +33,8 @@ urlpatterns = [
     path("health/", health_check, name="health_check"),
     # Admin route
     path("admin/", admin.site.urls),
+    # PWA offline page
+    path("offline/", TemplateView.as_view(template_name="offline.html"), name="offline"),
     # PWA infrastructure is handled by custom service worker
     # Authentication and dashboard routes (HTML interface)
     path("", include("accounts.urls", namespace="accounts")),

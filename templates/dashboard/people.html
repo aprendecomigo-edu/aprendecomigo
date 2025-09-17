@@ -1203,9 +1203,8 @@ function peopleManager() {
                     return; // Let HTMX handle the error display, don't show success
                 }
 
-                // True success - close modal, show success message, and refresh the list
+                // True success - close modal and reset forms (success message shown by server)
                 this.showAddStudentModal = false;
-                this.handleSuccess('Student added successfully!');
                 this.resetForms();
             } else {
                 // HTTP error - let HTMX handle the error display
