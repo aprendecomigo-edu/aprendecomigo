@@ -32,6 +32,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.html import escape
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
 from django.views import View
 from django.views.decorators.csrf import csrf_protect
@@ -119,9 +120,15 @@ class SignInView(View):
         if request.user.is_authenticated:
             return redirect(reverse("dashboard:dashboard"))
 
-        # Store the next parameter in session for post-login redirect
+        # Store the next parameter in session for post-login redirect (with security validation)
         next_url = request.GET.get("next")
-        if next_url:
+        if (
+            next_url
+            and next_url.strip()
+            and url_has_allowed_host_and_scheme(
+                next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+            )
+        ):
             request.session["signin_next_url"] = next_url
 
         return render(
@@ -676,7 +683,7 @@ class VerifyOTPView(View):
                     logger.error(f"Failed to update email verification task: {e}")
 
             # Get next URL from session or default to dashboard
-            next_url = request.session.get("signin_next_url", reverse("dashboard:dashboard"))
+            next_url = request.session.get("signin_next_url") or reverse("dashboard:dashboard")
 
             # Clean up session
             if "otp_token_id" in request.session:

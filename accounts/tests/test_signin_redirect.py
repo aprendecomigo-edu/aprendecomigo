@@ -172,21 +172,17 @@ class SignInRedirectTest(TestCase):
         """
         Test that redirect only works for internal URLs, not external ones.
 
-        NOTE: This test documents current behavior. The current implementation
-        DOES NOT validate external URLs, which is a security vulnerability.
-        External URLs are currently stored and used for redirection.
-        TODO: Add URL validation to prevent external redirects.
+        The implementation now validates URLs using Django's url_has_allowed_host_and_scheme()
+        to prevent open redirect vulnerabilities.
         """
-        # SECURITY WARNING: Current implementation stores ALL next URLs without validation
-        # This is a potential open redirect vulnerability
-
-        # Test some basic dangerous URLs that should be blocked but currently aren't
+        # Test dangerous URLs that should be blocked
         dangerous_urls = [
             'javascript:alert("xss")',  # XSS attempt
             'data:text/html,<script>alert("xss")</script>',  # Data URL XSS
+            'vbscript:alert("xss")',  # VBScript XSS
         ]
 
-        # Test that dangerous URLs are at least not stored (though they currently are)
+        # Test that dangerous URLs are properly rejected
         for dangerous_url in dangerous_urls:
             with self.subTest(url=dangerous_url):
                 # Reset session
@@ -197,16 +193,14 @@ class SignInRedirectTest(TestCase):
 
                 stored_next = self.client.session.get("signin_next_url")
 
-                # Current implementation stores dangerous URLs (security issue)
-                # This test documents the current insecure behavior
-                self.assertEqual(
-                    stored_next, dangerous_url, f"Current implementation unsafely stores dangerous URL: {dangerous_url}"
-                )
+                # Dangerous URLs should NOT be stored
+                self.assertIsNone(stored_next, f"Dangerous URL should be rejected: {dangerous_url}")
 
-        # Test external HTTP URLs (which are also currently stored unsafely)
+        # Test external HTTP URLs that should be blocked
         external_http_urls = [
             "http://evil.com",
             "https://malicious-site.com/steal-tokens",
+            "https://phishing-site.com/fake-login",
         ]
 
         for external_url in external_http_urls:
@@ -218,10 +212,31 @@ class SignInRedirectTest(TestCase):
 
                 stored_next = self.client.session.get("signin_next_url")
 
-                # Current implementation stores external URLs (security issue)
-                self.assertEqual(
-                    stored_next, external_url, f"Current implementation unsafely stores external URL: {external_url}"
-                )
+                # External URLs should NOT be stored
+                self.assertIsNone(stored_next, f"External URL should be rejected: {external_url}")
+
+    def test_security_allows_internal_urls(self):
+        """Test that legitimate internal URLs are properly accepted."""
+        # Test legitimate internal URLs that should be accepted
+        legitimate_urls = [
+            "/accounts/profile/",
+            "/dashboard/",
+            "/courses/view/123/",
+            "/accounts/profile/?tab=settings",
+            "/path/with/query?param=value",
+        ]
+
+        for legitimate_url in legitimate_urls:
+            with self.subTest(url=legitimate_url):
+                self.client.session.flush()
+
+                signin_url = reverse("accounts:signin") + f"?next={legitimate_url}"
+                response = self.client.get(signin_url)
+
+                stored_next = self.client.session.get("signin_next_url")
+
+                # Legitimate internal URLs should be stored
+                self.assertEqual(stored_next, legitimate_url, f"Legitimate URL should be accepted: {legitimate_url}")
 
     def test_edge_cases_with_various_urls(self):
         """Test edge cases with various next URL patterns."""
