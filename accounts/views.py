@@ -121,7 +121,7 @@ class SignInView(View):
 
         # Store the next parameter in session for post-login redirect
         next_url = request.GET.get("next")
-        if next_url:
+        if next_url and next_url.strip():
             request.session["signin_next_url"] = next_url
 
         return render(
@@ -676,7 +676,7 @@ class VerifyOTPView(View):
                     logger.error(f"Failed to update email verification task: {e}")
 
             # Get next URL from session or default to dashboard
-            next_url = request.session.get("signin_next_url", reverse("dashboard:dashboard"))
+            next_url = request.session.get("signin_next_url") or reverse("dashboard:dashboard")
 
             # Clean up session
             if "otp_token_id" in request.session:
