@@ -651,10 +651,16 @@ def resend_code(request: HttpRequest) -> HttpResponse:
     delivery_method = request.session.get("otp_delivery_method", "email")
 
     if not email or not user_id:
+        logger.warning("Resend code attempted with missing session data")
         return render(
             request,
-            "accounts/partials/signin_form.html",
-            {"error": "Session expired. Please sign in again.", "email": ""},
+            "accounts/partials/signin_success_with_verify.html",
+            {
+                "error": "Your session has expired. Please sign in again to receive a new verification code.",
+                "email": email or "",
+                "delivery_method": delivery_method,
+                "session_expired": True,
+            },
         )
 
     try:
@@ -699,6 +705,18 @@ def resend_code(request: HttpRequest) -> HttpResponse:
                 },
             )
 
+    except User.DoesNotExist:
+        logger.error(f"User not found for resend code: {email} (ID: {user_id})")
+        return render(
+            request,
+            "accounts/partials/signin_success_with_verify.html",
+            {
+                "error": "User account not found. Please sign in again.",
+                "email": email,
+                "delivery_method": delivery_method,
+                "session_expired": True,
+            },
+        )
     except Exception as e:
         logger.error(f"Resend code error for {email}: {e}")
         return render(
