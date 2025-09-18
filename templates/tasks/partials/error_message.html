@@ -1,3 +1,4 @@
+{% load i18n %}
 <!-- Error Message Partial -->
 <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg" role="alert">
     <div class="flex items-center">
@@ -7,7 +8,7 @@
             </svg>
         </div>
         <div>
-            <p class="font-bold">Error</p>
+            <p class="font-bold">{% trans "Error" %}</p>
             <p class="text-sm">{{ error }}</p>
         </div>
     </div>

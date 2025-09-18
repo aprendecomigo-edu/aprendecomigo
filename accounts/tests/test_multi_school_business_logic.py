@@ -17,6 +17,7 @@ from accounts.models import (
     TeacherCourse,
     TeacherProfile,
 )
+from accounts.tests.test_utils import get_unique_email, get_unique_phone_number
 
 
 class MultiSchoolBusinessLogicTest(TestCase):
@@ -36,8 +37,10 @@ class MultiSchoolBusinessLogicTest(TestCase):
         self.school1 = School.objects.create(name="School 1", description="Test school 1", address="Address 1")
         self.school2 = School.objects.create(name="School 2", description="Test school 2", address="Address 2")
 
-    def create_user(self, email, name, phone="+351912000000"):
+    def create_user(self, email, name, phone=None):
         """Factory method to create user."""
+        if phone is None:
+            phone = get_unique_phone_number()
         return CustomUser.objects.create_user(email=email, name=name, phone_number=phone)
 
     def create_school_membership(self, user, school, role):

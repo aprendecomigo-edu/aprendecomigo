@@ -4,6 +4,8 @@ from django.utils.translation import gettext_lazy as _
 
 from accounts.models import CustomUser
 
+from .managers import OnboardingTaskManager, SystemTaskManager, UserTaskManager
+
 
 class Task(models.Model):
     """
@@ -27,6 +29,17 @@ class Task(models.Model):
         ("assignment", _("Assignment")),
         ("personal", _("Personal")),
         ("system", _("System")),
+    ]
+
+    # System Task Codes
+    EMAIL_VERIFICATION = "EMAIL_VERIFICATION"
+    PHONE_VERIFICATION = "PHONE_VERIFICATION"
+    FIRST_STUDENT_ADDED = "FIRST_STUDENT_ADDED"
+
+    SYSTEM_TASK_CHOICES = [
+        (EMAIL_VERIFICATION, _("Email Verification")),
+        (PHONE_VERIFICATION, _("Phone Verification")),
+        (FIRST_STUDENT_ADDED, _("Add First Student")),
     ]
 
     # Core fields
@@ -57,6 +70,23 @@ class Task(models.Model):
         help_text=_("True if this task was automatically created by the system"),
     )
 
+    # System-specific identifier for unique system tasks
+    system_code = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        verbose_name=_("System Code"),
+        help_text=_("Unique identifier for system-generated tasks"),
+    )
+
+    # Default manager
+    objects = models.Manager()
+
+    # Custom managers
+    system_tasks = SystemTaskManager()
+    user_tasks = UserTaskManager()
+    onboarding_tasks = OnboardingTaskManager()
+
     class Meta:
         verbose_name = _("Task")
         verbose_name_plural = _("Tasks")
@@ -65,6 +95,15 @@ class Task(models.Model):
             models.Index(fields=["user", "status"]),
             models.Index(fields=["user", "due_date"]),
             models.Index(fields=["priority", "status"]),
+            models.Index(fields=["user", "system_code"]),
+            models.Index(fields=["system_code", "task_type"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "system_code"],
+                condition=models.Q(task_type="system") & models.Q(system_code__isnull=False),
+                name="unique_user_system_task",
+            )
         ]
 
     def __str__(self):

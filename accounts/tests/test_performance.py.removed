@@ -1,0 +1,744 @@
+"""
+Performance and Load Tests for Authentication System
+
+This module tests the performance characteristics of the authentication system
+under various load conditions to ensure it meets business requirements:
+
+- Signup flow performance under concurrent load
+- OTP generation and verification performance
+- PWA detection performance overhead
+- Database query optimization verification
+- Memory usage patterns
+- Scalability characteristics
+
+These tests help ensure the system can handle production load effectively.
+"""
+
+import time
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import timedelta
+from unittest.mock import patch
+
+from django.contrib.auth import get_user_model
+from django.test import TestCase, TransactionTestCase, Client, override_settings
+from django.test.utils import override_settings
+from django.utils import timezone
+from django.db import connection
+from django.test.utils import override_settings
+
+from accounts.models import School, SchoolMembership, SchoolRole, VerificationToken
+from accounts.services.otp_service import OTPService
+from accounts.services.phone_validation import PhoneValidationService
+from accounts.utils.pwa_detection import PWADetector
+from accounts.tests.test_base import BaseTestCase, BaseTransactionTestCase
+
+User = get_user_model()
+
+
+class SignupPerformanceTest(BaseTransactionTestCase):
+    """Test signup flow performance under load"""
+
+    def setUp(self):
+        self.base_signup_data = {
+            "full_name": "Test User",
+            "phone_number": "+351987654321",
+            "organization_name": "Test Organization"
+        }
+
+    def test_single_signup_performance(self):
+        """Test single signup completes within acceptable time"""
+        with patch("accounts.views.send_magic_link_email") as mock_email, \
+             patch("accounts.views.send_sms_otp") as mock_sms:
+
+            mock_email.return_value = {"success": True}
+            mock_sms.return_value = {"success": True}
+
+            client = Client()
+            signup_data = self.base_signup_data.copy()
+            signup_data["email"] = "perf_test@example.com"
+
+            # Measure signup time
+            start_time = time.time()
+            response = client.post("/signup/", signup_data)
+            end_time = time.time()
+
+            signup_time = end_time - start_time
+
+            # Signup should complete within 2 seconds
+            self.assertLess(signup_time, 2.0)
+            self.assertEqual(response.status_code, 200)
+
+    def test_concurrent_signups_performance(self):
+        """Test concurrent signup performance"""
+        def signup_user(user_index):
+            with patch("accounts.views.send_magic_link_email") as mock_email, \
+                 patch("accounts.views.send_sms_otp") as mock_sms:
+
+                mock_email.return_value = {"success": True}
+                mock_sms.return_value = {"success": True}
+
+                client = Client()
+                signup_data = self.base_signup_data.copy()
+                signup_data["email"] = f"user{user_index}@example.com"
+
+                start_time = time.time()
+                response = client.post("/signup/", signup_data)
+                end_time = time.time()
+
+                return {
+                    'user_index': user_index,
+                    'time': end_time - start_time,
+                    'status_code': response.status_code,
+                    'success': response.status_code == 200
+                }
+
+        # Test with 10 concurrent signups
+        concurrent_users = 10
+        results = []
+
+        with ThreadPoolExecutor(max_workers=concurrent_users) as executor:
+            futures = [executor.submit(signup_user, i) for i in range(concurrent_users)]
+
+            for future in as_completed(futures):
+                results.append(future.result())
+
+        # Analyze results
+        successful_signups = [r for r in results if r['success']]
+        failed_signups = [r for r in results if not r['success']]
+        signup_times = [r['time'] for r in successful_signups]
+
+        # At least 80% should succeed
+        success_rate = len(successful_signups) / len(results)
+        self.assertGreaterEqual(success_rate, 0.8)
+
+        # Average signup time should be reasonable
+        if signup_times:
+            avg_time = sum(signup_times) / len(signup_times)
+            max_time = max(signup_times)
+
+            self.assertLess(avg_time, 3.0)  # Average under 3 seconds
+            self.assertLess(max_time, 5.0)  # Max under 5 seconds
+
+        # Verify correct number of users created
+        self.assertEqual(User.objects.count(), len(successful_signups))
+
+    def test_signup_database_queries_optimization(self):
+        """Test signup uses minimal database queries"""
+        with patch("accounts.views.send_magic_link_email") as mock_email, \
+             patch("accounts.views.send_sms_otp") as mock_sms:
+
+            mock_email.return_value = {"success": True}
+            mock_sms.return_value = {"success": True}
+
+            client = Client()
+            signup_data = self.base_signup_data.copy()
+            signup_data["email"] = "db_test@example.com"
+
+            # Count database queries
+            with self.assertNumQueries(lambda: 15):  # Adjust based on actual optimized count
+                response = client.post("/signup/", signup_data)
+
+            self.assertEqual(response.status_code, 200)
+
+    def test_signup_rollback_performance(self):
+        """Test signup rollback performance on errors"""
+        with patch("accounts.db_queries.create_user_school_and_membership") as mock_create:
+            mock_create.side_effect = Exception("Simulated database error")
+
+            client = Client()
+            signup_data = self.base_signup_data.copy()
+            signup_data["email"] = "rollback_test@example.com"
+
+            start_time = time.time()
+            response = client.post("/signup/", signup_data)
+            end_time = time.time()
+
+            rollback_time = end_time - start_time
+
+            # Rollback should be fast (under 1 second)
+            self.assertLess(rollback_time, 1.0)
+
+            # No partial data should remain
+            self.assertEqual(User.objects.filter(email="rollback_test@example.com").count(), 0)
+            self.assertEqual(School.objects.filter(name="Test Organization").count(), 0)
+
+
+class OTPServicePerformanceTest(BaseTestCase):
+    """Test OTP service performance characteristics"""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email="test@example.com",
+            name="Test User",
+            phone_number="+351987654321"
+        )
+
+    def test_otp_generation_performance(self):
+        """Test OTP generation speed"""
+        generation_times = []
+
+        for i in range(100):
+            start_time = time.time()
+            otp_code, token_id = OTPService.generate_otp(self.user, 'email')
+            end_time = time.time()
+
+            generation_times.append(end_time - start_time)
+
+        avg_time = sum(generation_times) / len(generation_times)
+        max_time = max(generation_times)
+
+        # OTP generation should be very fast
+        self.assertLess(avg_time, 0.01)  # Average under 10ms
+        self.assertLess(max_time, 0.05)  # Max under 50ms
+
+    def test_otp_verification_performance(self):
+        """Test OTP verification speed"""
+        # Generate test OTPs
+        test_otps = []
+        for i in range(50):
+            otp_code, token_id = OTPService.generate_otp(self.user, 'email')
+            test_otps.append((otp_code, token_id))
+
+        verification_times = []
+
+        for otp_code, token_id in test_otps:
+            start_time = time.time()
+            success, result = OTPService.verify_otp(token_id, otp_code)
+            end_time = time.time()
+
+            verification_times.append(end_time - start_time)
+            self.assertTrue(success)
+
+        avg_time = sum(verification_times) / len(verification_times)
+        max_time = max(verification_times)
+
+        # OTP verification should be fast
+        self.assertLess(avg_time, 0.02)  # Average under 20ms
+        self.assertLess(max_time, 0.1)   # Max under 100ms
+
+    def test_concurrent_otp_operations(self):
+        """Test concurrent OTP generation and verification"""
+        def otp_workflow(user_index):
+            # Create user for this thread
+            user = User.objects.create_user(
+                email=f"concurrent_user_{user_index}@example.com",
+                name=f"User {user_index}",
+                phone_number=f"+35198765432{user_index % 10}"
+            )
+
+            start_time = time.time()
+
+            # Generate OTP
+            otp_code, token_id = OTPService.generate_otp(user, 'email')
+
+            # Verify OTP
+            success, result = OTPService.verify_otp(token_id, otp_code)
+
+            end_time = time.time()
+
+            return {
+                'user_index': user_index,
+                'success': success,
+                'time': end_time - start_time
+            }
+
+        # Test with 20 concurrent OTP workflows
+        concurrent_ops = 20
+        results = []
+
+        with ThreadPoolExecutor(max_workers=concurrent_ops) as executor:
+            futures = [executor.submit(otp_workflow, i) for i in range(concurrent_ops)]
+
+            for future in as_completed(futures):
+                results.append(future.result())
+
+        # All operations should succeed
+        successful_ops = [r for r in results if r['success']]
+        self.assertEqual(len(successful_ops), concurrent_ops)
+
+        # Times should be reasonable under load
+        op_times = [r['time'] for r in results]
+        avg_time = sum(op_times) / len(op_times)
+        max_time = max(op_times)
+
+        self.assertLess(avg_time, 0.1)  # Average under 100ms
+        self.assertLess(max_time, 0.5)  # Max under 500ms
+
+    def test_otp_cleanup_performance(self):
+        """Test OTP cleanup performance with large datasets"""
+        # Create many expired tokens
+        expired_tokens = []
+        for i in range(1000):
+            token = VerificationToken.objects.create(
+                user=self.user,
+                token_type='signin_otp',
+                token_value=f'hash_{i}',
+                expires_at=timezone.now() - timedelta(hours=1)
+            )
+            expired_tokens.append(token)
+
+        # Measure cleanup time
+        start_time = time.time()
+        deleted_count = OTPService.cleanup_expired_tokens()
+        end_time = time.time()
+
+        cleanup_time = end_time - start_time
+
+        # Cleanup should be efficient
+        self.assertLess(cleanup_time, 1.0)  # Under 1 second for 1000 tokens
+        self.assertEqual(deleted_count, 1000)
+
+    def test_otp_database_query_optimization(self):
+        """Test OTP operations use minimal database queries"""
+        # Test OTP generation queries
+        with self.assertNumQueries(3):  # DELETE existing + INSERT new + UPDATE user
+            otp_code, token_id = OTPService.generate_otp(self.user, 'email')
+
+        # Test OTP verification queries
+        with self.assertNumQueries(2):  # SELECT token + UPDATE used_at
+            success, result = OTPService.verify_otp(token_id, otp_code)
+
+
+class PWADetectionPerformanceTest(TestCase):
+    """Test PWA detection performance overhead"""
+
+    def setUp(self):
+        from django.test import RequestFactory
+        self.factory = RequestFactory()
+
+    def test_pwa_detection_speed(self):
+        """Test PWA detection speed with various request types"""
+        test_requests = [
+            # Web browser requests
+            self.factory.get('/', HTTP_USER_AGENT='Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/88.0.4324.96 Safari/537.36'),
+            # PWA requests
+            self.factory.get('/', HTTP_X_PWA_MODE='standalone'),
+            # Mobile requests
+            self.factory.get('/', HTTP_USER_AGENT='Mozilla/5.0 (Linux; Android 10) Mobile Safari/537.36'),
+            # Requests with cookies
+            self.factory.get('/'),
+        ]
+
+        # Set cookies for last request
+        test_requests[-1].COOKIES = {'pwa_mode': 'standalone'}
+
+        detection_times = []
+
+        for request in test_requests * 100:  # Test each 100 times
+            start_time = time.time()
+            is_pwa = PWADetector.is_pwa_request(request)
+            end_time = time.time()
+
+            detection_times.append(end_time - start_time)
+
+        avg_time = sum(detection_times) / len(detection_times)
+        max_time = max(detection_times)
+
+        # PWA detection should be very fast
+        self.assertLess(avg_time, 0.001)  # Average under 1ms
+        self.assertLess(max_time, 0.005)  # Max under 5ms
+
+    def test_pwa_detection_with_complex_user_agents(self):
+        """Test PWA detection performance with complex user agents"""
+        complex_user_agents = [
+            'Mozilla/5.0 (Linux; Android 10; SM-G975F) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/88.0.4324.93 Mobile Safari/537.36 wv' * 10,  # Very long
+            '',  # Empty
+            'Simple',  # Very short
+            '中文用户代理/1.0',  # Unicode characters
+        ]
+
+        detection_times = []
+
+        for user_agent in complex_user_agents:
+            for _ in range(100):
+                request = self.factory.get('/', HTTP_USER_AGENT=user_agent)
+
+                start_time = time.time()
+                is_pwa = PWADetector.is_pwa_request(request)
+                end_time = time.time()
+
+                detection_times.append(end_time - start_time)
+
+        avg_time = sum(detection_times) / len(detection_times)
+        max_time = max(detection_times)
+
+        # Should handle complex cases efficiently
+        self.assertLess(avg_time, 0.001)  # Average under 1ms
+        self.assertLess(max_time, 0.01)   # Max under 10ms
+
+    def test_concurrent_pwa_detection(self):
+        """Test PWA detection under concurrent load"""
+        def detect_pwa_batch(batch_size=100):
+            requests = [
+                self.factory.get('/', HTTP_X_PWA_MODE='standalone'),
+                self.factory.get('/', HTTP_USER_AGENT='Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/88.0.4324.96 Safari/537.36'),
+            ] * (batch_size // 2)
+
+            start_time = time.time()
+
+            for request in requests:
+                PWADetector.is_pwa_request(request)
+
+            end_time = time.time()
+            return end_time - start_time
+
+        # Test concurrent detection
+        batch_times = []
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            futures = [executor.submit(detect_pwa_batch) for _ in range(10)]
+
+            for future in as_completed(futures):
+                batch_times.append(future.result())
+
+        avg_batch_time = sum(batch_times) / len(batch_times)
+        max_batch_time = max(batch_times)
+
+        # Concurrent detection should be efficient
+        self.assertLess(avg_batch_time, 0.1)  # Average batch under 100ms
+        self.assertLess(max_batch_time, 0.2)  # Max batch under 200ms
+
+
+class PhoneValidationPerformanceTest(TestCase):
+    """Test phone validation performance"""
+
+    def test_phone_validation_speed(self):
+        """Test phone validation speed with various inputs"""
+        test_phone_numbers = [
+            "+351987654321",
+            "+1234567890",
+            "+447700900123",
+            "+5511987654321",
+            "987654321",  # Requires country code addition
+            "00351987654321",  # Requires prefix conversion
+        ]
+
+        validation_times = []
+
+        for phone_number in test_phone_numbers * 100:  # Test each 100 times
+            start_time = time.time()
+            try:
+                result = PhoneValidationService.validate_and_normalize(phone_number)
+            except ValidationError:
+                pass  # Expected for some invalid numbers
+            end_time = time.time()
+
+            validation_times.append(end_time - start_time)
+
+        avg_time = sum(validation_times) / len(validation_times)
+        max_time = max(validation_times)
+
+        # Phone validation should be fast
+        self.assertLess(avg_time, 0.001)  # Average under 1ms
+        self.assertLess(max_time, 0.005)  # Max under 5ms
+
+    def test_phone_validation_with_malformed_input(self):
+        """Test phone validation performance with malformed input"""
+        malformed_inputs = [
+            "a" * 1000,  # Very long invalid string
+            "",  # Empty string
+            "+++++++++",  # Multiple prefixes
+            "phone_number",  # Text
+            "123" * 100,  # Very long number
+        ]
+
+        validation_times = []
+
+        for malformed_input in malformed_inputs * 50:  # Test each 50 times
+            start_time = time.time()
+            try:
+                result = PhoneValidationService.validate_and_normalize(malformed_input)
+            except ValidationError:
+                pass  # Expected for malformed input
+            end_time = time.time()
+
+            validation_times.append(end_time - start_time)
+
+        avg_time = sum(validation_times) / len(validation_times)
+        max_time = max(validation_times)
+
+        # Should handle malformed input efficiently
+        self.assertLess(avg_time, 0.002)  # Average under 2ms
+        self.assertLess(max_time, 0.01)   # Max under 10ms
+
+
+class MemoryUsageTest(BaseTestCase):
+    """Test memory usage patterns"""
+
+    def test_signup_memory_usage(self):
+        """Test memory usage during signup doesn't grow excessively"""
+        import gc
+        import sys
+
+        # Get initial memory usage
+        gc.collect()
+        initial_objects = len(gc.get_objects())
+
+        # Perform multiple signups
+        with patch("accounts.views.send_magic_link_email") as mock_email, \
+             patch("accounts.views.send_sms_otp") as mock_sms:
+
+            mock_email.return_value = {"success": True}
+            mock_sms.return_value = {"success": True}
+
+            for i in range(50):
+                client = Client()
+                signup_data = {
+                    "email": f"memory_test_{i}@example.com",
+                    "full_name": f"User {i}",
+                    "phone_number": f"+35198765432{i % 10}",
+                    "organization_name": f"Org {i}"
+                }
+                response = client.post("/signup/", signup_data)
+                self.assertEqual(response.status_code, 200)
+
+        # Check memory usage after
+        gc.collect()
+        final_objects = len(gc.get_objects())
+
+        # Memory growth should be reasonable (not exponential)
+        object_growth = final_objects - initial_objects
+        self.assertLess(object_growth, 10000)  # Should not create excessive objects
+
+    def test_otp_generation_memory_usage(self):
+        """Test OTP generation doesn't leak memory"""
+        import gc
+
+        user = User.objects.create_user(
+            email="memory_test@example.com",
+            name="Memory Test User",
+            phone_number="+351987654321"
+        )
+
+        gc.collect()
+        initial_objects = len(gc.get_objects())
+
+        # Generate many OTPs
+        for i in range(1000):
+            otp_code, token_id = OTPService.generate_otp(user, 'email')
+
+        gc.collect()
+        final_objects = len(gc.get_objects())
+
+        # Memory growth should be minimal
+        object_growth = final_objects - initial_objects
+        self.assertLess(object_growth, 5000)  # Reasonable growth
+
+
+class ScalabilityTest(BaseTransactionTestCase):
+    """Test system scalability characteristics"""
+
+    def test_large_user_base_performance(self):
+        """Test performance with large number of existing users"""
+        # Create many existing users
+        existing_users = []
+        for i in range(1000):
+            user = User.objects.create_user(
+                email=f"existing_user_{i}@example.com",
+                name=f"Existing User {i}",
+                phone_number=f"+35100000{i:04d}"
+            )
+            existing_users.append(user)
+
+        # Test operations with large user base
+        with patch("accounts.views.send_magic_link_email") as mock_email, \
+             patch("accounts.views.send_sms_otp") as mock_sms:
+
+            mock_email.return_value = {"success": True}
+            mock_sms.return_value = {"success": True}
+
+            client = Client()
+
+            # Test signup performance
+            start_time = time.time()
+            response = client.post("/signup/", {
+                "email": "new_user@example.com",
+                "full_name": "New User",
+                "phone_number": "+351987654321",
+                "organization_name": "New Org"
+            })
+            signup_time = time.time() - start_time
+
+            # Should still be fast even with many existing users
+            self.assertLess(signup_time, 3.0)
+            self.assertEqual(response.status_code, 200)
+
+    def test_large_token_cleanup_performance(self):
+        """Test cleanup performance with large number of tokens"""
+        # Create user for tokens
+        user = User.objects.create_user(
+            email="cleanup_test@example.com",
+            name="Cleanup Test User",
+            phone_number="+351987654321"
+        )
+
+        # Create many expired tokens
+        batch_size = 10000
+        for i in range(batch_size):
+            VerificationToken.objects.create(
+                user=user,
+                token_type='signin_otp',
+                token_value=f'expired_hash_{i}',
+                expires_at=timezone.now() - timedelta(hours=1)
+            )
+
+        # Test cleanup performance
+        start_time = time.time()
+        deleted_count = OTPService.cleanup_expired_tokens()
+        cleanup_time = time.time() - start_time
+
+        # Should handle large cleanup efficiently
+        self.assertEqual(deleted_count, batch_size)
+        self.assertLess(cleanup_time, 5.0)  # Under 5 seconds for 10k tokens
+
+
+class DatabasePerformanceTest(BaseTestCase):
+    """Test database performance characteristics"""
+
+    def test_complex_query_performance(self):
+        """Test performance of complex authentication queries"""
+        # Create test data
+        users = []
+        for i in range(100):
+            user = User.objects.create_user(
+                email=f"query_test_{i}@example.com",
+                name=f"Query User {i}",
+                phone_number=f"+35100{i:06d}"
+            )
+            users.append(user)
+
+            # Create school and membership
+            school = School.objects.create(
+                name=f"School {i}",
+                contact_email=user.email
+            )
+            SchoolMembership.objects.create(
+                user=user,
+                school=school,
+                role=SchoolRole.SCHOOL_OWNER,
+                is_active=True
+            )
+
+        # Test query performance
+        from django.db import connection
+
+        # Reset query count
+        connection.queries_log.clear()
+
+        start_time = time.time()
+
+        # Perform complex queries (example)
+        verified_users = User.objects.filter(
+            email_verified=True,
+            phone_verified=True
+        ).select_related().prefetch_related('schoolmembership_set__school')
+
+        # Force evaluation
+        list(verified_users)
+
+        query_time = time.time() - start_time
+        query_count = len(connection.queries)
+
+        # Should be reasonably fast and efficient
+        self.assertLess(query_time, 1.0)  # Under 1 second
+        self.assertLess(query_count, 10)  # Reasonable number of queries
+
+    def test_index_usage_verification(self):
+        """Test that database indexes are being used effectively"""
+        # Create test data that would benefit from indexes
+        for i in range(1000):
+            user = User.objects.create_user(
+                email=f"index_test_{i}@example.com",
+                name=f"Index User {i}",
+                phone_number=f"+35200{i:06d}"
+            )
+
+            # Create verification tokens
+            VerificationToken.objects.create(
+                user=user,
+                token_type='signin_otp',
+                token_value=f'token_hash_{i}',
+                expires_at=timezone.now() + timedelta(minutes=10)
+            )
+
+        # Test queries that should use indexes
+        start_time = time.time()
+
+        # Email lookup (should use email index)
+        User.objects.get(email="index_test_500@example.com")
+
+        # Token lookup (should use token indexes)
+        VerificationToken.objects.filter(
+            token_type='signin_otp',
+            used_at__isnull=True
+        ).first()
+
+        query_time = time.time() - start_time
+
+        # Should be very fast with proper indexes
+        self.assertLess(query_time, 0.1)  # Under 100ms for indexed queries
+
+
+@override_settings(DEBUG=True)  # To capture queries
+class QueryOptimizationTest(BaseTestCase):
+    """Test query optimization and N+1 prevention"""
+
+    def test_signup_query_optimization(self):
+        """Test signup doesn't create N+1 query problems"""
+        with patch("accounts.views.send_magic_link_email") as mock_email, \
+             patch("accounts.views.send_sms_otp") as mock_sms:
+
+            mock_email.return_value = {"success": True}
+            mock_sms.return_value = {"success": True}
+
+            client = Client()
+
+            # Clear query log
+            connection.queries_log.clear()
+
+            response = client.post("/signup/", {
+                "email": "optimization_test@example.com",
+                "full_name": "Optimization User",
+                "phone_number": "+351987654321",
+                "organization_name": "Optimization Org"
+            })
+
+            query_count = len(connection.queries)
+
+            # Should use reasonable number of queries
+            self.assertLess(query_count, 20)  # Adjust based on actual optimized count
+            self.assertEqual(response.status_code, 200)
+
+    def test_bulk_operations_optimization(self):
+        """Test bulk operations are optimized"""
+        # Test cleanup operation with many tokens
+        user = User.objects.create_user(
+            email="bulk_test@example.com",
+            name="Bulk Test User",
+            phone_number="+351987654321"
+        )
+
+        # Create many tokens
+        tokens = []
+        for i in range(100):
+            token = VerificationToken(
+                user=user,
+                token_type='signin_otp',
+                token_value=f'bulk_hash_{i}',
+                expires_at=timezone.now() - timedelta(hours=1)
+            )
+            tokens.append(token)
+
+        VerificationToken.objects.bulk_create(tokens)
+
+        # Clear query log
+        connection.queries_log.clear()
+
+        # Cleanup should use minimal queries
+        deleted_count = OTPService.cleanup_expired_tokens()
+
+        query_count = len(connection.queries)
+
+        # Should use bulk delete, not individual deletes
+        self.assertLess(query_count, 5)  # Should be very few queries
+        self.assertEqual(deleted_count, 100)

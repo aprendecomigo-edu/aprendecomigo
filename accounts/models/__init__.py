@@ -58,7 +58,7 @@ from .schools import (
 from .users import (
     CustomUser,
     CustomUserManager,
-    VerificationCode,
+    VerificationToken,
 )
 
 # Define __all__ for explicit exports
@@ -99,5 +99,5 @@ __all__ = [
     "TeacherInvitationManager",
     "TeacherProfile",
     "TrialCostAbsorption",
-    "VerificationCode",
+    "VerificationToken",
 ]

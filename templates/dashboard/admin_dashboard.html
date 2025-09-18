@@ -1,5 +1,6 @@
 {% extends 'base_with_navs.html' %}
 {% load i18n %}
+{% load waffle_tags %}
 
 {% block page_title %}{% trans "Admin Dashboard" %}{% endblock %}
 
@@ -19,83 +20,6 @@
             </div>
         </div>
 
-        <!-- Warning Banner (if needed) -->
-        {% if total_students == 0 or total_teachers == 0 %}
-        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-            <div class="flex items-start space-x-3">
-                <svg class="w-5 h-5 text-amber-600 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>
-                </svg>
-                <div>
-                    <p class="font-semibold text-amber-900 mb-1">
-                        {% trans "You need to add" %} {% if total_teachers == 0 %}{% trans "teachers" %}{% endif %}{% if total_students == 0 and total_teachers == 0 %} {% trans "and" %} {% endif %}{% if total_students == 0 %}{% trans "students" %}{% endif %} {% trans "to fully activate your account" %}
-                    </p>
-                    <p class="text-amber-700 text-sm">
-                        {% trans "Complete the pending tasks below to get started." %}
-                    </p>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- Statistics Cards - Mobile Optimized -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6 mb-6 lg:mb-8">
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 lg:p-6" data-test="metric-teacher-count" data-value="{{ total_teachers }}">
-            <div class="flex flex-col lg:flex-row lg:items-center space-y-2 lg:space-y-0">
-                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center lg:mr-3">
-                    <svg class="w-4 h-4 lg:w-5 lg:h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                    </svg>
-                </div>
-                <div>
-                    <p class="text-xs lg:text-sm font-medium text-gray-500">{% trans "Total Teachers" %}</p>
-                    <p class="text-lg lg:text-2xl font-semibold text-gray-900">{{ total_teachers }}</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 lg:p-6" data-test="metric-student-count" data-value="{{ total_students }}">
-            <div class="flex flex-col lg:flex-row lg:items-center space-y-2 lg:space-y-0">
-                <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center lg:mr-3">
-                    <svg class="w-4 h-4 lg:w-5 lg:h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-                    </svg>
-                </div>
-                <div>
-                    <p class="text-xs lg:text-sm font-medium text-gray-500">{% trans "Total Students" %}</p>
-                    <p class="text-lg lg:text-2xl font-semibold text-gray-900">{{ total_students }}</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 lg:p-6" data-test="metric-session-count" data-value="{{ active_sessions }}">
-            <div class="flex flex-col lg:flex-row lg:items-center space-y-2 lg:space-y-0">
-                <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center lg:mr-3">
-                    <svg class="w-4 h-4 lg:w-5 lg:h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                </div>
-                <div>
-                    <p class="text-xs lg:text-sm font-medium text-gray-500">{% trans "Active Sessions" %}</p>
-                    <p class="text-lg lg:text-2xl font-semibold text-gray-900">{{ active_sessions }}</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3 lg:p-6" data-test="metric-monthly-revenue" data-value="{{ revenue_this_month }}" data-currency="EUR">
-            <div class="flex flex-col lg:flex-row lg:items-center space-y-2 lg:space-y-0">
-                <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center lg:mr-3">
-                    <svg class="w-4 h-4 lg:w-5 lg:h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-                    </svg>
-                </div>
-                <div>
-                    <p class="text-xs lg:text-sm font-medium text-gray-500">{% trans "Monthly Revenue" %}</p>
-                    <p class="text-lg lg:text-2xl font-semibold text-gray-900">€{{ revenue_this_month }}</p>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Upcoming Events Table (Full Width Row) - Mobile Optimized -->
@@ -193,17 +117,21 @@
                     <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                     </svg>
-                    <p class="text-lg font-medium text-gray-600 mb-1">Nenhuma aula agendada</p>
-                    <p class="text-sm text-gray-500">As aulas aparecerão aqui quando professores e alunos agendarem sessões</p>
+                    <p class="text-lg font-medium text-gray-600 mb-1">{% trans "No classes scheduled" %}</p>
+                    <p class="text-sm text-gray-500">{% trans "Classes will appear here when teachers and students schedule sessions" %}</p>
                 </div>
                 {% endif %}
+
+                {% switch "schedule_feature" %}
 
                 <div class="mt-6 text-center">
                     <a href="/calendar/" class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
                         Ver Calendário Completo
                     </a>
                 </div>
+                {% endswitch %}
             </div>
+
         </div>
     </div>
 
@@ -314,7 +242,7 @@
                             @click="addTask()"
                             :disabled="!newTask.title.trim()"
                             class="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                            Adicionar
+                            {% trans "Add" %}
                         </button>
                     </div>
                 </div>
@@ -385,7 +313,7 @@
                         <svg class="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
-                        <p class="text-sm font-medium text-gray-600 mb-1">Nenhuma tarefa</p>
+                        <p class="text-sm font-medium text-gray-600 mb-1">{% trans "No tasks" %}</p>
                         <button
                             @click="showAddForm = true"
                             class="text-xs font-medium text-blue-600 hover:text-blue-700">

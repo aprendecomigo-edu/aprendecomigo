@@ -12,7 +12,7 @@ from accounts.models import (
     SchoolRole,
     StudentProfile,
     TeacherProfile,
-    VerificationCode,
+    VerificationToken,
 )
 
 User = get_user_model()
@@ -116,7 +116,7 @@ class StudentProfileTests(TestCase):
         # Create profile with required fields
         profile = StudentProfile.objects.create(
             user=self.user,
-            educational_system=self.educational_system,
+            educational_system="pt",  # Use string code, not model instance
             birth_date=datetime.date(2008, 1, 1),
             school_year="10",
         )
@@ -137,7 +137,7 @@ class StudentProfileTests(TestCase):
         """Test that student profile has proper string representation."""
         profile = StudentProfile.objects.create(
             user=self.user,
-            educational_system=self.educational_system,
+            educational_system="pt",  # Use string code, not model instance
             birth_date=datetime.date(2008, 1, 1),
             school_year="10",
         )
@@ -216,98 +216,93 @@ class TeacherProfileTests(TestCase):
             self.assertIsNotNone(teacher_profile.last_activity)
 
 
-class VerificationCodeTests(TestCase):
-    """Test cases for VerificationCode business logic."""
+class VerificationTokenTests(TestCase):
+    """Test cases for VerificationToken business logic."""
 
     def setUp(self):
         """Set up test data."""
-        self.email = "test@example.com"
+        self.user = User.objects.create_user(
+            email="test@example.com",
+            name="Test User",
+        )
 
-    def test_generate_code_replaces_existing_for_same_email(self):
-        """Test that generating a new code replaces any existing code for the email."""
-        # Generate first code
-        verification1 = VerificationCode.generate_code(self.email)
-        original_secret = verification1.secret_key
+    def test_verification_token_creation(self):
+        """Test that VerificationToken can be created with required fields."""
+        token = VerificationToken.objects.create(
+            user=self.user,
+            token_type="email_verify",
+            token_value="hashed_token_value",
+            expires_at=timezone.now() + datetime.timedelta(hours=24),
+        )
 
-        # Generate second code for same email
-        verification2 = VerificationCode.generate_code(self.email)
+        self.assertEqual(token.user, self.user)
+        self.assertEqual(token.token_type, "email_verify")
+        self.assertEqual(token.token_value, "hashed_token_value")
+        self.assertEqual(token.attempts, 0)
+        self.assertEqual(token.max_attempts, 5)
+        self.assertIsNone(token.used_at)
 
-        # Should only have one verification code per email
-        self.assertEqual(VerificationCode.objects.filter(email=self.email).count(), 1)
+    def test_token_validation_methods(self):
+        """Test token validation helper methods."""
+        token = VerificationToken.objects.create(
+            user=self.user,
+            token_type="signin_otp",
+            token_value="test_token",
+            expires_at=timezone.now() + datetime.timedelta(hours=1),
+        )
 
-        # Secret key should be different (new code generated)
-        self.assertNotEqual(original_secret, verification2.secret_key)
+        # Token should be valid initially
+        self.assertTrue(token.is_valid())
+        self.assertFalse(token.is_expired())
+        self.assertFalse(token.is_used())
+        self.assertFalse(token.is_locked())
 
-    def test_code_generation_creates_valid_totp_code(self):
-        """Test that generated codes are valid TOTP codes."""
-        verification = VerificationCode.generate_code(self.email)
+    def test_token_expiration(self):
+        """Test token expiration logic."""
+        expired_token = VerificationToken.objects.create(
+            user=self.user,
+            token_type="email_verify",
+            token_value="expired_token",
+            expires_at=timezone.now() - datetime.timedelta(hours=1),
+        )
 
-        # Should generate 6-digit code
-        code = verification.get_current_code()
-        self.assertEqual(len(code), 6)
-        self.assertTrue(code.isdigit())
+        self.assertTrue(expired_token.is_expired())
+        self.assertFalse(expired_token.is_valid())
 
-        # Should be valid when checked
-        self.assertTrue(verification.is_valid(code))
-
-    def test_code_validation_enforces_business_rules(self):
-        """Test that code validation enforces security business rules."""
-        verification = VerificationCode.generate_code(self.email)
-        valid_code = verification.get_current_code()
-
-        # Valid code should work initially
-        self.assertTrue(verification.is_valid(valid_code))
-
-        # Invalid code should be rejected
-        self.assertFalse(verification.is_valid("000000"))
-
-        # Test max attempts protection
-        verification.failed_attempts = verification.max_attempts
-        verification.save()
-        self.assertFalse(verification.is_valid(valid_code))
-
-        # Test used code protection
-        verification.failed_attempts = 0
-        verification.is_used = True
-        verification.save()
-        self.assertFalse(verification.is_valid(valid_code))
-
-        # Test expiration (codes expire after 24 hours)
-        verification.is_used = False
-        verification.created_at = timezone.now() - timezone.timedelta(hours=25)
-        verification.save()
-        self.assertFalse(verification.is_valid(valid_code))
-
-    def test_failed_attempt_tracking_prevents_brute_force(self):
-        """Test that failed attempts are tracked to prevent brute force attacks."""
-        verification = VerificationCode.generate_code(self.email)
-
-        # Make multiple failed attempts
-        for i in range(verification.max_attempts):
-            self.assertFalse(verification.is_valid("wrong"))
-            verification.refresh_from_db()
-
-        # After max attempts, even valid codes should be rejected
-        valid_code = verification.get_current_code()
-        self.assertFalse(verification.is_valid(valid_code))
-        self.assertEqual(verification.failed_attempts, verification.max_attempts)
-
-    def test_use_marks_code_as_consumed(self):
-        """Test that using a code marks it as consumed to prevent reuse."""
-        verification = VerificationCode.generate_code(self.email)
-        valid_code = verification.get_current_code()
-
-        # Initially should be usable
-        self.assertFalse(verification.is_used)
-        self.assertTrue(verification.is_valid(valid_code))
+    def test_token_usage_tracking(self):
+        """Test token usage tracking."""
+        token = VerificationToken.objects.create(
+            user=self.user,
+            token_type="phone_verify",
+            token_value="usage_token",
+            expires_at=timezone.now() + datetime.timedelta(hours=1),
+        )
 
         # Mark as used
-        verification.use()
+        token.mark_used()
+        token.refresh_from_db()
 
-        # Should now be marked as used and invalid
-        verification.refresh_from_db()
-        self.assertTrue(verification.is_used)
-        self.assertFalse(verification.is_valid(valid_code))
+        self.assertTrue(token.is_used())
+        self.assertIsNotNone(token.used_at)
+        self.assertFalse(token.is_valid())
+
+    def test_failed_attempts_tracking(self):
+        """Test failed attempts tracking and locking."""
+        token = VerificationToken.objects.create(
+            user=self.user,
+            token_type="signin_otp",
+            token_value="attempt_token",
+            expires_at=timezone.now() + datetime.timedelta(hours=1),
+        )
+
+        # Record failed attempts
+        for i in range(token.max_attempts):
+            is_locked = token.record_attempt()
+
+        # Token should be locked after max attempts
+        self.assertTrue(is_locked)
+        self.assertTrue(token.is_locked())
+        self.assertFalse(token.is_valid())
 
 
 class UserSecurityTests(TestCase):

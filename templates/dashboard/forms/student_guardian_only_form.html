@@ -1,0 +1,147 @@
+{% load i18n %}
+<!-- Guardian-Only Account (Child Profile) Form -->
+<form hx-post="{% url 'accounts:student_create_guardian_only' %}"
+      hx-target="#message-area"
+      hx-swap="innerHTML"
+      hx-trigger="submit"
+      @htmx:after-request="handleFormResponse(event)">
+    {% csrf_token %}
+
+    <div class="space-y-8">
+        <!-- Student Profile Information Section -->
+        <div class="bg-orange-50 rounded-lg p-6">
+            <h5 class="text-lg font-medium text-orange-900 mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+                Student Profile Information
+            </h5>
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <div class="flex items-start space-x-2">
+                    <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="text-blue-700 text-sm">Student profile without login credentials. Guardian manages everything through their account.</span>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <label class="block text-sm font-medium text-gray-700">Student Full Name *</label>
+                    <input type="text" name="name" required
+                           data-test="student-name-input"
+                           x-model="guardianOnlyForm.name"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                           placeholder="Enter student's full name">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-sm font-medium text-gray-700">Birth Date *</label>
+                    <input type="date" name="birth_date" required
+                           data-test="student-birth-date-input"
+                           x-model="guardianOnlyForm.birth_date"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-sm font-medium text-gray-700">School Year</label>
+                    <select name="school_year" x-model="guardianOnlyForm.school_year"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                        <option value="">{% trans "Select school year" %}</option>
+                        <option value="1">{% trans "Year 1" %}</option>
+                        <option value="2">{% trans "Year 2" %}</option>
+                        <option value="3">{% trans "Year 3" %}</option>
+                        <option value="4">{% trans "Year 4" %}</option>
+                        <option value="5">{% trans "Year 5" %}</option>
+                        <option value="6">{% trans "Year 6" %}</option>
+                        <option value="7">{% trans "Year 7" %}</option>
+                        <option value="8">{% trans "Year 8" %}</option>
+                        <option value="9">{% trans "Year 9" %}</option>
+                        <option value="10">{% trans "Year 10" %}</option>
+                        <option value="11">{% trans "Year 11" %}</option>
+                        <option value="12">{% trans "Year 12" %}</option>
+                    </select>
+                </div>
+            </div>
+            <div class="space-y-1 mt-4">
+                <label class="block text-sm font-medium text-gray-700">Notes</label>
+                <textarea name="notes" x-model="guardianOnlyForm.notes"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                          rows="2" placeholder="Special needs, preferences, or other relevant information..."></textarea>
+            </div>
+        </div>
+
+        <!-- Guardian Account Information Section -->
+        <div class="bg-green-50 rounded-lg p-6">
+            <h5 class="text-lg font-medium text-green-900 mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                </svg>
+                Guardian Account & Information
+            </h5>
+            <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+                <div class="flex items-start space-x-2">
+                    <svg class="w-5 h-5 text-orange-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                    <span class="text-orange-700 text-sm">Guardian will have full access to manage the student's account, bookings, and payments.</span>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="space-y-1">
+                    <label class="block text-sm font-medium text-gray-700">Guardian Name *</label>
+                    <input type="text" name="guardian_name" required
+                           data-test="guardian-name-input"
+                           x-model="guardianOnlyForm.guardian_name"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                           placeholder="Enter guardian's full name">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-sm font-medium text-gray-700">Guardian Email *</label>
+                    <input type="email" name="guardian_email" required
+                           data-test="guardian-email-input"
+                           x-model="guardianOnlyForm.guardian_email"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                           placeholder="guardian@example.com">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-sm font-medium text-gray-700">Phone Number</label>
+                    <input type="tel" name="guardian_phone" x-model="guardianOnlyForm.guardian_phone"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                           placeholder="+351 912 345 678">
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-sm font-medium text-gray-700">Tax Number</label>
+                    <input type="text" name="guardian_tax_nr" x-model="guardianOnlyForm.guardian_tax_nr"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                           placeholder="123456789">
+                </div>
+            </div>
+            <div class="mt-4 space-y-1">
+                <label class="block text-sm font-medium text-gray-700">Address</label>
+                <textarea name="guardian_address" x-model="guardianOnlyForm.guardian_address"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                          rows="2" placeholder="Street address, postal code, city..."></textarea>
+            </div>
+            <div class="flex flex-wrap gap-6 mt-4">
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" name="guardian_invoice" x-model="guardianOnlyForm.guardian_invoice" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
+                    <span class="text-sm text-gray-700">Issue invoices</span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" name="guardian_email_notifications" x-model="guardianOnlyForm.guardian_email_notifications" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" checked />
+                    <span class="text-sm text-gray-700">Email notifications</span>
+                </label>
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" name="guardian_sms_notifications" x-model="guardianOnlyForm.guardian_sms_notifications" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
+                    <span class="text-sm text-gray-700">SMS notifications</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submit Button -->
+    <div class="flex justify-end pt-6 border-t border-gray-200">
+        <button type="submit"
+                class="px-6 py-2 bg-orange-600 text-white font-medium rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors">
+            Create Guardian Account & Student Profile
+        </button>
+    </div>
+</form>

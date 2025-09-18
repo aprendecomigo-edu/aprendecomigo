@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-10 14:17+0000\n"
+"POT-Creation-Date: 2025-09-17 19:40+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -29,52 +29,55 @@ msgstr ""
 msgid "Your email has been successfully verified!"
 msgstr ""
 
-msgid "1º ano"
+msgid "Your phone has been successfully verified!"
 msgstr ""
 
-msgid "2º ano"
+msgid "Year 1"
 msgstr ""
 
-msgid "3º ano"
+msgid "Year 2"
 msgstr ""
 
-msgid "4º ano"
+msgid "Year 3"
 msgstr ""
 
-msgid "5º ano"
+msgid "Year 4"
 msgstr ""
 
-msgid "6º ano"
+msgid "Year 5"
 msgstr ""
 
-msgid "7º ano"
+msgid "Year 6"
 msgstr ""
 
-msgid "8º ano"
+msgid "Year 7"
 msgstr ""
 
-msgid "9º ano"
+msgid "Year 8"
 msgstr ""
 
-msgid "10º ano"
+msgid "Year 9"
 msgstr ""
 
-msgid "11º ano"
+msgid "Year 10"
 msgstr ""
 
-msgid "12º ano"
+msgid "Year 11"
 msgstr ""
 
-msgid "Ensino Básico 1º Ciclo"
+msgid "Year 12"
 msgstr ""
 
-msgid "Ensino Básico 2º Ciclo"
+msgid "Basic Education 1st Cycle"
 msgstr ""
 
-msgid "Ensino Básico 3º Ciclo"
+msgid "Basic Education 2nd Cycle"
 msgstr ""
 
-msgid "Ensino Secundário"
+msgid "Basic Education 3rd Cycle"
+msgstr ""
+
+msgid "Secondary Education"
 msgstr ""
 
 msgid "Grade 1"
@@ -341,15 +344,6 @@ msgstr ""
 msgid "Cancelled"
 msgstr ""
 
-msgid "Guardian Responsible"
-msgstr ""
-
-msgid "Self Responsible"
-msgstr ""
-
-msgid "Shared Responsibility"
-msgstr ""
-
 msgid "email address"
 msgstr ""
 
@@ -548,6 +542,20 @@ msgstr ""
 msgid "Maximum classes per week (school default if null)"
 msgstr ""
 
+msgid "User account for this student (null if guardian-only management)"
+msgstr ""
+
+msgid "student name"
+msgstr ""
+
+msgid ""
+"Student's full name (required for all students, especially guardian-only "
+"students without user accounts)"
+msgstr ""
+
+msgid "educational system"
+msgstr ""
+
 msgid "Educational system this student belongs to"
 msgstr ""
 
@@ -560,14 +568,13 @@ msgstr ""
 msgid "birth date"
 msgstr ""
 
-msgid ""
-"Guardian of the student (null for adult students who are self-responsible)"
+msgid "account type"
 msgstr ""
 
-msgid "financial responsibility"
+msgid "Defines who has accounts and manages this student"
 msgstr ""
 
-msgid "Who is financially responsible for this student's account"
+msgid "Guardian of the student (required for guardian-managed accounts)"
 msgstr ""
 
 msgid "notes"
@@ -588,18 +595,37 @@ msgstr ""
 msgid "Enable SMS notifications for student alerts"
 msgstr ""
 
+msgid "Student address (only for adult students)"
+msgstr ""
+
 msgid "tax number"
+msgstr ""
+
+msgid "Tax number (only for adult students)"
 msgstr ""
 
 msgid "invoice"
 msgstr ""
 
-msgid "Whether to issue invoices for this guardian"
+msgid "Whether to issue invoices (only for adult students)"
 msgstr ""
 
-msgid ""
-"Students with guardian financial responsibility must have a guardian "
-"assigned."
+msgid "Adult students must have a user account."
+msgstr ""
+
+msgid "Adult students should not have a guardian assigned."
+msgstr ""
+
+msgid "Guardian-only students should not have a user account."
+msgstr ""
+
+msgid "Guardian-only students must have a guardian assigned."
+msgstr ""
+
+msgid "Student+Guardian accounts require the student to have a user account."
+msgstr ""
+
+msgid "Student+Guardian accounts require a guardian to be assigned."
 msgstr ""
 
 msgid "notification preferences"
@@ -618,6 +644,9 @@ msgid "Enable email notifications for guardian alerts"
 msgstr ""
 
 msgid "Enable SMS notifications for guardian alerts"
+msgstr ""
+
+msgid "Whether to issue invoices for this guardian"
 msgstr ""
 
 msgid "guardian Profile"
@@ -714,9 +743,6 @@ msgid "Official email domain for the school"
 msgstr ""
 
 msgid "Educational system used by this school"
-msgstr ""
-
-msgid "educational system"
 msgstr ""
 
 msgid "grade levels"
@@ -956,6 +982,36 @@ msgstr ""
 msgid "phone verified"
 msgstr ""
 
+msgid "email verified at"
+msgstr ""
+
+msgid "Timestamp when email was verified"
+msgstr ""
+
+msgid "phone verified at"
+msgstr ""
+
+msgid "Timestamp when phone was verified"
+msgstr ""
+
+msgid "normalized phone number"
+msgstr ""
+
+msgid "E.164 format phone number for duplicate checking"
+msgstr ""
+
+msgid "preferred OTP method"
+msgstr ""
+
+msgid "SMS"
+msgstr ""
+
+msgid "User's preferred method for receiving OTP codes"
+msgstr ""
+
+msgid "Last time user was active on the platform"
+msgstr ""
+
 msgid "verification required after"
 msgstr ""
 
@@ -974,6 +1030,78 @@ msgid "onboarding progress"
 msgstr ""
 
 msgid "tutorial preferences"
+msgstr ""
+
+msgid "Please enter a valid phone number with country code"
+msgstr ""
+
+msgid "Email Verification"
+msgstr ""
+
+msgid "Phone Verification"
+msgstr ""
+
+msgid "Signin OTP"
+msgstr ""
+
+msgid "User this token belongs to"
+msgstr ""
+
+msgid "token type"
+msgstr ""
+
+msgid "Type of verification this token is for"
+msgstr ""
+
+msgid "token value"
+msgstr ""
+
+msgid "Hashed token value for security"
+msgstr ""
+
+msgid "expires at"
+msgstr ""
+
+msgid "When this token expires"
+msgstr ""
+
+msgid "used at"
+msgstr ""
+
+msgid "When this token was successfully used"
+msgstr ""
+
+msgid "attempts"
+msgstr ""
+
+msgid "Number of failed verification attempts"
+msgstr ""
+
+msgid "max attempts"
+msgstr ""
+
+msgid "Maximum allowed attempts before token is locked"
+msgstr ""
+
+msgid "created at"
+msgstr ""
+
+msgid "Verification Token"
+msgstr ""
+
+msgid "Verification Tokens"
+msgstr ""
+
+msgid "Phone number is required"
+msgstr ""
+
+msgid "Please enter a valid phone number with country code (e.g., +1234567890)"
+msgstr ""
+
+msgid "Please include your country code (e.g., +1 for US, +351 for Portugal)"
+msgstr ""
+
+msgid "Invalid phone number format"
 msgstr ""
 
 msgid "You don't have permission to invite teachers to this school."
@@ -1288,9 +1416,6 @@ msgstr ""
 msgid "Current account balance in euros"
 msgstr ""
 
-msgid "created at"
-msgstr ""
-
 msgid "updated at"
 msgstr ""
 
@@ -1331,9 +1456,6 @@ msgid "Stripe customer ID"
 msgstr ""
 
 msgid "Stripe Customer ID associated with this transaction"
-msgstr ""
-
-msgid "expires at"
 msgstr ""
 
 msgid "Expiration date for packages (null for subscriptions)"
@@ -2600,9 +2722,6 @@ msgstr ""
 msgid "Schedule Change"
 msgstr ""
 
-msgid "SMS"
-msgstr ""
-
 msgid "Push Notification"
 msgstr ""
 
@@ -2760,6 +2879,9 @@ msgstr ""
 msgid "System"
 msgstr ""
 
+msgid "Add First Student"
+msgstr ""
+
 msgid "Title"
 msgstr ""
 
@@ -2799,6 +2921,12 @@ msgstr ""
 msgid "True if this task was automatically created by the system"
 msgstr ""
 
+msgid "System Code"
+msgstr ""
+
+msgid "Unique identifier for system-generated tasks"
+msgstr ""
+
 msgid "Task"
 msgstr ""
 
@@ -2814,41 +2942,89 @@ msgstr ""
 msgid "Task Comments"
 msgstr ""
 
+msgid "Verify your email address"
+msgstr ""
+
+msgid "Click the verification link sent to your email"
+msgstr ""
+
+msgid "Verify your phone number"
+msgstr ""
+
+msgid "Enter the SMS code to verify your phone"
+msgstr ""
+
+msgid "Add your first student"
+msgstr ""
+
+msgid "Add a student to start using the platform"
+msgstr ""
+
+msgid "Educational Platform"
+msgstr ""
+
+msgid "You're Invited to Join as a Teacher!"
+msgstr ""
+
+msgid "Hello,"
+msgstr ""
+
+msgid "My Profile"
+msgstr ""
+
+msgid "Edit Profile"
+msgstr ""
+
+msgid "Your account information and school memberships"
+msgstr ""
+
+msgid "School Members"
+msgstr ""
+
+msgid "Members of"
+msgstr ""
+
+msgid "Joined"
+msgstr ""
+
+msgid "First"
+msgstr ""
+
+msgid "Previous"
+msgstr ""
+
+msgid "Page"
+msgstr ""
+
+msgid "of"
+msgstr ""
+
+msgid "Next"
+msgstr ""
+
+msgid "Last"
+msgstr ""
+
+msgid "No members found."
+msgstr ""
+
+msgid "Verify Code"
+msgstr ""
+
+msgid "Enter the 6-digit code sent to"
+msgstr ""
+
+msgid "Need to change your email?"
+msgstr ""
+
+msgid "Go back"
+msgstr ""
+
 msgid "Admin Dashboard"
 msgstr ""
 
 #, python-format
 msgid "Hello, %(name)s!"
-msgstr ""
-
-msgid "You need to add"
-msgstr ""
-
-msgid "teachers"
-msgstr ""
-
-msgid "and"
-msgstr ""
-
-msgid "students"
-msgstr ""
-
-msgid "to fully activate your account"
-msgstr ""
-
-msgid "Complete the pending tasks below to get started."
-msgstr ""
-
-msgid "Total Teachers"
-msgstr ""
-
-msgid "Total Students"
-msgstr ""
-
-msgid "Active Sessions"
-msgstr ""
-
-msgid "Monthly Revenue"
 msgstr ""
 
 msgid "Upcoming Classes"
@@ -2860,7 +3036,119 @@ msgid_plural "%(counter)s classes scheduled"
 msgstr[0] ""
 msgstr[1] ""
 
+msgid "Date"
+msgstr ""
+
+msgid "Time"
+msgstr ""
+
+msgid "Class"
+msgstr ""
+
+msgid "No classes scheduled"
+msgstr ""
+
+msgid "Classes will appear here when teachers and students schedule sessions"
+msgstr ""
+
+msgid "Add"
+msgstr ""
+
+msgid "No tasks"
+msgstr ""
+
+msgid "Select school year"
+msgstr ""
+
+msgid "Invitations"
+msgstr ""
+
+msgid "Invite teachers to join your school and manage existing invitations"
+msgstr ""
+
+msgid "Invite New Teacher"
+msgstr ""
+
+msgid "Recent Invitations"
+msgstr ""
+
+msgid "Manage and track your teacher invitations"
+msgstr ""
+
+msgid "No invitations yet"
+msgstr ""
+
+msgid "Get started by inviting your first teacher above."
+msgstr ""
+
+#, python-format
+msgid "Year %(year)s"
+msgstr ""
+
+msgid "Student Management"
+msgstr ""
+
+msgid "No students found. Add students to get started."
+msgstr ""
+
+msgid "No teachers found"
+msgstr ""
+
+msgid "Add teachers to your school to get started."
+msgstr ""
+
+msgid "Add First Teacher"
+msgstr ""
+
+msgid "People Management"
+msgstr ""
+
+msgid "Staff"
+msgstr ""
+
+msgid "Add Student"
+msgstr ""
+
+msgid "Add Teacher"
+msgstr ""
+
+msgid "Staff Management"
+msgstr ""
+
+msgid "Staff management functionality coming soon."
+msgstr ""
+
+msgid "Student Portal"
+msgstr ""
+
+msgid "Continue your learning journey"
+msgstr ""
+
+msgid "Active Courses"
+msgstr ""
+
+msgid "Teacher Dashboard"
+msgstr ""
+
+msgid "Manage your teaching activities and connect with students"
+msgstr ""
+
+msgid "Active Students"
+msgstr ""
+
 msgid "Change"
+msgstr ""
+
+msgid "Optional class description"
+msgstr ""
+
+msgid "Start"
+msgstr ""
+
+msgid "Error"
+msgstr ""
+
+msgid "Success"
 msgstr ""
 
 msgid "Enter task title..."
@@ -2897,6 +3185,9 @@ msgid "Due Tomorrow"
 msgstr ""
 
 msgid "days left"
+msgstr ""
+
+msgid "Are you sure you want to delete this task?"
 msgstr ""
 
 msgid "Created"

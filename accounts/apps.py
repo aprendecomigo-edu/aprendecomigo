@@ -14,15 +14,9 @@ class AccountsConfig(AppConfig):
         logger = logging.getLogger(__name__)
         logger.info("AccountsConfig.ready() called - importing signals")
         try:
-            import importlib
+            import accounts.signals  # noqa: F401 - Required to register signals
 
-            # Force reload to avoid caching issues
-            if "accounts.signals" in __import__("sys").modules:
-                signals_module = __import__("sys").modules["accounts.signals"]
-                importlib.reload(signals_module)
-                logger.info("Signals module reloaded")
-            else:
-                logger.info("Original signals imported")
+            logger.info("Signals imported successfully")
         except Exception as e:
             logger.error(f"Failed to import signals: {e}")
             import traceback

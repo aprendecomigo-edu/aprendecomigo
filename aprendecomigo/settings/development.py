@@ -13,6 +13,10 @@ SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-r0i5j27-gmjj&c6v@0mf5=mz$o
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+# Waffle feature switches - defaults to DEBUG (True) in development
+# Set WAFFLE_DEFAULT_STATE=false to test with switches disabled
+# Set WAFFLE_DEFAULT_STATE=true to test with switches enabled
+
 # Will be overridden after base import
 
 # Database
@@ -30,6 +34,9 @@ DATABASES = {
 # Email backend for development
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 DEFAULT_FROM_EMAIL = "noreply@aprendecomigo.com"
+
+# SMS backend for development - logs to console instead of sending real SMS
+SMS_BACKEND = "messaging.services.sms_backends.ConsoleSMSBackend"
 
 # CORS Settings
 CORS_ALLOW_ALL_ORIGINS = True

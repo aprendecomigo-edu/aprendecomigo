@@ -1,0 +1,54 @@
+<!-- Unverified User Error Message with Resend Option -->
+<div class="w-full space-y-6">
+    <!-- Error Message -->
+    <div class="alert alert-warning">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+        </svg>
+        <div>
+            <h3 class="font-bold">Account verification required</h3>
+            <div class="text-sm">Please verify your email address before signing in to continue.</div>
+        </div>
+    </div>
+
+    <!-- User Email Display -->
+    <div class="form-control">
+        <label class="label">
+            <span class="label-text font-primary font-medium">Email: {{ email }}</span>
+        </label>
+    </div>
+
+    <!-- Resend Verification Button -->
+    <div id="resend-verification-container">
+        <form hx-post="{% url 'accounts:resend_verification_email_signin' %}"
+              hx-target="#resend-verification-container"
+              hx-swap="innerHTML"
+              class="w-full">
+            {% csrf_token %}
+            <input type="hidden" name="email" value="{{ email }}">
+            <button type="submit" class="btn btn-primary w-full bg-gradient-primary glass-light">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.05a1 1 0 001.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Resend verification email
+            </button>
+        </form>
+    </div>
+
+    <!-- Back to signin -->
+    <div class="text-center">
+        <button hx-get="{% url 'accounts:signin' %}"
+                hx-target="#signin-form-container"
+                hx-swap="innerHTML"
+                class="link link-neutral text-sm">
+            Back to sign in
+        </button>
+    </div>
+
+    <!-- Help Text -->
+    <div class="text-center">
+        <p class="text-base-content/70 text-xs">
+            Can't find the email? Check your spam folder or contact support if you continue to have issues.
+        </p>
+    </div>
+</div>

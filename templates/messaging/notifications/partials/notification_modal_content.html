@@ -1,0 +1,80 @@
+<!-- Modal Notification Content -->
+<div class="space-y-3">
+    {% if notifications %}
+        {% for notification in notifications %}
+            <div class="flex items-start justify-between p-3 hover:bg-gray-50 rounded-lg {% if not notification.is_read %}bg-blue-50 border-l-2 border-l-blue-500{% endif %}">
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center space-x-2 mb-1">
+                        <h4 class="text-sm font-medium text-gray-900 truncate">
+                            {{ notification.title }}
+                        </h4>
+                        {% if not notification.is_read %}
+                            <span class="flex-shrink-0 inline-block h-2 w-2 bg-blue-600 rounded-full"></span>
+                        {% endif %}
+                    </div>
+
+                    <p class="text-sm text-gray-600 line-clamp-2">
+                        {{ notification.message|truncatewords:15 }}
+                    </p>
+
+                    <div class="flex items-center justify-between mt-2">
+                        <span class="text-xs text-gray-500">{{ notification.created_at|timesince }} ago</span>
+
+                        <div class="flex items-center space-x-2">
+                            {% if not notification.is_read %}
+                                <button hx-post="{% url 'messaging:notification-mark-read' notification.pk %}"
+                                        hx-target="closest div"
+                                        hx-swap="outerHTML"
+                                        class="text-xs text-blue-600 hover:text-blue-800">
+                                    Mark read
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+            <div class="flex items-center justify-between border-t border-gray-200 pt-3 mt-3">
+                <div class="text-sm text-gray-700">
+                    {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ paginator.count }}
+                </div>
+
+                <div class="flex space-x-2">
+                    {% if page_obj.has_previous %}
+                        <button hx-get="?page={{ page_obj.previous_page_number }}&modal=true&{{ request.GET.urlencode }}"
+                                hx-target="#notification-modal-content"
+                                class="btn btn-outline btn-sm">
+                            <i data-lucide="chevron-left" class="h-4 w-4"></i>
+                        </button>
+                    {% endif %}
+
+                    {% if page_obj.has_next %}
+                        <button hx-get="?page={{ page_obj.next_page_number }}&modal=true&{{ request.GET.urlencode }}"
+                                hx-target="#notification-modal-content"
+                                class="btn btn-outline btn-sm">
+                            <i data-lucide="chevron-right" class="h-4 w-4"></i>
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+
+    {% else %}
+        <!-- Empty state -->
+        <div class="text-center py-8">
+            <i data-lucide="bell-off" class="h-8 w-8 text-gray-400 mx-auto mb-2"></i>
+            <p class="text-sm text-gray-500">
+                {% if request.GET.is_read == 'false' %}
+                    No unread notifications
+                {% elif request.GET.notification_type %}
+                    No notifications found
+                {% else %}
+                    No notifications yet
+                {% endif %}
+            </p>
+        </div>
+    {% endif %}
+</div>

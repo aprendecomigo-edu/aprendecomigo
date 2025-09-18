@@ -11,6 +11,9 @@
     <!-- PWA Meta Tags -->
     {% progressive_web_app_meta %}
 
+    <!-- PWA Integration -->
+    {% include 'includes/pwa_integration.html' %}
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,6 +29,18 @@
     {% tailwind_css %}
 </head>
 <body class="min-h-screen bg-white" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+    <!-- Beta Alert -->
+    <div class="w-full bg-warning/20 py-3">
+        <div class="container mx-auto px-4">
+            <div class="alert alert-warning justify-center rounded-lg border-none shadow-sm max-w-4xl mx-auto">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-5 w-5" fill="none" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+                <span class="text-center">Versão beta que pode conter erros. Para reportar, preencha  <a href="https://docs.google.com/forms/d/e/1FAIpQLSdm07QCKz_0hUclUb1zwz4PmM6YlBQ8964MeGS6VPGdeyv_ow/viewform?usp=sharing&ouid=105814860561549810378"  target="_blank" class="link font-medium">este formulário</a></span>
+            </div>
+        </div>
+    </div>
+
     {% block content %}
     {% endblock %}
 

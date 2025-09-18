@@ -176,7 +176,7 @@ class SignupIntegrationTestCase(BaseTestCase):
 
         # Assert: Error response
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "An account with this email already exists")
+        self.assertContains(response, "Account with this email or phone already exists")
 
         # Assert: Only original user exists, no new school created
         users = User.objects.filter(email=self.valid_signup_data["email"])
@@ -257,8 +257,11 @@ class SignupIntegrationTestCase(BaseTestCase):
         for full_name, expected_first, expected_last in test_cases:
             with self.subTest(full_name=full_name):
                 # Arrange: Fresh data for each test
+                from accounts.tests.test_utils import get_unique_email, get_unique_phone_number
+
                 test_data = self.valid_signup_data.copy()
-                test_data["email"] = f"test_{full_name.replace(' ', '_').lower()}@example.com"
+                test_data["email"] = get_unique_email(f"test_{full_name.replace(' ', '_').lower()}")
+                test_data["phone_number"] = get_unique_phone_number()
                 test_data["full_name"] = full_name
                 test_data["organization_name"] = f"{full_name}'s School"
 

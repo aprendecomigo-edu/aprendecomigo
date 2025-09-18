@@ -1,4 +1,6 @@
 {% extends 'base_with_navs.html' %}
+{% load i18n %}
+{% load waffle_tags %}
 
 {% block page_title %}People{% endblock %}
 
@@ -9,38 +11,22 @@
 </style>
 
 <!-- People Management Component with Alpine.js -->
-<div x-data="peopleManager()" class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+<div x-data="peopleManager()"
+     class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50"
+     hx-trigger="refreshStudents from:body"
+     hx-get="/people/students/"
+     hx-target="#students-content"
+     hx-swap="outerHTML">
     <!-- Page Header -->
     <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">Gestão de Pessoas</h1>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">{% trans "People Management" %}</h1>
         <p class="text-gray-600">Gerir professores, alunos e funcionários da sua escola</p>
     </div>
 
     <!-- Tab Navigation -->
     <div class="mb-8">
         <div class="flex space-x-1 bg-white rounded-lg border border-gray-200 p-1">
-            <button
-                @click="activeTab = 'teachers'"
-                :class="[
-                    'flex-1 py-3 px-4 rounded-md font-medium text-sm transition-colors',
-                    activeTab === 'teachers'
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-transparent text-gray-700 hover:text-gray-900'
-                ]"
-                class="flex items-center justify-center space-x-2"
-            >
-                <span>Professores</span>
-                <span
-                    :class="[
-                        'text-xs px-2 py-0.5 rounded-full',
-                        activeTab === 'teachers'
-                            ? 'bg-white text-blue-600'
-                            : 'bg-gray-100 text-gray-600'
-                    ]"
-                >
-                    {{ teacher_stats.total }}
-                </span>
-            </button>
+            <!-- Students Tab - Always first and enabled -->
             <button
                 @click="activeTab = 'students'"
                 :class="[
@@ -63,7 +49,47 @@
                     {{ student_stats.total }}
                 </span>
             </button>
+
+            <!-- Teachers Tab - Controlled by teacher_management waffle switch -->
             <button
+                {% switch "teacher_management" %}
+                @click="activeTab = 'teachers'"
+                :class="[
+                    'flex-1 py-3 px-4 rounded-md font-medium text-sm transition-colors',
+                    activeTab === 'teachers'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-transparent text-gray-700 hover:text-gray-900'
+                ]"
+                {% else %}
+                :class="[
+                    'flex-1 py-3 px-4 rounded-md font-medium text-sm transition-colors cursor-not-allowed',
+                    'bg-gray-100 text-gray-400'
+                ]"
+                disabled
+                title="Feature não disponível"
+                {% endswitch %}
+                class="flex items-center justify-center space-x-2"
+            >
+                <span>Professores</span>
+                <span
+                    :class="[
+                        'text-xs px-2 py-0.5 rounded-full',
+                        {% switch "teacher_management" %}
+                        activeTab === 'teachers'
+                            ? 'bg-white text-blue-600'
+                            : 'bg-gray-100 text-gray-600'
+                        {% else %}
+                        'bg-gray-200 text-gray-400'
+                        {% endswitch %}
+                    ]"
+                >
+                    {{ teacher_stats.total }}
+                </span>
+            </button>
+
+            <!-- Staff Tab - Controlled by staff_management waffle switch -->
+            <button
+                {% switch "staff_management" %}
                 @click="activeTab = 'staff'"
                 :class="[
                     'flex-1 py-3 px-4 rounded-md font-medium text-sm transition-colors',
@@ -71,15 +97,27 @@
                         ? 'bg-blue-600 text-white'
                         : 'bg-transparent text-gray-700 hover:text-gray-900'
                 ]"
+                {% else %}
+                :class="[
+                    'flex-1 py-3 px-4 rounded-md font-medium text-sm transition-colors cursor-not-allowed',
+                    'bg-gray-100 text-gray-400'
+                ]"
+                disabled
+                title="Feature não disponível"
+                {% endswitch %}
                 class="flex items-center justify-center space-x-2"
             >
-                <span>Funcionários</span>
+                <span>{% trans "Staff" %}</span>
                 <span
                     :class="[
                         'text-xs px-2 py-0.5 rounded-full',
+                        {% switch "staff_management" %}
                         activeTab === 'staff'
                             ? 'bg-white text-blue-600'
                             : 'bg-gray-100 text-gray-600'
+                        {% else %}
+                        'bg-gray-200 text-gray-400'
+                        {% endswitch %}
                     ]"
                 >
                     0
@@ -90,7 +128,63 @@
 
     <!-- Tab Content -->
     <div class="space-y-6">
-        <!-- Teachers Tab -->
+        <!-- Students Tab - Always first and enabled -->
+        <div x-show="activeTab === 'students'">
+            <!-- Actions and Search Row -->
+            <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
+                <!-- Actions -->
+                <div class="flex space-x-3">
+                    <button
+                        @click="openModal('addStudent')"
+                        data-test="add-student-button"
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
+                    >
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        <span>{% trans "Add Student" %}</span>
+                    </button>
+                </div>
+
+                <!-- Search -->
+                <div class="flex items-center space-x-2">
+                    <div class="relative">
+                        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <input
+                            type="text"
+                            x-model="studentSearchQuery"
+                            hx-post="/people/"
+                            hx-target="#students-content"
+                            hx-swap="outerHTML"
+                            hx-trigger="keyup changed delay:300ms"
+                            hx-vals='{"action": "search_students"}'
+                            name="search"
+                            placeholder="Buscar alunos, guardiões..."
+                            class="pl-10 pr-4 py-2 w-64 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                        {% csrf_token %}
+                    </div>
+                    <button
+                        x-show="studentSearchQuery.length > 0"
+                        @click="studentSearchQuery = ''; htmx.trigger(document.querySelector('input[name=search]'), 'keyup')"
+                        class="p-2 text-gray-500 hover:text-gray-700"
+                        title="Clear search"
+                    >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Students List - Server-side rendered -->
+            {% include 'dashboard/partials/students_list.html' %}
+        </div>
+
+        <!-- Teachers Tab - Controlled by teacher_management waffle switch -->
+        {% switch "teacher_management" %}
         <div x-show="activeTab === 'teachers'">
             <!-- Actions Row -->
             <div class="flex justify-between items-center mb-6">
@@ -102,7 +196,7 @@
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                         </svg>
-                        <span>Adicionar Professor</span>
+                        <span>{% trans "Add Teacher" %}</span>
                     </button>
                     <button
                         @click="openModal('inviteTeacher')"
@@ -132,53 +226,28 @@
             <!-- Teachers List - Server-side rendered -->
             {% include 'dashboard/partials/teachers_list.html' %}
         </div>
+        {% endswitch %}
 
-        <!-- Students Tab -->
-        <div x-show="activeTab === 'students'">
-            <!-- Actions Row -->
-            <div class="flex justify-between items-center mb-6">
-                <div class="flex space-x-3">
-                    <button
-                        @click="openModal('addStudent')"
-                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
-                    >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                        </svg>
-                        <span>Adicionar Aluno</span>
-                    </button>
-                    <button
-                        @click="openModal('bulkImport')"
-                        class="border border-gray-300 hover:bg-gray-50 text-gray-700 px-4 py-2 rounded-lg flex items-center space-x-2"
-                    >
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
-                        </svg>
-                        <span>Importar em Lote</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Students List - Server-side rendered -->
-            {% include 'dashboard/partials/students_list.html' %}
-        </div>
-
-        <!-- Staff Tab -->
+        <!-- Staff Tab - Controlled by staff_management waffle switch -->
+        {% switch "staff_management" %}
         <div x-show="activeTab === 'staff'">
             <div class="bg-white rounded-lg border border-gray-200 p-12">
                 <div class="text-center">
                     <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                     </svg>
-                    <h3 class="mt-2 text-lg font-semibold text-gray-700">Gestão de Funcionários</h3>
-                    <p class="text-gray-600">Funcionalidade de gestão de funcionários em breve.</p>
+                    <h3 class="mt-2 text-lg font-semibold text-gray-700">{% trans "Staff Management" %}</h3>
+                    <p class="text-gray-600">{% trans "Staff management functionality coming soon." %}</p>
                 </div>
             </div>
         </div>
+        {% endswitch %}
     </div>
 
     <!-- Modals -->
 
+    <!-- Teacher Management Modals - Only show when teacher_management is enabled -->
+    {% switch "teacher_management" %}
     <!-- Add Teacher Modal -->
     <div x-show="showAddTeacherModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
         <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
@@ -301,15 +370,23 @@
             </div>
         </div>
     </div>
+    {% endswitch %}
 
     <!-- Add Student Modal -->
-    <div x-show="showAddStudentModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div id="addStudentModal"
+         x-show="showAddStudentModal"
+         x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto"
+         aria-labelledby="modal-title"
+         role="dialog"
+         aria-modal="true"
+         x-transition>
         <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
             <!-- Backdrop overlay -->
             <div class="fixed inset-0 bg-black/30 transition-opacity backdrop-blur-sm" aria-hidden="true" @click="showAddStudentModal = false"></div>
 
             <!-- Modal panel -->
-            <div class="relative z-10 inline-block px-6 pt-6 pb-6 overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full"
+            <div class="relative z-10 inline-block px-6 pt-6 pb-6 overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
             <!-- Modal Header -->
             <div class="flex items-center justify-between pb-4 border-b border-gray-200">
                 <div class="flex items-center space-x-3">
@@ -331,424 +408,103 @@
                 </button>
             </div>
 
-            <!-- Account Type Selection -->
-            <div class="py-6 border-b border-gray-100">
-                <h4 class="text-lg font-medium text-gray-900 mb-2">Account Type</h4>
-                <p class="text-sm text-gray-600 mb-6">Choose how the student will access the platform and who manages the account</p>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label class="flex items-start space-x-3 p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                               :class="addStudentForm.accountType === 'separate' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'">
-                            <input type="radio" name="accountType" value="separate" x-model="addStudentForm.accountType"
-                                   class="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300" />
-                            <div>
-                                <div class="flex items-center space-x-2">
-                                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                    </svg>
-                                    <span class="font-medium text-gray-900">Student with Guardian</span>
+            <!-- DaisyUI Tabs for Account Types -->
+            <div class="py-6">
+                <div role="tablist" class="tabs tabs-lift w-full">
+                    <!-- Tab 1: Student + Guardian -->
+                    <input type="radio" name="student_account_tabs" id="tab-separate" class="tab" aria-label="Student + Guardian" checked />
+                    <div class="tab-content bg-base-100 border-base-300 rounded-box p-6">
+                        <div class="mb-4 p-4 border border-blue-200 rounded-lg bg-blue-50">
+                            <div class="flex items-start space-x-2">
+                                <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                </svg>
+                                <div>
+                                    <p class="font-medium text-blue-800">Student with Guardian</p>
+                                    <p class="text-sm text-blue-700">Both can login - student manages classes, guardian handles payments</p>
                                 </div>
-                                <p class="text-sm text-gray-500 mt-1">Both can login - student manages classes, guardian handles payments</p>
                             </div>
-                        </label>
+                        </div>
+                        {% include 'dashboard/forms/student_separate_form.html' %}
                     </div>
-                    <div>
-                        <label class="flex items-start space-x-3 p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                               :class="addStudentForm.accountType === 'guardian_only' ? 'border-orange-500 bg-orange-50' : 'border-gray-200'">
-                            <input type="radio" name="accountType" value="guardian_only" x-model="addStudentForm.accountType"
-                                   class="mt-1 h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300" />
-                            <div>
-                                <div class="flex items-center space-x-2">
-                                    <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                                    </svg>
-                                    <span class="font-medium text-gray-900">Guardian-Only Account</span>
+
+                    <!-- Tab 2: Guardian Only -->
+                    <input type="radio" name="student_account_tabs" id="tab-guardian-only" class="tab" aria-label="Guardian Only" />
+                    <div class="tab-content bg-base-100 border-base-300 rounded-box p-6">
+                        <div class="mb-4 p-4 border border-orange-200 rounded-lg bg-orange-50">
+                            <div class="flex items-start space-x-2">
+                                <svg class="w-5 h-5 text-orange-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                                </svg>
+                                <div>
+                                    <p class="font-medium text-orange-800">Guardian-Only Account</p>
+                                    <p class="text-sm text-orange-700">Only guardian can login - manages everything for child</p>
                                 </div>
-                                <p class="text-sm text-gray-500 mt-1">Only guardian can login - manages everything for child</p>
                             </div>
-                        </label>
+                        </div>
+                        {% include 'dashboard/forms/student_guardian_only_form.html' %}
                     </div>
-                    <div>
-                        <label class="flex items-start space-x-3 p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-                               :class="addStudentForm.accountType === 'self' ? 'border-green-500 bg-green-50' : 'border-gray-200'">
-                            <input type="radio" name="accountType" value="self" x-model="addStudentForm.accountType"
-                                   class="mt-1 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300" />
-                            <div>
-                                <div class="flex items-center space-x-2">
-                                    <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                    </svg>
-                                    <span class="font-medium text-gray-900">Adult Student</span>
+
+                    <!-- Tab 3: Adult Student -->
+                    <input type="radio" name="student_account_tabs" id="tab-adult" class="tab" aria-label="Adult Student" />
+                    <div class="tab-content bg-base-100 border-base-300 rounded-box p-6">
+                        <div class="mb-4 p-4 border border-green-200 rounded-lg bg-green-50">
+                            <div class="flex items-start space-x-2">
+                                <svg class="w-5 h-5 text-green-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                                <div>
+                                    <p class="font-medium text-green-800">Adult Student</p>
+                                    <p class="text-sm text-green-700">Single account - student manages everything independently</p>
                                 </div>
-                                <p class="text-sm text-gray-500 mt-1">Single account - student manages everything independently</p>
                             </div>
-                        </label>
+                        </div>
+                        {% include 'dashboard/forms/student_adult_form.html' %}
                     </div>
                 </div>
             </div>
+            </div>
+        </div>
+    </div>
 
-            <!-- Form Content -->
-            <form hx-post="/people/"
-                  hx-target="#students-content"
-                  hx-swap="outerHTML"
-                  hx-trigger="submit"
-                  class="py-6"
-                  @htmx:after-request="if(event.detail.successful) { showAddStudentModal = false; handleSuccess('Student added successfully!'); }">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="add_student">
-                <input type="hidden" name="account_type" x-model="addStudentForm.accountType">
+    <!-- Student Detail Modal -->
+    <div x-show="showStudentDetailModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Backdrop overlay -->
+            <div class="fixed inset-0 bg-black/30 transition-opacity backdrop-blur-sm" aria-hidden="true" @click="showStudentDetailModal = false"></div>
 
-                <!-- Student with Separate Guardian -->
-                <div x-show="addStudentForm.accountType === 'separate'" x-cloak class="space-y-8">
-                    <!-- Student Information Section -->
-                    <div class="bg-blue-50 rounded-lg p-6">
-                        <h5 class="text-lg font-medium text-blue-900 mb-4 flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <!-- Modal panel -->
+            <div class="relative z-10 inline-block px-6 pt-6 pb-6 overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between pb-4 border-b border-gray-200">
+                    <div class="flex items-center space-x-3">
+                        <div class="flex-shrink-0 w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
+                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                             </svg>
-                            Student Information
-                        </h5>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Full Name *</label>
-                                <input type="text" name="student_name" x-model="addStudentForm.student_name" :required="addStudentForm.accountType === 'separate'"
-                                       class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="Enter student's full name">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Email Address *</label>
-                                <input type="email" name="student_email" x-model="addStudentForm.student_email" :required="addStudentForm.accountType === 'separate'"
-                                       class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="student@example.com">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Birth Date *</label>
-                                <input type="date" name="student_birth_date" x-model="addStudentForm.student_birth_date" :required="addStudentForm.accountType === 'separate'"
-                                       class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">School Year</label>
-                                <select name="student_school_year" x-model="addStudentForm.student_school_year"
-                                        class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="">Select school year</option>
-                                    <option value="1">1º ano</option>
-                                    <option value="2">2º ano</option>
-                                    <option value="3">3º ano</option>
-                                    <option value="4">4º ano</option>
-                                    <option value="5">5º ano</option>
-                                    <option value="6">6º ano</option>
-                                    <option value="7">7º ano</option>
-                                    <option value="8">8º ano</option>
-                                    <option value="9">9º ano</option>
-                                    <option value="10">10º ano</option>
-                                    <option value="11">11º ano</option>
-                                    <option value="12">12º ano</option>
-                                </select>
-                            </div>
                         </div>
-                        <div class="mt-4 space-y-1">
-                            <label class="block text-sm font-medium text-gray-700">Notes</label>
-                            <textarea name="student_notes" x-model="addStudentForm.student_notes"
-                                      class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                                      rows="2" placeholder="Special needs, preferences, or other relevant information..."></textarea>
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-900">Student Details</h3>
+                            <p class="text-sm text-gray-500">View student information and management options</p>
                         </div>
                     </div>
-
-                    <!-- Guardian Information Section -->
-                    <div class="bg-green-50 rounded-lg p-6">
-                        <h5 class="text-lg font-medium text-green-900 mb-4 flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                            </svg>
-                            Guardian/Parent Information
-                        </h5>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Guardian Name *</label>
-                                <input type="text" name="guardian_name" x-model="addStudentForm.guardian_name" :required="addStudentForm.accountType === 'separate'"
-                                       class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
-                                       placeholder="Enter guardian's full name">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Guardian Email *</label>
-                                <input type="email" name="guardian_email" x-model="addStudentForm.guardian_email" :required="addStudentForm.accountType === 'separate'"
-                                       class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
-                                       placeholder="guardian@example.com">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Phone Number</label>
-                                <input type="tel" name="guardian_phone" x-model="addStudentForm.guardian_phone"
-                                       class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
-                                       placeholder="+351 912 345 678">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Tax Number</label>
-                                <input type="text" name="guardian_tax_nr" x-model="addStudentForm.guardian_tax_nr"
-                                       class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
-                                       placeholder="123456789">
-                            </div>
-                        </div>
-                        <div class="mt-4 space-y-1">
-                            <label class="block text-sm font-medium text-gray-700">Address</label>
-                            <textarea name="guardian_address" x-model="addStudentForm.guardian_address"
-                                      class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500"
-                                      rows="2" placeholder="Street address, postal code, city..."></textarea>
-                        </div>
-                        <div class="flex flex-wrap gap-6 mt-4">
-                            <label class="flex items-center space-x-2 cursor-pointer">
-                                <input type="checkbox" name="guardian_invoice" x-model="addStudentForm.guardian_invoice" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
-                                <span class="text-sm text-gray-700">Issue invoices</span>
-                            </label>
-                            <label class="flex items-center space-x-2 cursor-pointer">
-                                <input type="checkbox" name="guardian_email_notifications" x-model="addStudentForm.guardian_email_notifications" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" checked />
-                                <span class="text-sm text-gray-700">Email notifications</span>
-                            </label>
-                            <label class="flex items-center space-x-2 cursor-pointer">
-                                <input type="checkbox" name="guardian_sms_notifications" x-model="addStudentForm.guardian_sms_notifications" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
-                                <span class="text-sm text-gray-700">SMS notifications</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Guardian-Only Account (Young Student) -->
-                <div x-show="addStudentForm.accountType === 'guardian_only'" x-cloak class="space-y-8">
-                    <!-- Student Basic Information Section -->
-                    <div class="bg-orange-50 rounded-lg p-6">
-                        <h5 class="text-lg font-medium text-orange-900 mb-4 flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                            </svg>
-                            Student Information
-                        </h5>
-                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                            <div class="flex items-start space-x-2">
-                                <svg class="w-5 h-5 text-blue-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                <span class="text-blue-700 text-sm">Student profile without login credentials. Guardian manages everything through their account.</span>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Student Full Name *</label>
-                                <input type="text" name="guardian_only_student_name" x-model="addStudentForm.guardian_only_student_name" :required="addStudentForm.accountType === 'guardian_only'"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="Enter student's full name">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Birth Date *</label>
-                                <input type="date" name="guardian_only_student_birth_date" x-model="addStudentForm.guardian_only_student_birth_date" :required="addStudentForm.accountType === 'guardian_only'"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">School Year</label>
-                                <select name="guardian_only_student_school_year" x-model="addStudentForm.guardian_only_student_school_year"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="">Select school year</option>
-                                    <option value="1">1º ano</option>
-                                    <option value="2">2º ano</option>
-                                    <option value="3">3º ano</option>
-                                    <option value="4">4º ano</option>
-                                    <option value="5">5º ano</option>
-                                    <option value="6">6º ano</option>
-                                    <option value="7">7º ano</option>
-                                    <option value="8">8º ano</option>
-                                    <option value="9">9º ano</option>
-                                    <option value="10">10º ano</option>
-                                    <option value="11">11º ano</option>
-                                    <option value="12">12º ano</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="space-y-1 mt-4">
-                            <label class="block text-sm font-medium text-gray-700">Notes</label>
-                            <textarea name="guardian_only_student_notes" x-model="addStudentForm.guardian_only_student_notes"
-                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                      rows="2" placeholder="Special needs, preferences, or other relevant information..."></textarea>
-                        </div>
-                    </div>
-
-                    <!-- Guardian Information Section -->
-                    <div class="bg-green-50 rounded-lg p-6">
-                        <h5 class="text-lg font-medium text-green-900 mb-4 flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-                            </svg>
-                            Guardian Account & Information
-                        </h5>
-                        <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
-                            <div class="flex items-start space-x-2">
-                                <svg class="w-5 h-5 text-orange-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>
-                                </svg>
-                                <span class="text-orange-700 text-sm">Guardian will have full access to manage the student's account, bookings, and payments.</span>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Guardian Name *</label>
-                                <input type="text" name="guardian_only_guardian_name" x-model="addStudentForm.guardian_only_guardian_name" :required="addStudentForm.accountType === 'guardian_only'"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="Enter guardian's full name">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Guardian Email *</label>
-                                <input type="email" name="guardian_only_guardian_email" x-model="addStudentForm.guardian_only_guardian_email" :required="addStudentForm.accountType === 'guardian_only'"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="guardian@example.com">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Phone Number</label>
-                                <input type="tel" name="guardian_only_guardian_phone" x-model="addStudentForm.guardian_only_guardian_phone"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="+351 912 345 678">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Tax Number</label>
-                                <input type="text" name="guardian_only_guardian_tax_nr" x-model="addStudentForm.guardian_only_guardian_tax_nr"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="123456789">
-                            </div>
-                        </div>
-                        <div class="space-y-1 mt-4">
-                            <label class="block text-sm font-medium text-gray-700">Address</label>
-                            <textarea name="guardian_only_guardian_address" x-model="addStudentForm.guardian_only_guardian_address"
-                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                      rows="2" placeholder="Street address, postal code, city..."></textarea>
-                        </div>
-                        <div class="flex flex-wrap gap-4 mt-4">
-                            <div class="flex items-center space-x-2">
-                                <input type="checkbox" name="guardian_only_guardian_invoice" x-model="addStudentForm.guardian_only_guardian_invoice"
-                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
-                                <label class="text-sm text-gray-700 cursor-pointer">Issue invoices</label>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <input type="checkbox" name="guardian_only_guardian_email_notifications" x-model="addStudentForm.guardian_only_guardian_email_notifications"
-                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" checked />
-                                <label class="text-sm text-gray-700 cursor-pointer">Email notifications</label>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <input type="checkbox" name="guardian_only_guardian_sms_notifications" x-model="addStudentForm.guardian_only_guardian_sms_notifications"
-                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
-                                <label class="text-sm text-gray-700 cursor-pointer">SMS notifications</label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Adult Student (Self-Guardian) -->
-                <div x-show="addStudentForm.accountType === 'self'" x-cloak class="space-y-6">
-                    <div class="bg-gradient-to-br from-green-50 to-blue-50 rounded-lg p-6">
-                        <h5 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                            </svg>
-                            Student Information
-                        </h5>
-
-                        <!-- Personal Information -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Full Name *</label>
-                                <input type="text" name="self_name" x-model="addStudentForm.self_name" :required="addStudentForm.accountType === 'self'"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="Enter your full name">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Email Address *</label>
-                                <input type="email" name="self_email" x-model="addStudentForm.self_email" :required="addStudentForm.accountType === 'self'"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="your@email.com">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Phone Number</label>
-                                <input type="tel" name="self_phone" x-model="addStudentForm.self_phone"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="+351 912 345 678">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Birth Date *</label>
-                                <input type="date" name="self_birth_date" x-model="addStudentForm.self_birth_date" :required="addStudentForm.accountType === 'self'"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">School Year</label>
-                                <select name="self_school_year" x-model="addStudentForm.self_school_year"
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                    <option value="">Select school year</option>
-                                    <option value="1">1º ano</option>
-                                    <option value="2">2º ano</option>
-                                    <option value="3">3º ano</option>
-                                    <option value="4">4º ano</option>
-                                    <option value="5">5º ano</option>
-                                    <option value="6">6º ano</option>
-                                    <option value="7">7º ano</option>
-                                    <option value="8">8º ano</option>
-                                    <option value="9">9º ano</option>
-                                    <option value="10">10º ano</option>
-                                    <option value="11">11º ano</option>
-                                    <option value="12">12º ano</option>
-                                </select>
-                            </div>
-                            <div class="space-y-1">
-                                <label class="block text-sm font-medium text-gray-700">Tax Number</label>
-                                <input type="text" name="self_tax_nr" x-model="addStudentForm.self_tax_nr"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                       placeholder="123456789">
-                            </div>
-                        </div>
-
-                        <!-- Address -->
-                        <div class="space-y-1 mt-4">
-                            <label class="block text-sm font-medium text-gray-700">Address</label>
-                            <textarea name="self_address" x-model="addStudentForm.self_address"
-                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                      rows="2" placeholder="Street address, postal code, city..."></textarea>
-                        </div>
-
-                        <!-- Additional Information -->
-                        <div class="space-y-1 mt-4">
-                            <label class="block text-sm font-medium text-gray-700">Notes</label>
-                            <textarea name="self_notes" x-model="addStudentForm.self_notes"
-                                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                      rows="2" placeholder="Special needs, preferences, or other relevant information..."></textarea>
-                        </div>
-
-                        <!-- Preferences -->
-                        <div class="flex flex-wrap gap-4 mt-4">
-                            <div class="flex items-center space-x-2">
-                                <input type="checkbox" name="self_invoice" x-model="addStudentForm.self_invoice"
-                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
-                                <label class="text-sm text-gray-700 cursor-pointer">Issue invoices</label>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <input type="checkbox" name="self_email_notifications" x-model="addStudentForm.self_email_notifications"
-                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" checked />
-                                <label class="text-sm text-gray-700 cursor-pointer">Email notifications</label>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <input type="checkbox" name="self_sms_notifications" x-model="addStudentForm.self_sms_notifications"
-                                       class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
-                                <label class="text-sm text-gray-700 cursor-pointer">SMS notifications</label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Form Actions -->
-                <div class="flex justify-end gap-3 pt-6 border-t border-gray-200">
-                    <button type="button" @click="showAddStudentModal = false" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        Cancel
-                    </button>
-                    <button type="submit" class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    <button type="button" @click="showStudentDetailModal = false"
+                            class="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
-                        Add Student
                     </button>
                 </div>
-            </form>
+
+                <!-- Modal Content - Loaded via HTMX -->
+                <div id="student-detail-modal-content" class="py-6">
+                    <!-- Content will be loaded here via HTMX -->
+                    <div class="animate-pulse">
+                        <div class="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                        <div class="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+                        <div class="h-4 bg-gray-200 rounded w-5/6"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -811,14 +567,16 @@
 function peopleManager() {
     return {
         // UI State only (no server data)
-        activeTab: 'teachers',
+        activeTab: 'students',
         error: null,
         successMessage: null,
+        studentSearchQuery: '',
 
         // Modal state
         showAddTeacherModal: false,
         showInviteTeacherModal: false,
         showAddStudentModal: false,
+        showStudentDetailModal: false,
 
         // Form state for modals - no loading states needed with HTMX
         addTeacherForm: {
@@ -833,14 +591,15 @@ function peopleManager() {
             send_email: true
         },
 
-        addStudentForm: {
-            accountType: 'separate', // Default to separate guardian
-            // Separate Guardian fields
-            student_name: '',
-            student_email: '',
-            student_birth_date: '',
-            student_school_year: '',
-            student_notes: '',
+        // Clean form state objects for each account type
+        separateForm: {
+            // Student fields
+            name: '',
+            email: '',
+            birth_date: '',
+            school_year: '',
+            notes: '',
+            // Guardian fields
             guardian_name: '',
             guardian_email: '',
             guardian_phone: '',
@@ -848,32 +607,44 @@ function peopleManager() {
             guardian_address: '',
             guardian_invoice: false,
             guardian_email_notifications: true,
-            guardian_sms_notifications: false,
-            // Guardian-Only fields
-            guardian_only_student_name: '',
-            guardian_only_student_birth_date: '',
-            guardian_only_student_school_year: '',
-            guardian_only_student_notes: '',
-            guardian_only_guardian_name: '',
-            guardian_only_guardian_email: '',
-            guardian_only_guardian_phone: '',
-            guardian_only_guardian_tax_nr: '',
-            guardian_only_guardian_address: '',
-            guardian_only_guardian_invoice: false,
-            guardian_only_guardian_email_notifications: true,
-            guardian_only_guardian_sms_notifications: false,
-            // Self Guardian fields
-            self_name: '',
-            self_email: '',
-            self_phone: '',
-            self_birth_date: '',
-            self_school_year: '',
-            self_tax_nr: '',
-            self_address: '',
-            self_notes: '',
-            self_invoice: false,
-            self_email_notifications: true,
-            self_sms_notifications: false
+            guardian_sms_notifications: false
+        },
+
+        guardianOnlyForm: {
+            // Student profile fields
+            name: '',
+            birth_date: '',
+            school_year: '',
+            notes: '',
+            // Guardian account fields
+            guardian_name: '',
+            guardian_email: '',
+            guardian_phone: '',
+            guardian_tax_nr: '',
+            guardian_address: '',
+            guardian_invoice: false,
+            guardian_email_notifications: true,
+            guardian_sms_notifications: false
+        },
+
+        adultForm: {
+            // Adult student fields
+            name: '',
+            email: '',
+            birth_date: '',
+            phone: '',
+            school_year: '',
+            tax_nr: '',
+            address: '',
+            notes: '',
+            invoice: false,
+            email_notifications: true,
+            sms_notifications: false
+        },
+
+        // Initialize component
+        init() {
+            // No complex form validation needed - each separate form handles its own validation
         },
 
         // Helper methods for UI state
@@ -888,47 +659,20 @@ function peopleManager() {
                 school_id: 1,
                 send_email: true
             };
-            this.addStudentForm = {
-                accountType: 'separate',
-                // Separate Guardian fields
-                student_name: '',
-                student_email: '',
-                student_birth_date: '',
-                student_school_year: '',
-                student_notes: '',
-                guardian_name: '',
-                guardian_email: '',
-                guardian_phone: '',
-                guardian_tax_nr: '',
-                guardian_address: '',
-                guardian_invoice: false,
-                guardian_email_notifications: true,
-                guardian_sms_notifications: false,
-                // Guardian-Only fields
-                guardian_only_student_name: '',
-                guardian_only_student_birth_date: '',
-                guardian_only_student_school_year: '',
-                guardian_only_student_notes: '',
-                guardian_only_guardian_name: '',
-                guardian_only_guardian_email: '',
-                guardian_only_guardian_phone: '',
-                guardian_only_guardian_tax_nr: '',
-                guardian_only_guardian_address: '',
-                guardian_only_guardian_invoice: false,
-                guardian_only_guardian_email_notifications: true,
-                guardian_only_guardian_sms_notifications: false,
-                // Self Guardian fields
-                self_name: '',
-                self_email: '',
-                self_phone: '',
-                self_birth_date: '',
-                self_school_year: '',
-                self_tax_nr: '',
-                self_address: '',
-                self_notes: '',
-                self_invoice: false,
-                self_email_notifications: true,
-                self_sms_notifications: false
+            // Reset clean form state objects
+            this.separateForm = {
+                name: '', email: '', birth_date: '', school_year: '', notes: '',
+                guardian_name: '', guardian_email: '', guardian_phone: '', guardian_tax_nr: '', guardian_address: '',
+                guardian_invoice: false, guardian_email_notifications: true, guardian_sms_notifications: false
+            };
+            this.guardianOnlyForm = {
+                name: '', birth_date: '', school_year: '', notes: '',
+                guardian_name: '', guardian_email: '', guardian_phone: '', guardian_tax_nr: '', guardian_address: '',
+                guardian_invoice: false, guardian_email_notifications: true, guardian_sms_notifications: false
+            };
+            this.adultForm = {
+                name: '', email: '', birth_date: '', phone: '', school_year: '', tax_nr: '', address: '', notes: '',
+                invoice: false, email_notifications: true, sms_notifications: false
             };
         },
 
@@ -953,12 +697,27 @@ function peopleManager() {
                     break;
                 case 'addStudent':
                     this.showAddStudentModal = true;
-                    break;
-                case 'bulkImport':
-                    // TODO: Implement bulk import modal
-                    alert('Bulk import functionality coming soon');
+                    // Setup initial validation after modal is shown
+                    setTimeout(() => this.updateFormValidation(this.addStudentForm.account_type), 100);
                     break;
             }
+        },
+
+        // Open student detail modal
+        openStudentDetail(studentId) {
+            this.error = null;
+            this.showStudentDetailModal = true;
+
+            // Use HTMX to fetch student details
+            htmx.ajax('POST', '/people/', {
+                target: '#student-detail-modal-content',
+                swap: 'innerHTML',
+                values: {
+                    'action': 'get_student_detail',
+                    'student_id': studentId,
+                    'csrfmiddlewaretoken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            });
         },
 
         // HTMX event handlers for success/error messages
@@ -971,6 +730,29 @@ function peopleManager() {
 
         handleError(message) {
             this.error = message;
+        },
+
+
+        // Handle HTMX form response properly
+        handleFormResponse(event) {
+            const xhr = event.detail.xhr;
+            const isSuccess = xhr.status >= 200 && xhr.status < 300;
+
+            if (isSuccess) {
+                // Check if response contains error content (backend validation failure)
+                const responseText = xhr.responseText;
+                if (responseText && (responseText.includes('error') || responseText.includes('Missing required fields'))) {
+                    // This is actually an error response from backend validation
+                    return; // Let HTMX handle the error display, don't show success
+                }
+
+                // True success - close modal and reset forms (success message shown by server)
+                this.showAddStudentModal = false;
+                this.resetForms();
+            } else {
+                // HTTP error - let HTMX handle the error display
+                this.error = 'Failed to add student. Please try again.';
+            }
         }
     }
 }

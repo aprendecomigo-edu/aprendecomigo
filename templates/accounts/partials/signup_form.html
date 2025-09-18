@@ -111,6 +111,7 @@
             <input type="text"
                    name="organization_name"
                    :placeholder="accountType === 'tutor' ? 'Your practice name' : 'Your school name'"
+                   value="{{ organization_name|default:'' }}"
                    class="input input-lg w-full glass-light p-4 rounded-xl"
                    autocomplete="organization"
                    data-test="input-school-name"
@@ -129,20 +130,18 @@
     {% endif %}
 
     <!-- Submit Button -->
-    <div class="relative">
-        <button type="submit"
-                class="btn btn-neutral w-full bg-gradient-primary border-none text-white htmx-request:opacity-50 htmx-request:pointer-events-none"
-                data-test="submit-registration">
-            <span class="htmx-indicator-none">Create Account</span>
-            <span class="htmx-indicator" data-test="loading-registration">
-                <div class="loading loading-spinner loading-sm"></div>
-                Creating Account...
-            </span>
-        </button>
+    <div class="flex justify-center">
+        <div class="relative w-full max-w-sm">
+            <button type="submit"
+                    class="btn btn-neutral w-full bg-gradient-primary border-none text-white htmx-request:opacity-50 htmx-request:pointer-events-none"
+                    data-test="submit-registration">
+                Create Account
+            </button>
 
-        <!-- Loading Spinner Overlay -->
-        <div class="htmx-indicator absolute inset-0 flex items-center justify-center bg-base-100/50 backdrop-blur-sm rounded-lg opacity-0 invisible" data-test="loading-registration">
-            <div class="loading loading-spinner loading-md text-primary"></div>
+            <!-- Loading Spinner Overlay -->
+            <div class="htmx-indicator absolute inset-0 flex items-center justify-center bg-base-100/50 backdrop-blur-sm rounded-lg opacity-0 invisible" data-test="loading-registration">
+                <div class="loading loading-spinner loading-md text-primary"></div>
+            </div>
         </div>
     </div>
 </form>

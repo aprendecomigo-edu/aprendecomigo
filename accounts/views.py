@@ -24,24 +24,32 @@ from django.contrib.auth import get_user_model, login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db import transaction
+from django.core.validators import validate_email
+from django.db import models, transaction
 from django.http import Http404, HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.decorators import method_decorator
+from django.utils.html import escape
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _
 from django.views import View
 from django.views.decorators.csrf import csrf_protect
+from django.views.decorators.http import require_http_methods
 from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView
 from sesame.utils import get_query_string, get_query_string as sesame_get_query_string
 from sesame.views import LoginView as SesameLoginView
+from waffle import switch_is_active
 
-from messaging.services import send_magic_link_email, send_sms_otp
+from messaging.services import send_magic_link_email, send_otp_email_message, send_sms_otp
 
 from .db_queries import create_user_school_and_membership, get_user_by_email, user_exists
 from .models import School, SchoolMembership, SchoolSettings, TeacherInvitation
+from .models.profiles import StudentProfile
+from .models.schools import SchoolRole
 from .permissions import IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin
+from .services.otp_service import OTPService
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -98,15 +106,13 @@ VERIFICATION_SESSION_KEYS = [
 
 class SignInView(View):
     """
-    Handle user sign-in with SMS OTP verification.
+    Handle user sign-in with OTP delivery choice.
 
-    This view provides a secure login flow for existing users:
-    1. User enters email address
-    2. System sends SMS OTP to registered phone number
-    3. User verifies OTP to complete login
-
-    GET: Display sign-in form
-    POST: Validate email and send SMS OTP
+    New flow:
+    1. User enters email
+    2. System shows delivery choice based on verified methods
+    3. User chooses email or SMS delivery
+    4. OTP is sent and verified
     """
 
     def get(self, request) -> HttpResponse:
@@ -114,123 +120,289 @@ class SignInView(View):
         if request.user.is_authenticated:
             return redirect(reverse("dashboard:dashboard"))
 
+        # Store the next parameter in session for post-login redirect (with security validation)
+        next_url = request.GET.get("next")
+        if (
+            next_url
+            and next_url.strip()
+            and url_has_allowed_host_and_scheme(
+                next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+            )
+        ):
+            request.session["signin_next_url"] = next_url
+
         return render(
             request,
             "accounts/signin.html",
-            {"title": "Login - Aprende Comigo", "meta_description": "Sign in to your Aprende Comigo account"},
+            {"title": "Sign In - Aprende Comigo", "meta_description": "Sign in to your Aprende Comigo account"},
         )
 
     @method_decorator(csrf_protect)
     def post(self, request):
-        """Handle sign in form submission via HTMX"""
+        """Handle email submission and show delivery options"""
         email = request.POST.get("email", "").strip().lower()
         logger.info(f"[SIGNIN] Starting signin process for: {email}")
 
-        # Validate email using the same pattern as the HTML form
+        # Validate email
         email_pattern = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
 
         if not email:
             return render(
                 request,
                 "accounts/partials/signin_form.html",
-                {"error": "Please enter your email address", "email": email},
+                {
+                    "error": "Please enter your email address",
+                    "email": email,
+                    "sms_enabled": switch_is_active("sms_feature"),
+                },
             )
 
-        # Check if it's a valid email
         if not re.match(email_pattern, email):
             return render(
                 request,
                 "accounts/partials/signin_form.html",
-                {"error": "Please enter a valid email address", "email": email},
+                {
+                    "error": "Please enter a valid email address",
+                    "email": email,
+                    "sms_enabled": switch_is_active("sms_feature"),
+                },
             )
 
         try:
             # Check if user exists
             if not user_exists(email):
-                # Log the event for security monitoring
                 logger.warning(f"Authentication attempt with unregistered email: {email}")
-
-                # Set minimal session data for security (prevent email enumeration)
-                request.session["verification_email"] = email
-
-                # Still show success to prevent email enumeration
-                return render(request, "accounts/partials/signin_success_with_verify.html", {"email": email})
-
-            # User exists - generate dual verification for existing users
-            logger.info(f"Dual verification requested for registered email: {email}")
-            user = get_user_by_email(email)
-
-            # Generate magic link for email verification
-            login_url = reverse("accounts:magic_login")
-            magic_link = request.build_absolute_uri(login_url) + get_query_string(user)
-            logger.info(f"Generated magic link for {email}: {login_url} (token length: {len(get_query_string(user))})")
-
-            # Generate secure 6-digit OTP code for SMS verification
-            otp_code = str(secrets.randbelow(900000) + 100000)
-            otp_expires = (timezone.now() + timedelta(minutes=5)).timestamp()
-            logger.info(f"Generated OTP code: {otp_code} for user: {user.email}")
-
-            try:
-                # Send both magic link and SMS OTP (if phone available)
-                email_result = send_magic_link_email(email, magic_link, user.name or user.first_name)
-
-                # Log email confirmation for development environment
-                if email_result.get("success"):
-                    # Extract token from magic link for logging (last part after 'sesame=')
-                    token = magic_link.split("sesame=")[-1] if "sesame=" in magic_link else "generated"
-                    log_email_confirmation_sent(email, token[:8] + "...")  # Show partial token for security
-                else:
-                    log_email_confirmation_failure(email, "Email sending failed")
-
-                # Check if user has phone number for SMS
-                if user.phone_number:
-                    sms_result = send_sms_otp(user.phone_number, otp_code, user.name or user.first_name)
-                else:
-                    sms_result = {"success": True}  # Continue if no phone number
-                    logger.warning(f"User {email} has no phone number on file")
-
-                if email_result.get("success") and sms_result.get("success"):
-                    # Store verification data in session
-                    request.session["verification_email"] = email
-                    request.session["verification_phone"] = user.phone_number
-                    request.session["verification_user_id"] = user.id
-                    request.session["verification_otp_code"] = otp_code
-                    request.session["verification_otp_expires"] = otp_expires
-                    request.session["is_signin"] = True
-
-                    logger.info(
-                        f"Dual verification sent successfully to: {email} and {user.phone_number or 'no phone'}"
-                    )
-                    return render(
-                        request,
-                        "accounts/partials/signin_success_with_verify.html",
-                        {"email": email, "phone_number": user.phone_number},
-                    )
-                else:
-                    return render(
-                        request,
-                        "accounts/partials/signin_form.html",
-                        {
-                            "error": "There was an issue sending the verification codes. Please try again.",
-                            "email": email,
-                        },
-                    )
-
-            except Exception as verification_error:
-                logger.error(f"Failed to send verification codes to {email}: {verification_error}")
+                # Prevent email enumeration - show generic message
                 return render(
                     request,
                     "accounts/partials/signin_form.html",
-                    {"error": "There was an issue sending the verification codes. Please try again.", "email": email},
+                    {
+                        "error": "Invalid email or account not verified",
+                        "email": email,
+                        "sms_enabled": switch_is_active("sms_feature"),
+                    },
                 )
+
+            user = get_user_by_email(email)
+
+            # Check if user has at least one verified contact method
+            if not (user.email_verified or user.phone_verified):
+                logger.warning(f"Signin attempt by unverified user: {email}")
+                return render(
+                    request,
+                    "accounts/partials/signin_unverified.html",
+                    {"email": email},
+                )
+
+            # Store email in session for OTP delivery
+            request.session["signin_email"] = email
+            request.session["signin_user_id"] = user.id
+
+            # For test phase - show delivery choice directly in signin form
+            return render(
+                request,
+                "accounts/partials/signin_form.html",
+                {
+                    "email": email,
+                    "show_delivery_choice": True,
+                    "phone_available": bool(user.phone_number),
+                    "sms_enabled": switch_is_active("sms_feature"),
+                },
+            )
 
         except Exception as e:
             logger.error(f"Sign in error for {email}: {e}")
             return render(
                 request,
                 "accounts/partials/signin_form.html",
-                {"error": "There was an issue sending the verification codes. Please try again.", "email": email},
+                {
+                    "error": "There was an issue processing your request. Please try again.",
+                    "email": email,
+                    "sms_enabled": switch_is_active("sms_feature"),
+                },
             )
+
+
+@require_http_methods(["POST"])
+@csrf_protect
+def send_otp_email(request):
+    """Send OTP via email for signin"""
+    email = request.session.get("signin_email")
+    user_id = request.session.get("signin_user_id")
+
+    if not email or not user_id:
+        return render(
+            request,
+            "accounts/partials/signin_form.html",
+            {
+                "error": "Session expired. Please start over.",
+                "email": "",
+                "sms_enabled": switch_is_active("sms_feature"),
+            },
+        )
+
+    try:
+        user = User.objects.get(id=user_id, email=email)
+
+        # Generate OTP
+        otp_code, token_id = OTPService.generate_otp(user, "email")
+
+        # Send via email
+        result = send_otp_email_message(user.email, otp_code, user.first_name)
+
+        if result.get("success"):
+            # Store token ID in session for verification
+            request.session["otp_token_id"] = token_id
+            request.session["otp_delivery_method"] = "email"
+
+            logger.info(f"OTP sent via email to: {email}")
+            return render(
+                request,
+                "accounts/partials/signin_success_with_verify.html",
+                {
+                    "delivery_method": "email",
+                    "masked_contact": f"{email[:3]}***{email[email.index('@') :]}",
+                    "email": email,
+                },
+            )
+        else:
+            return render(
+                request,
+                "accounts/partials/signin_form.html",
+                {
+                    "error": "Failed to send email. Please try again later.",
+                    "email": email,
+                    "show_delivery_choice": True,
+                    "phone_available": bool(user.phone_number),
+                    "sms_enabled": switch_is_active("sms_feature"),
+                },
+            )
+
+    except User.DoesNotExist:
+        return render(
+            request,
+            "accounts/partials/signin_form.html",
+            {
+                "error": "Session expired. Please start over.",
+                "email": "",
+                "sms_enabled": switch_is_active("sms_feature"),
+            },
+        )
+    except Exception as e:
+        logger.error(f"Error sending OTP email to {email}: {e}")
+        return render(
+            request,
+            "accounts/partials/signin_form.html",
+            {
+                "error": "Failed to send code. Please try again.",
+                "email": email,
+                "show_delivery_choice": True,
+                "phone_available": False,
+                "sms_enabled": switch_is_active("sms_feature"),
+            },
+        )
+
+
+@require_http_methods(["POST"])
+@csrf_protect
+def send_otp_sms(request):
+    """Send OTP via SMS for signin"""
+    # Check if SMS feature is enabled
+    if not switch_is_active("sms_feature"):
+        return render(
+            request,
+            "accounts/partials/signin_form.html",
+            {
+                "error": "SMS service is temporarily unavailable. Please use email instead.",
+                "email": request.session.get("signin_email", ""),
+                "show_delivery_choice": True,
+                "phone_available": False,
+                "sms_enabled": False,
+            },
+        )
+
+    email = request.session.get("signin_email")
+    user_id = request.session.get("signin_user_id")
+
+    if not email or not user_id:
+        return render(
+            request,
+            "accounts/partials/signin_form.html",
+            {
+                "error": "Session expired. Please start over.",
+                "email": "",
+                "sms_enabled": switch_is_active("sms_feature"),
+            },
+        )
+
+    try:
+        user = User.objects.get(id=user_id, email=email)
+
+        # Check if phone is verified
+        if not user.phone_verified or not user.phone_number:
+            return render(
+                request,
+                "accounts/partials/signin_form.html",
+                {
+                    "error": "Phone not verified. Please choose email or verify your phone first.",
+                    "email": email,
+                    "show_delivery_choice": True,
+                    "phone_available": False,
+                    "sms_enabled": switch_is_active("sms_feature"),
+                },
+            )
+
+        # Generate OTP
+        otp_code, token_id = OTPService.generate_otp(user, "sms")
+
+        # Send via SMS
+        result = send_sms_otp(user.phone_number, otp_code, user.first_name)
+
+        if result.get("success"):
+            # Store token ID in session for verification
+            request.session["otp_token_id"] = token_id
+            request.session["otp_delivery_method"] = "sms"
+
+            logger.info(f"OTP sent via SMS to: {user.phone_number}")
+            return render(
+                request,
+                "accounts/partials/otp_input.html",
+                {"delivery_method": "sms", "masked_contact": f"***{user.phone_number[-4:]}"},
+            )
+        else:
+            return render(
+                request,
+                "accounts/partials/delivery_choice.html",
+                {
+                    "error": "Failed to send SMS. Please try email or try again later.",
+                    "email": email,
+                    "available_methods": ["email", "sms"] if user.email_verified else ["sms"],
+                },
+            )
+
+    except User.DoesNotExist:
+        return render(
+            request,
+            "accounts/partials/signin_form.html",
+            {
+                "error": "Session expired. Please start over.",
+                "email": "",
+                "sms_enabled": switch_is_active("sms_feature"),
+            },
+        )
+    except Exception as e:
+        logger.error(f"Error sending OTP SMS to {email}: {e}")
+        return render(
+            request,
+            "accounts/partials/signin_form.html",
+            {
+                "error": "Failed to send code. Please try again.",
+                "email": email,
+                "show_delivery_choice": True,
+                "phone_available": False,
+                "sms_enabled": switch_is_active("sms_feature"),
+            },
+        )
 
 
 class SignUpView(View):
@@ -269,73 +441,70 @@ class SignUpView(View):
         phone_number = request.POST.get("phone_number", "").strip()
         organization_name = request.POST.get("organization_name", "").strip()
 
+        # Helper function to get safe context for template rendering
+        # Note: Only escape values for display, not for business logic
+        def get_safe_context(error_msg):
+            return {
+                "error": error_msg,
+                "email": escape(email),
+                "full_name": escape(full_name),
+                "phone_number": escape(phone_number),
+                "organization_name": escape(organization_name),
+            }
+
         # Validate inputs
         if not email:
             return render(
                 request,
                 "accounts/partials/signup_form.html",
-                {"error": "Email is required", "email": email, "full_name": full_name, "phone_number": phone_number},
+                get_safe_context("Email is required"),
             )
 
         if not full_name:
             return render(
                 request,
                 "accounts/partials/signup_form.html",
-                {
-                    "error": "Full name is required",
-                    "email": email,
-                    "full_name": full_name,
-                    "phone_number": phone_number,
-                },
+                get_safe_context("Full name is required"),
             )
 
         if not phone_number:
             return render(
                 request,
                 "accounts/partials/signup_form.html",
-                {
-                    "error": "Phone number is required",
-                    "email": email,
-                    "full_name": full_name,
-                    "phone_number": phone_number,
-                },
+                get_safe_context("Phone number is required"),
             )
 
         if not organization_name:
             return render(
                 request,
                 "accounts/partials/signup_form.html",
-                {
-                    "error": "Organization name is required",
-                    "email": email,
-                    "full_name": full_name,
-                    "phone_number": phone_number,
-                },
+                get_safe_context("Organization name is required"),
             )
 
         if not re.match(r"^[^@]+@[^@]+\.[^@]+$", email):
             return render(
                 request,
                 "accounts/partials/signup_form.html",
-                {
-                    "error": "Please enter a valid email address",
-                    "email": email,
-                    "full_name": full_name,
-                    "phone_number": phone_number,
-                },
+                get_safe_context("Please enter a valid email address"),
             )
 
-        # Check if user already exists
-        if User.objects.filter(email=email).exists():
+        # Check for duplicates (email OR phone) using phone validation service
+        from accounts.services.phone_validation import PhoneValidationService
+
+        try:
+            phone_normalized = PhoneValidationService.validate_and_normalize(phone_number)
+        except ValidationError as e:
             return render(
                 request,
                 "accounts/partials/signup_form.html",
-                {
-                    "error": "An account with this email already exists. Try signing in instead.",
-                    "email": email,
-                    "full_name": full_name,
-                    "phone_number": phone_number,
-                },
+                get_safe_context(str(e)),
+            )
+
+        if User.objects.filter(models.Q(email=email) | models.Q(phone_number_normalized=phone_normalized)).exists():
+            return render(
+                request,
+                "accounts/partials/signup_form.html",
+                get_safe_context("Account with this email or phone already exists"),
             )
 
         try:
@@ -372,35 +541,34 @@ class SignUpView(View):
 
                 logger.info(f"User signup completed for: {email} (unverified, 24h grace period)")
 
-                # Send verification emails/SMS asynchronously (non-blocking)
+                # Send verification emails/SMS asynchronously (UPDATE THIS PART)
                 try:
-                    # Generate magic link for email verification
-                    login_url = reverse("accounts:verify_email")
-                    from sesame.utils import get_query_string
+                    # Generate SEPARATE magic links for email and phone verification
+                    email_verify_url = reverse("accounts:verify_email")
+                    phone_verify_url = reverse("accounts:verify_phone")
 
-                    magic_link = request.build_absolute_uri(login_url) + get_query_string(user)
+                    email_magic_link = request.build_absolute_uri(email_verify_url) + get_query_string(user)
+                    phone_magic_link = request.build_absolute_uri(phone_verify_url) + get_query_string(user)
 
                     # Send email verification (non-blocking)
-                    send_magic_link_email(email, magic_link, first_name, is_verification=True)
-                    logger.info(f"Verification email sent to: {email}")
+                    send_magic_link_email(email, email_magic_link, first_name, is_verification=True)
+                    logger.info(f"Email verification link sent to: {email}")
 
-                    # Generate and send SMS OTP if phone provided
-                    if phone_number:
-                        otp_code = str(secrets.randbelow(900000) + 100000)
-                        request.session[f"verify_otp_{user.id}"] = otp_code
-                        request.session[f"verify_otp_expires_{user.id}"] = (
-                            timezone.now() + timedelta(minutes=30)
-                        ).timestamp()
-                        send_sms_otp(phone_number, otp_code, first_name, is_verification=True)
-                        logger.info(f"Verification SMS sent to: {phone_number}")
+                    # Send SMS verification (non-blocking) - only if SMS feature is enabled
+                    if phone_number and switch_is_active("sms_feature"):
+                        from messaging.services import send_verification_sms
+
+                        send_verification_sms(phone_number, phone_magic_link, first_name)
+                        logger.info(f"SMS verification link sent to: {phone_number}")
+                    elif phone_number and not switch_is_active("sms_feature"):
+                        logger.info(f"SMS verification skipped for {phone_number} - SMS feature disabled")
+
                 except Exception as e:
-                    # Don't block signup if verification sending fails
-                    logger.error(f"Failed to send verifications for {email}: {e}")
+                    logger.error(f"Error sending verification messages to {email}: {e}")
+                    # Don't fail signup if verification sending fails
 
-                # Create verification tasks using the task service
-                from tasks.services import TaskService
-
-                TaskService.create_verification_tasks(user, email, phone_number)
+                # System tasks are created automatically via signal when user is created
+                # No need for explicit task creation here
 
             # Return success with redirect to dashboard
             return render(
@@ -417,253 +585,234 @@ class SignUpView(View):
             return render(
                 request,
                 "accounts/partials/signup_form.html",
-                {
-                    "error": "There was an issue creating your account. Please try again.",
-                    "email": email,
-                    "full_name": full_name,
-                    "phone_number": phone_number,
-                },
+                get_safe_context("There was an issue creating your account. Please try again."),
             )
 
 
 class VerifyOTPView(View):
     """
-    Handle SMS OTP verification for both signup and signin flows.
+    Handle OTP verification for signin flow.
 
-    This view manages the second step of our dual-factor authentication:
-    1. Email magic link (handled by sesame)
-    2. SMS OTP verification (handled here)
-
-    CRITICAL BUSINESS RULE: Every user (except superusers) MUST have a school association.
-    For signup: User verification and school creation are atomic - both succeed or both fail.
-    For signin: Authenticates existing user after successful verification.
-
-    Session data required:
-    - verification_user_id: User ID for verification
-    - verification_otp_code: Expected OTP code
-    - verification_otp_expires: OTP expiration timestamp
-    - verification_phone: Phone number for context
-    - verification_email: Email for context
-    - is_signup/is_signin: Flow type flags
-    - signup_school_name: School name for new user (signup only)
+    Validates the OTP code and logs the user in with appropriate session duration.
     """
 
     def get(self, request: HttpRequest) -> HttpResponse:
-        """Render OTP verification page with context from session data."""
-        # Check session data
-        user_id = request.session.get("verification_user_id")
-        expected_otp = request.session.get("verification_otp_code")
-        phone = request.session.get("verification_phone")
-        is_signup = request.session.get("is_signup", False)
-        is_signin = request.session.get("is_signin", False)
+        """Render OTP input page if session is valid"""
+        token_id = request.session.get("otp_token_id")
+        delivery_method = request.session.get("otp_delivery_method")
 
-        if not all([user_id, expected_otp, phone]):
+        if not token_id or not delivery_method:
             return redirect(reverse("accounts:signin"))
+
+        # Get masked contact info for display
+        if delivery_method == "email":
+            email = request.session.get("signin_email", "")
+            masked_contact = f"{email[:3]}***{email[email.index('@') :] if '@' in email else ''}"
+        else:  # SMS
+            user_id = request.session.get("signin_user_id")
+            try:
+                user = User.objects.get(id=user_id)
+                masked_contact = f"***{user.phone_number[-4:] if user.phone_number else '****'}"
+            except Exception:
+                masked_contact = "***"
 
         return render(
             request,
-            "accounts/verify_code.html",
+            "accounts/verify_otp.html",
             {
-                "title": "Verify Phone - Aprende Comigo",
-                "meta_description": "Enter your SMS verification code",
-                "phone_number": phone,
-                "is_signup": is_signup,
-                "is_signin": is_signin,
+                "title": "Enter Verification Code - Aprende Comigo",
+                "delivery_method": delivery_method,
+                "masked_contact": masked_contact,
             },
         )
 
     @method_decorator(csrf_protect)
     def post(self, request: HttpRequest) -> HttpResponse:
         """
-        Handle OTP verification for both signup and signin flows.
-
-        Validates the SMS OTP code against session data and:
-        - For signup: Creates school and membership, then logs in user
-        - For signin: Logs in existing user
+        Handle OTP verification for signin flows using OTPService.
 
         Returns: HTMX partial template with success or error message
         """
+        from .services.otp_service import OTPService
+
         otp_code = request.POST.get("verification_code", "").strip()
 
-        # Get session data
-        user_id = request.session.get("verification_user_id")
-        expected_otp = request.session.get("verification_otp_code")
-        otp_expires = request.session.get("verification_otp_expires")
-        phone = request.session.get("verification_phone")
-        email = request.session.get("verification_email")  # Get email for combined template
-        is_signup = request.session.get("is_signup", False)
-        is_signin = request.session.get("is_signin", False)
+        # Get session data for signin flow
+        token_id = request.session.get("otp_token_id")
+        email = request.session.get("signin_email")
+        delivery_method = request.session.get("otp_delivery_method")
 
-        if not all([user_id, expected_otp, phone, otp_code]):
+        if not token_id or not otp_code:
             return render(
                 request,
                 "accounts/partials/signin_success_with_verify.html",
                 {
                     "error": "Please enter the verification code.",
                     "email": email,
-                    "phone_number": phone,
+                    "delivery_method": delivery_method,
                 },
             )
 
-        # Check if OTP has expired
-        if otp_expires and timezone.now().timestamp() > otp_expires:
+        # Verify OTP using OTPService
+        success, result = OTPService.verify_otp(token_id, otp_code)
+
+        if success:
+            user = result
+            # Log user in for signin flow
+            login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+            logger.info(f"OTP authentication successful for user: {user.email}")
+
+            # Mark email as verified if using email delivery
+            if delivery_method == "email" and not user.email_verified:
+                user.email_verified = True
+                user.save(update_fields=["email_verified"])
+                logger.info(f"Email verification completed via OTP for user: {user.email}")
+
+                # Mark the email verification task as completed
+                try:
+                    from tasks.models import Task
+
+                    email_task = Task.objects.filter(
+                        user=user, title="Verify your email address", status="pending"
+                    ).first()
+                    if email_task:
+                        email_task.status = "completed"
+                        email_task.save()
+                        logger.info(f"Email verification task completed for {user.email}")
+                except Exception as e:
+                    logger.error(f"Failed to update email verification task: {e}")
+
+            # Get next URL from session or default to dashboard
+            next_url = request.session.get("signin_next_url") or reverse("dashboard:dashboard")
+
+            # Clean up session
+            if "otp_token_id" in request.session:
+                del request.session["otp_token_id"]
+            if "otp_delivery_method" in request.session:
+                del request.session["otp_delivery_method"]
+            if "signin_email" in request.session:
+                del request.session["signin_email"]
+            if "signin_user_id" in request.session:
+                del request.session["signin_user_id"]
+            if "signin_next_url" in request.session:
+                del request.session["signin_next_url"]
+
+            # Redirect to next URL or dashboard
+            return HttpResponse(
+                status=200,
+                headers={"HX-Redirect": next_url},
+            )
+        else:
+            # Verification failed
+            error_message = result
             return render(
                 request,
                 "accounts/partials/signin_success_with_verify.html",
                 {
-                    "error": "Verification code has expired. Please request a new one.",
+                    "error": error_message,
                     "email": email,
-                    "phone_number": phone,
+                    "delivery_method": delivery_method,
                 },
             )
-
-        try:
-            # Get user
-            user = User.objects.get(id=user_id)
-
-            # Verify OTP by comparing with session-stored code
-            if otp_code == expected_otp:
-                if is_signup:
-                    # Signup now happens immediately, no OTP verification needed
-                    logger.warning(f"Unexpected signup OTP verification for user: {user.email}")
-                    self._clear_verification_session(request)
-                    return render(
-                        request,
-                        "accounts/partials/signin_success_with_verify.html",
-                        {
-                            "error": "Signup process has changed. Please sign up again.",
-                            "email": email,
-                            "phone_number": phone,
-                        },
-                    )
-
-                elif is_signin:
-                    # For signin, SMS OTP is sufficient
-                    login(request, user, backend="django.contrib.auth.backends.ModelBackend")
-                    logger.info(f"SMS authentication successful for user: {user.email}")
-
-                    # Clear session data
-                    self._clear_verification_session(request)
-
-                    return render(
-                        request,
-                        "accounts/partials/verify_success.html",
-                        {"message": "Welcome back!", "redirect_url": reverse("dashboard:dashboard")},
-                    )
-
-            else:
-                return render(
-                    request,
-                    "accounts/partials/signin_success_with_verify.html",
-                    {
-                        "error": "Invalid verification code. Please try again.",
-                        "email": email,
-                        "phone_number": phone,
-                    },
-                )
-
-        except Exception as e:
-            logger.error(f"OTP verification error: {e}")
-            return render(
-                request,
-                "accounts/partials/signin_success_with_verify.html",
-                {
-                    "error": "There was an issue verifying your code. Please try again.",
-                    "email": email,
-                    "phone_number": phone,
-                },
-            )
-
-    def _clear_verification_session(self, request: HttpRequest) -> None:
-        """
-        Clear all verification-related session data.
-
-        Removes all session keys used during the verification process
-        to prevent data leakage and ensure clean session state.
-
-        Args:
-            request: HTTP request containing session data to clear
-        """
-        keys_to_clear = [
-            "verification_email",
-            "verification_phone",
-            "verification_user_id",
-            "verification_otp_code",
-            "verification_otp_expires",
-            "is_signup",
-            "is_signin",
-            "signup_school_name",
-        ]
-        for key in keys_to_clear:
-            request.session.pop(key, None)
 
 
 # Function for resending verification code via HTMX
 @csrf_protect
 def resend_code(request: HttpRequest) -> HttpResponse:
     """
-    Resend magic link verification email via HTMX.
-
-    Retrieves email from session, validates user exists, generates new magic link,
-    and sends it via email. Used when users need a new verification link.
+    Resend OTP code via email or SMS using OTPService.
 
     Args:
-        request: HTTP request with session containing verification_email
+        request: HTTP request with session containing signin data
 
     Returns:
-        HttpResponse: HTMX partial with success or error message
+        HttpResponse: HTMX partial with new OTP form or error message
     """
-    email = request.session.get("verification_email")
+    from messaging.services import send_otp_email_message
 
-    if not email:
+    from .services.otp_service import OTPService
+
+    email = request.session.get("signin_email")
+    user_id = request.session.get("signin_user_id")
+    delivery_method = request.session.get("otp_delivery_method", "email")
+
+    if not email or not user_id:
+        logger.warning("Resend code attempted with missing session data")
         return render(
-            request, "accounts/partials/resend_error.html", {"error": "Session expired. Please try signing in again."}
+            request,
+            "accounts/partials/signin_success_with_verify.html",
+            {
+                "error": "Your session has expired. Please sign in again to receive a new verification code.",
+                "email": email or "",
+                "delivery_method": delivery_method,
+                "session_expired": True,
+            },
         )
 
     try:
-        # Check if user exists and generate new magic link
-        if not user_exists(email):
-            return render(
-                request, "accounts/partials/resend_error.html", {"error": "No account found with this email address."}
-            )
+        user = User.objects.get(id=user_id, email=email)
 
-        logger.info(f"Resending magic link for: {email}")
-        user = get_user_by_email(email)
-        login_url = reverse("accounts:magic_login")
-        magic_link = request.build_absolute_uri(login_url) + get_query_string(user)
-        logger.info(f"Regenerated magic link for {email}: {login_url} (token length: {len(get_query_string(user))})")
+        # Generate new OTP
+        otp_code, token_id = OTPService.generate_otp(user, delivery_method)
 
-        try:
-            send_magic_link_email(email, magic_link, user.name or user.first_name)
-            logger.info(f"Magic link resent successfully to: {email}")
+        # Send OTP based on delivery method
+        if delivery_method == "email":
+            result = send_otp_email_message(user.email, otp_code, user.first_name)
+        else:
+            # SMS sending would go here
+            result = {"success": False, "error": "SMS not yet implemented"}
 
-            # Log email confirmation resent for development environment
-            token = magic_link.split("sesame=")[-1] if "sesame=" in magic_link else "generated"
-            log_email_confirmation_resent(email, token[:8] + "...")  # Show partial token for security
+        if result.get("success"):
+            # Update session with new token
+            request.session["otp_token_id"] = token_id
+            logger.info(f"OTP resent successfully via {delivery_method} to: {email}")
 
+            # Return the OTP input form again
             return render(
                 request,
-                "accounts/partials/resend_success.html",
-                {"email": email, "message": "A new login link has been sent to your email."},
+                "accounts/partials/signin_success_with_verify.html",
+                {
+                    "delivery_method": delivery_method,
+                    "masked_contact": f"{email[:3]}***{email[email.index('@') :]}",
+                    "email": email,
+                    "message": "A new verification code has been sent.",
+                },
             )
-
-        except Exception as email_error:
-            logger.error(f"Failed to resend magic link to {email}: {email_error}")
-            # Log email confirmation failure for development environment
-            log_email_confirmation_failure(email, f"Resend failed: {email_error!s}")
-
+        else:
+            error_msg = result.get("error", "Failed to resend verification code.")
+            logger.error(f"Failed to resend OTP to {email}: {error_msg}")
             return render(
                 request,
-                "accounts/partials/resend_error.html",
-                {"error": "There was an issue resending the login link. Please try again."},
+                "accounts/partials/signin_success_with_verify.html",
+                {
+                    "error": error_msg,
+                    "email": email,
+                    "delivery_method": delivery_method,
+                },
             )
 
+    except User.DoesNotExist:
+        logger.error(f"User not found for resend code: {email} (ID: {user_id})")
+        return render(
+            request,
+            "accounts/partials/signin_success_with_verify.html",
+            {
+                "error": "User account not found. Please sign in again.",
+                "email": email,
+                "delivery_method": delivery_method,
+                "session_expired": True,
+            },
+        )
     except Exception as e:
         logger.error(f"Resend code error for {email}: {e}")
         return render(
             request,
-            "accounts/partials/resend_error.html",
-            {"error": "There was an issue resending the login link. Please try again."},
+            "accounts/partials/signin_success_with_verify.html",
+            {
+                "error": "There was an issue resending the verification code. Please try again.",
+                "email": email,
+                "delivery_method": delivery_method,
+            },
         )
 
 
@@ -931,12 +1080,98 @@ class AcceptTeacherInvitationView(View):
         return redirect(reverse("accounts:accept_invitation", kwargs={"token": token}))
 
 
+class EmailVerificationView(SesameLoginView):
+    """Handle email verification via magic link"""
+
+    def login_success(self):
+        """Mark email as verified and log user in"""
+        # Access request and user from the view instance
+        user = self.request.user
+        if not user.email_verified:
+            user.email_verified = True
+            user.email_verified_at = timezone.now()
+            user.save(update_fields=["email_verified", "email_verified_at"])
+
+            messages.success(self.request, "✅ Email verified successfully!")
+            logger.info(f"Email verified for user: {user.email}")
+
+            # Log email confirmation success
+            log_email_confirmation_success(user.email)
+        else:
+            messages.info(self.request, "Your email is already verified!")
+
+        # Let the parent class handle the redirect properly
+        return super().login_success()
+
+
+class PhoneVerificationView(SesameLoginView):
+    """Handle phone verification via magic link"""
+
+    def dispatch(self, request, *args, **kwargs):
+        logger.info(f"PhoneVerificationView.dispatch called - URL: {request.get_full_path()}")
+        logger.info(f"PhoneVerificationView.dispatch called - GET params: {request.GET}")
+        logger.info(f"PhoneVerificationView.dispatch called - METHOD: {request.method}")
+
+        # Check if this is a redirect by looking at HTTP_REFERER
+        referer = request.headers.get("referer")
+        if referer:
+            logger.info(f"PhoneVerificationView.dispatch called - REFERER: {referer}")
+
+        response = super().dispatch(request, *args, **kwargs)
+
+        # Log the response status
+        logger.info(f"PhoneVerificationView.dispatch response status: {response.status_code}")
+        if hasattr(response, "url"):
+            logger.info(f"PhoneVerificationView.dispatch response redirect to: {response.url}")
+
+        return response
+
+    def get_user(self, request):
+        """Override to add debugging for sesame authentication"""
+        logger.info("PhoneVerificationView.get_user called")
+        logger.info(f"PhoneVerificationView.get_user - sesame token: {request.GET.get('sesame', 'NO TOKEN')}")
+        try:
+            user = super().get_user(request)
+            logger.info(f"PhoneVerificationView.get_user success: {user}")
+            return user
+        except Exception as e:
+            logger.error(f"PhoneVerificationView.get_user failed: {e}")
+            raise
+
+    def login_failure(self, request):
+        logger.error("PhoneVerificationView.login_failure called - sesame authentication failed")
+        messages.error(request, "Phone verification link is invalid or expired.")
+        return redirect(reverse("accounts:signin"))
+
+    def login_success(self):
+        """Mark phone as verified and log user in"""
+        # Access request and user from the view instance
+        user = self.request.user
+        logger.info(f"PhoneVerificationView.login_success called for user: {user.email}")
+        logger.info(f"Phone verified before: {user.phone_verified}")
+
+        if not user.phone_verified:
+            user.phone_verified = True
+            user.phone_verified_at = timezone.now()
+            user.save(update_fields=["phone_verified", "phone_verified_at"])
+
+            logger.info(f"Phone verified after save: {user.phone_verified}")
+            messages.success(self.request, "✅ Phone verified successfully!")
+            logger.info(f"Phone verified for user: {user.email}")
+        else:
+            messages.info(self.request, "Your phone is already verified!")
+
+        # Let the parent class handle the redirect properly
+        logger.info("PhoneVerificationView.login_success delegating to parent class")
+        return super().login_success()
+
+
 class CustomMagicLoginView(SesameLoginView):
     """
     Custom magic link login view with enhanced error handling and logging.
 
-    Extends sesame's LoginView to provide better user feedback and debugging
-    information for magic link authentication failures.
+    This handles magic link logins for signin (not verification).
+    For verification, use EmailVerificationView or PhoneVerificationView.
     """
 
     def dispatch(self, request, *args, **kwargs):
@@ -969,6 +1204,19 @@ class CustomMagicLoginView(SesameLoginView):
             # Provide generic error message
             messages.error(request, "There was an issue with your login link. Please try signing in again.")
             return redirect(reverse("accounts:signin"))
+
+    def login_success(self):
+        """Override to add verification check for signin magic links"""
+        # Access request and user from the view instance
+        user = self.request.user
+        # This is for signin, not verification, so check if user is verified
+        if not (user.email_verified or user.phone_verified):
+            messages.error(self.request, "Please verify your email or phone number before signing in.")
+            return redirect(reverse("accounts:signin"))
+
+        # User is verified, proceed with login
+        logger.info(f"Successful magic link signin for verified user: {user.email}")
+        return super().login_success()
 
 
 @login_required
@@ -1122,6 +1370,7 @@ class ProfileView(LoginRequiredMixin, DetailView):
         context["school_name"] = memberships.first().school.name if memberships.exists() else "No School"
         context["user_first_name"] = self.request.user.first_name
         context["user_role"] = memberships.first().get_role_display() if memberships.exists() else "User"
+        context["sms_enabled"] = switch_is_active("sms_feature")
 
         return context
 
@@ -1268,6 +1517,12 @@ def send_verification_email(request):
 @login_required
 def send_verification_sms(request):
     """Send verification SMS to the current user (HTMX endpoint)."""
+    # Check if SMS feature is enabled
+    if not switch_is_active("sms_feature"):
+        return HttpResponse(
+            '<div class="text-red-600 text-sm">SMS service is temporarily unavailable. Please try again later.</div>'
+        )
+
     user = request.user
 
     # Check if phone number exists
@@ -1300,6 +1555,64 @@ def send_verification_sms(request):
             return HttpResponse('<div class="text-red-600 text-sm">Failed to send SMS. Please try again later.</div>')
     except Exception as e:
         logger.error(f"Error sending verification SMS to {user.phone_number}: {e}")
+        return HttpResponse('<div class="text-red-600 text-sm">An error occurred. Please try again later.</div>')
+
+
+@require_http_methods(["POST"])
+@csrf_protect
+def resend_verification_email_signin(request):
+    """
+    Resend verification email for unverified users during signin flow (HTMX endpoint).
+
+    This endpoint is for users who are not logged in yet but trying to sign in
+    with an unverified account. It looks up the user by email from POST data.
+    """
+    email = request.POST.get("email", "").strip().lower()
+
+    if not email:
+        return HttpResponse('<div class="text-red-600 text-sm">Email address is required.</div>')
+
+    try:
+        # Validate email format
+        from django.core.validators import validate_email
+
+        validate_email(email)
+    except ValidationError:
+        return HttpResponse('<div class="text-red-600 text-sm">Please enter a valid email address.</div>')
+
+    try:
+        # Get user by email
+        user = get_user_by_email(email)
+        if not user:
+            # Don't reveal if user exists - security best practice
+            return HttpResponse(
+                '<div class="text-red-600 text-sm">If this email is registered, a verification email will be sent.</div>'
+            )
+
+        # Check if already verified
+        if user.email_verified:
+            return HttpResponse(
+                '<div class="text-green-600 text-sm">Your email is already verified! Please try signing in again.</div>'
+            )
+
+        # Generate magic link for email verification
+        login_url = reverse("accounts:verify_email")
+        magic_link = request.build_absolute_uri(login_url) + sesame_get_query_string(user)
+
+        # Send verification email
+        result = send_magic_link_email(user.email, magic_link, user.first_name, is_verification=True)
+
+        if result.get("success"):
+            logger.info(f"Verification email resent to unverified signin user: {email}")
+            return HttpResponse(
+                '<div class="text-green-600 text-sm">Verification email sent! Check your inbox and click the verification link.</div>'
+            )
+        else:
+            logger.error(f"Failed to resend verification email to {email}")
+            return HttpResponse('<div class="text-red-600 text-sm">Failed to send email. Please try again later.</div>')
+
+    except Exception as e:
+        logger.error(f"Error resending verification email to {email}: {e}")
         return HttpResponse('<div class="text-red-600 text-sm">An error occurred. Please try again later.</div>')
 
 
@@ -1405,3 +1718,431 @@ def root_redirect(request):
         return HttpResponseRedirect(reverse("dashboard:dashboard"))
     else:
         return HttpResponseRedirect(reverse("accounts:signin"))
+
+
+# ==========================================
+# Student Creation Views (Refactored from dashboard.views.PeopleView)
+# ==========================================
+
+
+class BaseStudentCreateView(LoginRequiredMixin, View):
+    """Base class for student creation views with common functionality."""
+
+    def _validate_email_format(self, email):
+        """Validate and return clean email or raise ValidationError"""
+        if not email:
+            raise ValidationError("Email is required")
+        try:
+            validate_email(email)
+            return email.lower()
+        except ValidationError:
+            raise ValidationError(f"Invalid email format: {email}")
+
+    def _get_user_schools(self, user):
+        """Get schools accessible to the current user"""
+        if user.is_staff or user.is_superuser:
+            return School.objects.all()
+        school_ids = SchoolMembership.objects.filter(user=user).values_list("school_id", flat=True)
+        return School.objects.filter(id__in=school_ids)
+
+    def _render_error(self, request, error_message):
+        """Render error message template"""
+        logger.error(f"Student creation error: {error_message}")
+        return render(
+            request,
+            "shared/partials/error_message.html",
+            {"error": error_message},
+        )
+
+    def _render_success(self, request, success_message):
+        """Render success message template"""
+        logger.info(f"Student creation success: {success_message}")
+        return render(
+            request,
+            "shared/partials/success_message.html",
+            {"message": success_message},
+        )
+
+
+@method_decorator(csrf_protect, name="dispatch")
+class StudentSeparateCreateView(BaseStudentCreateView):
+    """Create both student and guardian user accounts (separate logins)."""
+
+    def post(self, request):
+        """Handle Student + Guardian account creation"""
+        from django.db import transaction
+
+        from accounts.models.profiles import GuardianProfile
+        from accounts.permissions import PermissionService
+
+        try:
+            # Sanitize and extract form data
+            student_name = escape(request.POST.get("name", "").strip())
+            student_email_raw = request.POST.get("email", "").strip()
+            student_birth_date = request.POST.get("birth_date")
+            student_school_year = escape(request.POST.get("school_year", "").strip())
+            student_notes = escape(request.POST.get("notes", "").strip())
+
+            guardian_name = escape(request.POST.get("guardian_name", "").strip())
+            guardian_email_raw = request.POST.get("guardian_email", "").strip()
+            guardian_phone = escape(request.POST.get("guardian_phone", "").strip())
+            guardian_tax_nr = escape(request.POST.get("guardian_tax_nr", "").strip())
+            guardian_address = escape(request.POST.get("guardian_address", "").strip())
+            guardian_invoice = request.POST.get("guardian_invoice") == "on"
+            guardian_email_notifications = request.POST.get("guardian_email_notifications") == "on"
+            guardian_sms_notifications = request.POST.get("guardian_sms_notifications") == "on"
+
+            # Log form data for debugging
+            logger.info(f"Processing separate student creation: student={student_name}, guardian={guardian_name}")
+
+            # Validate and sanitize emails
+            try:
+                student_email = self._validate_email_format(student_email_raw)
+                guardian_email = self._validate_email_format(guardian_email_raw)
+            except ValidationError as e:
+                return self._render_error(request, str(e))
+
+            # Validate required fields
+            if not all([student_name, student_email, student_birth_date, guardian_name, guardian_email]):
+                missing_fields = []
+                if not student_name:
+                    missing_fields.append("student name")
+                if not student_email:
+                    missing_fields.append("student email")
+                if not student_birth_date:
+                    missing_fields.append("student birth date")
+                if not guardian_name:
+                    missing_fields.append("guardian name")
+                if not guardian_email:
+                    missing_fields.append("guardian email")
+
+                error_msg = f"Missing required fields: {', '.join(missing_fields)}"
+                return self._render_error(request, error_msg)
+
+            # Get user's schools and educational system
+            user_schools = self._get_user_schools(request.user)
+            with transaction.atomic():
+                # Temporarily disconnect the task creation signal to prevent orphaned tasks
+                from django.db.models.signals import post_save
+
+                from accounts.signals.verification_task_signals import create_system_tasks_for_new_user
+
+                post_save.disconnect(create_system_tasks_for_new_user, sender=User)
+
+                try:
+                    # Create or get student user
+                    try:
+                        student_user = User.objects.get(email=student_email)
+                        student_user_was_created = False
+                    except User.DoesNotExist:
+                        student_user = User.objects.create_user(email=student_email, name=student_name)
+                        student_user_was_created = True
+
+                    # Create or get guardian user
+                    try:
+                        guardian_user = User.objects.get(email=guardian_email)
+                        guardian_user_was_created = False
+                    except User.DoesNotExist:
+                        guardian_user = User.objects.create_user(
+                            email=guardian_email, name=guardian_name, phone_number=guardian_phone
+                        )
+                        guardian_user_was_created = True
+
+                    # Create guardian profile
+                    guardian_profile, _ = GuardianProfile.objects.get_or_create(
+                        user=guardian_user,
+                        defaults={
+                            "address": guardian_address,
+                            "tax_nr": guardian_tax_nr,
+                            "invoice": guardian_invoice,
+                            "email_notifications_enabled": guardian_email_notifications,
+                            "sms_notifications_enabled": guardian_sms_notifications,
+                        },
+                    )
+
+                    # Create student profile
+                    student_profile = StudentProfile.objects.create(
+                        user=student_user,
+                        name=student_name,
+                        account_type="STUDENT_GUARDIAN",
+                        school_year=student_school_year,
+                        birth_date=student_birth_date,
+                        guardian=guardian_profile,
+                        notes=student_notes,
+                    )
+
+                    # Setup permissions
+                    PermissionService.setup_permissions_for_student(student_profile)
+
+                    # Add both users to schools
+                    for school in user_schools:
+                        SchoolMembership.objects.get_or_create(
+                            user=student_user, school=school, defaults={"role": SchoolRole.STUDENT}
+                        )
+                        SchoolMembership.objects.get_or_create(
+                            user=guardian_user, school=school, defaults={"role": SchoolRole.GUARDIAN}
+                        )
+
+                    # Manually create system tasks after successful student creation
+                    from tasks.services import TaskService
+
+                    if student_user_was_created:
+                        TaskService.initialize_system_tasks(student_user)
+                    if guardian_user_was_created:
+                        TaskService.initialize_system_tasks(guardian_user)
+
+                finally:
+                    # Reconnect the signal
+                    post_save.connect(create_system_tasks_for_new_user, sender=User)
+
+            success_message = f"Successfully created student account for {student_name} and guardian account for {guardian_name}. Both can now login independently."
+            return self._render_success(request, success_message)
+
+        except Exception as e:
+            logger.error(f"Unexpected error in separate student creation: {e}", exc_info=True)
+            return self._render_error(request, "An unexpected error occurred. Please try again.")
+
+
+@method_decorator(csrf_protect, name="dispatch")
+class StudentGuardianOnlyCreateView(BaseStudentCreateView):
+    """Create guardian account only, with student profile managed by guardian."""
+
+    def post(self, request):
+        """Handle Guardian-Only account creation"""
+        from django.db import transaction
+
+        from accounts.models.profiles import GuardianProfile
+        from accounts.permissions import PermissionService
+
+        try:
+            # Sanitize and extract form data
+            student_name = escape(request.POST.get("name", "").strip())
+            student_birth_date = request.POST.get("birth_date")
+            student_school_year = escape(request.POST.get("school_year", "").strip())
+            student_notes = escape(request.POST.get("notes", "").strip())
+
+            guardian_name = escape(request.POST.get("guardian_name", "").strip())
+            guardian_email_raw = request.POST.get("guardian_email", "").strip()
+            guardian_phone = escape(request.POST.get("guardian_phone", "").strip())
+            guardian_tax_nr = escape(request.POST.get("guardian_tax_nr", "").strip())
+            guardian_address = escape(request.POST.get("guardian_address", "").strip())
+            guardian_invoice = request.POST.get("guardian_invoice") == "on"
+            guardian_email_notifications = request.POST.get("guardian_email_notifications") == "on"
+            guardian_sms_notifications = request.POST.get("guardian_sms_notifications") == "on"
+
+            # Log form data for debugging
+            logger.info(f"Processing guardian-only creation: student={student_name}, guardian={guardian_name}")
+
+            # Validate and sanitize email
+            try:
+                guardian_email = self._validate_email_format(guardian_email_raw)
+            except ValidationError as e:
+                return self._render_error(request, str(e))
+
+            # Validate required fields
+            if not all([student_name, student_birth_date, guardian_name, guardian_email]):
+                missing_fields = []
+                if not student_name:
+                    missing_fields.append("student name")
+                if not student_birth_date:
+                    missing_fields.append("student birth date")
+                if not guardian_name:
+                    missing_fields.append("guardian name")
+                if not guardian_email:
+                    missing_fields.append("guardian email")
+
+                error_msg = f"Missing required fields: {', '.join(missing_fields)}"
+                return self._render_error(request, error_msg)
+
+            # Get user's schools and educational system
+            user_schools = self._get_user_schools(request.user)
+            with transaction.atomic():
+                # Temporarily disconnect the task creation signal to prevent orphaned tasks
+                from django.db.models.signals import post_save
+
+                from accounts.signals.verification_task_signals import create_system_tasks_for_new_user
+
+                post_save.disconnect(create_system_tasks_for_new_user, sender=User)
+
+                try:
+                    # Create or get guardian user
+                    try:
+                        guardian_user = User.objects.get(email=guardian_email)
+                        guardian_user_was_created = False
+                    except User.DoesNotExist:
+                        guardian_user = User.objects.create_user(
+                            email=guardian_email, name=guardian_name, phone_number=guardian_phone
+                        )
+                        guardian_user_was_created = True
+
+                    # Create guardian profile
+                    guardian_profile, _ = GuardianProfile.objects.get_or_create(
+                        user=guardian_user,
+                        defaults={
+                            "address": guardian_address,
+                            "tax_nr": guardian_tax_nr,
+                            "invoice": guardian_invoice,
+                            "email_notifications_enabled": guardian_email_notifications,
+                            "sms_notifications_enabled": guardian_sms_notifications,
+                        },
+                    )
+
+                    # Create student profile WITHOUT a user account (guardian-only)
+                    student_profile = StudentProfile.objects.create(
+                        user=None,  # No user account for guardian-only students
+                        name=student_name,  # Store student name directly
+                        account_type="GUARDIAN_ONLY",
+                        school_year=student_school_year,
+                        birth_date=student_birth_date,
+                        guardian=guardian_profile,
+                        notes=student_notes,
+                    )
+
+                    # Setup permissions
+                    PermissionService.setup_permissions_for_student(student_profile)
+
+                    # Add guardian to schools
+                    for school in user_schools:
+                        SchoolMembership.objects.get_or_create(
+                            user=guardian_user, school=school, defaults={"role": SchoolRole.GUARDIAN}
+                        )
+
+                    # Manually create system tasks after successful student creation
+                    if guardian_user_was_created:
+                        from tasks.services import TaskService
+
+                        TaskService.initialize_system_tasks(guardian_user)
+
+                finally:
+                    # Reconnect the signal
+                    post_save.connect(create_system_tasks_for_new_user, sender=User)
+
+            success_message = f"Successfully created guardian account for {guardian_name} who will manage {student_name}'s profile. Only the guardian can login."
+            return self._render_success(request, success_message)
+
+        except Exception as e:
+            logger.error(f"Unexpected error in guardian-only creation: {e}", exc_info=True)
+            return self._render_error(request, "An unexpected error occurred. Please try again.")
+
+
+@method_decorator(csrf_protect, name="dispatch")
+class StudentAdultCreateView(BaseStudentCreateView):
+    """Create adult student account (self-managed)."""
+
+    def post(self, request):
+        """Handle Adult Student account creation"""
+        from django.db import transaction
+
+        from accounts.models.profiles import GuardianProfile
+        from accounts.permissions import PermissionService
+
+        try:
+            # Sanitize and extract form data
+            student_name = escape(request.POST.get("name", "").strip())
+            student_email_raw = request.POST.get("email", "").strip()
+            student_birth_date = request.POST.get("birth_date")
+            student_phone = escape(request.POST.get("phone", "").strip())
+            student_school_year = escape(request.POST.get("school_year", "").strip())
+            student_tax_nr = escape(request.POST.get("tax_nr", "").strip())
+            student_address = escape(request.POST.get("address", "").strip())
+            student_notes = escape(request.POST.get("notes", "").strip())
+            student_invoice = request.POST.get("invoice") == "on"
+            student_email_notifications = request.POST.get("email_notifications") == "on"
+            student_sms_notifications = request.POST.get("sms_notifications") == "on"
+
+            # Log form data for debugging
+            logger.info(f"Processing adult student creation: student={student_name}")
+
+            # Validate and sanitize email
+            try:
+                student_email = self._validate_email_format(student_email_raw)
+            except ValidationError as e:
+                return self._render_error(request, str(e))
+
+            # Validate required fields
+            if not all([student_name, student_email, student_birth_date]):
+                missing_fields = []
+                if not student_name:
+                    missing_fields.append("student name")
+                if not student_email:
+                    missing_fields.append("student email")
+                if not student_birth_date:
+                    missing_fields.append("student birth date")
+
+                error_msg = f"Missing required fields: {', '.join(missing_fields)}"
+                return self._render_error(request, error_msg)
+
+            # Get user's schools and educational system
+            user_schools = self._get_user_schools(request.user)
+            with transaction.atomic():
+                # Temporarily disconnect the task creation signal to prevent orphaned tasks
+                from django.db.models.signals import post_save
+
+                from accounts.signals.verification_task_signals import create_system_tasks_for_new_user
+
+                post_save.disconnect(create_system_tasks_for_new_user, sender=User)
+
+                try:
+                    # Create or get student user
+                    try:
+                        student_user = User.objects.get(email=student_email)
+                        user_was_created = False
+                    except User.DoesNotExist:
+                        student_user = User.objects.create_user(
+                            email=student_email, name=student_name, phone_number=student_phone
+                        )
+                        user_was_created = True
+
+                    # Create or update guardian profile for self (adult students are their own guardian)
+                    guardian_profile, _ = GuardianProfile.objects.get_or_create(
+                        user=student_user,
+                        defaults={
+                            "address": student_address,
+                            "tax_nr": student_tax_nr,
+                            "invoice": student_invoice,
+                            "email_notifications_enabled": student_email_notifications,
+                            "sms_notifications_enabled": student_sms_notifications,
+                        },
+                    )
+
+                    # Create student profile
+                    student_profile = StudentProfile.objects.create(
+                        user=student_user,
+                        name=student_name,
+                        account_type="ADULT_STUDENT",
+                        school_year=student_school_year,
+                        birth_date=student_birth_date,
+                        guardian=guardian_profile,  # Adult student is their own guardian
+                        notes=student_notes,
+                        email_notifications_enabled=student_email_notifications,
+                        sms_notifications_enabled=student_sms_notifications,
+                        address=student_address,
+                        tax_nr=student_tax_nr,
+                        invoice=student_invoice,
+                    )
+
+                    # Setup permissions
+                    PermissionService.setup_permissions_for_student(student_profile)
+
+                    # Add student to schools
+                    for school in user_schools:
+                        SchoolMembership.objects.get_or_create(
+                            user=student_user, school=school, defaults={"role": SchoolRole.STUDENT}
+                        )
+
+                    # Manually create system tasks after successful student creation
+                    if user_was_created:
+                        from tasks.services import TaskService
+
+                        TaskService.initialize_system_tasks(student_user)
+
+                finally:
+                    # Reconnect the signal
+                    post_save.connect(create_system_tasks_for_new_user, sender=User)
+
+            success_message = f"Successfully created adult student account for {student_name}. They can now login and manage their own account."
+            return self._render_success(request, success_message)
+
+        except Exception as e:
+            logger.error(f"Unexpected error in adult student creation: {e}", exc_info=True)
+            return self._render_error(request, "An unexpected error occurred. Please try again.")

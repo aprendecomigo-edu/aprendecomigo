@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
 {% block content %}
 <!-- Full screen container with proper flex hierarchy -->
@@ -28,10 +29,10 @@
 
                         <div class="flex flex-col items-center space-y-2">
                             <h1 class="text-center font-primary text-4xl font-bold">
-                                <span class="text-gradient-primary font-primary">Verify Code</span>
+                                <span class="text-gradient-primary font-primary">{% trans "Verify Code" %}</span>
                             </h1>
                             <p class="text-center text-gray-600 font-body text-base leading-relaxed">
-                                Enter the 6-digit code sent to<br>
+                                {% trans "Enter the 6-digit code sent to" %}<br>
                                 <span class="font-medium text-gray-900">{{ email }}</span>
                             </p>
                         </div>
@@ -48,11 +49,11 @@
                     <!-- Footer with back option -->
                     <div class="flex flex-col items-center mt-8 space-y-2">
                         <p class="text-center text-gray-600 font-body text-sm">
-                            Need to change your email?
+                            {% trans "Need to change your email?" %}
                         </p>
                         <a href="{% if is_signup %}/auth/signup{% else %}/auth/signin{% endif %}"
            class="text-white text-sm font-bold py-1 px-1 rounded-xl font-primary bg-black">
-                            Go back
+                            {% trans "Go back" %}
                         </a>
                     </div>
                 </div>

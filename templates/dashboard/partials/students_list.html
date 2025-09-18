@@ -1,43 +1,96 @@
+{% load i18n %}
 <!-- Students List Partial - for HTMX updates -->
 <div id="students-content">
     {% if students %}
-        <!-- Students List -->
-        <div class="grid gap-4">
-            {% for student in students %}
-                <div class="bg-white rounded-lg border border-gray-200 p-4">
-                    <div class="flex justify-between items-start">
-                        <div class="flex-1">
-                            <h3 class="font-semibold text-gray-900">{{ student.full_name|default:"Unknown Student" }}</h3>
-                            <p class="text-sm text-gray-600">{{ student.email|default:"No email" }}</p>
-                            {% if student.school_year %}
-                                <p class="text-sm text-blue-600 mt-1">School Year: {{ student.school_year }}</p>
-                            {% endif %}
-                            <span class="inline-block mt-2 px-2 py-1 text-xs font-medium rounded-full
-                                {% if student.status == 'active' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
-                                {{ student.status|title }}
-                            </span>
-                        </div>
-                        <button class="border border-gray-300 hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded-lg text-sm">
-                            View
-                        </button>
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
+        <!-- Students Table -->
+        <div class="overflow-x-auto bg-white rounded-lg border border-gray-200">
+            <table class="table table-zebra w-full">
+                <thead>
+                    <tr class="bg-gray-50">
+                        <th class="text-left font-medium text-gray-900">Student</th>
+                        <th class="text-left font-medium text-gray-900">Contact</th>
+                        <th class="text-left font-medium text-gray-900">School Year</th>
+                        <th class="text-left font-medium text-gray-900">Date Added</th>
+                        <th class="text-left font-medium text-gray-900">Status</th>
+                        <th class="text-left font-medium text-gray-900">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr class="hover:bg-gray-50">
+                        <!-- Student Info -->
+                        <td>
+                            <div class="flex items-center space-x-3">
+                                <div class="avatar">
+                                    <div class="mask mask-circle w-10 h-10 bg-blue-600 flex items-center justify-center">
+                                        <span class="text-white font-medium text-sm">
+                                            {{ student.name|default:student.full_name|default:"U"|first|upper }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-gray-900">
+                                        {{ student.name|default:student.full_name|default:"Unknown Student" }}
+                                    </div>
+                                    {% if student.guardian %}
+                                        <div class="text-sm opacity-75">
+                                            Guardian: {{ student.guardian.name|truncatechars:20 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
 
-        <!-- Students Stats -->
-        <div class="mt-6 bg-white rounded-lg border border-gray-200 p-4">
-            <h3 class="font-semibold text-gray-900 mb-3">Resumo</h3>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="text-center">
-                    <div class="text-2xl font-bold text-blue-600">{{ student_stats.total }}</div>
-                    <div class="text-sm text-gray-600">Total de Alunos</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-2xl font-bold text-green-600">{{ students|length }}</div>
-                    <div class="text-sm text-gray-600">Ativos</div>
-                </div>
-            </div>
+                        <!-- Contact Info -->
+                        <td>
+                            <div>
+                                <div class="font-medium">{{ student.email|default:"No email" }}</div>
+                                {% if student.guardian.email and student.guardian.email != student.email %}
+                                    <div class="text-sm opacity-75">{{ student.guardian.email }}</div>
+                                {% endif %}
+                            </div>
+                        </td>
+
+                        <!-- School Year -->
+                        <td>
+                            {% if student.school_year %}
+                                <div class="badge badge-primary badge-sm">
+                                    {% blocktrans with year=student.school_year %}Year {{ year }}{% endblocktrans %}
+                                </div>
+                            {% else %}
+                                <span class="text-sm opacity-50">Not set</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Date Added -->
+                        <td>
+                            <div class="text-sm text-gray-600">
+                                {{ student.date_joined|date:"d M Y" }}
+                            </div>
+                            <div class="text-xs text-gray-400">
+                                {{ student.date_joined|date:"H:i" }}
+                            </div>
+                        </td>
+
+                        <!-- Status -->
+                        <td>
+                            <div class="badge {% if student.status == 'active' %}badge-success{% else %}badge-error{% endif %} badge-sm">
+                                {{ student.status|title }}
+                            </div>
+                        </td>
+
+                        <!-- Actions -->
+                        <td>
+                            <button
+                                @click="openStudentDetail({{ student.id }})"
+                                class="btn btn-ghost btn-sm text-blue-600 hover:text-blue-800">
+                                View Details
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     {% else %}
         <!-- Students Empty State -->
@@ -46,13 +99,13 @@
                 <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                 </svg>
-                <h3 class="mt-2 text-lg font-semibold text-gray-700">Gestão de Alunos</h3>
-                <p class="text-gray-600">Nenhum aluno encontrado. Adicione alunos para começar.</p>
+                <h3 class="mt-2 text-lg font-semibold text-gray-700">{% trans "Student Management" %}</h3>
+                <p class="text-gray-600">{% trans "No students found. Add students to get started." %}</p>
                 <button
                     @click="openModal('addStudent')"
                     class="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
                 >
-                    Adicionar Primeiro Aluno
+                    {% trans "Add First Student" %}
                 </button>
             </div>
         </div>

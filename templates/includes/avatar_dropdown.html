@@ -1,0 +1,69 @@
+<!-- Avatar Dropdown Component -->
+<div class="relative" x-data="{ {{ dropdown_id|default:'avatar' }}Open: false }">
+    <button @click="{{ dropdown_id|default:'avatar' }}Open = !{{ dropdown_id|default:'avatar' }}Open"
+            @click.away="{{ dropdown_id|default:'avatar' }}Open = false"
+            class="avatar cursor-pointer">
+        <div class="w-8 rounded-full ring ring-primary ring-offset-base-100 ring-offset-1 hover:ring-2 transition-all">
+            <div class="bg-gradient-primary rounded-full flex items-center justify-center w-full h-full">
+                <span class="text-white font-medium text-sm">{{ user.first_name.0|default:"A"|upper }}</span>
+            </div>
+        </div>
+    </button>
+
+    <!-- Dropdown Menu -->
+    <div x-show="{{ dropdown_id|default:'avatar' }}Open"
+         x-transition:enter="transition ease-out duration-100"
+         x-transition:enter-start="transform opacity-0 scale-95"
+         x-transition:enter-end="transform opacity-100 scale-100"
+         x-transition:leave="transition ease-in duration-75"
+         x-transition:leave-start="transform opacity-100 scale-100"
+         x-transition:leave-end="transform opacity-0 scale-95"
+         @click.stop
+         class="absolute right-0 mt-2 min-w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+
+        <!-- User Info -->
+        <div class="px-4 py-3 border-b border-gray-100">
+            <p class="text-sm font-medium text-gray-900 truncate">{{ user.name|default:user.first_name }}</p>
+            <p class="text-xs text-gray-500 break-all">{{ user.email }}</p>
+        </div>
+
+        <!-- Menu Items -->
+        <a href="{% url 'accounts:profile' %}" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+            <i data-lucide="user" class="h-4 w-4 mr-3 text-gray-500"></i>
+            My Profile
+        </a>
+
+        <!-- Language Selector -->
+        {% load i18n %}
+        {% get_current_language as LANGUAGE_CODE %}
+        {% get_available_languages as LANGUAGES %}
+        <div class="px-4 py-2 border-t border-gray-100" @click.stop>
+            <div class="flex items-center justify-between text-sm text-gray-700">
+                <div class="flex items-center">
+                    <i data-lucide="globe" class="h-4 w-4 mr-3 text-gray-500"></i>
+                    <span>Language</span>
+                </div>
+                <form method="post" action="{% url 'accounts:set_language' %}" class="flex items-center">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <select name="language"
+                            onchange="this.form.submit()"
+                            class="text-xs border-0 bg-transparent focus:ring-0 pr-1 text-gray-600 cursor-pointer hover:text-gray-900">
+                        {% for lang_code, lang_name in LANGUAGES %}
+                        <option value="{{ lang_code }}" {% if lang_code == LANGUAGE_CODE %}selected{% endif %}>
+                            {% if lang_code == 'en-gb' %}🇬🇧{% elif lang_code == 'pt-pt' %}🇵🇹{% endif %} {{ lang_name|slice:":2"|upper }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+        </div>
+
+        <div class="border-t border-gray-100">
+            <a href="{% url 'accounts:logout' %}" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                <i data-lucide="log-out" class="h-4 w-4 mr-3 text-red-500"></i>
+                Sign Out
+            </a>
+        </div>
+    </div>
+</div>

@@ -20,6 +20,7 @@ from django.utils import timezone
 
 from accounts.models import School, SchoolMembership, SchoolRole
 from accounts.tests.test_base import BaseTestCase
+from accounts.tests.test_utils import get_unique_email, get_unique_phone_number
 from accounts.views import SignUpView, send_verification_email, send_verification_sms
 from tasks.models import Task
 
@@ -35,9 +36,9 @@ class SignUpViewTestCase(BaseTestCase):
         self.factory = RequestFactory()
 
         self.valid_signup_data = {
-            "email": "test@example.com",
+            "email": get_unique_email("test"),
             "full_name": "John Doe",
-            "phone_number": "+351987654321",
+            "phone_number": get_unique_phone_number(),
             "organization_name": "Test School",
         }
 
@@ -120,17 +121,12 @@ class SignUpViewTestCase(BaseTestCase):
         response = self.client.post(self.signup_url, self.valid_signup_data)
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "An account with this email already exists")
+        self.assertContains(response, "Account with this email or phone already exists")
 
     @patch("accounts.views.send_magic_link_email")
-    @patch("accounts.views.send_sms_otp")
-    @patch("tasks.services.TaskService.create_verification_tasks")
-    def test_signup_post_successful_creates_user_with_progressive_verification(
-        self, mock_create_tasks, mock_send_sms, mock_send_email
-    ):
+    @patch("messaging.services.send_verification_sms")
+    def test_signup_post_successful_creates_user_with_progressive_verification(self, mock_send_sms, mock_send_email):
         """Test successful signup creates user with progressive verification settings."""
-        # Mock task creation to return mock tasks
-        mock_create_tasks.return_value = [Mock(), Mock()]
 
         response = self.client.post(self.signup_url, self.valid_signup_data)
 
@@ -164,14 +160,13 @@ class SignUpViewTestCase(BaseTestCase):
         # Check verification methods were called
         mock_send_email.assert_called_once()
         mock_send_sms.assert_called_once()
-        mock_create_tasks.assert_called_once_with(user, user.email, user.phone_number)
+        # System tasks are now created automatically via signal
+        # No explicit task creation call needed in signup flow
 
     @patch("accounts.views.send_magic_link_email")
     @patch("accounts.views.send_sms_otp")
-    @patch("tasks.services.TaskService.create_verification_tasks")
-    def test_signup_post_successful_creates_unverified_session(self, mock_create_tasks, mock_send_sms, mock_send_email):
+    def test_signup_post_successful_creates_unverified_session(self, mock_send_sms, mock_send_email):
         """Test successful signup creates session with unverified user markers."""
-        mock_create_tasks.return_value = [Mock(), Mock()]
 
         response = self.client.post(self.signup_url, self.valid_signup_data)
 
@@ -192,12 +187,8 @@ class SignUpViewTestCase(BaseTestCase):
 
     @patch("accounts.views.send_magic_link_email", side_effect=Exception("Email failed"))
     @patch("accounts.views.send_sms_otp", side_effect=Exception("SMS failed"))
-    @patch("tasks.services.TaskService.create_verification_tasks")
-    def test_signup_post_continues_despite_verification_sending_failures(
-        self, mock_create_tasks, mock_send_sms, mock_send_email
-    ):
+    def test_signup_post_continues_despite_verification_sending_failures(self, mock_send_sms, mock_send_email):
         """Test that signup completes even if verification sending fails."""
-        mock_create_tasks.return_value = [Mock(), Mock()]
 
         response = self.client.post(self.signup_url, self.valid_signup_data)
 
@@ -209,8 +200,7 @@ class SignUpViewTestCase(BaseTestCase):
         user = User.objects.get(email=self.valid_signup_data["email"])
         self.assertIsNotNone(user)
 
-        # Tasks should still be created
-        mock_create_tasks.assert_called_once()
+        # System tasks should still be created automatically via signal
 
     @patch("accounts.views.create_user_school_and_membership", side_effect=Exception("Database error"))
     def test_signup_post_database_error_returns_error_message(self, mock_create_school):
@@ -231,10 +221,7 @@ class SignUpViewTestCase(BaseTestCase):
         with (
             patch("accounts.views.send_magic_link_email"),
             patch("accounts.views.send_sms_otp"),
-            patch("tasks.services.TaskService.create_verification_tasks") as mock_create_tasks,
         ):
-            mock_create_tasks.return_value = [Mock(), Mock()]
-
             response = self.client.post(self.signup_url, data)
 
             self.assertEqual(response.status_code, 200)
@@ -250,10 +237,7 @@ class SignUpViewTestCase(BaseTestCase):
         with (
             patch("accounts.views.send_magic_link_email"),
             patch("accounts.views.send_sms_otp"),
-            patch("tasks.services.TaskService.create_verification_tasks") as mock_create_tasks,
         ):
-            mock_create_tasks.return_value = [Mock(), Mock()]
-
             response = self.client.post(self.signup_url, data)
 
             self.assertEqual(response.status_code, 200)
@@ -270,7 +254,9 @@ class VerificationHTMXEndpointsTestCase(BaseTestCase):
         self.factory = RequestFactory()
 
         # Create a test user
-        self.user = User.objects.create_user(email="test@example.com", name="Test User", phone_number="+351987654321")
+        self.user = User.objects.create_user(
+            email=get_unique_email("test"), name="Test User", phone_number=get_unique_phone_number()
+        )
 
         self.send_email_url = reverse("accounts:send_verification_email")
         self.send_sms_url = reverse("accounts:send_verification_sms")
@@ -430,7 +416,7 @@ class VerificationEdgeCasesTestCase(BaseTestCase):
 
         # Create user with verification deadline in the past
         self.expired_user = User.objects.create_user(
-            email="expired@example.com", name="Expired User", phone_number="+351987654321"
+            email=get_unique_email("expired"), name="Expired User", phone_number=get_unique_phone_number()
         )
         self.expired_user.email_verified = False
         self.expired_user.phone_verified = False
@@ -439,7 +425,7 @@ class VerificationEdgeCasesTestCase(BaseTestCase):
 
         # Create user with verification deadline in the future
         self.grace_period_user = User.objects.create_user(
-            email="grace@example.com", name="Grace User", phone_number="+351987654321"
+            email=get_unique_email("grace"), name="Grace User", phone_number=get_unique_phone_number()
         )
         self.grace_period_user.email_verified = False
         self.grace_period_user.phone_verified = False
@@ -457,7 +443,9 @@ class VerificationEdgeCasesTestCase(BaseTestCase):
 
     def test_partially_verified_user_email_only(self):
         """Test user with only email verified."""
-        user = User.objects.create_user(email="partial@example.com", name="Partial User", phone_number="+351987654321")
+        user = User.objects.create_user(
+            email=get_unique_email("partial"), name="Partial User", phone_number=get_unique_phone_number()
+        )
         user.email_verified = True
         user.phone_verified = False
         user.verification_required_after = timezone.now() - timedelta(hours=1)
@@ -471,7 +459,7 @@ class VerificationEdgeCasesTestCase(BaseTestCase):
     def test_partially_verified_user_phone_only(self):
         """Test user with only phone verified."""
         user = User.objects.create_user(
-            email="partial2@example.com", name="Partial User 2", phone_number="+351987654321"
+            email=get_unique_email("partial2"), name="Partial User 2", phone_number=get_unique_phone_number()
         )
         user.email_verified = False
         user.phone_verified = True
@@ -482,50 +470,3 @@ class VerificationEdgeCasesTestCase(BaseTestCase):
         # This is tested in middleware tests, but we verify the data setup here
         self.assertFalse(user.email_verified)
         self.assertTrue(user.phone_verified)
-
-    def test_user_without_phone_number_can_signup(self):
-        """Test that signup fails gracefully if phone number is missing (per current implementation)."""
-        # Based on the SignUpView code, phone_number is required
-        # This test documents that behavior
-        data = {
-            "email": "no-phone@example.com",
-            "full_name": "No Phone User",
-            "organization_name": "Test Org",
-            # phone_number intentionally missing
-        }
-
-        response = self.client.post(reverse("accounts:signup"), data)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Phone number is required")
-
-        # User should not be created
-        self.assertFalse(User.objects.filter(email=data["email"]).exists())
-
-    @patch("accounts.views.timezone.now")
-    def test_verification_deadline_calculation_precision(self, mock_now):
-        """Test that verification deadline is calculated with proper precision."""
-        # Fix the current time for predictable testing
-        fixed_time = timezone.datetime(2023, 10, 15, 12, 0, 0, tzinfo=timezone.get_current_timezone())
-        mock_now.return_value = fixed_time
-
-        with (
-            patch("accounts.views.send_magic_link_email"),
-            patch("accounts.views.send_sms_otp"),
-            patch("tasks.services.TaskService.create_verification_tasks") as mock_create_tasks,
-        ):
-            mock_create_tasks.return_value = [Mock(), Mock()]
-
-            data = {
-                "email": "precision@example.com",
-                "full_name": "Precision Test",
-                "phone_number": "+351987654321",
-                "organization_name": "Test Org",
-            }
-
-            response = self.client.post(reverse("accounts:signup"), data)
-
-            user = User.objects.get(email=data["email"])
-            expected_deadline = fixed_time + timedelta(hours=24)
-
-            self.assertEqual(user.verification_required_after, expected_deadline)

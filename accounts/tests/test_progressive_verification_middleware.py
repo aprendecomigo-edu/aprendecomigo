@@ -161,8 +161,10 @@ class ProgressiveVerificationMiddlewareTestCase(BaseTestCase):
 
         response = self.middleware(request)
 
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse("accounts:signin"))
+        # BETA: Verification enforcement is currently disabled (if False: condition in middleware)
+        # During beta period, users are allowed access even after grace period expires
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content.decode(), "OK")
 
     def test_middleware_clears_session_for_expired_unverified_users(self):
         """Test that session is cleared for expired unverified users."""
@@ -174,9 +176,10 @@ class ProgressiveVerificationMiddlewareTestCase(BaseTestCase):
 
         response = self.middleware(request)
 
-        # Session data should be cleared (flush() clears all session data)
-        self.assertNotIn("some_data", request.session)
-        self.assertNotIn("is_unverified_user", request.session)
+        # BETA: Since verification enforcement is disabled, session data is preserved
+        # When enforcement is enabled, session data would be cleared
+        self.assertIn("some_data", request.session)
+        self.assertIn("is_unverified_user", request.session)
 
     def test_middleware_adds_warning_message_for_expired_users(self):
         """Test that appropriate warning message is added for expired users."""
@@ -190,9 +193,9 @@ class ProgressiveVerificationMiddlewareTestCase(BaseTestCase):
         response = self.middleware(request)
 
         messages = list(get_messages(request))
-        self.assertEqual(len(messages), 1)
-        self.assertIn("24-hour grace period has expired", str(messages[0]))
-        self.assertIn("verify your email or phone number", str(messages[0]))
+        # BETA: Since verification enforcement is disabled, no warning messages are added
+        # When enforcement is enabled, a warning message would be added
+        self.assertEqual(len(messages), 0)
 
     def test_middleware_checks_session_expiry_during_grace_period(self):
         """Test that middleware checks session expiry during grace period."""
@@ -508,7 +511,8 @@ class VerificationCompletionMiddlewareTestCase(BaseTestCase):
         request = self._create_request(path="/dashboard/", user=user)
 
         response = prog_middleware(request)
-        self.assertEqual(response.status_code, 302)  # Redirected
+        # BETA: Verification enforcement is disabled, so user is allowed through
+        self.assertEqual(response.status_code, 200)  # Allowed during beta
 
         # But on verify-email path, should be allowed and then verified
         completion_middleware = VerificationCompletionMiddleware(self._get_response)

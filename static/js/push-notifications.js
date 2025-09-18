@@ -4,9 +4,9 @@
  */
 
 // Production logging utility
-const DEBUG = false; // Set to false for production
-const log = DEBUG ? console.log.bind(console, '[Push]') : () => {};
-const warn = DEBUG ? console.warn.bind(console, '[Push]') : console.warn.bind(console, '[Push]'); // Keep warnings
+const PUSH_DEBUG = false; // Set to false for production
+const log = PUSH_DEBUG ? console.log.bind(console, '[Push]') : () => {};
+const warn = PUSH_DEBUG ? console.warn.bind(console, '[Push]') : console.warn.bind(console, '[Push]'); // Keep warnings
 const error = console.error.bind(console, '[Push]'); // Always log errors
 
 class PushNotificationManager {

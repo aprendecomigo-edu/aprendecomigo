@@ -1,12 +1,13 @@
 {% extends 'base_with_navs.html' %}
+{% load i18n %}
 
-{% block page_title %}Student Portal{% endblock %}
+{% block page_title %}{% trans "Student Portal" %}{% endblock %}
 
 {% block dashboard_content %}
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
     <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">Student Portal</h1>
-        <p class="text-gray-600">Continue your learning journey</p>
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">{% trans "Student Portal" %}</h1>
+        <p class="text-gray-600">{% trans "Continue your learning journey" %}</p>
     </div>
 
     <!-- Student Quick Stats -->
@@ -19,7 +20,7 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-500">Active Courses</p>
+                    <p class="text-sm font-medium text-gray-500">{% trans "Active Courses" %}</p>
                     <p class="text-2xl font-semibold text-gray-900">3</p>
                 </div>
             </div>

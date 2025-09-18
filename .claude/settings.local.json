@@ -74,7 +74,22 @@
       "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_xewBzH/**)",
       "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_LFGzNK/**)",
       "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_KHl9TM/**)",
-      "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_Efu2ld/**)"
+      "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_Efu2ld/**)",
+      "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_hNpSQu/**)",
+      "mcp__ide__getDiagnostics",
+      "WebFetch(domain:web.dev)",
+      "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_d96dvK/**)",
+      "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_vlC111/**)",
+      "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_oX3kUh/**)",
+      "WebFetch(domain:localhost)",
+      "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_OQHcLI/**)",
+      "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_pDU2E4/**)",
+      "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_Y1WL4F/**)",
+      "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_OKAq1L/**)",
+      "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_UpkXE5/**)",
+      "Read(//Users/anapmc/Code/aprendecomigo-fix-272/accounts/**)",
+      "Read(//Users/anapmc/Code/aprendecomigo-fix-272/templates/dashboard/forms/**)",
+      "Read(//Users/anapmc/Code/aprendecomigo-fix-272/tasks/**)"
     ],
     "deny": [],
     "ask": []

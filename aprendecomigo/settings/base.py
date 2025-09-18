@@ -81,7 +81,8 @@ MIDDLEWARE = [
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",  # MUST BE BEFORE SessionManagementMiddleware
+    "accounts.middleware.SessionManagementMiddleware",  # PWA detection and session management - MOVED AFTER AuthenticationMiddleware
     "django.contrib.messages.middleware.MessageMiddleware",  # Must come before custom middleware that uses messages
     "sesame.middleware.AuthenticationMiddleware",  # Magic link authentication - must come after AuthenticationMiddleware
     "accounts.middleware.ProgressiveVerificationMiddleware",  # Progressive verification - must come after auth and messages
@@ -402,6 +403,9 @@ LOGOUT_REDIRECT_URL = "/signin/"
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 DEFAULT_FROM_EMAIL = "noreply@aprendecomigo.com"
 
+# SMS backend - default to console backend, override in environment-specific settings
+SMS_BACKEND = "messaging.services.sms_backends.ConsoleSMSBackend"
+
 # For production, use SMTP
 if not DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
@@ -415,6 +419,9 @@ if not DEBUG:
 SESSION_COOKIE_SECURE = True  # Ensures the cookie is sent only with HTTPS requests
 CSRF_COOKIE_SECURE = True  # Ensures the CSRF cookie is sent only with HTTPS requests
 SESSION_COOKIE_HTTPONLY = True  # Prevents JavaScript from accessing the session cookie
+
+# Session serialization - use JSON for compatibility with PWA session metadata
+SESSION_SERIALIZER = "django.contrib.sessions.serializers.JSONSerializer"
 # For even more security in production:
 if not DEBUG:
     # HTTP Strict Transport Security
@@ -788,6 +795,9 @@ PWA_APP_ICONS = [
 ]
 PWA_SERVICE_WORKER_PATH = os.path.join(BASE_DIR, "static", "js", "service-worker.js")
 
+# APPEND_SLASH Configuration - Temporary fix for sesame query parameter issue
+APPEND_SLASH = False  # Disable to prevent query parameter stripping during redirects
+
 # Sesame Configuration (Magic Links)
 SESAME_MAX_AGE = 900  # 15 minutes for better user experience
 SESAME_ONE_TIME = False  # Allow multiple uses for testing/troubleshooting
@@ -808,15 +818,25 @@ TAILWIND_APP_NAME = "theme"
 # Configure switches (not flags) for feature toggles
 # Switches are simple on/off settings like DEBUG - configured at deployment/environment level
 
-# Default switch state - matches DEBUG setting
-# Development: DEBUG=True → switches enabled by default
-# Production: DEBUG=False → switches disabled by default
-WAFFLE_SWITCH_DEFAULT = DEBUG == "True"
+# Default switch state - configurable per environment
+# Use WAFFLE_DEFAULT_STATE environment variable to control default switch behavior
+# Production: should be "True" (features on by default)
+# Staging: should be "False" (features off by default)
+# Development: configurable via env var for testing both states
+WAFFLE_SWITCH_DEFAULT = os.getenv("WAFFLE_DEFAULT_STATE", str(DEBUG)).lower() == "true"
 
 # Individual switch configurations (optional overrides)
 # Use environment variables to override specific switches in production
-WAFFLE_SWITCH_SCHEDULE_FEATURE = os.getenv("WAFFLE_SWITCH_SCHEDULE_FEATURE", str(DEBUG)).lower() == "true"
-WAFFLE_SWITCH_CHAT_FEATURE = os.getenv("WAFFLE_SWITCH_CHAT_FEATURE", str(DEBUG)).lower() == "true"
+# Defaults to WAFFLE_DEFAULT_STATE if not explicitly set
+WAFFLE_SWITCH_SCHEDULE_FEATURE = (
+    os.getenv("WAFFLE_SWITCH_SCHEDULE_FEATURE", os.getenv("WAFFLE_DEFAULT_STATE", str(DEBUG))).lower() == "true"
+)
+WAFFLE_SWITCH_CHAT_FEATURE = (
+    os.getenv("WAFFLE_SWITCH_CHAT_FEATURE", os.getenv("WAFFLE_DEFAULT_STATE", str(DEBUG))).lower() == "true"
+)
+WAFFLE_SWITCH_SMS_FEATURE = (
+    os.getenv("WAFFLE_SWITCH_SMS_FEATURE", os.getenv("WAFFLE_DEFAULT_STATE", str(DEBUG))).lower() == "true"
+)
 
 # Alternative: Use WAFFLE_CREATE_MISSING_SWITCHES to automatically create switches
 # WAFFLE_CREATE_MISSING_SWITCHES = True  # Creates switches in database if they don't exist

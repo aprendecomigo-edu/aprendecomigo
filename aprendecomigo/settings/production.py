@@ -10,6 +10,10 @@ from .staging import *
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
+# Waffle feature switches - ON by default in production
+# Override with WAFFLE_DEFAULT_STATE=false to disable all new switches
+WAFFLE_DEFAULT_STATE = os.getenv("WAFFLE_DEFAULT_STATE", "true")
+
 # Stricter AWS validation - raise errors instead of warnings
 if not os.getenv("AWS_ACCESS_KEY_ID") and not os.getenv("AWS_PROFILE"):
     raise ValueError("AWS_ACCESS_KEY_ID environment variable is not set (or use AWS_PROFILE for IAM roles)")
@@ -21,6 +25,9 @@ if not os.getenv("AWS_DEFAULT_REGION"):
 # Production email defaults
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "Aprende Comigo <noreply@aprendecomigo.com>")
 SERVER_EMAIL = os.getenv("SERVER_EMAIL", "server@aprendecomigo.com")
+
+# SMS backend for production - inherits from staging but explicit is better
+SMS_BACKEND = "messaging.services.sms_backends.SNSSMSBackend"
 
 # Email tracking and analytics for production
 ANYMAIL_SEND_DEFAULTS = {

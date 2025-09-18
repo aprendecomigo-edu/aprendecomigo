@@ -3,1067 +3,1205 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
+#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Aprende Comigo\n"
+"Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-10 14:17+0000\n"
-"PO-Revision-Date: 2025-09-10 14:17+0000\n"
-"Last-Translator: Translation Team <translate@aprendecomigo.com>\n"
-"Language-Team: Portuguese (Portugal)\n"
-"Language: pt-PT\n"
+"POT-Creation-Date: 2025-09-17 19:40+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgid "Accounts and User Management"
-msgstr ""
+msgstr "Gestão de Contas e Utilizadores"
 
 msgid ""
 "Your 24-hour grace period has expired. Please verify your email or phone "
 "number to continue using Aprende Comigo."
 msgstr ""
+"O período de tolerância de 24 horas expirou. Por favor, verifique o seu "
+"endereço de email ou número de telemóvel para continuar a usar o Aprende Comigo."
 
 msgid "Your email has been successfully verified!"
-msgstr ""
+msgstr "O seu email foi verificado com sucesso!"
 
-msgid "1º ano"
-msgstr ""
+msgid "Your phone has been successfully verified!"
+msgstr "O seu telemóvel foi verificado com sucesso!"
 
-msgid "2º ano"
-msgstr ""
+msgid "Year 1"
+msgstr "1.º Ano"
 
-msgid "3º ano"
-msgstr ""
+msgid "Year 2"
+msgstr "2.º Ano"
 
-msgid "4º ano"
-msgstr ""
+msgid "Year 3"
+msgstr "3.º Ano"
 
-msgid "5º ano"
-msgstr ""
+msgid "Year 4"
+msgstr "4.º Ano"
 
-msgid "6º ano"
-msgstr ""
+msgid "Year 5"
+msgstr "5.º Ano"
 
-msgid "7º ano"
-msgstr ""
+msgid "Year 6"
+msgstr "6.º Ano"
 
-msgid "8º ano"
-msgstr ""
+msgid "Year 7"
+msgstr "7.º Ano"
 
-msgid "9º ano"
-msgstr ""
+msgid "Year 8"
+msgstr "8.º Ano"
 
-msgid "10º ano"
-msgstr ""
+msgid "Year 9"
+msgstr "9.º Ano"
 
-msgid "11º ano"
-msgstr ""
+msgid "Year 10"
+msgstr "10.º Ano"
 
-msgid "12º ano"
-msgstr ""
+msgid "Year 11"
+msgstr "11.º Ano"
 
-msgid "Ensino Básico 1º Ciclo"
-msgstr ""
+msgid "Year 12"
+msgstr "12.º Ano"
 
-msgid "Ensino Básico 2º Ciclo"
-msgstr ""
+msgid "Basic Education 1st Cycle"
+msgstr "1.º Ciclo do Ensino Básico"
 
-msgid "Ensino Básico 3º Ciclo"
-msgstr ""
+msgid "Basic Education 2nd Cycle"
+msgstr "2.º Ciclo do Ensino Básico"
 
-msgid "Ensino Secundário"
-msgstr ""
+msgid "Basic Education 3rd Cycle"
+msgstr "3.º Ciclo do Ensino Básico"
+
+msgid "Secondary Education"
+msgstr "Ensino Secundário"
 
 msgid "Grade 1"
-msgstr ""
+msgstr "1.º Ano"
 
 msgid "Grade 2"
-msgstr ""
+msgstr "2.º Ano"
 
 msgid "Grade 3"
-msgstr ""
+msgstr "3.º Ano"
 
 msgid "Grade 4"
-msgstr ""
+msgstr "4.º Ano"
 
 msgid "Grade 5"
-msgstr ""
+msgstr "5.º Ano"
 
 msgid "Grade 6"
-msgstr ""
+msgstr "6.º Ano"
 
 msgid "Grade 7"
-msgstr ""
+msgstr "7.º Ano"
 
 msgid "Grade 8"
-msgstr ""
+msgstr "8.º Ano"
 
 msgid "Grade 9"
-msgstr ""
+msgstr "9.º Ano"
 
 msgid "Grade 10"
-msgstr ""
+msgstr "10.º Ano"
 
 msgid "Grade 11"
-msgstr ""
+msgstr "11.º Ano"
 
 msgid "Grade 12"
-msgstr ""
+msgstr "12.º Ano"
 
 msgid "Elementary"
-msgstr ""
+msgstr "Ensino Básico"
 
 msgid "Middle School"
-msgstr ""
+msgstr "2.º e 3.º Ciclos"
 
 msgid "High School"
-msgstr ""
+msgstr "Ensino Secundário"
 
 msgid "Portugal"
-msgstr ""
+msgstr "Portugal"
 
 msgid "Custom"
-msgstr ""
+msgstr "Personalizado"
 
 msgid "system name"
-msgstr ""
+msgstr "nome do sistema"
 
 msgid "Name of the educational system (e.g., 'Portugal')"
-msgstr ""
+msgstr "Nome do sistema educativo (ex: 'Portugal')"
 
 msgid "system code"
-msgstr ""
+msgstr "código do sistema"
 
 msgid "Unique code for the system (e.g., 'pt')"
-msgstr ""
+msgstr "Código único para o sistema (ex: 'pt')"
 
 msgid "description"
-msgstr ""
+msgstr "descrição"
 
 msgid "Description of the educational system"
-msgstr ""
+msgstr "Descrição do sistema educativo"
 
 msgid "is active"
-msgstr ""
+msgstr "está ativo"
 
 msgid "Educational System"
-msgstr ""
+msgstr "Sistema Educativo"
 
 msgid "Educational Systems"
-msgstr ""
+msgstr "Sistemas Educativos"
 
 msgid "course name"
-msgstr ""
+msgstr "nome do curso"
 
 msgid "course code"
-msgstr ""
+msgstr "código do curso"
 
 msgid "Alphanumeric code for the course (e.g., educational system codes)"
-msgstr ""
+msgstr "Código alfanumérico para o curso (ex: códigos do sistema educativo)"
 
 msgid "Educational system this course belongs to"
-msgstr ""
+msgstr "Sistema educativo a que este curso pertence"
 
 msgid "education level"
-msgstr ""
+msgstr "nível de ensino"
 
 msgid "Education level within the educational system"
-msgstr ""
+msgstr "Nível de ensino dentro do sistema educativo"
 
 msgid "course description"
-msgstr ""
+msgstr "descrição do curso"
 
 msgid "Detailed description of the course content and objectives"
-msgstr ""
+msgstr "Descrição detalhada do conteúdo e objetivos do curso"
 
 msgid "hourly rate for this course"
-msgstr ""
+msgstr "tarifa horária para este curso"
 
 msgid "Specific hourly rate for this course (overrides teacher's default rate)"
-msgstr ""
+msgstr "Tarifa horária específica para este curso (substitui a tarifa padrão do professor)"
 
 msgid "is actively teaching"
-msgstr ""
+msgstr "está ativamente a ensinar"
 
 msgid "started teaching date"
-msgstr ""
+msgstr "data de início de ensino"
 
 msgid "School Owner"
-msgstr ""
+msgstr "Proprietário da Escola"
 
 msgid "School Administrator"
-msgstr ""
+msgstr "Administrador Escolar"
 
 msgid "Teacher"
-msgstr ""
+msgstr "Professor"
 
 msgid "School Staff"
-msgstr ""
+msgstr "Pessoal Escolar"
 
 msgid "Student"
-msgstr ""
+msgstr "Aluno"
 
 msgid "Guardian"
-msgstr ""
+msgstr "Encarregado de Educação"
 
 msgid "Invitation Sent"
-msgstr ""
+msgstr "Convite Enviado"
 
 msgid "Invitation Accepted"
-msgstr ""
+msgstr "Convite Aceite"
 
 msgid "Invitation Declined"
-msgstr ""
+msgstr "Convite Recusado"
 
 msgid "Student Joined"
-msgstr ""
+msgstr "Aluno Inscrito"
 
 msgid "Teacher Joined"
-msgstr ""
+msgstr "Professor Inscrito"
 
 msgid "Class Created"
-msgstr ""
+msgstr "Aula Criada"
 
 msgid "Class Completed"
-msgstr ""
+msgstr "Aula Concluída"
 
 msgid "Class Cancelled"
-msgstr ""
+msgstr "Aula Cancelada"
 
 msgid "Settings Updated"
-msgstr ""
+msgstr "Definições Atualizadas"
 
 msgid "School"
-msgstr ""
+msgstr "Escola"
 
 msgid "Split"
-msgstr ""
+msgstr "Dividir"
 
 msgid "Euro"
-msgstr ""
+msgstr "Euro"
 
 msgid "US Dollar"
-msgstr ""
+msgstr "Dólar Americano"
 
 msgid "Brazilian Real"
-msgstr ""
+msgstr "Real Brasileiro"
 
 msgid "British Pound"
-msgstr ""
+msgstr "Libra Esterlina"
 
 msgid "Portuguese"
-msgstr ""
+msgstr "Português"
 
 msgid "English"
-msgstr ""
+msgstr "Inglês"
 
 msgid "Spanish"
-msgstr ""
+msgstr "Espanhol"
 
 msgid "French"
-msgstr ""
+msgstr "Francês"
 
 msgid "Google Calendar"
-msgstr ""
+msgstr "Google Calendar"
 
 msgid "Microsoft Outlook"
-msgstr ""
+msgstr "Microsoft Outlook"
 
 msgid "CalDAV"
-msgstr ""
+msgstr "CalDAV"
 
 msgid "None"
-msgstr ""
+msgstr "Nenhum"
 
 msgid "SMTP"
-msgstr ""
+msgstr "SMTP"
 
 msgid "SendGrid"
-msgstr ""
+msgstr "SendGrid"
 
 msgid "Mailgun"
-msgstr ""
+msgstr "Mailgun"
 
 msgid "1 Year"
-msgstr ""
+msgstr "1 Ano"
 
 msgid "2 Years"
-msgstr ""
+msgstr "2 Anos"
 
 msgid "5 Years"
-msgstr ""
+msgstr "5 Anos"
 
 msgid "Indefinite"
-msgstr ""
+msgstr "Indefinido"
 
 msgid "Not Sent"
-msgstr ""
+msgstr "Não Enviado"
 
 msgid "Queued"
-msgstr ""
+msgstr "Em Fila"
 
 msgid "Sending"
-msgstr ""
+msgstr "A Enviar"
 
 msgid "Sent"
-msgstr ""
+msgstr "Enviado"
 
 msgid "Delivered"
-msgstr ""
+msgstr "Entregue"
 
 msgid "Opened"
-msgstr ""
+msgstr "Aberto"
 
 msgid "Clicked"
-msgstr ""
+msgstr "Clicado"
 
 msgid "Failed"
-msgstr ""
+msgstr "Falhado"
 
 msgid "Pending"
-msgstr ""
+msgstr "Pendente"
 
 msgid "Viewed"
-msgstr ""
+msgstr "Visualizado"
 
 msgid "Accepted"
-msgstr ""
+msgstr "Aceite"
 
 msgid "Declined"
-msgstr ""
+msgstr "Recusado"
 
 msgid "Expired"
-msgstr ""
+msgstr "Expirado"
 
 msgid "Cancelled"
-msgstr ""
-
-msgid "Guardian Responsible"
-msgstr ""
-
-msgid "Self Responsible"
-msgstr ""
-
-msgid "Shared Responsibility"
-msgstr ""
+msgstr "Cancelado"
 
 msgid "email address"
-msgstr ""
+msgstr "endereço de email"
 
 msgid "role"
-msgstr ""
+msgstr "função"
 
 msgid "token"
-msgstr ""
+msgstr "token"
 
 msgid "is accepted"
-msgstr ""
+msgstr "é aceite"
 
 msgid "usage count"
-msgstr ""
+msgstr "contagem de utilização"
 
 msgid "max uses"
-msgstr ""
+msgstr "máximo de utilizações"
 
 msgid "Leave blank for unlimited uses"
-msgstr ""
+msgstr "Deixe em branco para utilizações ilimitadas"
 
 msgid "custom message"
-msgstr ""
+msgstr "mensagem personalizada"
 
 msgid "Personal message to include in the invitation"
-msgstr ""
+msgstr "Mensagem pessoal a incluir no convite"
 
 msgid "batch ID"
-msgstr ""
+msgstr "ID do lote"
 
 msgid "UUID to group related invitations together"
-msgstr ""
+msgstr "UUID para agrupar convites relacionados"
 
 msgid "status"
-msgstr ""
+msgstr "estado"
 
 msgid "email delivery status"
-msgstr ""
+msgstr "estado de entrega do email"
 
 msgid "email sent at"
-msgstr ""
+msgstr "email enviado em"
 
 msgid "email delivered at"
-msgstr ""
+msgstr "email entregue em"
 
 msgid "email failure reason"
-msgstr ""
+msgstr "razão da falha do email"
 
 msgid "retry count"
-msgstr ""
+msgstr "contagem de tentativas"
 
 msgid "max retries"
-msgstr ""
+msgstr "máximo de tentativas"
 
 msgid "accepted at"
-msgstr ""
+msgstr "aceite em"
 
 msgid "declined at"
-msgstr ""
+msgstr "recusado em"
 
 msgid "When the invitation was declined"
-msgstr ""
+msgstr "Quando o convite foi recusado"
 
 msgid "viewed at"
-msgstr ""
+msgstr "visualizado em"
 
 msgid "When the invitation was first viewed"
-msgstr ""
+msgstr "Quando o convite foi visualizado pela primeira vez"
 
 msgid "Teacher Invitation"
-msgstr ""
+msgstr "Convite de Professor"
 
 msgid "Teacher Invitations"
-msgstr ""
+msgstr "Convites de Professor"
 
 msgid "biography"
-msgstr ""
+msgstr "biografia"
 
 msgid "Teacher's professional biography"
-msgstr ""
+msgstr "Biografia profissional do professor"
 
 msgid "specialty"
-msgstr ""
+msgstr "especialidade"
 
 msgid "education"
-msgstr ""
+msgstr "formação"
 
 msgid "Educational background and qualifications"
-msgstr ""
+msgstr "Formação académica e qualificações"
 
 msgid "hourly rate"
-msgstr ""
+msgstr "tarifa horária"
 
 msgid "availability"
-msgstr ""
+msgstr "disponibilidade"
 
 msgid "Available days and times for lessons"
-msgstr ""
+msgstr "Dias e horas disponíveis para aulas"
 
 msgid "address"
-msgstr ""
+msgstr "morada"
 
 msgid "Street, number, postal code and location"
-msgstr ""
+msgstr "Rua, número, código postal e localidade"
 
 msgid "teacher phone"
-msgstr ""
+msgstr "telemóvel do professor"
 
 msgid "calendar iframe"
-msgstr ""
+msgstr "iframe do calendário"
 
 msgid "education background"
-msgstr ""
+msgstr "formação académica"
 
 msgid ""
 "Structured educational background data (degree, institution, field, year)"
 msgstr ""
+"Dados estruturados da formação académica (grau, instituição, área, ano)"
 
 msgid "teaching subjects"
-msgstr ""
+msgstr "disciplinas que leciona"
 
 msgid "List of subjects the teacher specializes in"
-msgstr ""
+msgstr "Lista de disciplinas em que o professor é especializado"
 
 msgid "rate structure"
-msgstr ""
+msgstr "estrutura de tarifas"
 
 msgid "Detailed rate structure for different class types"
-msgstr ""
+msgstr "Estrutura detalhada de tarifas para diferentes tipos de aulas"
 
 msgid "weekly availability"
-msgstr ""
+msgstr "disponibilidade semanal"
 
 msgid "Structured weekly availability schedule"
-msgstr ""
+msgstr "Horário de disponibilidade semanal estruturado"
 
 msgid "grade level preferences"
-msgstr ""
+msgstr "preferências de anos escolares"
 
 msgid ""
 "List of preferred grade levels (elementary, middle, high school, university)"
 msgstr ""
+"Lista de níveis de ensino preferidos (básico, 2.º e 3.º ciclos, secundário, universitário)"
 
 msgid "teaching experience"
-msgstr ""
+msgstr "experiência de ensino"
 
 msgid ""
 "Structured teaching experience data (years, institutions, specializations)"
 msgstr ""
+"Dados estruturados da experiência de ensino (anos, instituições, especializações)"
 
 msgid "credentials documents"
-msgstr ""
+msgstr "documentos de credenciais"
 
 msgid "List of uploaded credential document references"
-msgstr ""
+msgstr "Lista de referências de documentos de credenciais carregados"
 
 msgid "availability schedule"
-msgstr ""
+msgstr "horário de disponibilidade"
 
 msgid "Detailed availability schedule with time slots and preferences"
-msgstr ""
+msgstr "Horário detalhado de disponibilidade com horários e preferências"
 
 msgid "last profile update"
-msgstr ""
+msgstr "última atualização do perfil"
 
 msgid "When the profile was last updated"
-msgstr ""
+msgstr "Quando o perfil foi atualizado pela última vez"
 
 msgid "last activity"
-msgstr ""
+msgstr "última atividade"
 
 msgid "When the teacher was last active in the system"
-msgstr ""
+msgstr "Quando o professor esteve ativo pela última vez no sistema"
 
 msgid "minimum notice minutes"
-msgstr ""
+msgstr "minutos de aviso mínimo"
 
 msgid "Override minimum notice period in minutes (school default if null)"
-msgstr ""
+msgstr "Substituir período mínimo de aviso em minutos (padrão da escola se vazio)"
 
 msgid "buffer time minutes"
-msgstr ""
+msgstr "minutos de intervalo"
 
 msgid "Buffer time between classes in minutes (school default if null)"
-msgstr ""
+msgstr "Tempo de intervalo entre aulas em minutos (padrão da escola se vazio)"
 
 msgid "maximum daily bookings"
-msgstr ""
+msgstr "máximo de marcações diárias"
 
 msgid "Maximum classes per day (school default if null)"
-msgstr ""
+msgstr "Máximo de aulas por dia (padrão da escola se vazio)"
 
 msgid "maximum weekly bookings"
-msgstr ""
+msgstr "máximo de marcações semanais"
 
 msgid "Maximum classes per week (school default if null)"
-msgstr ""
+msgstr "Máximo de aulas por semana (padrão da escola se vazio)"
 
-msgid "Educational system this student belongs to"
-msgstr ""
+msgid "User account for this student (null if guardian-only management)"
+msgstr "Conta de utilizador para este aluno (vazio se gerido apenas pelo encarregado)"
 
-msgid "school year"
-msgstr ""
-
-msgid "School year within the educational system"
-msgstr ""
-
-msgid "birth date"
-msgstr ""
+msgid "student name"
+msgstr "nome do aluno"
 
 msgid ""
-"Guardian of the student (null for adult students who are self-responsible)"
+"Student's full name (required for all students, especially guardian-only "
+"students without user accounts)"
 msgstr ""
-
-msgid "financial responsibility"
-msgstr ""
-
-msgid "Who is financially responsible for this student's account"
-msgstr ""
-
-msgid "notes"
-msgstr ""
-
-msgid "Additional notes about the student, special needs, etc."
-msgstr ""
-
-msgid "email notifications enabled"
-msgstr ""
-
-msgid "Enable email notifications for student alerts"
-msgstr ""
-
-msgid "SMS notifications enabled"
-msgstr ""
-
-msgid "Enable SMS notifications for student alerts"
-msgstr ""
-
-msgid "tax number"
-msgstr ""
-
-msgid "invoice"
-msgstr ""
-
-msgid "Whether to issue invoices for this guardian"
-msgstr ""
-
-msgid ""
-"Students with guardian financial responsibility must have a guardian "
-"assigned."
-msgstr ""
-
-msgid "notification preferences"
-msgstr ""
-
-msgid "Guardian notification preferences (email, SMS, in-app)"
-msgstr ""
-
-msgid "default approval settings"
-msgstr ""
-
-msgid "Default purchase approval settings for all studentren"
-msgstr ""
-
-msgid "Enable email notifications for guardian alerts"
-msgstr ""
-
-msgid "Enable SMS notifications for guardian alerts"
-msgstr ""
-
-msgid "guardian Profile"
-msgstr ""
-
-msgid "guardian Profiles"
-msgstr ""
-
-msgid "guardian"
-msgstr ""
-
-msgid "Guardian user who manages the student account"
-msgstr ""
-
-msgid "student"
-msgstr ""
-
-msgid "Student user whose account is managed by the guardian"
-msgstr ""
-
-msgid "school"
-msgstr ""
-
-msgid "School where this relationship is established"
-msgstr ""
-
-msgid "Whether this relationship is currently active"
-msgstr ""
-
-msgid "requires purchase approval"
-msgstr ""
-
-msgid "Whether guardian approval is required for purchases"
-msgstr ""
-
-msgid "requires session approval"
-msgstr ""
-
-msgid "Whether guardian approval is required for booking sessions"
-msgstr ""
-
-msgid "guardian-student Relationship"
-msgstr ""
-
-msgid "guardian-student Relationships"
-msgstr ""
-
-msgid "guardian and student cannot be the same user"
-msgstr ""
-
-msgid "guardian must be a member of the school"
-msgstr ""
-
-msgid "student must be a member of the school"
-msgstr ""
-
-msgid "Parent"
-msgstr ""
-
-msgid "name"
-msgstr ""
-
-msgid "contact email"
-msgstr ""
-
-msgid "phone number"
-msgstr ""
-
-msgid "website"
-msgstr ""
-
-msgid "logo"
-msgstr ""
-
-msgid "School logo image"
-msgstr ""
-
-msgid "primary color"
-msgstr ""
-
-msgid "Primary brand color in hex format"
-msgstr ""
-
-msgid "secondary color"
-msgstr ""
-
-msgid "Secondary brand color in hex format"
-msgstr ""
-
-msgid "email domain"
-msgstr ""
-
-msgid "Official email domain for the school"
-msgstr ""
-
-msgid "Educational system used by this school"
-msgstr ""
+"Nome completo do aluno (obrigatório para todos os alunos, especialmente os "
+"geridos apenas pelo encarregado sem contas de utilizador)"
 
 msgid "educational system"
-msgstr ""
+msgstr "sistema educativo"
+
+msgid "Educational system this student belongs to"
+msgstr "Sistema educativo a que este aluno pertence"
+
+msgid "school year"
+msgstr "ano letivo"
+
+msgid "School year within the educational system"
+msgstr "Ano letivo dentro do sistema educativo"
+
+msgid "birth date"
+msgstr "data de nascimento"
+
+msgid "account type"
+msgstr "tipo de conta"
+
+msgid "Defines who has accounts and manages this student"
+msgstr "Define quem tem contas e gere este aluno"
+
+msgid "Guardian of the student (required for guardian-managed accounts)"
+msgstr "Encarregado de educação do aluno (obrigatório para contas geridas pelo encarregado)"
+
+msgid "notes"
+msgstr "notas"
+
+msgid "Additional notes about the student, special needs, etc."
+msgstr "Notas adicionais sobre o aluno, necessidades especiais, etc."
+
+msgid "email notifications enabled"
+msgstr "notificações por email ativadas"
+
+msgid "Enable email notifications for student alerts"
+msgstr "Ativar notificações por email para alertas do aluno"
+
+msgid "SMS notifications enabled"
+msgstr "notificações por SMS ativadas"
+
+msgid "Enable SMS notifications for student alerts"
+msgstr "Ativar notificações por SMS para alertas do aluno"
+
+msgid "Student address (only for adult students)"
+msgstr "Morada do aluno (apenas para alunos adultos)"
+
+msgid "tax number"
+msgstr "número de contribuinte"
+
+msgid "Tax number (only for adult students)"
+msgstr "Número de contribuinte (apenas para alunos adultos)"
+
+msgid "invoice"
+msgstr "fatura"
+
+msgid "Whether to issue invoices (only for adult students)"
+msgstr "Se deve emitir faturas (apenas para alunos adultos)"
+
+msgid "Adult students must have a user account."
+msgstr "Alunos adultos devem ter uma conta de utilizador."
+
+msgid "Adult students should not have a guardian assigned."
+msgstr "Alunos adultos não devem ter um encarregado de educação atribuído."
+
+msgid "Guardian-only students should not have a user account."
+msgstr "Alunos geridos apenas pelo encarregado não devem ter uma conta de utilizador."
+
+msgid "Guardian-only students must have a guardian assigned."
+msgstr "Alunos geridos apenas pelo encarregado devem ter um encarregado de educação atribuído."
+
+msgid "Student+Guardian accounts require the student to have a user account."
+msgstr "Contas Aluno+Encarregado requerem que o aluno tenha uma conta de utilizador."
+
+msgid "Student+Guardian accounts require a guardian to be assigned."
+msgstr "Contas Aluno+Encarregado requerem que seja atribuído um encarregado de educação."
+
+msgid "notification preferences"
+msgstr "preferências de notificação"
+
+msgid "Guardian notification preferences (email, SMS, in-app)"
+msgstr "Preferências de notificação do encarregado (email, SMS, na app)"
+
+msgid "default approval settings"
+msgstr "definições de aprovação padrão"
+
+msgid "Default purchase approval settings for all studentren"
+msgstr "Definições de aprovação de compras padrão para todos os alunos"
+
+msgid "Enable email notifications for guardian alerts"
+msgstr "Ativar notificações por email para alertas do encarregado"
+
+msgid "Enable SMS notifications for guardian alerts"
+msgstr "Ativar notificações por SMS para alertas do encarregado"
+
+msgid "Whether to issue invoices for this guardian"
+msgstr "Se deve emitir faturas para este encarregado"
+
+msgid "guardian Profile"
+msgstr "Perfil do Encarregado"
+
+msgid "guardian Profiles"
+msgstr "Perfis dos Encarregados"
+
+msgid "guardian"
+msgstr "encarregado"
+
+msgid "Guardian user who manages the student account"
+msgstr "Utilizador encarregado que gere a conta do aluno"
+
+msgid "student"
+msgstr "aluno"
+
+msgid "Student user whose account is managed by the guardian"
+msgstr "Utilizador aluno cuja conta é gerida pelo encarregado"
+
+msgid "school"
+msgstr "escola"
+
+msgid "School where this relationship is established"
+msgstr "Escola onde esta relação é estabelecida"
+
+msgid "Whether this relationship is currently active"
+msgstr "Se esta relação está atualmente ativa"
+
+msgid "requires purchase approval"
+msgstr "requer aprovação de compra"
+
+msgid "Whether guardian approval is required for purchases"
+msgstr "Se a aprovação do encarregado é necessária para compras"
+
+msgid "requires session approval"
+msgstr "requer aprovação de sessão"
+
+msgid "Whether guardian approval is required for booking sessions"
+msgstr "Se a aprovação do encarregado é necessária para marcar sessões"
+
+msgid "guardian-student Relationship"
+msgstr "Relação Encarregado-Aluno"
+
+msgid "guardian-student Relationships"
+msgstr "Relações Encarregado-Aluno"
+
+msgid "guardian and student cannot be the same user"
+msgstr "encarregado e aluno não podem ser o mesmo utilizador"
+
+msgid "guardian must be a member of the school"
+msgstr "encarregado deve ser membro da escola"
+
+msgid "student must be a member of the school"
+msgstr "aluno deve ser membro da escola"
+
+msgid "Parent"
+msgstr "Encarregado de Educação"
+
+msgid "name"
+msgstr "nome"
+
+msgid "contact email"
+msgstr "email de contacto"
+
+msgid "phone number"
+msgstr "número de telemóvel"
+
+msgid "website"
+msgstr "website"
+
+msgid "logo"
+msgstr "logotipo"
+
+msgid "School logo image"
+msgstr "Imagem do logotipo da escola"
+
+msgid "primary color"
+msgstr "cor primária"
+
+msgid "Primary brand color in hex format"
+msgstr "Cor primária da marca em formato hexadecimal"
+
+msgid "secondary color"
+msgstr "cor secundária"
+
+msgid "Secondary brand color in hex format"
+msgstr "Cor secundária da marca em formato hexadecimal"
+
+msgid "email domain"
+msgstr "domínio de email"
+
+msgid "Official email domain for the school"
+msgstr "Domínio de email oficial da escola"
+
+msgid "Educational system used by this school"
+msgstr "Sistema educativo usado por esta escola"
 
 msgid "grade levels"
-msgstr ""
+msgstr "níveis de ano"
 
 msgid "List of grade levels offered by this school"
-msgstr ""
+msgstr "Lista de níveis de ano oferecidos por esta escola"
 
 msgid "billing contact name"
-msgstr ""
+msgstr "nome do contacto de faturação"
 
 msgid "Name of billing contact person"
-msgstr ""
+msgstr "Nome da pessoa de contacto para faturação"
 
 msgid "billing contact email"
-msgstr ""
+msgstr "email de contacto de faturação"
 
 msgid "Email for billing-related communications"
-msgstr ""
+msgstr "Email para comunicações relacionadas com faturação"
 
 msgid "billing address"
-msgstr ""
+msgstr "morada de faturação"
 
 msgid "Billing address for invoices and payments"
-msgstr ""
+msgstr "Morada de faturação para faturas e pagamentos"
 
 msgid "tax ID"
-msgstr ""
+msgstr "NIF"
 
 msgid "Tax identification number for billing"
-msgstr ""
+msgstr "Número de identificação fiscal para faturação"
 
 msgid "currency"
-msgstr ""
+msgstr "moeda"
 
 msgid "Default currency for pricing and billing"
-msgstr ""
+msgstr "Moeda padrão para preços e faturação"
 
 msgid "language"
-msgstr ""
+msgstr "idioma"
 
 msgid "Default language for the school interface"
-msgstr ""
+msgstr "Idioma padrão para a interface da escola"
 
 msgid "working hours start"
-msgstr ""
+msgstr "início do horário de funcionamento"
 
 msgid "School working hours start time"
-msgstr ""
+msgstr "Hora de início do funcionamento da escola"
 
 msgid "working hours end"
-msgstr ""
+msgstr "fim do horário de funcionamento"
 
 msgid "School working hours end time"
-msgstr ""
+msgstr "Hora de fim do funcionamento da escola"
 
 msgid "working days"
-msgstr ""
+msgstr "dias de funcionamento"
 
 msgid "List of working days (0=Monday, 6=Sunday)"
-msgstr ""
+msgstr "Lista de dias de funcionamento (0=Segunda, 6=Domingo)"
 
 msgid "Enable email notifications for school events"
-msgstr ""
+msgstr "Ativar notificações por email para eventos da escola"
 
 msgid "Enable SMS notifications for school events"
-msgstr ""
+msgstr "Ativar notificações por SMS para eventos da escola"
 
 msgid "allow student self-enrollment"
-msgstr ""
+msgstr "permitir auto-inscrição de alunos"
 
 msgid "Allow students to enroll themselves"
-msgstr ""
+msgstr "Permitir aos alunos inscreverem-se a si próprios"
 
 msgid "require parent approval"
-msgstr ""
+msgstr "requerer aprovação dos pais"
 
 msgid "Require parental approval for student actions"
-msgstr ""
+msgstr "Requerer aprovação dos pais para ações dos alunos"
 
 msgid "auto assign teachers"
-msgstr ""
+msgstr "atribuir professores automaticamente"
 
 msgid "Automatically assign available teachers to classes"
-msgstr ""
+msgstr "Atribuir automaticamente professores disponíveis às aulas"
 
 msgid "class reminder hours"
-msgstr ""
+msgstr "horas de lembrete de aula"
 
 msgid "Hours before class to send reminder notifications"
-msgstr ""
+msgstr "Horas antes da aula para enviar notificações de lembrete"
 
 msgid "enable calendar integration"
-msgstr ""
+msgstr "ativar integração de calendário"
 
 msgid "Enable integration with external calendar systems"
-msgstr ""
+msgstr "Ativar integração com sistemas de calendário externos"
 
 msgid "calendar integration type"
-msgstr ""
+msgstr "tipo de integração de calendário"
 
 msgid "Type of calendar integration"
-msgstr ""
+msgstr "Tipo de integração de calendário"
 
 msgid "enable email integration"
-msgstr ""
+msgstr "ativar integração de email"
 
 msgid "Enable integration with external email systems"
-msgstr ""
+msgstr "Ativar integração com sistemas de email externos"
 
 msgid "email integration provider"
-msgstr ""
+msgstr "fornecedor de integração de email"
 
 msgid "Email integration provider"
-msgstr ""
+msgstr "Fornecedor de integração de email"
 
 msgid "data retention policy"
-msgstr ""
+msgstr "política de retenção de dados"
 
 msgid "How long to retain student and class data"
-msgstr ""
+msgstr "Por quanto tempo reter dados de alunos e aulas"
 
 msgid "GDPR compliance enabled"
-msgstr ""
+msgstr "conformidade RGPD ativada"
 
 msgid "Enable GDPR compliance features"
-msgstr ""
+msgstr "Ativar recursos de conformidade com RGPD"
 
 msgid "allow data export"
-msgstr ""
+msgstr "permitir exportação de dados"
 
 msgid "Allow users to export their personal data"
-msgstr ""
+msgstr "Permitir aos utilizadores exportar os seus dados pessoais"
 
 msgid "require data processing consent"
-msgstr ""
+msgstr "requerer consentimento de processamento de dados"
 
 msgid "Require explicit consent for data processing"
-msgstr ""
+msgstr "Requerer consentimento explícito para processamento de dados"
 
 msgid "default minimum notice minutes"
-msgstr ""
+msgstr "minutos de aviso mínimo padrão"
 
 msgid "Default minimum notice period in minutes (2 hours)"
-msgstr ""
+msgstr "Período mínimo de aviso padrão em minutos (2 horas)"
 
 msgid "default buffer time minutes"
-msgstr ""
+msgstr "minutos de intervalo padrão"
 
 msgid "Default buffer time between classes in minutes"
-msgstr ""
+msgstr "Tempo de intervalo padrão entre aulas em minutos"
 
 msgid "default max daily bookings"
-msgstr ""
+msgstr "máximo padrão de marcações diárias"
 
 msgid "Default maximum classes per day for teachers"
-msgstr ""
+msgstr "Máximo padrão de aulas por dia para professores"
 
 msgid "default max weekly bookings"
-msgstr ""
+msgstr "máximo padrão de marcações semanais"
 
 msgid "Default maximum classes per week for teachers"
-msgstr ""
+msgstr "Máximo padrão de aulas por semana para professores"
 
 msgid "student max daily bookings"
-msgstr ""
+msgstr "máximo de marcações diárias do aluno"
 
 msgid "Maximum classes per day for students"
-msgstr ""
+msgstr "Máximo de aulas por dia para alunos"
 
 msgid "student max weekly bookings"
-msgstr ""
+msgstr "máximo de marcações semanais do aluno"
 
 msgid "Maximum classes per week for students"
-msgstr ""
+msgstr "Máximo de aulas por semana para alunos"
 
 msgid "buffer time for group classes"
-msgstr ""
+msgstr "tempo de intervalo para aulas de grupo"
 
 msgid "Buffer time in minutes for group classes"
-msgstr ""
+msgstr "Tempo de intervalo em minutos para aulas de grupo"
 
 msgid "buffer time for trial classes"
-msgstr ""
+msgstr "tempo de intervalo para aulas experimentais"
 
 msgid "Buffer time in minutes for trial classes"
-msgstr ""
+msgstr "Tempo de intervalo em minutos para aulas experimentais"
 
 msgid "School Settings"
-msgstr ""
+msgstr "Definições da Escola"
 
 msgid "Monday"
-msgstr ""
+msgstr "Segunda-feira"
 
 msgid "Tuesday"
-msgstr ""
+msgstr "Terça-feira"
 
 msgid "Wednesday"
-msgstr ""
+msgstr "Quarta-feira"
 
 msgid "Thursday"
-msgstr ""
+msgstr "Quinta-feira"
 
 msgid "Friday"
-msgstr ""
+msgstr "Sexta-feira"
 
 msgid "Saturday"
-msgstr ""
+msgstr "Sábado"
 
 msgid "Sunday"
-msgstr ""
+msgstr "Domingo"
 
 msgid "The Email must be set"
-msgstr ""
+msgstr "O email deve ser definido"
 
 msgid "username"
-msgstr ""
+msgstr "nome de utilizador"
 
 msgid "profile photo"
-msgstr ""
+msgstr "fotografia de perfil"
 
 msgid "User profile photo"
-msgstr ""
+msgstr "Fotografia de perfil do utilizador"
 
 msgid "primary contact"
-msgstr ""
+msgstr "contacto principal"
 
 msgid "Email"
-msgstr ""
+msgstr "Email"
 
 msgid "Phone"
-msgstr ""
+msgstr "Telemóvel"
 
 msgid "email verified"
-msgstr ""
+msgstr "email verificado"
 
 msgid "phone verified"
-msgstr ""
+msgstr "telemóvel verificado"
+
+msgid "email verified at"
+msgstr "email verificado em"
+
+msgid "Timestamp when email was verified"
+msgstr "Carimbo temporal de quando o email foi verificado"
+
+msgid "phone verified at"
+msgstr "telemóvel verificado em"
+
+msgid "Timestamp when phone was verified"
+msgstr "Carimbo temporal de quando o telemóvel foi verificado"
+
+msgid "normalized phone number"
+msgstr "número de telemóvel normalizado"
+
+msgid "E.164 format phone number for duplicate checking"
+msgstr "Número de telemóvel em formato E.164 para verificação de duplicados"
+
+msgid "preferred OTP method"
+msgstr "método OTP preferido"
+
+msgid "SMS"
+msgstr "SMS"
+
+msgid "User's preferred method for receiving OTP codes"
+msgstr "Método preferido do utilizador para receber códigos OTP"
+
+msgid "Last time user was active on the platform"
+msgstr "Última vez que o utilizador esteve ativo na plataforma"
 
 msgid "verification required after"
-msgstr ""
+msgstr "verificação necessária após"
 
 msgid ""
 "After this time, user must verify email/phone to continue accessing the "
 "platform"
 msgstr ""
+"Após este momento, o utilizador deve verificar email/telemóvel para "
+"continuar a aceder à plataforma"
 
 msgid "first login completed"
-msgstr ""
+msgstr "primeiro login concluído"
 
 msgid "onboarding completed"
-msgstr ""
+msgstr "integração concluída"
 
 msgid "onboarding progress"
-msgstr ""
+msgstr "progresso da integração"
 
 msgid "tutorial preferences"
-msgstr ""
+msgstr "preferências do tutorial"
+
+msgid "Please enter a valid phone number with country code"
+msgstr "Por favor, introduza um número de telemóvel válido com indicativo"
+
+msgid "Email Verification"
+msgstr "Verificação de Email"
+
+msgid "Phone Verification"
+msgstr "Verificação de Telemóvel"
+
+msgid "Signin OTP"
+msgstr "OTP de Entrada"
+
+msgid "User this token belongs to"
+msgstr "Utilizador a quem pertence este token"
+
+msgid "token type"
+msgstr "tipo de token"
+
+msgid "Type of verification this token is for"
+msgstr "Tipo de verificação para o qual este token é usado"
+
+msgid "token value"
+msgstr "valor do token"
+
+msgid "Hashed token value for security"
+msgstr "Valor do token cifrado para segurança"
+
+msgid "expires at"
+msgstr "expira em"
+
+msgid "When this token expires"
+msgstr "Quando este token expira"
+
+msgid "used at"
+msgstr "usado em"
+
+msgid "When this token was successfully used"
+msgstr "Quando este token foi usado com sucesso"
+
+msgid "attempts"
+msgstr "tentativas"
+
+msgid "Number of failed verification attempts"
+msgstr "Número de tentativas de verificação falhadas"
+
+msgid "max attempts"
+msgstr "máximo de tentativas"
+
+msgid "Maximum allowed attempts before token is locked"
+msgstr "Máximo de tentativas permitidas antes do token ser bloqueado"
+
+msgid "created at"
+msgstr "criado em"
+
+msgid "Verification Token"
+msgstr "Token de Verificação"
+
+msgid "Verification Tokens"
+msgstr "Tokens de Verificação"
+
+msgid "Phone number is required"
+msgstr "O número de telemóvel é obrigatório"
+
+msgid "Please enter a valid phone number with country code (e.g., +1234567890)"
+msgstr "Por favor, introduza um número de telemóvel válido com indicativo (ex: +351912345678)"
+
+msgid "Please include your country code (e.g., +1 for US, +351 for Portugal)"
+msgstr "Por favor, inclua o indicativo do país (ex: +1 para EUA, +351 para Portugal)"
+
+msgid "Invalid phone number format"
+msgstr "Formato de número de telemóvel inválido"
 
 msgid "You don't have permission to invite teachers to this school."
-msgstr ""
+msgstr "Não tem permissão para convidar professores para esta escola."
 
 #, python-format
 msgid "Teacher invitation sent to %(email)s"
-msgstr ""
+msgstr "Convite de professor enviado para %(email)s"
 
 #, python-format
 msgid "Welcome to %(school)s! You are now a %(role)s."
-msgstr ""
+msgstr "Bem-vindo à %(school)s! Agora é %(role)s."
 
 msgid "Your profile has been updated successfully."
-msgstr ""
+msgstr "O seu perfil foi atualizado com sucesso."
 
 #, python-format
 msgid "Settings for %(school)s have been updated successfully."
-msgstr ""
+msgstr "As definições da %(school)s foram atualizadas com sucesso."
 
 msgid "Grade Specific Rate"
-msgstr ""
+msgstr "Tarifa Específica por Ano"
 
 msgid "Group Class Rate"
-msgstr ""
+msgstr "Tarifa de Aula em Grupo"
 
 msgid "Fixed Monthly Salary"
-msgstr ""
+msgstr "Salário Mensal Fixo"
 
 msgid "Base Salary Plus Bonus"
-msgstr ""
+msgstr "Salário Base Mais Bónus"
 
 msgid "Individual Session"
-msgstr ""
+msgstr "Sessão Individual"
 
 msgid "Group Session"
-msgstr ""
+msgstr "Sessão em Grupo"
 
 msgid "Scheduled"
-msgstr ""
+msgstr "Agendado"
 
 msgid "In Progress"
-msgstr ""
+msgstr "Em Progresso"
 
 msgid "Completed"
-msgstr ""
+msgstr "Concluído"
 
 msgid "No Show"
-msgstr ""
+msgstr "Faltou"
 
 msgid "Calculated"
-msgstr ""
+msgstr "Calculado"
 
 msgid "Paid"
-msgstr ""
+msgstr "Pago"
 
 msgid "School Absorbs Cost"
-msgstr ""
+msgstr "Escola Absorve o Custo"
 
 msgid "Teacher Absorbs Cost"
-msgstr ""
+msgstr "Professor Absorve o Custo"
 
 msgid "Split Cost 50/50"
-msgstr ""
+msgstr "Dividir Custo 50/50"
 
 msgid "Weekly"
-msgstr ""
+msgstr "Semanal"
 
 msgid "Bi-weekly"
-msgstr ""
+msgstr "Quinzenal"
 
 msgid "Monthly"
-msgstr ""
+msgstr "Mensal"
 
 msgid "Received"
-msgstr ""
+msgstr "Recebido"
 
 msgid "Processing"
-msgstr ""
+msgstr "A processar"
 
 msgid "Processed"
-msgstr ""
+msgstr "Processado"
 
 msgid "Retrying"
-msgstr ""
+msgstr "A tentar novamente"
 
 msgid "Package"
-msgstr ""
+msgstr "Pacote"
 
 msgid "Subscription"
-msgstr ""
+msgstr "Subscrição"
 
 msgid "trial cost absorption"
 msgstr ""
@@ -1138,16 +1276,16 @@ msgid "Teacher Compensation Rules"
 msgstr ""
 
 msgid "Grade level is required for grade-specific rules"
-msgstr ""
+msgstr "Nível de ensino é obrigatório para regras específicas de ano"
 
 msgid "Rate per hour is required for grade-specific rules"
-msgstr ""
+msgstr "Taxa por hora é obrigatória para regras específicas de ano"
 
 msgid "Rate per hour is required for group class rules"
-msgstr ""
+msgstr "Taxa por hora é obrigatória para regras de aulas de grupo"
 
 msgid "Fixed amount is required for fixed salary rules"
-msgstr ""
+msgstr "Montante fixo é obrigatório para regras de salário fixo"
 
 msgid "date"
 msgstr ""
@@ -1287,9 +1425,6 @@ msgstr ""
 msgid "Current account balance in euros"
 msgstr ""
 
-msgid "created at"
-msgstr ""
-
 msgid "updated at"
 msgstr ""
 
@@ -1330,9 +1465,6 @@ msgid "Stripe customer ID"
 msgstr ""
 
 msgid "Stripe Customer ID associated with this transaction"
-msgstr ""
-
-msgid "expires at"
 msgstr ""
 
 msgid "Expiration date for packages (null for subscriptions)"
@@ -1634,13 +1766,13 @@ msgid "require approval for sessions"
 msgstr ""
 
 msgid "Whether guardian approval is required for booking individual sessions"
-msgstr ""
+msgstr "Se a aprovação do encarregado é necessária para reservar sessões individuais"
 
 msgid "require approval for packages"
 msgstr ""
 
 msgid "Whether guardian approval is required for purchasing hour packages"
-msgstr ""
+msgstr "Se a aprovação do encarregado é necessária para comprar pacotes de horas"
 
 msgid "Whether budget controls are currently active"
 msgstr ""
@@ -1775,13 +1907,13 @@ msgid "processed at"
 msgstr ""
 
 msgid "Timestamp when the event was successfully processed"
-msgstr ""
+msgstr "Carimbo temporal de quando o evento foi processado com sucesso"
 
 msgid "error message"
-msgstr ""
+msgstr "mensagem de erro"
 
 msgid "Error message if processing failed"
-msgstr ""
+msgstr "Mensagem de erro se o processamento falhasse"
 
 msgid "Number of times processing has been retried"
 msgstr ""
@@ -1967,851 +2099,935 @@ msgid "admin user"
 msgstr ""
 
 msgid "Administrator who performed this action"
-msgstr ""
+msgstr "Administrador que realizou esta ação"
 
 msgid "target user"
-msgstr ""
+msgstr "utilizador alvo"
 
 msgid "User affected by this action (if applicable)"
-msgstr ""
+msgstr "Utilizador afetado por esta ação (se aplicável)"
 
 msgid "target transaction"
-msgstr ""
+msgstr "transação alvo"
 
 msgid "Transaction affected by this action (if applicable)"
-msgstr ""
+msgstr "Transação afetada por esta ação (se aplicável)"
 
 msgid "target dispute"
-msgstr ""
+msgstr "disputa alvo"
 
 msgid "Dispute affected by this action (if applicable)"
-msgstr ""
+msgstr "Disputa afetada por esta ação (se aplicável)"
 
 msgid "success"
-msgstr ""
+msgstr "sucesso"
 
 msgid "Whether the action was successful"
-msgstr ""
+msgstr "Se a ação foi bem-sucedida"
 
 msgid "result message"
-msgstr ""
+msgstr "mensagem de resultado"
 
 msgid "Result message or error details"
-msgstr ""
+msgstr "Mensagem de resultado ou detalhes de erro"
 
 msgid "amount impacted"
-msgstr ""
+msgstr "valor impactado"
 
 msgid "Financial amount impacted by this action"
-msgstr ""
+msgstr "Montante financeiro impactado por esta ação"
 
 msgid "action data"
-msgstr ""
+msgstr "dados da ação"
 
 msgid "Detailed data about the action performed"
-msgstr ""
+msgstr "Dados detalhados sobre a ação realizada"
 
 msgid "Stripe reference ID"
-msgstr ""
+msgstr "ID de referência Stripe"
 
 msgid "Related Stripe object ID (if applicable)"
-msgstr ""
+msgstr "ID do objeto Stripe relacionado (se aplicável)"
 
 msgid "IP address"
-msgstr ""
+msgstr "endereço IP"
 
 msgid "IP address from which the action was performed"
-msgstr ""
+msgstr "Endereço IP de onde a ação foi realizada"
 
 msgid "user agent"
-msgstr ""
+msgstr "agente de utilizador"
 
 msgid "User agent of the client that performed the action"
-msgstr ""
+msgstr "Agente de utilizador do cliente que realizou a ação"
 
 msgid "two factor verified"
-msgstr ""
+msgstr "dois fatores verificado"
 
 msgid "Whether two-factor authentication was verified"
-msgstr ""
+msgstr "Se a autenticação de dois fatores foi verificada"
 
 msgid "Admin Action"
-msgstr ""
+msgstr "Ação de Administrador"
 
 msgid "Admin Actions"
-msgstr ""
+msgstr "Ações de Administrador"
 
 msgid "alert ID"
-msgstr ""
+msgstr "ID do alerta"
 
 msgid "Unique identifier for this fraud alert"
-msgstr ""
+msgstr "Identificador único para este alerta de fraude"
 
 msgid "severity"
-msgstr ""
+msgstr "gravidade"
 
 msgid "Severity level of the fraud alert"
-msgstr ""
+msgstr "Nível de gravidade do alerta de fraude"
 
 msgid "Current status of the fraud alert"
-msgstr ""
+msgstr "Estado atual do alerta de fraude"
 
 msgid "alert type"
-msgstr ""
+msgstr "tipo de alerta"
 
 msgid "Type of fraud pattern detected"
-msgstr ""
+msgstr "Tipo de padrão de fraude detetado"
 
 msgid "Detailed description of the suspicious activity"
-msgstr ""
+msgstr "Descrição detalhada da atividade suspeita"
 
 msgid "User associated with this fraud alert"
-msgstr ""
+msgstr "Utilizador associado a este alerta de fraude"
 
 msgid "related transactions"
-msgstr ""
+msgstr "transações relacionadas"
 
 msgid "Transactions that triggered this alert"
-msgstr ""
+msgstr "Transações que desencadearam este alerta"
 
 msgid "detection data"
-msgstr ""
+msgstr "dados de deteção"
 
 msgid "Data used to detect this fraud pattern"
-msgstr ""
+msgstr "Dados utilizados para detetar este padrão de fraude"
 
 msgid "risk score"
-msgstr ""
+msgstr "pontuação de risco"
 
 msgid "Risk assessment score (0-100)"
-msgstr ""
+msgstr "Pontuação de avaliação de risco (0-100)"
 
 msgid "assigned to"
-msgstr ""
+msgstr "atribuído a"
 
 msgid "Administrator assigned to investigate this alert"
-msgstr ""
+msgstr "Administrador atribuído para investigar este alerta"
 
 msgid "investigated at"
-msgstr ""
+msgstr "investigado em"
 
 msgid "When the alert was investigated"
-msgstr ""
+msgstr "Quando o alerta foi investigado"
 
 msgid "resolution notes"
-msgstr ""
+msgstr "notas de resolução"
 
 msgid "Notes about how this alert was resolved"
-msgstr ""
+msgstr "Notas sobre como este alerta foi resolvido"
 
 msgid "actions taken"
-msgstr ""
+msgstr "ações tomadas"
 
 msgid "List of actions taken in response to this alert"
-msgstr ""
+msgstr "Lista de ações tomadas em resposta a este alerta"
 
 msgid "Fraud Alerts"
-msgstr ""
+msgstr "Alertas de Fraude"
 
 msgid "Low Balance"
-msgstr ""
+msgstr "Saldo Baixo"
 
 msgid "Package Expiring"
-msgstr ""
+msgstr "Pacote a Expirar"
 
 msgid "Balance Depleted"
-msgstr ""
+msgstr "Saldo Esgotado"
 
 msgid "user"
-msgstr ""
+msgstr "utilizador"
 
 msgid "User who will receive this notification"
-msgstr ""
+msgstr "Utilizador que receberá esta notificação"
 
 msgid "notification type"
-msgstr ""
+msgstr "tipo de notificação"
 
 msgid "Type of notification"
-msgstr ""
+msgstr "Tipo de notificação"
 
 msgid "title"
-msgstr ""
+msgstr "título"
 
 msgid "Notification title"
-msgstr ""
+msgstr "Título da notificação"
 
 msgid "message"
-msgstr ""
+msgstr "mensagem"
 
 msgid "Notification message content"
-msgstr ""
+msgstr "Conteúdo da mensagem de notificação"
 
 msgid "is read"
-msgstr ""
+msgstr "foi lida"
 
 msgid "Whether the notification has been read"
-msgstr ""
+msgstr "Se a notificação foi lida"
 
 msgid "read at"
-msgstr ""
+msgstr "lida em"
 
 msgid "Timestamp when notification was read"
-msgstr ""
+msgstr "Carimbo temporal de quando a notificação foi lida"
 
 msgid "related transaction"
-msgstr ""
+msgstr "transação relacionada"
 
 msgid ""
 "Purchase transaction related to this notification (for package expiration)"
-msgstr ""
+msgstr "Transação de compra relacionada com esta notificação (para expiração de pacote)"
 
 msgid "Additional notification data in JSON format"
-msgstr ""
+msgstr "Dados adicionais de notificação em formato JSON"
 
 msgid "Notification"
-msgstr ""
+msgstr "Notificação"
 
 msgid "Notifications"
-msgstr ""
+msgstr "Notificações"
 
 msgid "Bounced"
-msgstr ""
+msgstr "Devolvido"
 
 msgid "Marked as Spam"
-msgstr ""
+msgstr "Marcado como Spam"
 
 msgid "Invitation"
-msgstr ""
+msgstr "Convite"
 
 msgid "Reminder"
-msgstr ""
+msgstr "Lembrete"
 
 msgid "Welcome"
-msgstr ""
+msgstr "Boas-vindas"
 
 msgid "Profile Reminder"
-msgstr ""
+msgstr "Lembrete de Perfil"
 
 msgid "Completion Celebration"
-msgstr ""
+msgstr "Celebração de Conclusão"
 
 msgid "Ongoing Support"
-msgstr ""
+msgstr "Apoio Contínuo"
 
 msgid "Low Balance Alert"
-msgstr ""
+msgstr "Alerta de Saldo Baixo"
 
 msgid "Package Expiring Alert"
-msgstr ""
+msgstr "Alerta de Pacote a Expirar"
 
 msgid "Manual"
-msgstr ""
+msgstr "Manual"
 
 msgid "Automated"
-msgstr ""
+msgstr "Automático"
 
 msgid "Sequence"
-msgstr ""
+msgstr "Sequência"
 
 msgid "School this template belongs to"
-msgstr ""
+msgstr "Escola a que este modelo pertence"
 
 msgid "template type"
-msgstr ""
+msgstr "tipo de modelo"
 
 msgid "Type of email template"
-msgstr ""
+msgstr "Tipo de modelo de e-mail"
 
 msgid "template name"
-msgstr ""
+msgstr "nome do modelo"
 
 msgid "Human-readable name for the template"
-msgstr ""
+msgstr "Nome legível para o modelo"
 
 msgid "subject template"
-msgstr ""
+msgstr "modelo de assunto"
 
 msgid "Email subject with template variables like {{teacher_name}}"
-msgstr ""
+msgstr "Assunto do e-mail com variáveis de modelo como {{teacher_name}}"
 
 msgid "HTML content"
-msgstr ""
+msgstr "conteúdo HTML"
 
 msgid "HTML email content with template variables"
-msgstr ""
+msgstr "Conteúdo HTML do e-mail com variáveis de modelo"
 
 msgid "text content"
-msgstr ""
+msgstr "conteúdo de texto"
 
 msgid "Plain text email content with template variables"
-msgstr ""
+msgstr "Conteúdo de texto simples do e-mail com variáveis de modelo"
 
 msgid "use school branding"
-msgstr ""
+msgstr "usar identidade da escola"
 
 msgid "Apply school colors and logo to template"
-msgstr ""
+msgstr "Aplicar cores e logo da escola ao modelo"
 
 msgid "custom CSS"
-msgstr ""
+msgstr "CSS personalizado"
 
 msgid "Additional CSS for template customization"
-msgstr ""
+msgstr "CSS adicional para personalização do modelo"
 
 msgid "Whether this template is active and can be used"
-msgstr ""
+msgstr "Se este modelo está ativo e pode ser usado"
 
 msgid "Whether this is the default template for this type"
-msgstr ""
+msgstr "Se este é o modelo padrão para este tipo"
 
 msgid "User who created this template"
-msgstr ""
+msgstr "Utilizador que criou este modelo"
 
 msgid "School Email Template"
-msgstr ""
+msgstr "Modelo de E-mail da Escola"
 
 msgid "School Email Templates"
-msgstr ""
+msgstr "Modelos de E-mail da Escola"
 
 msgid "Only one default template per school and type is allowed"
-msgstr ""
+msgstr "Apenas um modelo padrão por escola e tipo é permitido"
 
 #, python-format
 msgid "Template security validation failed: %(error)s"
-msgstr ""
+msgstr "Validação de segurança do modelo falhada: %(error)s"
 
 #, python-format
 msgid "Custom CSS contains dangerous pattern: %(pattern)s"
-msgstr ""
+msgstr "CSS personalizado contém padrão perigoso: %(pattern)s"
 
 msgid "Custom CSS too large. Maximum size is 10KB"
-msgstr ""
+msgstr "CSS personalizado demasiado grande. Tamanho máximo é 10KB"
 
 msgid "School this sequence belongs to"
-msgstr ""
+msgstr "Escola a que esta sequência pertence"
 
 msgid "sequence name"
-msgstr ""
+msgstr "nome da sequência"
 
 msgid "Human-readable name for the sequence"
-msgstr ""
+msgstr "Nome legível para a sequência"
 
 msgid "Description of what this sequence does"
-msgstr ""
+msgstr "Descrição do que esta sequência faz"
 
 msgid "trigger event"
-msgstr ""
+msgstr "evento desencadeador"
 
 msgid "Invitation Viewed"
-msgstr ""
+msgstr "Convite Visualizado"
 
 msgid "Profile Incomplete"
-msgstr ""
+msgstr "Perfil Incompleto"
 
 msgid "Profile Completed"
-msgstr ""
+msgstr "Perfil Completo"
 
 msgid "Event that triggers this sequence"
-msgstr ""
+msgstr "Evento que desencadeia esta sequência"
 
 msgid "Whether this sequence is active"
-msgstr ""
+msgstr "Se esta sequência está ativa"
 
 msgid "maximum emails"
-msgstr ""
+msgstr "e-mails máximos"
 
 msgid "Maximum number of emails to send in this sequence"
-msgstr ""
+msgstr "Número máximo de e-mails a enviar nesta sequência"
 
 msgid "Email Sequence"
-msgstr ""
+msgstr "Sequência de E-mail"
 
 msgid "Email Sequences"
-msgstr ""
+msgstr "Sequências de E-mail"
 
 msgid "Email sequence this step belongs to"
-msgstr ""
+msgstr "Sequência de e-mail a que este passo pertence"
 
 msgid "Email template to use for this step"
-msgstr ""
+msgstr "Modelo de e-mail a usar para este passo"
 
 msgid "step number"
-msgstr ""
+msgstr "número do passo"
 
 msgid "Order of this step in the sequence"
-msgstr ""
+msgstr "Ordem deste passo na sequência"
 
 msgid "delay hours"
-msgstr ""
+msgstr "horas de atraso"
 
 msgid "Hours to wait before sending this email"
-msgstr ""
+msgstr "Horas a esperar antes de enviar este e-mail"
 
 msgid "send condition"
-msgstr ""
+msgstr "condição de envio"
 
 msgid "Always Send"
-msgstr ""
+msgstr "Enviar Sempre"
 
 msgid "If No Response"
-msgstr ""
+msgstr "Se Sem Resposta"
 
 msgid "If Not Accepted"
-msgstr ""
+msgstr "Se Não Aceite"
 
 msgid "If Profile Incomplete"
-msgstr ""
+msgstr "Se Perfil Incompleto"
 
 msgid "Condition that must be met to send this email"
-msgstr ""
+msgstr "Condição que deve ser cumprida para enviar este e-mail"
 
 msgid "Whether this step is active"
-msgstr ""
+msgstr "Se este passo está ativo"
 
 msgid "Email Sequence Step"
-msgstr ""
+msgstr "Passo da Sequência de E-mail"
 
 msgid "Email Sequence Steps"
-msgstr ""
+msgstr "Passos da Sequência de E-mail"
 
 msgid "User who received the email (if registered)"
-msgstr ""
+msgstr "Utilizador que recebeu o e-mail (se registado)"
 
 msgid "recipient email"
-msgstr ""
+msgstr "e-mail do destinatário"
 
 msgid "Email address of the recipient"
-msgstr ""
+msgstr "Endereço de e-mail do destinatário"
 
 msgid "School that sent the email"
-msgstr ""
+msgstr "Escola que enviou o e-mail"
 
 msgid "Template used for this email"
-msgstr ""
+msgstr "Modelo usado para este e-mail"
 
 msgid "Type of email template used"
-msgstr ""
+msgstr "Tipo de modelo de e-mail usado"
 
 msgid "email subject"
-msgstr ""
+msgstr "assunto do e-mail"
 
 msgid "Rendered email subject"
-msgstr ""
+msgstr "Assunto do e-mail renderizado"
 
 msgid "communication type"
-msgstr ""
+msgstr "tipo de comunicação"
 
 msgid "Type of communication"
-msgstr ""
+msgstr "Tipo de comunicação"
 
 msgid "Email sequence this belongs to (if automated)"
-msgstr ""
+msgstr "Sequência de e-mail a que isto pertence (se automático)"
 
 msgid "Sequence step this email represents"
-msgstr ""
+msgstr "Passo da sequência que este e-mail representa"
 
 msgid "delivery status"
-msgstr ""
+msgstr "estado de entrega"
 
 msgid "Current delivery status"
-msgstr ""
+msgstr "Estado atual de entrega"
 
 msgid "failure reason"
-msgstr ""
+msgstr "razão da falha"
 
 msgid "Reason for delivery failure"
-msgstr ""
+msgstr "Razão para a falha de entrega"
 
 msgid "Number of delivery attempts"
-msgstr ""
+msgstr "Número de tentativas de entrega"
 
 msgid "maximum retries"
-msgstr ""
+msgstr "tentativas máximas"
 
 msgid "Maximum number of retry attempts"
-msgstr ""
+msgstr "Número máximo de tentativas de repetição"
 
 msgid "Related teacher invitation (if applicable)"
-msgstr ""
+msgstr "Convite de professor relacionado (se aplicável)"
 
 msgid "User who initiated this communication"
-msgstr ""
+msgstr "Utilizador que iniciou esta comunicação"
 
 msgid "Email Communication"
-msgstr ""
+msgstr "Comunicação por E-mail"
 
 msgid "Email Communications"
-msgstr ""
+msgstr "Comunicações por E-mail"
 
 msgid "Individual"
-msgstr ""
+msgstr "Individual"
 
 msgid "Group"
-msgstr ""
+msgstr "Grupo"
 
 msgid "Trial"
-msgstr ""
+msgstr "Experimental"
 
 msgid "Confirmed"
-msgstr ""
+msgstr "Confirmada"
 
 msgid "Rejected"
-msgstr ""
+msgstr "Rejeitada"
 
 msgid "School context for this availability"
-msgstr ""
+msgstr "Contexto escolar para esta disponibilidade"
 
 msgid "day of week"
-msgstr ""
+msgstr "dia da semana"
 
 msgid "End time must be after start time."
-msgstr ""
+msgstr "A hora de fim deve ser posterior à hora de início."
 
 msgid "School context for this unavailability"
-msgstr ""
+msgstr "Contexto escolar para esta indisponibilidade"
 
 msgid "reason"
-msgstr ""
+msgstr "razão"
 
 msgid "all day"
-msgstr ""
+msgstr "todo o dia"
 
 msgid "Cannot create unavailability for past dates."
-msgstr ""
+msgstr "Não é possível criar indisponibilidade para datas passadas."
 
 msgid "Start time and end time are required for partial day unavailability."
-msgstr ""
+msgstr "Hora de início e hora de fim são obrigatórias para indisponibilidade parcial."
 
 msgid "Student participating in this class"
-msgstr ""
+msgstr "Aluno participante nesta aula"
 
 msgid "class type"
-msgstr ""
+msgstr "tipo de aula"
 
 msgid "scheduled date"
-msgstr ""
+msgstr "data agendada"
 
 msgid "duration in minutes"
-msgstr ""
+msgstr "duração em minutos"
 
 msgid "User who booked this class"
-msgstr ""
+msgstr "Utilizador que reservou esta aula"
 
 msgid "booked at"
-msgstr ""
+msgstr "reservado em"
 
 msgid "Additional students for group classes"
-msgstr ""
+msgstr "Alunos adicionais para aulas de grupo"
 
 msgid "User who cancelled this class"
-msgstr ""
+msgstr "Utilizador que cancelou esta aula"
 
 msgid "cancellation reason"
-msgstr ""
+msgstr "razão de cancelamento"
 
 msgid "completed at"
-msgstr ""
+msgstr "concluída em"
 
 msgid "User who marked this class as completed"
-msgstr ""
+msgstr "Utilizador que marcou esta aula como concluída"
 
 msgid "actual duration in minutes"
-msgstr ""
+msgstr "duração real em minutos"
 
 msgid "completion notes"
-msgstr ""
+msgstr "notas de conclusão"
 
 msgid "marked no-show at"
-msgstr ""
+msgstr "marcado como faltoso em"
 
 msgid "User who marked this class as no-show"
-msgstr ""
+msgstr "Utilizador que marcou esta aula como faltosa"
 
 msgid "no-show reason"
-msgstr ""
+msgstr "razão da falta"
 
 msgid "confirmed at"
-msgstr ""
+msgstr "confirmada em"
 
 msgid "User who confirmed this class"
-msgstr ""
+msgstr "Utilizador que confirmou esta aula"
 
 msgid "rejected at"
-msgstr ""
+msgstr "rejeitada em"
 
 msgid "User who rejected this class"
-msgstr ""
+msgstr "Utilizador que rejeitou esta aula"
 
 msgid "maximum participants"
-msgstr ""
+msgstr "participantes máximos"
 
 msgid "Maximum number of participants allowed for group classes"
-msgstr ""
+msgstr "Número máximo de participantes permitidos para aulas de grupo"
 
 msgid "Additional structured metadata for the class"
-msgstr ""
+msgstr "Metadados estruturados adicionais para a aula"
 
 msgid "Recurring schedule that generated this instance"
-msgstr ""
+msgstr "Horário recorrente que gerou esta instância"
 
 msgid "teacher notes"
-msgstr ""
+msgstr "notas do professor"
 
 msgid "student notes"
-msgstr ""
+msgstr "notas do aluno"
 
 msgid "Cannot schedule classes in the past."
-msgstr ""
+msgstr "Não é possível agendar aulas no passado."
 
 msgid "Max participants is required for group classes."
-msgstr ""
+msgstr "Número máximo de participantes é obrigatório para aulas de grupo."
 
 msgid "Max participants must be a positive integer."
-msgstr ""
+msgstr "Número máximo de participantes deve ser um número inteiro positivo."
 
 msgid "Student must be a member of the school."
-msgstr ""
+msgstr "O aluno deve ser membro da escola."
 
 msgid "Teacher must be a member of the school."
-msgstr ""
+msgstr "O professor deve ser membro da escola."
 
 msgid "Biweekly"
-msgstr ""
+msgstr "Quinzenal"
 
 msgid "Paused"
-msgstr ""
+msgstr "Pausado"
 
 msgid "Confirmation"
-msgstr ""
+msgstr "Confirmação"
 
 msgid "24 Hours Before"
-msgstr ""
+msgstr "24 Horas Antes"
 
 msgid "1 Hour Before"
-msgstr ""
+msgstr "1 Hora Antes"
 
 msgid "15 Minutes Before"
-msgstr ""
+msgstr "15 Minutos Antes"
 
 msgid "Cancellation"
-msgstr ""
+msgstr "Cancelamento"
 
 msgid "Schedule Change"
-msgstr ""
-
-msgid "SMS"
-msgstr ""
+msgstr "Mudança de Horário"
 
 msgid "Push Notification"
-msgstr ""
+msgstr "Notificação Push"
 
 msgid "In-App Notification"
-msgstr ""
+msgstr "Notificação na App"
 
 msgid "Students participating in this recurring class"
-msgstr ""
+msgstr "Alunos participantes nesta aula recorrente"
 
 msgid "frequency type"
-msgstr ""
+msgstr "tipo de frequência"
 
 msgid "Maximum number of participants for group classes"
-msgstr ""
+msgstr "Número máximo de participantes para aulas de grupo"
 
 msgid "start date"
-msgstr ""
+msgstr "data de início"
 
 msgid "end date"
-msgstr ""
+msgstr "data de fim"
 
 msgid "User who cancelled this recurring series"
-msgstr ""
+msgstr "Utilizador que cancelou esta série recorrente"
 
 msgid "paused at"
-msgstr ""
+msgstr "pausado em"
 
 msgid "User who paused this recurring series"
-msgstr ""
+msgstr "Utilizador que pausou esta série recorrente"
 
 msgid "End date must be after start date."
-msgstr ""
+msgstr "A data de fim deve ser posterior à data de início."
 
 msgid "Individual classes can only have one student."
-msgstr ""
+msgstr "Aulas individuais só podem ter um aluno."
 
 msgid "School-specific preferences (null for global preferences)"
-msgstr ""
+msgstr "Preferências específicas da escola (nulo para preferências globais)"
 
 msgid "reminder timing hours"
-msgstr ""
+msgstr "horas de tempo de lembrete"
 
 msgid "List of hours before class to send reminders (e.g., [24, 2, 0.5])"
-msgstr ""
+msgstr "Lista de horas antes da aula para enviar lembretes (ex: [24, 2, 0.5])"
 
 msgid "communication channels"
-msgstr ""
+msgstr "canais de comunicação"
 
 msgid "List of preferred communication channels"
-msgstr ""
+msgstr "Lista de canais de comunicação preferidos"
 
 msgid "timezone preference"
-msgstr ""
+msgstr "preferência de fuso horário"
 
 msgid "User's preferred timezone (e.g., 'America/New_York')"
-msgstr ""
+msgstr "Fuso horário preferido do utilizador (ex: 'America/New_York')"
 
 msgid "Whether reminders are enabled for this user"
-msgstr ""
+msgstr "Se os lembretes estão ativados para este utilizador"
 
 msgid "is school default"
-msgstr ""
+msgstr "é padrão da escola"
 
 msgid "Whether this is the default preference template for the school"
-msgstr ""
+msgstr "Se este é o modelo de preferência padrão para a escola"
 
 msgid "Must be a list of numbers"
-msgstr ""
+msgstr "Deve ser uma lista de números"
 
 msgid "Hours must be numbers between 0 and 168"
-msgstr ""
+msgstr "As horas devem ser números entre 0 e 168"
 
 msgid "Must be a list of channel names"
-msgstr ""
+msgstr "Deve ser uma lista de nomes de canais"
 
 #, python-brace-format
 msgid "Invalid channel. Must be one of: {}"
-msgstr ""
+msgstr "Canal inválido. Deve ser um de: {}"
 
 msgid "Invalid timezone"
-msgstr ""
+msgstr "Fuso horário inválido"
 
 msgid "reminder type"
-msgstr ""
+msgstr "tipo de lembrete"
 
 msgid "User who will receive this reminder"
-msgstr ""
+msgstr "Utilizador que receberá este lembrete"
 
 msgid "recipient type"
-msgstr ""
+msgstr "tipo de destinatário"
 
 msgid "Admin"
-msgstr ""
+msgstr "Administrador"
 
 msgid "Role of the recipient in the class context"
-msgstr ""
+msgstr "Função do destinatário no contexto da aula"
 
 msgid "communication channel"
-msgstr ""
+msgstr "canal de comunicação"
 
 msgid "Channel used to send this reminder"
-msgstr ""
+msgstr "Canal usado para enviar este lembrete"
 
 msgid "scheduled for"
-msgstr ""
+msgstr "agendado para"
 
 msgid "When this reminder should be sent (UTC)"
-msgstr ""
+msgstr "Quando este lembrete deve ser enviado (UTC)"
 
 msgid "sent at"
-msgstr ""
+msgstr "enviado em"
 
 msgid "When this reminder was actually sent"
-msgstr ""
+msgstr "Quando este lembrete foi realmente enviado"
 
 msgid "subject"
-msgstr ""
+msgstr "assunto"
 
 msgid "Email subject or notification title"
-msgstr ""
+msgstr "Assunto do e-mail ou título da notificação"
 
 msgid "Reminder message content"
-msgstr ""
+msgstr "Conteúdo da mensagem de lembrete"
 
 msgid "Error message if sending failed"
-msgstr ""
+msgstr "Mensagem de erro se o envio falhou"
 
 msgid "Number of times sending was retried"
-msgstr ""
+msgstr "Número de vezes que o envio foi repetido"
 
 msgid "external message ID"
-msgstr ""
+msgstr "ID da mensagem externa"
 
 msgid "ID from external communication service"
-msgstr ""
+msgstr "ID do serviço de comunicação externo"
 
 msgid "Additional data for the reminder"
-msgstr ""
+msgstr "Dados adicionais para o lembrete"
 
 msgid "Scheduled time must be in the future"
-msgstr ""
+msgstr "A hora agendada deve ser no futuro"
 
 msgid "Retry count cannot exceed max retries"
-msgstr ""
+msgstr "Número de tentativas não pode exceder o máximo"
 
 msgid "Onboarding"
-msgstr ""
+msgstr "Integração"
 
 msgid "Assignment"
-msgstr ""
+msgstr "Atribuição"
 
 msgid "Personal"
-msgstr ""
+msgstr "Pessoal"
 
 msgid "System"
-msgstr ""
+msgstr "Sistema"
+
+msgid "Add First Student"
+msgstr "Adicionar Primeiro Aluno"
 
 msgid "Title"
-msgstr ""
+msgstr "Título"
 
 msgid "Description"
-msgstr ""
+msgstr "Descrição"
 
 msgid "User"
-msgstr ""
+msgstr "Utilizador"
 
 msgid "Status"
-msgstr ""
+msgstr "Estado"
 
 msgid "Priority"
-msgstr ""
+msgstr "Prioridade"
 
 msgid "Task Type"
-msgstr ""
+msgstr "Tipo de Tarefa"
 
 msgid "Due Date"
-msgstr ""
+msgstr "Data de Vencimento"
 
 msgid "Completed At"
-msgstr ""
+msgstr "Concluída Em"
 
 msgid "Created At"
-msgstr ""
+msgstr "Criada Em"
 
 msgid "Updated At"
-msgstr ""
+msgstr "Atualizada Em"
 
 msgid "Is Urgent"
-msgstr ""
+msgstr "É Urgente"
 
 msgid "Is System Generated"
-msgstr ""
+msgstr "É Gerada pelo Sistema"
 
 msgid "True if this task was automatically created by the system"
-msgstr ""
+msgstr "Verdadeiro se esta tarefa foi automaticamente criada pelo sistema"
+
+msgid "System Code"
+msgstr "Código do Sistema"
+
+msgid "Unique identifier for system-generated tasks"
+msgstr "Identificador único para tarefas geradas pelo sistema"
 
 msgid "Task"
-msgstr ""
+msgstr "Tarefa"
 
 msgid "Tasks"
-msgstr ""
+msgstr "Tarefas"
 
 msgid "Comment"
-msgstr ""
+msgstr "Comentário"
 
 msgid "Task Comment"
-msgstr ""
+msgstr "Comentário da Tarefa"
 
 msgid "Task Comments"
-msgstr ""
+msgstr "Comentários da Tarefa"
+
+msgid "Verify your email address"
+msgstr "Verifique o seu endereço de e-mail"
+
+msgid "Click the verification link sent to your email"
+msgstr "Clique na ligação de verificação enviada para o seu e-mail"
+
+msgid "Verify your phone number"
+msgstr "Verifique o seu número de telefone"
+
+msgid "Enter the SMS code to verify your phone"
+msgstr "Introduza o código SMS para verificar o seu telefone"
+
+msgid "Add your first student"
+msgstr "Adicione o seu primeiro aluno"
+
+msgid "Add a student to start using the platform"
+msgstr "Adicione um aluno para começar a usar a plataforma"
+
+msgid "Educational Platform"
+msgstr "Plataforma Educativa"
+
+msgid "You're Invited to Join as a Teacher!"
+msgstr "Foi convidado para se juntar como Professor!"
+
+msgid "Hello,"
+msgstr "Olá,"
+
+msgid "My Profile"
+msgstr "O Meu Perfil"
+
+msgid "Edit Profile"
+msgstr "Editar Perfil"
+
+msgid "Your account information and school memberships"
+msgstr "As suas informações de conta e membros de escolas"
+
+msgid "School Members"
+msgstr "Membros da Escola"
+
+msgid "Members of"
+msgstr "Membros de"
+
+msgid "Joined"
+msgstr "Inscrito"
+
+msgid "First"
+msgstr "Primeiro"
+
+msgid "Previous"
+msgstr "Anterior"
+
+msgid "Page"
+msgstr "Página"
+
+msgid "of"
+msgstr "de"
+
+msgid "Next"
+msgstr "Seguinte"
+
+msgid "Last"
+msgstr "Último"
+
+msgid "No members found."
+msgstr "Nenhum membro encontrado."
+
+msgid "Verify Code"
+msgstr "Verificar Código"
+
+msgid "Enter the 6-digit code sent to"
+msgstr "Introduza o código de 6 dígitos enviado para"
+
+msgid "Need to change your email?"
+msgstr "Precisa de alterar o seu email?"
+
+msgid "Go back"
+msgstr "Voltar"
 
 msgid "Admin Dashboard"
 msgstr "Painel de Administração"
@@ -2819,36 +3035,6 @@ msgstr "Painel de Administração"
 #, python-format
 msgid "Hello, %(name)s!"
 msgstr "Olá, %(name)s!"
-
-msgid "You need to add"
-msgstr "Precisa adicionar"
-
-msgid "teachers"
-msgstr "professores"
-
-msgid "and"
-msgstr "e"
-
-msgid "students"
-msgstr "alunos"
-
-msgid "to fully activate your account"
-msgstr "para ativar totalmente a sua conta"
-
-msgid "Complete the pending tasks below to get started."
-msgstr "Complete as tarefas pendentes abaixo para começar."
-
-msgid "Total Teachers"
-msgstr "Total de Professores"
-
-msgid "Total Students"
-msgstr "Total de Alunos"
-
-msgid "Active Sessions"
-msgstr "Sessões Ativas"
-
-msgid "Monthly Revenue"
-msgstr "Receita Mensal"
 
 msgid "Upcoming Classes"
 msgstr "Próximas Aulas"
@@ -2859,92 +3045,207 @@ msgid_plural "%(counter)s classes scheduled"
 msgstr[0] "%(counter)s aula agendada"
 msgstr[1] "%(counter)s aulas agendadas"
 
+msgid "Date"
+msgstr "Data"
+
+msgid "Time"
+msgstr "Hora"
+
+msgid "Class"
+msgstr "Aula"
+
+msgid "No classes scheduled"
+msgstr "Nenhuma aula agendada"
+
+msgid "Classes will appear here when teachers and students schedule sessions"
+msgstr "As aulas aparecerão aqui quando professores e alunos agendarem sessões"
+
+msgid "Add"
+msgstr "Adicionar"
+
+msgid "No tasks"
+msgstr "Nenhuma tarefa"
+
+msgid "Select school year"
+msgstr "Selecionar ano letivo"
+
+msgid "Invitations"
+msgstr "Convites"
+
+msgid "Invite teachers to join your school and manage existing invitations"
+msgstr "Convide professores para se juntarem à sua escola e gerir convites existentes"
+
+msgid "Invite New Teacher"
+msgstr "Convidar Novo Professor"
+
+msgid "Recent Invitations"
+msgstr "Convites Recentes"
+
+msgid "Manage and track your teacher invitations"
+msgstr "Gira e acompanha os seus convites de professores"
+
+msgid "No invitations yet"
+msgstr "Ainda sem convites"
+
+msgid "Get started by inviting your first teacher above."
+msgstr "Comece por convidar o seu primeiro professor acima."
+
+#, python-format
+msgid "Year %(year)s"
+msgstr "Ano %(year)s"
+
+msgid "Student Management"
+msgstr "Gestão de Alunos"
+
+msgid "No students found. Add students to get started."
+msgstr "Nenhum aluno encontrado. Adicione alunos para começar."
+
+msgid "No teachers found"
+msgstr "Nenhum professor encontrado"
+
+msgid "Add teachers to your school to get started."
+msgstr "Adicione professores à sua escola para começar."
+
+msgid "Add First Teacher"
+msgstr "Adicionar Primeiro Professor"
+
+msgid "People Management"
+msgstr "Gestão de Pessoas"
+
+msgid "Staff"
+msgstr "Pessoal"
+
+msgid "Add Student"
+msgstr "Adicionar Aluno"
+
+msgid "Add Teacher"
+msgstr "Adicionar Professor"
+
+msgid "Staff Management"
+msgstr "Gestão de Pessoal"
+
+msgid "Staff management functionality coming soon."
+msgstr "Funcionalidade de gestão de pessoal em breve."
+
+msgid "Student Portal"
+msgstr "Portal do Aluno"
+
+msgid "Continue your learning journey"
+msgstr "Continue a sua jornada de aprendizagem"
+
+msgid "Active Courses"
+msgstr "Cursos Ativos"
+
+msgid "Teacher Dashboard"
+msgstr "Painel do Professor"
+
+msgid "Manage your teaching activities and connect with students"
+msgstr "Gira as suas atividades de ensino e conecte-se com alunos"
+
+msgid "Active Students"
+msgstr "Alunos Ativos"
+
 msgid "Change"
 msgstr "Alterar"
 
+msgid "Optional class description"
+msgstr "Descrição opcional da aula"
+
+msgid "Start"
+msgstr "Iniciar"
+
+msgid "Error"
+msgstr "Erro"
+
+msgid "Success"
+msgstr "Sucesso"
+
 msgid "Enter task title..."
-msgstr ""
+msgstr "Introduza o título da tarefa..."
 
 msgid "Enter task description..."
-msgstr ""
+msgstr "Introduza a descrição da tarefa..."
 
 msgid "Type"
-msgstr ""
+msgstr "Tipo"
 
 msgid "Mark as urgent"
-msgstr ""
+msgstr "Marcar como urgente"
 
 msgid "Cancel"
-msgstr ""
+msgstr "Cancelar"
 
 msgid "Update Task"
-msgstr ""
+msgstr "Atualizar Tarefa"
 
 msgid "Create Task"
-msgstr ""
+msgstr "Criar Tarefa"
 
 msgid "Urgent"
-msgstr ""
+msgstr "Urgente"
 
 msgid "Overdue"
-msgstr ""
+msgstr "Em Atraso"
 
 msgid "Due Today"
-msgstr ""
+msgstr "Vence Hoje"
 
 msgid "Due Tomorrow"
-msgstr ""
+msgstr "Vence Amanhã"
 
 msgid "days left"
-msgstr ""
+msgstr "dias restantes"
+
+msgid "Are you sure you want to delete this task?"
+msgstr "Tem a certeza de que quer apagar esta tarefa?"
 
 msgid "Created"
-msgstr ""
+msgstr "Criada"
 
 msgid "Updated"
-msgstr ""
+msgstr "Atualizada"
 
 msgid "No tasks found"
-msgstr ""
+msgstr "Nenhuma tarefa encontrada"
 
 msgid "No tasks match the current filter."
-msgstr ""
+msgstr "Nenhuma tarefa corresponde ao filtro atual."
 
 msgid "Get started by creating your first task."
-msgstr ""
+msgstr "Comece por criar a sua primeira tarefa."
 
 msgid "Total Tasks"
-msgstr ""
+msgstr "Total de Tarefas"
 
 msgid "Overdue Tasks"
-msgstr ""
+msgstr "Tarefas em Atraso"
 
 msgid "task"
-msgstr ""
+msgstr "tarefa"
 
 msgid "Urgent Tasks"
-msgstr ""
+msgstr "Tarefas Urgentes"
 
 msgid "Edit Task"
-msgstr ""
+msgstr "Editar Tarefa"
 
 msgid "Back to Tasks"
-msgstr ""
+msgstr "Voltar às Tarefas"
 
 msgid "Last updated"
-msgstr ""
+msgstr "Última atualização"
 
 msgid "Complete"
-msgstr ""
+msgstr "Concluir"
 
 msgid "Reopen"
-msgstr ""
+msgstr "Reabrir"
 
 msgid "Manage your tasks and to-do items"
-msgstr ""
+msgstr "Gira as suas tarefas e itens por fazer"
 
 msgid "New Task"
-msgstr ""
+msgstr "Nova Tarefa"
 
 msgid "All"
-msgstr ""
+msgstr "Todos"

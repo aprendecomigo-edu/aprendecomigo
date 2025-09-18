@@ -10,12 +10,10 @@ app_name = "messaging"
 
 urlpatterns = [
     # =======================
-    # NOTIFICATION URLS
+    # NOTIFICATION URLS (Modal Only)
     # =======================
-    # Notification list and filtering
+    # Modal notification content (HTMX only)
     path("notifications/", views.NotificationListView.as_view(), name="notification-list"),
-    # Notification detail
-    path("notifications/<int:pk>/", views.NotificationDetailView.as_view(), name="notification-detail"),
     # Mark notification as read (HTMX endpoint)
     path("notifications/<int:pk>/mark-read/", views.NotificationMarkReadView.as_view(), name="notification-mark-read"),
     # Unread count badge (HTMX polling endpoint)

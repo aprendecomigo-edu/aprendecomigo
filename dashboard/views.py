@@ -8,11 +8,16 @@ import logging
 from uuid import uuid4
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.db import models
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils import timezone
+from django.utils.decorators import method_decorator
+from django.utils.html import escape
 from django.views import View
+from django.views.decorators.csrf import csrf_protect
 
 from accounts.models import CustomUser, InvitationStatus, School, SchoolMembership, TeacherInvitation
 from accounts.models.enums import SchoolRole
@@ -24,6 +29,7 @@ from tasks.models import Task
 logger = logging.getLogger("accounts.auth")
 
 
+@method_decorator(csrf_protect, name="dispatch")
 class DashboardView(LoginRequiredMixin, View):
     """Main dashboard view that renders appropriate template based on user role"""
 
@@ -463,6 +469,7 @@ class InvitationsView(LoginRequiredMixin, View):
         )
 
 
+@method_decorator(csrf_protect, name="dispatch")
 class PeopleView(LoginRequiredMixin, View):
     """Unified people management page with tabs for teachers, students, staff"""
 
@@ -536,6 +543,29 @@ class PeopleView(LoginRequiredMixin, View):
                 }
             )
 
+        # Add Guardian-Only students (no user accounts)
+        guardian_only_profiles = StudentProfile.objects.filter(
+            user=None,  # Guardian-Only students have no user account
+            account_type="GUARDIAN_ONLY",
+        ).select_related("guardian")
+
+        for profile in guardian_only_profiles:
+            # Use the first school from user_schools for display (admin can manage across schools)
+            school = user_schools.first() if user_schools.exists() else None
+            guardian_user = profile.guardian.user if profile.guardian else None
+
+            students.append(
+                {
+                    "id": f"guardian_only_{profile.id}",  # Unique ID for guardian-only students
+                    "email": guardian_user.email if guardian_user else "",
+                    "name": profile.name,  # Use the name field from StudentProfile
+                    "full_name": profile.name,
+                    "school_year": profile.school_year,
+                    "school": {"id": school.id, "name": school.name} if school else {"id": 0, "name": "Unknown"},
+                    "status": "active",  # Guardian-Only students are always "active"
+                }
+            )
+
         # Calculate stats
         teacher_stats = {
             "active": len([t for t in teachers if t["status"] == "active"]),
@@ -566,10 +596,12 @@ class PeopleView(LoginRequiredMixin, View):
 
         if action == "add_teacher":
             return self._handle_add_teacher(request)
-        elif action == "add_student":
-            return self._handle_add_student(request)
         elif action == "invite_teacher":
             return self._handle_invite_teacher(request)
+        elif action == "search_students":
+            return self._handle_search_students(request)
+        elif action == "get_student_detail":
+            return self._handle_get_student_detail(request)
         else:
             return JsonResponse({"error": "Invalid action"}, status=400)
 
@@ -623,268 +655,40 @@ class PeopleView(LoginRequiredMixin, View):
         except Exception as e:
             return render(request, "shared/partials/error_message.html", {"error": f"Failed to add teacher: {e!s}"})
 
-    def _handle_add_student(self, request):
-        """Handle adding a new student with the three account type scenarios"""
+    def _validate_email_format(self, email):
+        """Validate email format and return sanitized email or raise ValidationError"""
+        if not email:
+            return ""
 
-        from django.db import transaction
+        # Strip whitespace first
+        email = email.strip()
 
-        from accounts.models.educational import EducationalSystem
-        from accounts.models.profiles import GuardianProfile
-        from accounts.permissions import PermissionService
+        # Check for basic format requirements
+        if " " in email:
+            raise ValidationError(f"Email cannot contain spaces: {email}")
 
+        if "@" not in email:
+            raise ValidationError(f"Email must contain @: {email}")
+
+        if email.startswith("@") or email.endswith("@"):
+            raise ValidationError(f"Invalid email format: {email}")
+
+        # Reject emails with non-ASCII characters (internationalized domains)
+        # This matches the test expectation for stricter validation
         try:
-            account_type = request.POST.get("account_type", "separate")
+            email.encode("ascii")
+        except UnicodeEncodeError:
+            raise ValidationError(f"Email must contain only ASCII characters: {email}")
 
-            # Get user's schools
-            def get_user_schools(user):
-                if user.is_staff or user.is_superuser:
-                    return School.objects.all()
-                school_ids = SchoolMembership.objects.filter(user=user).values_list("school_id", flat=True)
-                return School.objects.filter(id__in=school_ids)
+        # Use Django's built-in validator
+        try:
+            validate_email(email)
+            return escape(email)
+        except ValidationError:
+            raise ValidationError(f"Invalid email format: {email}")
 
-            user_schools = get_user_schools(request.user)
-
-            # Get default educational system (Portugal)
-            educational_system = EducationalSystem.objects.filter(code="pt").first()
-            if not educational_system:
-                educational_system = EducationalSystem.objects.first()
-
-            with transaction.atomic():
-                if account_type == "guardian_only":
-                    # Handle guardian-only scenario (young student without login)
-                    student_name = request.POST.get("guardian_only_student_name")
-                    student_birth_date = request.POST.get("guardian_only_student_birth_date")
-                    student_school_year = request.POST.get("guardian_only_student_school_year", "")
-                    student_notes = request.POST.get("guardian_only_student_notes", "")
-
-                    guardian_name = request.POST.get("guardian_only_guardian_name")
-                    guardian_email = request.POST.get("guardian_only_guardian_email")
-                    guardian_phone = request.POST.get("guardian_only_guardian_phone", "")
-                    guardian_tax_nr = request.POST.get("guardian_only_guardian_tax_nr", "")
-                    guardian_address = request.POST.get("guardian_only_guardian_address", "")
-                    guardian_invoice = request.POST.get("guardian_only_guardian_invoice") == "on"
-                    guardian_email_notifications = (
-                        request.POST.get("guardian_only_guardian_email_notifications") == "on"
-                    )
-                    guardian_sms_notifications = request.POST.get("guardian_only_guardian_sms_notifications") == "on"
-
-                    # Validate required fields
-                    if not all([student_name, student_birth_date, guardian_name, guardian_email]):
-                        return render(
-                            request,
-                            "shared/partials/error_message.html",
-                            {"error": "Student name, birth date, guardian name and email are required"},
-                        )
-
-                    # Create or get guardian user
-                    try:
-                        guardian_user = CustomUser.objects.get(email=guardian_email)
-                    except CustomUser.DoesNotExist:
-                        guardian_user = CustomUser.objects.create_user(
-                            email=guardian_email, name=guardian_name, phone_number=guardian_phone
-                        )
-
-                    # Create guardian profile
-                    guardian_profile, _ = GuardianProfile.objects.get_or_create(
-                        user=guardian_user,
-                        defaults={
-                            "address": guardian_address,
-                            "tax_nr": guardian_tax_nr,
-                            "invoice": guardian_invoice,
-                            "email_notifications_enabled": guardian_email_notifications,
-                            "sms_notifications_enabled": guardian_sms_notifications,
-                        },
-                    )
-
-                    # Create student profile WITHOUT a user account (guardian-only)
-                    student_profile = StudentProfile.objects.create(
-                        user=None,  # No user account for guardian-only students
-                        account_type="GUARDIAN_ONLY",
-                        educational_system=educational_system,
-                        school_year=student_school_year,
-                        birth_date=student_birth_date,
-                        guardian=guardian_profile,
-                        notes=student_notes,
-                    )
-
-                    # Setup permissions for guardian to manage this student
-                    PermissionService.setup_permissions_for_student(student_profile)
-
-                    # Add guardian to schools (student placeholder account doesn't need school membership)
-                    for school in user_schools:
-                        SchoolMembership.objects.get_or_create(
-                            user=guardian_user, school=school, defaults={"role": SchoolRole.GUARDIAN}
-                        )
-
-                elif account_type == "separate":
-                    # Handle separate guardian scenario
-                    student_name = request.POST.get("student_name")
-                    student_email = request.POST.get("student_email")
-                    student_birth_date = request.POST.get("student_birth_date")
-                    student_school_year = request.POST.get("student_school_year", "")
-                    student_notes = request.POST.get("student_notes", "")
-
-                    guardian_name = request.POST.get("guardian_name")
-                    guardian_email = request.POST.get("guardian_email")
-                    guardian_phone = request.POST.get("guardian_phone", "")
-                    guardian_tax_nr = request.POST.get("guardian_tax_nr", "")
-                    guardian_address = request.POST.get("guardian_address", "")
-                    guardian_invoice = request.POST.get("guardian_invoice") == "on"
-                    guardian_email_notifications = request.POST.get("guardian_email_notifications") == "on"
-                    guardian_sms_notifications = request.POST.get("guardian_sms_notifications") == "on"
-
-                    # Validate required fields
-                    if not all([student_name, student_email, student_birth_date, guardian_name, guardian_email]):
-                        return render(
-                            request,
-                            "shared/partials/error_message.html",
-                            {"error": "Student name, email, birth date, guardian name and email are required"},
-                        )
-
-                    # Create or get student user
-                    try:
-                        student_user = CustomUser.objects.get(email=student_email)
-                    except CustomUser.DoesNotExist:
-                        student_user = CustomUser.objects.create_user(email=student_email, name=student_name)
-
-                    # Create or get guardian user
-                    try:
-                        guardian_user = CustomUser.objects.get(email=guardian_email)
-                    except CustomUser.DoesNotExist:
-                        guardian_user = CustomUser.objects.create_user(
-                            email=guardian_email, name=guardian_name, phone_number=guardian_phone
-                        )
-
-                    # Create guardian profile
-                    guardian_profile, _ = GuardianProfile.objects.get_or_create(
-                        user=guardian_user,
-                        defaults={
-                            "address": guardian_address,
-                            "tax_nr": guardian_tax_nr,
-                            "invoice": guardian_invoice,
-                            "email_notifications_enabled": guardian_email_notifications,
-                            "sms_notifications_enabled": guardian_sms_notifications,
-                        },
-                    )
-
-                    # Create student profile with STUDENT_GUARDIAN account type
-                    student_profile, created = StudentProfile.objects.get_or_create(
-                        user=student_user,
-                        defaults={
-                            "account_type": "STUDENT_GUARDIAN",
-                            "educational_system": educational_system,
-                            "school_year": student_school_year,
-                            "birth_date": student_birth_date,
-                            "guardian": guardian_profile,
-                            "notes": student_notes,
-                        },
-                    )
-
-                    if not created:
-                        student_profile.account_type = "STUDENT_GUARDIAN"
-                        student_profile.school_year = student_school_year
-                        student_profile.birth_date = student_birth_date
-                        student_profile.guardian = guardian_profile
-                        student_profile.notes = student_notes
-                        student_profile.save()
-
-                    # Setup permissions for student-guardian relationship
-                    PermissionService.setup_permissions_for_student(student_profile)
-
-                    # Add both users to schools
-                    for school in user_schools:
-                        # Add student
-                        SchoolMembership.objects.get_or_create(
-                            user=student_user, school=school, defaults={"role": SchoolRole.STUDENT.value}
-                        )
-                        # Add guardian
-                        SchoolMembership.objects.get_or_create(
-                            user=guardian_user, school=school, defaults={"role": SchoolRole.GUARDIAN}
-                        )
-
-                elif account_type == "self":
-                    # Handle self-guardian scenario (adult student)
-                    name = request.POST.get("self_name")
-                    email = request.POST.get("self_email")
-                    phone = request.POST.get("self_phone", "")
-                    birth_date = request.POST.get("self_birth_date")
-                    school_year = request.POST.get("self_school_year", "")
-                    tax_nr = request.POST.get("self_tax_nr", "")
-                    address = request.POST.get("self_address", "")
-                    notes = request.POST.get("self_notes", "")
-                    invoice = request.POST.get("self_invoice") == "on"
-                    email_notifications = request.POST.get("self_email_notifications") == "on"
-                    sms_notifications = request.POST.get("self_sms_notifications") == "on"
-
-                    # Validate required fields
-                    if not all([name, email, birth_date]):
-                        return render(
-                            request,
-                            "shared/partials/error_message.html",
-                            {"error": "Name, email and birth date are required"},
-                        )
-
-                    # Create or get user
-                    try:
-                        user = CustomUser.objects.get(email=email)
-                    except CustomUser.DoesNotExist:
-                        user = CustomUser.objects.create_user(email=email, name=name, phone_number=phone)
-
-                    # For adult students, no need for guardian profile
-                    # Create student profile with ADULT_STUDENT account type
-                    student_profile, created = StudentProfile.objects.get_or_create(
-                        user=user,
-                        defaults={
-                            "account_type": "ADULT_STUDENT",
-                            "educational_system": educational_system,
-                            "school_year": school_year,
-                            "birth_date": birth_date,
-                            "guardian": None,  # No guardian for adult students
-                            "notes": notes,
-                            "address": address,
-                            "tax_nr": tax_nr,
-                            "invoice": invoice,
-                            "email_notifications_enabled": email_notifications,
-                            "sms_notifications_enabled": sms_notifications,
-                        },
-                    )
-
-                    if not created:
-                        student_profile.account_type = "ADULT_STUDENT"
-                        student_profile.school_year = school_year
-                        student_profile.birth_date = birth_date
-                        student_profile.guardian = None
-                        student_profile.notes = notes
-                        student_profile.address = address
-                        student_profile.tax_nr = tax_nr
-                        student_profile.invoice = invoice
-                        student_profile.email_notifications_enabled = email_notifications
-                        student_profile.sms_notifications_enabled = sms_notifications
-                        student_profile.save()
-
-                    # Setup permissions for adult student (full access)
-                    PermissionService.setup_permissions_for_student(student_profile)
-
-                    # Add user to schools as student only (they handle their own account)
-                    for school in user_schools:
-                        SchoolMembership.objects.get_or_create(
-                            user=user, school=school, defaults={"role": SchoolRole.STUDENT.value}
-                        )
-                else:
-                    return render(
-                        request,
-                        "shared/partials/error_message.html",
-                        {
-                            "error": f'Invalid account type: {account_type}. Must be "separate", "guardian_only", or "self"'
-                        },
-                    )
-
-            # Return updated students partial
-            return self._render_students_partial(request)
-
-        except Exception as e:
-            logger.exception("Error adding student")
-            return render(request, "shared/partials/error_message.html", {"error": f"Failed to add student: {e!s}"})
+    # NOTE: Student creation logic has been moved to dedicated views in accounts.views.student_creation
+    # This improves modularity and makes the code easier to maintain and test
 
     def _handle_invite_teacher(self, request):
         """Handle teacher invitation"""
@@ -892,6 +696,81 @@ class PeopleView(LoginRequiredMixin, View):
         return render(
             request, "shared/partials/success_message.html", {"message": "Teacher invitation functionality coming soon"}
         )
+
+    def _handle_search_students(self, request):
+        """Handle student search requests"""
+        search_query = request.POST.get("search", "").strip()
+        return self._render_students_partial(request, search_query=search_query)
+
+    def _handle_get_student_detail(self, request):
+        """Handle student detail requests"""
+
+        try:
+            student_id = request.POST.get("student_id")
+            if not student_id:
+                return render(request, "shared/partials/error_message.html", {"error": "Student ID is required"})
+
+            # Get student with all related data
+            student = CustomUser.objects.select_related(
+                "student_profile", "student_profile__guardian", "student_profile__educational_system"
+            ).get(id=student_id)
+
+            # Get school membership
+            membership = (
+                SchoolMembership.objects.filter(user=student, role=SchoolRole.STUDENT.value)
+                .select_related("school")
+                .first()
+            )
+
+            # Prepare student detail data
+            student_detail = {
+                "id": student.id,
+                "email": student.email,
+                "name": student.name,
+                "full_name": student.get_full_name(),
+                "phone_number": student.phone_number or "",
+                "is_active": student.is_active,
+                "date_joined": student.date_joined,
+                "last_login": student.last_login,
+                "school": {"name": membership.school.name, "id": membership.school.id} if membership else None,
+            }
+
+            # Add student profile data if exists
+            if hasattr(student, "student_profile"):
+                profile = student.student_profile
+                student_detail.update(
+                    {
+                        "school_year": profile.school_year or "",
+                        "birth_date": profile.birth_date,
+                        "account_type": profile.account_type or "",
+                        "notes": profile.notes or "",
+                        "educational_system": profile.educational_system.name if profile.educational_system else "",
+                    }
+                )
+
+                # Add guardian data if exists
+                if profile.guardian:
+                    guardian = profile.guardian
+                    student_detail["guardian"] = {
+                        "id": guardian.id,
+                        "name": guardian.user.get_full_name() if guardian.user else "",
+                        "email": guardian.user.email if guardian.user else "",
+                        "phone_number": guardian.user.phone_number if guardian.user else "",
+                        "tax_number": guardian.tax_nr or "",
+                        "address": guardian.address or "",
+                        "invoice": guardian.invoice,
+                        "email_notifications_enabled": guardian.email_notifications_enabled,
+                        "sms_notifications_enabled": guardian.sms_notifications_enabled,
+                    }
+
+            return render(request, "dashboard/partials/student_detail_modal_content.html", {"student": student_detail})
+
+        except CustomUser.DoesNotExist:
+            return render(request, "shared/partials/error_message.html", {"error": "Student not found"})
+        except Exception as e:
+            return render(
+                request, "shared/partials/error_message.html", {"error": f"Error fetching student details: {e!s}"}
+            )
 
     def _render_teachers_partial(self, request):
         """Render teachers list partial for HTMX updates"""
@@ -957,8 +836,10 @@ class PeopleView(LoginRequiredMixin, View):
             },
         )
 
-    def _render_students_partial(self, request):
+    def _render_students_partial(self, request, search_query=None):
         """Render students list partial for HTMX updates"""
+        from django.db.models import Q
+
         from accounts.models import School, SchoolMembership
         from accounts.models.enums import SchoolRole
         from accounts.models.profiles import StudentProfile
@@ -977,26 +858,75 @@ class PeopleView(LoginRequiredMixin, View):
             school__in=user_schools, role=SchoolRole.STUDENT.value
         ).select_related("user", "school")
 
+        # Apply search filter if provided
+        if search_query:
+            # Search across student and guardian fields
+            student_memberships = student_memberships.filter(
+                Q(user__name__icontains=search_query)
+                | Q(user__email__icontains=search_query)
+                | Q(user__student_profile__school_year__icontains=search_query)
+            )
+
         students = []
         for membership in student_memberships:
             user = membership.user
             try:
                 profile = user.student_profile
                 school_year = profile.school_year
+                account_type = profile.account_type
+                created_at = profile.created_at  # Use StudentProfile.created_at
+
+                # Get guardian info if exists
+                guardian_info = None
+                if profile.guardian:
+                    guardian_profile = profile.guardian
+                    guardian_info = {
+                        "name": guardian_profile.user.get_full_name() if guardian_profile.user else "",
+                        "email": guardian_profile.user.email if guardian_profile.user else "",
+                        "phone": guardian_profile.user.phone_number if guardian_profile.user else "",
+                    }
             except (StudentProfile.DoesNotExist, AttributeError):
                 school_year = ""
+                account_type = ""
+                guardian_info = None
+                created_at = user.date_joined  # Fallback to user creation date if no profile
 
-            students.append(
-                {
-                    "id": user.id,
-                    "email": user.email,
-                    "name": user.name,
-                    "full_name": user.get_full_name(),
-                    "school_year": school_year,
-                    "school": {"id": membership.school.id, "name": membership.school.name},
-                    "status": "active" if user.is_active else "inactive",
-                }
-            )
+            # Include guardian info in search
+            student_data = {
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "full_name": user.get_full_name(),
+                "school_year": school_year,
+                "account_type": account_type,
+                "guardian": guardian_info,
+                "school": {"id": membership.school.id, "name": membership.school.name},
+                "status": "active" if user.is_active else "inactive",
+                "date_joined": created_at,
+            }
+
+            # Add student to results if no search or if search matches
+            if not search_query:
+                students.append(student_data)
+            else:
+                # Check if search matches any student field
+                student_matches = any(
+                    search_query.lower() in str(value).lower() for value in [user.name, user.email, school_year]
+                )
+
+                # Check if search matches guardian fields
+                guardian_matches = False
+                if guardian_info:
+                    guardian_matches = any(
+                        search_query.lower() in str(value).lower()
+                        for value in [guardian_info.get("name", ""), guardian_info.get("email", "")]
+                    )
+
+                if student_matches or guardian_matches:
+                    students.append(student_data)
+
+        # Sort students by newest first (by created_at date)
+        students.sort(key=lambda x: x["date_joined"], reverse=True)
 
         student_stats = {"total": len(students)}
 

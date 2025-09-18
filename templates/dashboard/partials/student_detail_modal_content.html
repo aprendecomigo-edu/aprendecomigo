@@ -1,0 +1,194 @@
+{% load i18n %}
+<!-- Student Detail Modal Content - Loaded via HTMX -->
+{% if student %}
+<div class="space-y-6">
+    <!-- Student Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Basic Information -->
+        <div class="bg-blue-50 rounded-lg p-6">
+            <div class="flex items-center mb-4">
+                <div class="flex-shrink-0 w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mr-4">
+                    <span class="text-white font-medium text-lg">
+                        {{ student.name|default:student.full_name|default:"U"|first|upper }}
+                    </span>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-blue-900">{{ student.name|default:student.full_name|default:"Unknown Student" }}</h3>
+                    <p class="text-sm text-blue-700">{{ student.account_type|default:"Standard Account" }}</p>
+                </div>
+            </div>
+
+            <dl class="space-y-3">
+                <div class="flex justify-between">
+                    <dt class="text-sm font-medium text-blue-700">Email:</dt>
+                    <dd class="text-sm text-blue-900">{{ student.email|default:"Not provided" }}</dd>
+                </div>
+                {% if student.phone_number %}
+                <div class="flex justify-between">
+                    <dt class="text-sm font-medium text-blue-700">Phone:</dt>
+                    <dd class="text-sm text-blue-900">{{ student.phone_number }}</dd>
+                </div>
+                {% endif %}
+                {% if student.school_year %}
+                <div class="flex justify-between">
+                    <dt class="text-sm font-medium text-blue-700">School Year:</dt>
+                    <dd class="text-sm text-blue-900">{% blocktrans with year=student.school_year %}Year {{ year }}{% endblocktrans %}</dd>
+                </div>
+                {% endif %}
+                {% if student.birth_date %}
+                <div class="flex justify-between">
+                    <dt class="text-sm font-medium text-blue-700">Birth Date:</dt>
+                    <dd class="text-sm text-blue-900">{{ student.birth_date|date:"d M Y" }}</dd>
+                </div>
+                {% endif %}
+                <div class="flex justify-between">
+                    <dt class="text-sm font-medium text-blue-700">Status:</dt>
+                    <dd class="text-sm">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                            {% if student.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                            {% if student.is_active %}Active{% else %}Inactive{% endif %}
+                        </span>
+                    </dd>
+                </div>
+            </dl>
+        </div>
+
+        <!-- School & System Information -->
+        <div class="bg-gray-50 rounded-lg p-6">
+            <h4 class="text-lg font-semibold text-gray-900 mb-4">School Information</h4>
+            <dl class="space-y-3">
+                {% if student.school %}
+                <div class="flex justify-between">
+                    <dt class="text-sm font-medium text-gray-700">School:</dt>
+                    <dd class="text-sm text-gray-900">{{ student.school.name }}</dd>
+                </div>
+                {% endif %}
+                {% if student.educational_system %}
+                <div class="flex justify-between">
+                    <dt class="text-sm font-medium text-gray-700">Educational System:</dt>
+                    <dd class="text-sm text-gray-900">{{ student.educational_system }}</dd>
+                </div>
+                {% endif %}
+                {% if student.date_joined %}
+                <div class="flex justify-between">
+                    <dt class="text-sm font-medium text-gray-700">Joined:</dt>
+                    <dd class="text-sm text-gray-900">{{ student.date_joined|date:"d M Y" }}</dd>
+                </div>
+                {% endif %}
+                {% if student.last_login %}
+                <div class="flex justify-between">
+                    <dt class="text-sm font-medium text-gray-700">Last Login:</dt>
+                    <dd class="text-sm text-gray-900">{{ student.last_login|date:"d M Y, H:i" }}</dd>
+                </div>
+                {% endif %}
+            </dl>
+        </div>
+    </div>
+
+    <!-- Guardian Information -->
+    {% if student.guardian %}
+    <div class="bg-green-50 rounded-lg p-6">
+        <h4 class="text-lg font-semibold text-green-900 mb-4 flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+            </svg>
+            Guardian Information
+        </h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <h5 class="font-medium text-green-800 mb-3">Contact Details</h5>
+                <dl class="space-y-2">
+                    <div class="flex justify-between">
+                        <dt class="text-sm font-medium text-green-700">Name:</dt>
+                        <dd class="text-sm text-green-900">{{ student.guardian.name|default:"Not provided" }}</dd>
+                    </div>
+                    <div class="flex justify-between">
+                        <dt class="text-sm font-medium text-green-700">Email:</dt>
+                        <dd class="text-sm text-green-900">{{ student.guardian.email|default:"Not provided" }}</dd>
+                    </div>
+                    {% if student.guardian.phone_number %}
+                    <div class="flex justify-between">
+                        <dt class="text-sm font-medium text-green-700">Phone:</dt>
+                        <dd class="text-sm text-green-900">{{ student.guardian.phone_number }}</dd>
+                    </div>
+                    {% endif %}
+                    {% if student.guardian.tax_number %}
+                    <div class="flex justify-between">
+                        <dt class="text-sm font-medium text-green-700">Tax Number:</dt>
+                        <dd class="text-sm text-green-900">{{ student.guardian.tax_number }}</dd>
+                    </div>
+                    {% endif %}
+                </dl>
+            </div>
+            <div>
+                <h5 class="font-medium text-green-800 mb-3">Preferences</h5>
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-green-700">Invoice:</span>
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                            {% if student.guardian.invoice %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-600{% endif %}">
+                            {% if student.guardian.invoice %}Yes{% else %}No{% endif %}
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-green-700">Email Notifications:</span>
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                            {% if student.guardian.email_notifications_enabled %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-600{% endif %}">
+                            {% if student.guardian.email_notifications_enabled %}Enabled{% else %}Disabled{% endif %}
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-green-700">SMS Notifications:</span>
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                            {% if student.guardian.sms_notifications_enabled %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-600{% endif %}">
+                            {% if student.guardian.sms_notifications_enabled %}Enabled{% else %}Disabled{% endif %}
+                        </span>
+                    </div>
+                </div>
+                {% if student.guardian.address %}
+                <div class="mt-4">
+                    <h5 class="font-medium text-green-800 mb-2">Address</h5>
+                    <p class="text-sm text-green-900 leading-relaxed">{{ student.guardian.address }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Notes -->
+    {% if student.notes %}
+    <div class="bg-yellow-50 rounded-lg p-6">
+        <h4 class="text-lg font-semibold text-yellow-900 mb-4 flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+            </svg>
+            Notes
+        </h4>
+        <p class="text-sm text-yellow-900 leading-relaxed">{{ student.notes }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Actions -->
+    <div class="flex justify-end gap-3 pt-6 border-t border-gray-200">
+        <button type="button" @click="showStudentDetailModal = false"
+                class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            Close
+        </button>
+        <!-- TODO: Add Edit Student functionality
+        <button type="button"
+                class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            Edit Student
+        </button>
+        -->
+    </div>
+</div>
+{% else %}
+<div class="text-center py-8">
+    <svg class="mx-auto h-12 w-12 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    <h3 class="mt-2 text-sm font-medium text-gray-900">Error Loading Student</h3>
+    <p class="mt-1 text-sm text-gray-500">Unable to load student information. Please try again.</p>
+</div>
+{% endif %}

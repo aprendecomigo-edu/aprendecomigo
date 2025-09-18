@@ -172,12 +172,21 @@ class StudentProfile(models.Model):
         blank=True,
         help_text=_("User account for this student (null if guardian-only management)"),
     )
-    educational_system: models.ForeignKey = models.ForeignKey(
-        "EducationalSystem",
-        on_delete=models.CASCADE,
-        related_name="students",
+    name: models.CharField = models.CharField(
+        _("student name"),
+        max_length=150,
+        blank=False,
+        null=False,
+        help_text=_(
+            "Student's full name (required for all students, especially guardian-only students without user accounts)"
+        ),
+    )
+    educational_system: models.CharField = models.CharField(
+        _("educational system"),
+        max_length=20,
+        choices=[("pt", "Portugal"), ("custom", "Custom")],
+        default="pt",  # Portugal system as default
         help_text=_("Educational system this student belongs to"),
-        default=1,  # Portugal system as default
     )
     school_year: models.CharField = models.CharField(
         _("school year"), max_length=50, help_text=_("School year within the educational system")
@@ -241,29 +250,19 @@ class StudentProfile(models.Model):
         ]
 
     def __str__(self) -> str:
-        user_name = self.user.name if hasattr(self.user, "name") else str(self.user)
-        return f"Student Profile: {user_name}"
+        if self.user and hasattr(self.user, "name"):
+            return f"Student Profile: {self.user.name}"
+        elif self.name:
+            return f"Student Profile: {self.name}"
+        else:
+            return f"Student Profile: {self.user or 'Unknown'}"
 
     def clean(self):
         """Validate that school_year is valid for the selected educational system"""
         super().clean()
 
-        # Validate school year
-        if (
-            self.educational_system
-            and self.school_year
-            and not self.educational_system.validate_school_year(self.school_year)
-        ):
-            from django.core.exceptions import ValidationError
-
-            valid_years = dict(self.educational_system.school_year_choices)
-            raise ValidationError(
-                {
-                    "school_year": f"School year '{self.school_year}' is not valid for "
-                    f"educational system '{self.educational_system.name}'. "
-                    f"Valid options: {list(valid_years.keys())}"
-                }
-            )
+        # For now, we're only supporting Portuguese system
+        # School year validation can be added later if needed
         # Validate account type consistency
         from django.core.exceptions import ValidationError
 

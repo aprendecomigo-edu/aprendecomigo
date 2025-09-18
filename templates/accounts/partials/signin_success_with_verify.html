@@ -19,10 +19,10 @@
     </div>
 
     <!-- Verification Form -->
-    <form hx-post="{% url 'accounts:verify_otp' %}"
+    <form {% if not session_expired %}hx-post="{% url 'accounts:verify_otp' %}"
           hx-target="#signin-form-container"
-          hx-swap="innerHTML"
-          class="w-full space-y-6">
+          hx-swap="innerHTML"{% endif %}
+          class="w-full space-y-6"{% if session_expired %} style="pointer-events: none; opacity: 0.6;"{% endif %}>
         {% csrf_token %}
 
         <!-- Verification Code Field with 6 Separate Inputs -->
@@ -94,31 +94,42 @@
         </div>
 
         <!-- Submit Button -->
-        <div class="w-full mt-8">
-            <button type="submit"
-                    class="w-full bg-gradient-primary py-4 rounded-xl active:scale-98 transition-all shadow-lg text-white text-center font-bold font-primary text-base">
-                <span class="htmx-indicator">
-                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Verifying...
-                </span>
-                <span class="htmx-indicator-none">Verify Code</span>
-            </button>
+        <div class="flex justify-center mt-8">
+            <div class="relative w-full max-w-sm">
+                <button type="submit"
+                        class="w-full bg-gradient-primary py-4 rounded-xl active:scale-98 transition-all shadow-lg text-white text-center font-bold font-primary text-base htmx-request:opacity-50 htmx-request:pointer-events-none"
+                        data-test="verify-code">
+                    Verify Code
+                </button>
+
+                <!-- Loading Spinner Overlay -->
+                <div class="htmx-indicator absolute inset-0 flex items-center justify-center bg-base-100/50 backdrop-blur-sm rounded-lg opacity-0 invisible" data-test="loading-verify">
+                    <div class="loading loading-spinner loading-md text-primary"></div>
+                </div>
+            </div>
         </div>
 
         <!-- Resend option -->
         <div class="text-center mt-4">
-            <p class="text-sm text-base-content/70 font-body">
-                Didn't receive the code?
-                <button type="button"
-                        hx-post="{% url 'accounts:resend_code' %}"
-                        hx-target="#signin-form-container"
-                        class="link link-primary font-medium">
-                    Resend
-                </button>
-            </p>
+            {% if session_expired %}
+                <p class="text-sm text-base-content/70 font-body">
+                    Your session has expired.
+                    <a href="{% url 'accounts:signin' %}"
+                       class="link link-primary font-medium">
+                        Please sign in again
+                    </a>
+                </p>
+            {% else %}
+                <p class="text-sm text-base-content/70 font-body">
+                    Didn't receive the code?
+                    <button type="button"
+                            hx-post="{% url 'accounts:resend_code' %}"
+                            hx-target="#signin-form-container"
+                            class="link link-primary font-medium">
+                        Resend
+                    </button>
+                </p>
+            {% endif %}
         </div>
     </form>
 </div>
