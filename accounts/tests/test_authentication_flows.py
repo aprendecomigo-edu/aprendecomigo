@@ -378,7 +378,7 @@ class OTPSigninFlowTest(BaseTestCase):
 
         self.assertEqual(response.status_code, 200)
         # Should show error message instead of proceeding to delivery choice
-        self.assertContains(response, "verify your email or phone number")
+        self.assertContains(response, "Please verify your email address before signing in to continue")
 
         # Should NOT create signin session for unverified users
         self.assertNotIn("signin_user_id", self.client.session)

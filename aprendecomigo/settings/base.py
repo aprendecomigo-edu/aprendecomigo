@@ -834,6 +834,9 @@ WAFFLE_SWITCH_SCHEDULE_FEATURE = (
 WAFFLE_SWITCH_CHAT_FEATURE = (
     os.getenv("WAFFLE_SWITCH_CHAT_FEATURE", os.getenv("WAFFLE_DEFAULT_STATE", str(DEBUG))).lower() == "true"
 )
+WAFFLE_SWITCH_SMS_FEATURE = (
+    os.getenv("WAFFLE_SWITCH_SMS_FEATURE", os.getenv("WAFFLE_DEFAULT_STATE", str(DEBUG))).lower() == "true"
+)
 
 # Alternative: Use WAFFLE_CREATE_MISSING_SWITCHES to automatically create switches
 # WAFFLE_CREATE_MISSING_SWITCHES = True  # Creates switches in database if they don't exist
