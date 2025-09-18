@@ -4,6 +4,7 @@
     "builder": "NIXPACKS",
     "nixpacksPlan": {
       "providers": ["python", "node"],
+      "packages": ["gettext"],
       "phases": {
         "build": {
           "cmds": [
