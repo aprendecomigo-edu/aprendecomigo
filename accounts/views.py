@@ -39,6 +39,7 @@ from django.views.decorators.http import require_http_methods
 from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView
 from sesame.utils import get_query_string, get_query_string as sesame_get_query_string
 from sesame.views import LoginView as SesameLoginView
+from waffle import switch_is_active
 
 from messaging.services import send_magic_link_email, send_otp_email_message, send_sms_otp
 
@@ -118,6 +119,11 @@ class SignInView(View):
         if request.user.is_authenticated:
             return redirect(reverse("dashboard:dashboard"))
 
+        # Store the next parameter in session for post-login redirect
+        next_url = request.GET.get("next")
+        if next_url:
+            request.session["signin_next_url"] = next_url
+
         return render(
             request,
             "accounts/signin.html",
@@ -137,14 +143,22 @@ class SignInView(View):
             return render(
                 request,
                 "accounts/partials/signin_form.html",
-                {"error": "Please enter your email address", "email": email},
+                {
+                    "error": "Please enter your email address",
+                    "email": email,
+                    "sms_enabled": switch_is_active("sms_feature"),
+                },
             )
 
         if not re.match(email_pattern, email):
             return render(
                 request,
                 "accounts/partials/signin_form.html",
-                {"error": "Please enter a valid email address", "email": email},
+                {
+                    "error": "Please enter a valid email address",
+                    "email": email,
+                    "sms_enabled": switch_is_active("sms_feature"),
+                },
             )
 
         try:
@@ -155,7 +169,11 @@ class SignInView(View):
                 return render(
                     request,
                     "accounts/partials/signin_form.html",
-                    {"error": "Invalid email or account not verified", "email": email},
+                    {
+                        "error": "Invalid email or account not verified",
+                        "email": email,
+                        "sms_enabled": switch_is_active("sms_feature"),
+                    },
                 )
 
             user = get_user_by_email(email)
@@ -181,6 +199,7 @@ class SignInView(View):
                     "email": email,
                     "show_delivery_choice": True,
                     "phone_available": bool(user.phone_number),
+                    "sms_enabled": switch_is_active("sms_feature"),
                 },
             )
 
@@ -189,7 +208,11 @@ class SignInView(View):
             return render(
                 request,
                 "accounts/partials/signin_form.html",
-                {"error": "There was an issue processing your request. Please try again.", "email": email},
+                {
+                    "error": "There was an issue processing your request. Please try again.",
+                    "email": email,
+                    "sms_enabled": switch_is_active("sms_feature"),
+                },
             )
 
 
@@ -202,7 +225,13 @@ def send_otp_email(request):
 
     if not email or not user_id:
         return render(
-            request, "accounts/partials/signin_form.html", {"error": "Session expired. Please start over.", "email": ""}
+            request,
+            "accounts/partials/signin_form.html",
+            {
+                "error": "Session expired. Please start over.",
+                "email": "",
+                "sms_enabled": switch_is_active("sms_feature"),
+            },
         )
 
     try:
@@ -238,12 +267,19 @@ def send_otp_email(request):
                     "email": email,
                     "show_delivery_choice": True,
                     "phone_available": bool(user.phone_number),
+                    "sms_enabled": switch_is_active("sms_feature"),
                 },
             )
 
     except User.DoesNotExist:
         return render(
-            request, "accounts/partials/signin_form.html", {"error": "Session expired. Please start over.", "email": ""}
+            request,
+            "accounts/partials/signin_form.html",
+            {
+                "error": "Session expired. Please start over.",
+                "email": "",
+                "sms_enabled": switch_is_active("sms_feature"),
+            },
         )
     except Exception as e:
         logger.error(f"Error sending OTP email to {email}: {e}")
@@ -255,6 +291,7 @@ def send_otp_email(request):
                 "email": email,
                 "show_delivery_choice": True,
                 "phone_available": False,
+                "sms_enabled": switch_is_active("sms_feature"),
             },
         )
 
@@ -263,12 +300,32 @@ def send_otp_email(request):
 @csrf_protect
 def send_otp_sms(request):
     """Send OTP via SMS for signin"""
+    # Check if SMS feature is enabled
+    if not switch_is_active("sms_feature"):
+        return render(
+            request,
+            "accounts/partials/signin_form.html",
+            {
+                "error": "SMS service is temporarily unavailable. Please use email instead.",
+                "email": request.session.get("signin_email", ""),
+                "show_delivery_choice": True,
+                "phone_available": False,
+                "sms_enabled": False,
+            },
+        )
+
     email = request.session.get("signin_email")
     user_id = request.session.get("signin_user_id")
 
     if not email or not user_id:
         return render(
-            request, "accounts/partials/signin_form.html", {"error": "Session expired. Please start over.", "email": ""}
+            request,
+            "accounts/partials/signin_form.html",
+            {
+                "error": "Session expired. Please start over.",
+                "email": "",
+                "sms_enabled": switch_is_active("sms_feature"),
+            },
         )
 
     try:
@@ -278,11 +335,13 @@ def send_otp_sms(request):
         if not user.phone_verified or not user.phone_number:
             return render(
                 request,
-                "accounts/partials/delivery_choice.html",
+                "accounts/partials/signin_form.html",
                 {
                     "error": "Phone not verified. Please choose email or verify your phone first.",
                     "email": email,
-                    "available_methods": ["email"] if user.email_verified else [],
+                    "show_delivery_choice": True,
+                    "phone_available": False,
+                    "sms_enabled": switch_is_active("sms_feature"),
                 },
             )
 
@@ -316,14 +375,26 @@ def send_otp_sms(request):
 
     except User.DoesNotExist:
         return render(
-            request, "accounts/partials/signin_form.html", {"error": "Session expired. Please start over.", "email": ""}
+            request,
+            "accounts/partials/signin_form.html",
+            {
+                "error": "Session expired. Please start over.",
+                "email": "",
+                "sms_enabled": switch_is_active("sms_feature"),
+            },
         )
     except Exception as e:
         logger.error(f"Error sending OTP SMS to {email}: {e}")
         return render(
             request,
-            "accounts/partials/delivery_choice.html",
-            {"error": "Failed to send code. Please try again.", "email": email},
+            "accounts/partials/signin_form.html",
+            {
+                "error": "Failed to send code. Please try again.",
+                "email": email,
+                "show_delivery_choice": True,
+                "phone_available": False,
+                "sms_enabled": switch_is_active("sms_feature"),
+            },
         )
 
 
@@ -476,12 +547,14 @@ class SignUpView(View):
                     send_magic_link_email(email, email_magic_link, first_name, is_verification=True)
                     logger.info(f"Email verification link sent to: {email}")
 
-                    # Send SMS verification (non-blocking)
-                    if phone_number:
+                    # Send SMS verification (non-blocking) - only if SMS feature is enabled
+                    if phone_number and switch_is_active("sms_feature"):
                         from messaging.services import send_verification_sms
 
                         send_verification_sms(phone_number, phone_magic_link, first_name)
                         logger.info(f"SMS verification link sent to: {phone_number}")
+                    elif phone_number and not switch_is_active("sms_feature"):
+                        logger.info(f"SMS verification skipped for {phone_number} - SMS feature disabled")
 
                 except Exception as e:
                     logger.error(f"Error sending verification messages to {email}: {e}")
@@ -602,6 +675,9 @@ class VerifyOTPView(View):
                 except Exception as e:
                     logger.error(f"Failed to update email verification task: {e}")
 
+            # Get next URL from session or default to dashboard
+            next_url = request.session.get("signin_next_url", reverse("dashboard:dashboard"))
+
             # Clean up session
             if "otp_token_id" in request.session:
                 del request.session["otp_token_id"]
@@ -611,11 +687,13 @@ class VerifyOTPView(View):
                 del request.session["signin_email"]
             if "signin_user_id" in request.session:
                 del request.session["signin_user_id"]
+            if "signin_next_url" in request.session:
+                del request.session["signin_next_url"]
 
-            # Redirect to dashboard
+            # Redirect to next URL or dashboard
             return HttpResponse(
                 status=200,
-                headers={"HX-Redirect": reverse("dashboard:dashboard")},
+                headers={"HX-Redirect": next_url},
             )
         else:
             # Verification failed
@@ -643,8 +721,9 @@ def resend_code(request: HttpRequest) -> HttpResponse:
     Returns:
         HttpResponse: HTMX partial with new OTP form or error message
     """
+    from messaging.services import send_otp_email_message
+
     from .services.otp_service import OTPService
-    from .utils.notifications import send_otp_email_message
 
     email = request.session.get("signin_email")
     user_id = request.session.get("signin_user_id")
@@ -1284,6 +1363,7 @@ class ProfileView(LoginRequiredMixin, DetailView):
         context["school_name"] = memberships.first().school.name if memberships.exists() else "No School"
         context["user_first_name"] = self.request.user.first_name
         context["user_role"] = memberships.first().get_role_display() if memberships.exists() else "User"
+        context["sms_enabled"] = switch_is_active("sms_feature")
 
         return context
 
@@ -1430,6 +1510,12 @@ def send_verification_email(request):
 @login_required
 def send_verification_sms(request):
     """Send verification SMS to the current user (HTMX endpoint)."""
+    # Check if SMS feature is enabled
+    if not switch_is_active("sms_feature"):
+        return HttpResponse(
+            '<div class="text-red-600 text-sm">SMS service is temporarily unavailable. Please try again later.</div>'
+        )
+
     user = request.user
 
     # Check if phone number exists

@@ -174,13 +174,20 @@
                         </div>
                         <div>
                             {% if user.phone_number and not user.phone_verified %}
-                                <button hx-post="{% url 'accounts:send_verification_sms' %}"
-                                        hx-target="#phone-verification-message"
-                                        hx-swap="innerHTML"
-                                        class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
-                                    Send Verification SMS
-                                </button>
-                                <div id="phone-verification-message" class="mt-2"></div>
+                                {% if sms_enabled %}
+                                    <button hx-post="{% url 'accounts:send_verification_sms' %}"
+                                            hx-target="#phone-verification-message"
+                                            hx-swap="innerHTML"
+                                            class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
+                                        Send Verification SMS
+                                    </button>
+                                    <div id="phone-verification-message" class="mt-2"></div>
+                                {% else %}
+                                    <div class="text-sm text-amber-600">
+                                        <i data-lucide="alert-circle" class="inline h-4 w-4"></i>
+                                        SMS verification temporarily unavailable
+                                    </div>
+                                {% endif %}
                             {% elif user.phone_verified %}
                                 <span class="text-sm text-green-600 font-medium">
                                     <i data-lucide="check-circle" class="inline h-4 w-4"></i>

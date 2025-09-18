@@ -18,10 +18,22 @@
         </button>
     </form>
 
-    <!-- SMS Option (Disabled for now) -->
+    <!-- SMS Option - conditionally shown based on waffle flag -->
+    {% if sms_enabled and phone_available %}
+    <form hx-post="{% url 'accounts:send_otp_sms' %}"
+          hx-target="#signin-form-container"
+          hx-swap="innerHTML"
+          class="w-full">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-secondary w-full glass-light">
+            Send Code via SMS
+        </button>
+    </form>
+    {% elif sms_enabled %}
     <button class="btn btn-neutral w-full glass-light" disabled>
-        Send Code via SMS (Coming Soon)
+        Send Code via SMS (No phone number)
     </button>
+    {% endif %}
 
     <!-- Back to edit email -->
     <div class="text-center">
