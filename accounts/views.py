@@ -165,8 +165,8 @@ class SignInView(View):
                 logger.warning(f"Signin attempt by unverified user: {email}")
                 return render(
                     request,
-                    "accounts/partials/signin_form.html",
-                    {"error": "Please verify your email or phone number before signing in", "email": email},
+                    "accounts/partials/signin_unverified.html",
+                    {"email": email},
                 )
 
             # Store email in session for OTP delivery
@@ -1444,6 +1444,64 @@ def send_verification_sms(request):
             return HttpResponse('<div class="text-red-600 text-sm">Failed to send SMS. Please try again later.</div>')
     except Exception as e:
         logger.error(f"Error sending verification SMS to {user.phone_number}: {e}")
+        return HttpResponse('<div class="text-red-600 text-sm">An error occurred. Please try again later.</div>')
+
+
+@require_http_methods(["POST"])
+@csrf_protect
+def resend_verification_email_signin(request):
+    """
+    Resend verification email for unverified users during signin flow (HTMX endpoint).
+
+    This endpoint is for users who are not logged in yet but trying to sign in
+    with an unverified account. It looks up the user by email from POST data.
+    """
+    email = request.POST.get("email", "").strip().lower()
+
+    if not email:
+        return HttpResponse('<div class="text-red-600 text-sm">Email address is required.</div>')
+
+    try:
+        # Validate email format
+        from django.core.validators import validate_email
+
+        validate_email(email)
+    except ValidationError:
+        return HttpResponse('<div class="text-red-600 text-sm">Please enter a valid email address.</div>')
+
+    try:
+        # Get user by email
+        user = get_user_by_email(email)
+        if not user:
+            # Don't reveal if user exists - security best practice
+            return HttpResponse(
+                '<div class="text-red-600 text-sm">If this email is registered, a verification email will be sent.</div>'
+            )
+
+        # Check if already verified
+        if user.email_verified:
+            return HttpResponse(
+                '<div class="text-green-600 text-sm">Your email is already verified! Please try signing in again.</div>'
+            )
+
+        # Generate magic link for email verification
+        login_url = reverse("accounts:verify_email")
+        magic_link = request.build_absolute_uri(login_url) + sesame_get_query_string(user)
+
+        # Send verification email
+        result = send_magic_link_email(user.email, magic_link, user.first_name, is_verification=True)
+
+        if result.get("success"):
+            logger.info(f"Verification email resent to unverified signin user: {email}")
+            return HttpResponse(
+                '<div class="text-green-600 text-sm">Verification email sent! Check your inbox and click the verification link.</div>'
+            )
+        else:
+            logger.error(f"Failed to resend verification email to {email}")
+            return HttpResponse('<div class="text-red-600 text-sm">Failed to send email. Please try again later.</div>')
+
+    except Exception as e:
+        logger.error(f"Error resending verification email to {email}: {e}")
         return HttpResponse('<div class="text-red-600 text-sm">An error occurred. Please try again later.</div>')
 
 

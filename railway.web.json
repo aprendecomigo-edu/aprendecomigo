@@ -4,7 +4,6 @@
     "builder": "NIXPACKS",
     "nixpacksPlan": {
       "providers": ["python", "node"],
-      "packages": ["gettext"],
       "phases": {
         "build": {
           "cmds": [
@@ -16,7 +15,7 @@
     }
   },
   "deploy": {
-    "startCommand": "python manage.py migrate --noinput && python manage.py compilemessages && python manage.py collectstatic --noinput --clear && gunicorn aprendecomigo.asgi:application --bind [::]:$PORT --workers 3 --worker-class uvicorn.workers.UvicornWorker --worker-connections 1000 --max-requests 1000 --max-requests-jitter 50 --timeout 120 --access-logfile - --error-logfile -",
+    "startCommand": "python manage.py migrate --noinput && python manage.py collectstatic --noinput --clear && gunicorn aprendecomigo.asgi:application --bind [::]:$PORT --workers 3 --worker-class uvicorn.workers.UvicornWorker --worker-connections 1000 --max-requests 1000 --max-requests-jitter 50 --timeout 120 --access-logfile - --error-logfile -",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3,
     "healthcheckPath": "/health/",
@@ -25,7 +24,7 @@
   "environments": {
     "staging": {
       "deploy": {
-        "startCommand": "python manage.py migrate --noinput && python manage.py compilemessages && python manage.py collectstatic --noinput --clear && gunicorn aprendecomigo.asgi:application --bind [::]:$PORT --workers 3 --worker-class uvicorn.workers.UvicornWorker --worker-connections 1000 --max-requests 1000 --max-requests-jitter 50 --timeout 120 --log-level info --access-logfile - --error-logfile -",
+        "startCommand": "python manage.py migrate --noinput && python manage.py collectstatic --noinput --clear && gunicorn aprendecomigo.asgi:application --bind [::]:$PORT --workers 3 --worker-class uvicorn.workers.UvicornWorker --worker-connections 1000 --max-requests 1000 --max-requests-jitter 50 --timeout 120 --log-level info --access-logfile - --error-logfile -",
         "restartPolicyMaxRetries": 2,
         "healthcheckPath": "/health/",
         "healthcheckTimeout": 300
@@ -33,7 +32,7 @@
     },
     "production": {
       "deploy": {
-        "startCommand": "python manage.py migrate --noinput && python manage.py compilemessages && python manage.py collectstatic --noinput --clear && python manage.py check --deploy && gunicorn aprendecomigo.asgi:application --bind [::]:$PORT --workers 3 --worker-class uvicorn.workers.UvicornWorker --worker-connections 1000 --max-requests 1000 --max-requests-jitter 50 --timeout 120 --log-level warning --access-logfile - --error-logfile -",
+        "startCommand": "python manage.py migrate --noinput && python manage.py collectstatic --noinput --clear && python manage.py check --deploy && gunicorn aprendecomigo.asgi:application --bind [::]:$PORT --workers 3 --worker-class uvicorn.workers.UvicornWorker --worker-connections 1000 --max-requests 1000 --max-requests-jitter 50 --timeout 120 --log-level warning --access-logfile - --error-logfile -",
         "restartPolicyMaxRetries": 5,
         "healthcheckPath": "/health/",
         "healthcheckTimeout": 300

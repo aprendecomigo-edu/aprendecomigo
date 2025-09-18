@@ -28,6 +28,7 @@ from .views import (
     cancel_teacher_invitation,
     resend_code,
     resend_teacher_invitation,
+    resend_verification_email_signin,
     root_redirect,
     send_otp_email,
     send_otp_sms,
@@ -59,6 +60,10 @@ urlpatterns = [
     # Verification actions from profile page
     path("send-verification-email/", send_verification_email, name="send_verification_email"),
     path("send-verification-sms/", send_verification_sms, name="send_verification_sms"),
+    # Verification resend for signin flow (for unverified users)
+    path(
+        "resend-verification-email-signin/", resend_verification_email_signin, name="resend_verification_email_signin"
+    ),
     # Teacher Invitation Management
     path("invitations/", TeacherInvitationListView.as_view(), name="invitation_list"),
     path("invitations/create/", TeacherInvitationCreateView.as_view(), name="invitation_create"),
