@@ -742,3 +742,101 @@ class AddStudentIntegrationTest(BaseTestCase):
         # Adult student has a guardian profile (themselves)
         self.assertIsNotNone(adult_student.guardian)
         self.assertEqual(adult_student.guardian.user, adult_student.user)
+
+
+class StudentCreationRefreshTest(BaseTestCase):
+    """
+    Test automatic refresh functionality after student creation.
+
+    This addresses the bug where the students list doesn't automatically refresh
+    after creating a new student, requiring users to manually refresh the page.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.admin_user = User.objects.create_user(email="admin@test.com", name="Admin User", is_active=True)
+        self.school = School.objects.create(name="Test School")
+        SchoolMembership.objects.create(
+            user=self.admin_user, school=self.school, role=SchoolRole.SCHOOL_ADMIN, is_active=True
+        )
+        self.student_separate_url = reverse("accounts:student_create_separate")
+
+    @patch("accounts.permissions.PermissionService.setup_permissions_for_student")
+    def test_successful_student_creation_triggers_list_refresh(self, mock_setup):
+        """
+        Test that successful student creation returns HTMX headers to trigger students list refresh.
+
+        This is the core test for the refresh bug. After successful student creation,
+        the response should include HTMX trigger headers to refresh the students list.
+        """
+        self.client.force_login(self.admin_user)
+
+        form_data = {
+            "name": "New Student For Refresh",
+            "email": "newstudent@refresh.test",
+            "birth_date": "2010-01-01",
+            "guardian_name": "Guardian For Refresh",
+            "guardian_email": "guardian@refresh.test",
+        }
+
+        # Simulate HTMX request
+        response = self.client.post(
+            self.student_separate_url, form_data, headers={"hx-request": "true", "hx-target": "#message-area"}
+        )
+
+        self.assertEqual(response.status_code, 200)
+
+        # Verify student was created successfully
+        self.assertTrue(User.objects.filter(email="newstudent@refresh.test").exists())
+
+        # Critical test: Response should include HTMX trigger to refresh students list
+        # This is what's currently missing and causes the bug
+        hx_trigger = response.get("HX-Trigger")
+        if hx_trigger:
+            # If HX-Trigger exists, it should include refreshStudents event
+            self.assertIn("refreshStudents", hx_trigger)
+        else:
+            # If no HX-Trigger header, this confirms the bug exists
+            # The test documents the expected behavior for fixing the issue
+            self.fail(
+                "REFRESH BUG CONFIRMED: No HX-Trigger header found in response. "
+                "Expected 'refreshStudents' trigger to automatically refresh the students list."
+            )
+
+    @patch("accounts.permissions.PermissionService.setup_permissions_for_student")
+    def test_htmx_out_of_band_swap_for_students_list(self, mock_setup):
+        """
+        Test alternative approach: HTMX out-of-band swap to refresh students list.
+
+        Instead of using HX-Trigger, the response could include an out-of-band swap
+        that directly updates the #students-content container.
+        """
+        self.client.force_login(self.admin_user)
+
+        form_data = {
+            "name": "OOB Test Student",
+            "email": "oob@test.com",
+            "birth_date": "2010-01-01",
+            "guardian_name": "OOB Guardian",
+            "guardian_email": "oob.guardian@test.com",
+        }
+
+        response = self.client.post(self.student_separate_url, form_data, headers={"hx-request": "true"})
+
+        self.assertEqual(response.status_code, 200)
+
+        # Verify student was created
+        self.assertTrue(User.objects.filter(email="oob@test.com").exists())
+
+        response_content = response.content.decode()
+
+        # Check if response includes out-of-band swap for students list
+        # This would be an alternative solution to the refresh bug
+        if "hx-swap-oob" in response_content and "students-content" in response_content:
+            # Out-of-band swap approach is implemented
+            self.assertIn('id="students-content"', response_content)
+            self.assertIn('hx-swap-oob="true"', response_content)
+        else:
+            # Document that out-of-band swap is not currently implemented
+            # This is another potential solution for the refresh bug
+            print("INFO: Out-of-band swap not implemented. Students list won't auto-refresh.")
