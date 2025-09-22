@@ -1750,13 +1750,16 @@ class BaseStudentCreateView(LoginRequiredMixin, View):
         )
 
     def _render_success(self, request, success_message):
-        """Render success message template"""
+        """Render success message template with HX-Trigger to refresh students list"""
         logger.info(f"Student creation success: {success_message}")
-        return render(
+        response = render(
             request,
             "shared/partials/success_message.html",
             {"message": success_message},
         )
+        # Add HX-Trigger header to automatically refresh the students list
+        response["HX-Trigger"] = "refreshStudents"
+        return response
 
 
 @method_decorator(csrf_protect, name="dispatch")
