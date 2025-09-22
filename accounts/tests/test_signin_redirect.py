@@ -78,10 +78,10 @@ class SignInRedirectTest(TestCase):
 
         # Step 3: Choose email delivery method
         with patch("messaging.services.send_otp_email_message") as mock_send_email:
-            mock_send_email.return_value = True
+            mock_send_email.return_value = {"success": True}
 
             delivery_response = self.client.post(
-                reverse("accounts:send_otp_email"), {"delivery_method": "email"}, headers={"hx-request": "true"}
+                reverse("accounts:send_otp_email"), {"email": self.user.email}, headers={"hx-request": "true"}
             )
 
         # Step 4: Verify OTP
@@ -317,10 +317,10 @@ class SignInRedirectTest(TestCase):
 
         # Step 3: Choose delivery method
         with patch("messaging.services.send_otp_email_message") as mock_send_email:
-            mock_send_email.return_value = True
+            mock_send_email.return_value = {"success": True}
 
             delivery_response = self.client.post(
-                reverse("accounts:send_otp_email"), {"delivery_method": "email"}, headers={"hx-request": "true"}
+                reverse("accounts:send_otp_email"), {"email": self.user.email}, headers={"hx-request": "true"}
             )
 
         # Check next URL still in session after delivery method selection
