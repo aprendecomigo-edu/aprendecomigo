@@ -13,8 +13,16 @@
     <div class="space-y-2 mb-6">
         <h3 class="card-title color-primary font-primary text-2xl font-bold justify-center">Code Sent!</h3>
         <p class="text-base-content/70 font-body">
-            We've sent verification codes to your email and phone<br>
-            <span class="font-medium text-base-content">{{ email }}</span>
+            {% if delivery_method == "email" %}
+                We've sent a verification code to your email<br>
+                <span class="font-medium text-base-content">{{ email }}</span>
+            {% elif delivery_method == "sms" %}
+                We've sent a verification code to your phone<br>
+                <span class="font-medium text-base-content">{{ masked_contact }}</span>
+            {% else %}
+                We've sent verification codes to your email and phone<br>
+                <span class="font-medium text-base-content">{{ email }}</span>
+            {% endif %}
         </p>
     </div>
 

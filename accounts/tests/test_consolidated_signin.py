@@ -166,7 +166,7 @@ class EmailOTPSecurityTest(BaseTestCase):
         mock_generate_otp.assert_called_once_with(self.verified_user, "email")
         mock_send_email.assert_called_once()
 
-    @patch("messaging.services.send_otp_email_message")
+    @patch("accounts.views.send_otp_email_message")
     def test_email_sending_failure_shows_error(self, mock_send_email):
         """Test that email sending failure shows appropriate error."""
         mock_send_email.return_value = {"success": False, "error": "SMTP error"}
@@ -843,7 +843,7 @@ class ConsolidatedSignInErrorHandlingTest(BaseTestCase):
             email_verified=True,
         )
 
-        with patch("messaging.services.send_otp_email_message") as mock_send_email:
+        with patch("accounts.views.send_otp_email_message") as mock_send_email:
             with patch("accounts.services.otp_service.OTPService.generate_otp") as mock_generate_otp:
                 mock_generate_otp.return_value = ("123456", "token_123")
                 mock_send_email.return_value = {"success": True}
@@ -865,7 +865,7 @@ class ConsolidatedSignInErrorHandlingTest(BaseTestCase):
             email_verified=True,
         )
 
-        with patch("messaging.services.send_otp_email_message") as mock_send_email:
+        with patch("accounts.views.send_otp_email_message") as mock_send_email:
             with patch("accounts.services.otp_service.OTPService.generate_otp") as mock_generate_otp:
                 mock_generate_otp.return_value = ("123456", "token_123")
                 mock_send_email.return_value = {"success": True}

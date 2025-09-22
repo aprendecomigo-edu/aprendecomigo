@@ -373,27 +373,30 @@ class OTPSigninFlowTest(BaseTestCase):
 
     def test_signin_requires_verified_contact_method(self):
         """FR-3.1: Signin requires at least one verified contact method"""
-        # Unverified users should be blocked from proceeding
+        # In consolidated signin flow, unverified users see the signin form but get errors when trying to get OTP
         response = self.client.post(self.signin_url, {"email": self.unverified_user.email})
 
         self.assertEqual(response.status_code, 200)
-        # Should show error message instead of proceeding to delivery choice
-        self.assertContains(response, "Please verify your email address before signing in to continue")
+        # Should show the consolidated signin form with email pre-populated
+        self.assertContains(response, "Choose how to receive your sign-in code:")
+        self.assertContains(response, f"email: '{self.unverified_user.email}'")
 
-        # Should NOT create signin session for unverified users
+        # Should NOT create signin session yet (session only created when OTP is sent)
         self.assertNotIn("signin_user_id", self.client.session)
 
     def test_verified_user_can_proceed_to_delivery_choice(self):
         """FR-3.1: Verified users can proceed to delivery choice"""
-        # Verified users should be able to proceed to delivery choice
+        # Verified users should be able to see the consolidated signin form with delivery options
         response = self.client.post(self.signin_url, {"email": self.email_only_user.email})
 
         self.assertEqual(response.status_code, 200)
-        # Should show delivery choice UI (check for delivery choice elements)
-        self.assertContains(response, "Delivery Choice UI")
+        # Should show delivery choice in consolidated form (email and SMS buttons)
+        self.assertContains(response, "Choose how to receive your sign-in code:")
+        self.assertContains(response, f"email: '{self.email_only_user.email}'")
+        self.assertContains(response, "Send Code via Email")
 
-        # Should create signin session for verified users
-        self.assertIn("signin_user_id", self.client.session)
+        # Should NOT create signin session yet (session only created when OTP is sent)
+        self.assertNotIn("signin_user_id", self.client.session)
 
     @patch("accounts.views.send_otp_email")
     @patch("accounts.views.send_otp_sms")
