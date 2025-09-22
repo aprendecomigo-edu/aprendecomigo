@@ -134,115 +134,96 @@ class SignInView(View):
         return render(
             request,
             "accounts/signin.html",
-            {"title": "Sign In - Aprende Comigo", "meta_description": "Sign in to your Aprende Comigo account"},
+            {
+                "title": "Sign In - Aprende Comigo",
+                "meta_description": "Sign in to your Aprende Comigo account",
+                "sms_enabled": switch_is_active("sms_feature"),
+            },
         )
 
     @method_decorator(csrf_protect)
     def post(self, request):
-        """Handle email submission and show delivery options"""
+        """
+        Simplified handler for sign-in form submission.
+        Since the consolidated form now handles both email input and delivery choice on one page,
+        this method just renders the form with any provided email value.
+        All validation and user verification is now handled by send_otp_email and send_otp_sms.
+        """
         email = request.POST.get("email", "").strip().lower()
-        logger.info(f"[SIGNIN] Starting signin process for: {email}")
 
-        # Validate email
-        email_pattern = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
-
-        if not email:
-            return render(
-                request,
-                "accounts/partials/signin_form.html",
-                {
-                    "error": "Please enter your email address",
-                    "email": email,
-                    "sms_enabled": switch_is_active("sms_feature"),
-                },
-            )
-
-        if not re.match(email_pattern, email):
-            return render(
-                request,
-                "accounts/partials/signin_form.html",
-                {
-                    "error": "Please enter a valid email address",
-                    "email": email,
-                    "sms_enabled": switch_is_active("sms_feature"),
-                },
-            )
-
-        try:
-            # Check if user exists
-            if not user_exists(email):
-                logger.warning(f"Authentication attempt with unregistered email: {email}")
-                # Prevent email enumeration - show generic message
-                return render(
-                    request,
-                    "accounts/partials/signin_form.html",
-                    {
-                        "error": "Invalid email or account not verified",
-                        "email": email,
-                        "sms_enabled": switch_is_active("sms_feature"),
-                    },
-                )
-
-            user = get_user_by_email(email)
-
-            # Check if user has at least one verified contact method
-            if not (user.email_verified or user.phone_verified):
-                logger.warning(f"Signin attempt by unverified user: {email}")
-                return render(
-                    request,
-                    "accounts/partials/signin_unverified.html",
-                    {"email": email},
-                )
-
-            # Store email in session for OTP delivery
-            request.session["signin_email"] = email
-            request.session["signin_user_id"] = user.id
-
-            # For test phase - show delivery choice directly in signin form
-            return render(
-                request,
-                "accounts/partials/signin_form.html",
-                {
-                    "email": email,
-                    "show_delivery_choice": True,
-                    "phone_available": bool(user.phone_number),
-                    "sms_enabled": switch_is_active("sms_feature"),
-                },
-            )
-
-        except Exception as e:
-            logger.error(f"Sign in error for {email}: {e}")
-            return render(
-                request,
-                "accounts/partials/signin_form.html",
-                {
-                    "error": "There was an issue processing your request. Please try again.",
-                    "email": email,
-                    "sms_enabled": switch_is_active("sms_feature"),
-                },
-            )
+        # Simply render the consolidated signin form
+        return render(
+            request,
+            "accounts/partials/signin_form.html",
+            {
+                "email": email,
+                "sms_enabled": switch_is_active("sms_feature"),
+            },
+        )
 
 
 @require_http_methods(["POST"])
 @csrf_protect
 def send_otp_email(request):
     """Send OTP via email for signin"""
-    email = request.session.get("signin_email")
-    user_id = request.session.get("signin_user_id")
+    email = request.POST.get("email", "").strip().lower()
+    logger.info(f"[SIGNIN] OTP email request for: {email}")
 
-    if not email or not user_id:
+    # Validate email
+    if not email:
         return render(
             request,
             "accounts/partials/signin_form.html",
             {
-                "error": "Session expired. Please start over.",
-                "email": "",
+                "error": "Please enter your email address",
+                "email": email,
+                "sms_enabled": switch_is_active("sms_feature"),
+            },
+        )
+
+    if not re.match(EMAIL_REGEX, email):
+        return render(
+            request,
+            "accounts/partials/signin_form.html",
+            {
+                "error": "Please enter a valid email address",
+                "email": email,
                 "sms_enabled": switch_is_active("sms_feature"),
             },
         )
 
     try:
-        user = User.objects.get(id=user_id, email=email)
+        # Check if user exists and is verified
+        if not user_exists(email):
+            logger.warning(f"OTP email attempt with unregistered email: {email}")
+            return render(
+                request,
+                "accounts/partials/signin_form.html",
+                {
+                    "error": "Invalid email or account not verified",
+                    "email": email,
+                    "sms_enabled": switch_is_active("sms_feature"),
+                },
+            )
+
+        user = get_user_by_email(email)
+
+        # Check if user's email is verified
+        if not user.email_verified:
+            logger.warning(f"OTP email attempt with unverified email: {email}")
+            return render(
+                request,
+                "accounts/partials/signin_form.html",
+                {
+                    "error": "Please verify your email address first",
+                    "email": email,
+                    "sms_enabled": switch_is_active("sms_feature"),
+                },
+            )
+
+        # Store email and user_id in session for OTP verification
+        request.session["signin_email"] = email
+        request.session["signin_user_id"] = user.id
 
         # Generate OTP
         otp_code, token_id = OTPService.generate_otp(user, "email")
@@ -272,32 +253,17 @@ def send_otp_email(request):
                 {
                     "error": "Failed to send email. Please try again later.",
                     "email": email,
-                    "show_delivery_choice": True,
-                    "phone_available": bool(user.phone_number),
                     "sms_enabled": switch_is_active("sms_feature"),
                 },
             )
-
-    except User.DoesNotExist:
-        return render(
-            request,
-            "accounts/partials/signin_form.html",
-            {
-                "error": "Session expired. Please start over.",
-                "email": "",
-                "sms_enabled": switch_is_active("sms_feature"),
-            },
-        )
     except Exception as e:
-        logger.error(f"Error sending OTP email to {email}: {e}")
+        logger.error(f"Error in send_otp_email for {email}: {e!s}")
         return render(
             request,
             "accounts/partials/signin_form.html",
             {
-                "error": "Failed to send code. Please try again.",
+                "error": "An error occurred. Please try again later.",
                 "email": email,
-                "show_delivery_choice": True,
-                "phone_available": False,
                 "sms_enabled": switch_is_active("sms_feature"),
             },
         )
@@ -314,29 +280,65 @@ def send_otp_sms(request):
             "accounts/partials/signin_form.html",
             {
                 "error": "SMS service is temporarily unavailable. Please use email instead.",
-                "email": request.session.get("signin_email", ""),
-                "show_delivery_choice": True,
-                "phone_available": False,
+                "email": request.POST.get("email", ""),
                 "sms_enabled": False,
             },
         )
 
-    email = request.session.get("signin_email")
-    user_id = request.session.get("signin_user_id")
+    email = request.POST.get("email", "").strip().lower()
+    logger.info(f"[SIGNIN] OTP SMS request for: {email}")
 
-    if not email or not user_id:
+    # Validate email
+    if not email:
         return render(
             request,
             "accounts/partials/signin_form.html",
             {
-                "error": "Session expired. Please start over.",
-                "email": "",
+                "error": "Please enter your email address",
+                "email": email,
+                "sms_enabled": switch_is_active("sms_feature"),
+            },
+        )
+
+    if not re.match(EMAIL_REGEX, email):
+        return render(
+            request,
+            "accounts/partials/signin_form.html",
+            {
+                "error": "Please enter a valid email address",
+                "email": email,
                 "sms_enabled": switch_is_active("sms_feature"),
             },
         )
 
     try:
-        user = User.objects.get(id=user_id, email=email)
+        # Check if user exists and is verified
+        if not user_exists(email):
+            logger.warning(f"OTP SMS attempt with unregistered email: {email}")
+            return render(
+                request,
+                "accounts/partials/signin_form.html",
+                {
+                    "error": "Invalid email or account not verified",
+                    "email": email,
+                    "sms_enabled": switch_is_active("sms_feature"),
+                },
+            )
+
+        user = get_user_by_email(email)
+
+        # Check if user's email is verified
+        if not user.email_verified:
+            logger.warning(f"OTP SMS attempt with unverified email: {email}")
+            return render(
+                request,
+                "accounts/partials/signin_form.html",
+                {
+                    "error": "Please verify your email address first",
+                    "email": email,
+                    "sms_enabled": switch_is_active("sms_feature"),
+                },
+            )
 
         # Check if phone is verified
         if not user.phone_verified or not user.phone_number:
@@ -346,11 +348,13 @@ def send_otp_sms(request):
                 {
                     "error": "Phone not verified. Please choose email or verify your phone first.",
                     "email": email,
-                    "show_delivery_choice": True,
-                    "phone_available": False,
                     "sms_enabled": switch_is_active("sms_feature"),
                 },
             )
+
+        # Store email and user_id in session for OTP verification
+        request.session["signin_email"] = email
+        request.session["signin_user_id"] = user.id
 
         # Generate OTP
         otp_code, token_id = OTPService.generate_otp(user, "sms")
@@ -366,40 +370,31 @@ def send_otp_sms(request):
             logger.info(f"OTP sent via SMS to: {user.phone_number}")
             return render(
                 request,
-                "accounts/partials/otp_input.html",
-                {"delivery_method": "sms", "masked_contact": f"***{user.phone_number[-4:]}"},
+                "accounts/partials/signin_success_with_verify.html",
+                {
+                    "delivery_method": "sms",
+                    "masked_contact": f"***{user.phone_number[-4:]}",
+                    "email": email,
+                },
             )
         else:
             return render(
                 request,
-                "accounts/partials/delivery_choice.html",
+                "accounts/partials/signin_form.html",
                 {
                     "error": "Failed to send SMS. Please try email or try again later.",
                     "email": email,
-                    "available_methods": ["email", "sms"] if user.email_verified else ["sms"],
+                    "sms_enabled": switch_is_active("sms_feature"),
                 },
             )
-
-    except User.DoesNotExist:
-        return render(
-            request,
-            "accounts/partials/signin_form.html",
-            {
-                "error": "Session expired. Please start over.",
-                "email": "",
-                "sms_enabled": switch_is_active("sms_feature"),
-            },
-        )
     except Exception as e:
-        logger.error(f"Error sending OTP SMS to {email}: {e}")
+        logger.error(f"Error in send_otp_sms for {email}: {e!s}")
         return render(
             request,
             "accounts/partials/signin_form.html",
             {
-                "error": "Failed to send code. Please try again.",
+                "error": "An error occurred. Please try again later.",
                 "email": email,
-                "show_delivery_choice": True,
-                "phone_available": False,
                 "sms_enabled": switch_is_active("sms_feature"),
             },
         )
