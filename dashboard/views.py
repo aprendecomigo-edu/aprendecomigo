@@ -711,9 +711,9 @@ class PeopleView(LoginRequiredMixin, View):
                 return render(request, "shared/partials/error_message.html", {"error": "Student ID is required"})
 
             # Get student with all related data
-            student = CustomUser.objects.select_related(
-                "student_profile", "student_profile__guardian", "student_profile__educational_system"
-            ).get(id=student_id)
+            student = CustomUser.objects.select_related("student_profile", "student_profile__guardian").get(
+                id=student_id
+            )
 
             # Get school membership
             membership = (
@@ -744,7 +744,7 @@ class PeopleView(LoginRequiredMixin, View):
                         "birth_date": profile.birth_date,
                         "account_type": profile.account_type or "",
                         "notes": profile.notes or "",
-                        "educational_system": profile.educational_system.name if profile.educational_system else "",
+                        "educational_system": profile.educational_system or "",
                     }
                 )
 
