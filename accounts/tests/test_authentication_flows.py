@@ -402,21 +402,25 @@ class OTPSigninFlowTest(BaseTestCase):
         mock_email.return_value = {"success": True}
         mock_sms.return_value = {"success": True}
 
-        # Email-verified user should reach delivery choice
+        # With consolidated signin flow, POST to signin now returns the consolidated form
+        # Email-verified user should see consolidated signin form with delivery options
         response = self.client.post(self.signin_url, {"email": self.email_only_user.email})
 
         self.assertEqual(response.status_code, 200)
-        # Check for delivery choice UI elements instead of specific text
-        self.assertContains(response, "Delivery Choice UI")
+        # Check for consolidated signin form with delivery options
+        self.assertContains(response, "Choose how to receive your sign-in code:")
         # Check for form action to send OTP via email
         self.assertContains(response, 'hx-post="/send-otp-email/"')
+        # Email should be pre-filled in Alpine.js data
+        self.assertContains(response, f"email: '{self.email_only_user.email}'")
 
-        # User with both verified should also reach delivery choice
+        # User with both verified should also see consolidated signin form
         response = self.client.post(self.signin_url, {"email": self.verified_user.email})
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Delivery Choice UI")
+        self.assertContains(response, "Choose how to receive your sign-in code:")
         self.assertContains(response, 'hx-post="/send-otp-email/"')
+        self.assertContains(response, f"email: '{self.verified_user.email}'")
 
     def test_otp_generation_has_correct_format_and_validity(self):
         """FR-3.3: 6-digit OTP with 10-minute validity"""
