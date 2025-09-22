@@ -838,7 +838,6 @@ class PeopleView(LoginRequiredMixin, View):
 
     def _render_students_partial(self, request, search_query=None):
         """Render students list partial for HTMX updates"""
-        from django.db.models import Q
 
         from accounts.models import School, SchoolMembership
         from accounts.models.enums import SchoolRole
@@ -853,21 +852,14 @@ class PeopleView(LoginRequiredMixin, View):
 
         user_schools = get_user_schools(request.user)
 
-        # Get students data with profiles
+        # Get ALL students data with profiles (no premature filtering)
         student_memberships = SchoolMembership.objects.filter(
             school__in=user_schools, role=SchoolRole.STUDENT.value
         ).select_related("user", "school")
 
-        # Apply search filter if provided
-        if search_query:
-            # Search across student and guardian fields
-            student_memberships = student_memberships.filter(
-                Q(user__name__icontains=search_query)
-                | Q(user__email__icontains=search_query)
-                | Q(user__student_profile__school_year__icontains=search_query)
-            )
-
         students = []
+
+        # Process regular students (with user accounts)
         for membership in student_memberships:
             user = membership.user
             try:
@@ -891,7 +883,6 @@ class PeopleView(LoginRequiredMixin, View):
                 guardian_info = None
                 created_at = user.date_joined  # Fallback to user creation date if no profile
 
-            # Include guardian info in search
             student_data = {
                 "id": user.id,
                 "email": user.email,
@@ -905,7 +896,7 @@ class PeopleView(LoginRequiredMixin, View):
                 "date_joined": created_at,
             }
 
-            # Add student to results if no search or if search matches
+            # Apply search filter in Python (not in database)
             if not search_query:
                 students.append(student_data)
             else:
@@ -923,6 +914,60 @@ class PeopleView(LoginRequiredMixin, View):
                     )
 
                 if student_matches or guardian_matches:
+                    students.append(student_data)
+
+        # Add Guardian-Only students (no user accounts) to search results
+        guardian_only_profiles = StudentProfile.objects.filter(
+            user=None,  # Guardian-Only students have no user account
+            account_type="GUARDIAN_ONLY",
+        ).select_related("guardian")
+
+        for profile in guardian_only_profiles:
+            # Use the first school from user_schools for display (admin can manage across schools)
+            school = user_schools.first() if user_schools.exists() else None
+            guardian_user = profile.guardian.user if profile.guardian else None
+
+            guardian_info = None
+            if profile.guardian:
+                guardian_profile = profile.guardian
+                guardian_info = {
+                    "name": guardian_profile.user.get_full_name() if guardian_profile.user else "",
+                    "email": guardian_profile.user.email if guardian_profile.user else "",
+                    "phone": guardian_profile.user.phone_number if guardian_profile.user else "",
+                }
+
+            student_data = {
+                "id": f"guardian_only_{profile.id}",  # Unique ID for guardian-only students
+                "email": guardian_user.email if guardian_user else "",
+                "name": profile.name,  # Use the name field from StudentProfile
+                "full_name": profile.name,
+                "school_year": profile.school_year,
+                "account_type": profile.account_type,
+                "guardian": guardian_info,
+                "school": {"id": school.id, "name": school.name} if school else {"id": 0, "name": "Unknown"},
+                "status": "active",  # Guardian-Only students are always "active"
+                "date_joined": profile.created_at,
+            }
+
+            # Apply search filter for Guardian-Only students too
+            if not search_query:
+                students.append(student_data)
+            else:
+                # Check if search matches Guardian-Only student fields
+                guardian_only_matches = any(
+                    search_query.lower() in str(value).lower()
+                    for value in [profile.name, profile.school_year, guardian_user.email if guardian_user else ""]
+                )
+
+                # Check if search matches guardian fields
+                guardian_matches = False
+                if guardian_info:
+                    guardian_matches = any(
+                        search_query.lower() in str(value).lower()
+                        for value in [guardian_info.get("name", ""), guardian_info.get("email", "")]
+                    )
+
+                if guardian_only_matches or guardian_matches:
                     students.append(student_data)
 
         # Sort students by newest first (by created_at date)
