@@ -51,24 +51,32 @@ class ConsolidatedSignInFormTest(BaseTestCase):
         self.assertContains(response, "Send Code via Email")
         self.assertContains(response, 'hx-post="/send-otp-email/"')
 
-    @override_switch("sms_feature", active=True)
-    def test_signin_form_shows_sms_button_when_feature_enabled(self):
-        """Test that SMS button appears when waffle switch is enabled."""
+    @patch("accounts.views.switch_is_active")
+    def test_signin_form_shows_sms_button_when_feature_enabled(self, mock_switch):
+        """Test that SMS button appears when SMS feature is available."""
+        mock_switch.return_value = True
+
         response = self.client.get(self.signin_url)
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Send Code via SMS")
         self.assertContains(response, 'hx-post="/send-otp-sms/"')
+        # Verify our view checked the switch
+        mock_switch.assert_called_with("sms_feature")
 
-    @override_switch("sms_feature", active=False)
-    def test_signin_form_hides_sms_button_when_feature_disabled(self):
-        """Test that SMS button is hidden when waffle switch is disabled."""
+    @patch("accounts.views.switch_is_active")
+    def test_signin_form_hides_sms_button_when_feature_disabled(self, mock_switch):
+        """Test that SMS button is hidden when SMS feature is unavailable."""
+        mock_switch.return_value = False
+
         response = self.client.get(self.signin_url)
 
         self.assertEqual(response.status_code, 200)
-        # SMS button should not be rendered when waffle switch is disabled
+        # SMS button should not be rendered when SMS feature is disabled
         self.assertNotContains(response, "Send Code via SMS")
         self.assertNotContains(response, 'hx-post="/send-otp-sms/"')
+        # Verify our view checked the switch
+        mock_switch.assert_called_with("sms_feature")
 
     def test_signin_post_renders_form_with_email_value(self):
         """Test that posting to signin renders form with provided email."""
@@ -244,9 +252,11 @@ class SMSOTPSecurityTest(BaseTestCase):
             phone_verified=False,
         )
 
-    @override_switch("sms_feature", active=False)
-    def test_sms_disabled_shows_error(self):
+    @patch("accounts.views.switch_is_active")
+    def test_sms_disabled_shows_error(self, mock_switch):
         """Test that SMS OTP shows error when feature is disabled."""
+        mock_switch.return_value = False
+
         response = self.client.post(
             self.send_otp_sms_url, {"email": self.phone_verified_user.email}, headers={"hx-request": "true"}
         )
@@ -254,6 +264,8 @@ class SMSOTPSecurityTest(BaseTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "SMS service is temporarily unavailable")
         self.assertContains(response, "Please use email instead")
+        # Verify our view checked the switch
+        mock_switch.assert_called_with("sms_feature")
 
     @override_switch("sms_feature", active=True)
     def test_nonexistent_user_returns_generic_error(self):
