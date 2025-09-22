@@ -212,3 +212,81 @@ class PeopleViewSearchTest(TestCase):
         # Both students should be in the response
         self.assertIn("Student One", response_content)
         self.assertIn("Student Two", response_content)
+
+    def test_search_clear_with_backspace_updates_list_correctly(self):
+        """
+        Test that clearing search characters with backspace/delete updates the list correctly.
+
+        This test specifically addresses the bug where using delete key to clear characters
+        doesn't always update the list correctly.
+        """
+        # Create test students
+        diana = self._create_student("Diana Santos", "diana.santos@test.com", "Year 7")
+        maria = self._create_student("Maria Silva", "maria.silva@test.com", "Year 8")
+        ana = self._create_student("Ana Costa", "ana.costa@test.com", "Year 9")
+
+        self.client.force_login(self.teacher_user)
+
+        # Step 1: Search for "Diana" - should return only Diana
+        response = self.client.post(
+            reverse("people"), {"action": "search_students", "search": "Diana"}, headers={"hx-request": "true"}
+        )
+        self.assertEqual(response.status_code, 200)
+        response_content = response.content.decode()
+        self.assertIn("Diana Santos", response_content)
+        self.assertNotIn("Maria Silva", response_content)
+        self.assertNotIn("Ana Costa", response_content)
+
+        # Step 2: Clear part of search to "Di" - should still return only Diana
+        response = self.client.post(
+            reverse("people"), {"action": "search_students", "search": "Di"}, headers={"hx-request": "true"}
+        )
+        self.assertEqual(response.status_code, 200)
+        response_content = response.content.decode()
+        self.assertIn("Diana Santos", response_content)
+        self.assertNotIn("Maria Silva", response_content)
+        self.assertNotIn("Ana Costa", response_content)
+
+        # Step 3: Clear search completely - should return all students
+        response = self.client.post(
+            reverse("people"), {"action": "search_students", "search": ""}, headers={"hx-request": "true"}
+        )
+        self.assertEqual(response.status_code, 200)
+        response_content = response.content.decode()
+        self.assertIn("Diana Santos", response_content)
+        self.assertIn("Maria Silva", response_content)
+        self.assertIn("Ana Costa", response_content)
+
+    def test_search_clear_button_functionality(self):
+        """
+        Test that clicking the X icon clears search and shows all contacts.
+
+        This test specifically addresses the bug where clicking the X icon
+        doesn't update the list at all.
+        """
+        # Create test students
+        diana = self._create_student("Diana Santos", "diana.santos@test.com", "Year 7")
+        maria = self._create_student("Maria Silva", "maria.silva@test.com", "Year 8")
+
+        self.client.force_login(self.teacher_user)
+
+        # Step 1: Search for "Diana" - should return only Diana
+        response = self.client.post(
+            reverse("people"), {"action": "search_students", "search": "Diana"}, headers={"hx-request": "true"}
+        )
+        self.assertEqual(response.status_code, 200)
+        response_content = response.content.decode()
+        self.assertIn("Diana Santos", response_content)
+        self.assertNotIn("Maria Silva", response_content)
+
+        # Step 2: Simulate clicking X icon (clearing search)
+        # The X icon triggers a keyup event with empty search
+        response = self.client.post(
+            reverse("people"), {"action": "search_students", "search": ""}, headers={"hx-request": "true"}
+        )
+        self.assertEqual(response.status_code, 200)
+        response_content = response.content.decode()
+
+        # Should show all students after clearing
+        self.assertIn("Diana Santos", response_content)
+        self.assertIn("Maria Silva", response_content)

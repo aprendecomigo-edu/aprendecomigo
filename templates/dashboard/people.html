@@ -158,7 +158,7 @@
                             hx-post="/people/"
                             hx-target="#students-content"
                             hx-swap="outerHTML"
-                            hx-trigger="keyup changed delay:300ms"
+                            hx-trigger="keyup changed delay:150ms, search_clear"
                             hx-vals='{"action": "search_students"}'
                             name="search"
                             placeholder="Buscar alunos, guardiões..."
@@ -168,7 +168,7 @@
                     </div>
                     <button
                         x-show="studentSearchQuery.length > 0"
-                        @click="studentSearchQuery = ''; htmx.trigger(document.querySelector('input[name=search]'), 'keyup')"
+                        @click="studentSearchQuery = ''; $nextTick(() => htmx.trigger(document.querySelector('input[name=search]'), 'search_clear'))"
                         class="p-2 text-gray-500 hover:text-gray-700"
                         title="Clear search"
                     >
