@@ -692,6 +692,15 @@ class VerifyOTPView(View):
             if "signin_next_url" in request.session:
                 del request.session["signin_next_url"]
 
+            # Clean up unverified user session markers after successful OTP verification
+            if "is_unverified_user" in request.session:
+                del request.session["is_unverified_user"]
+            if "unverified_until" in request.session:
+                del request.session["unverified_until"]
+
+            # Reset session expiry to default (consistent with VerificationCompletionMiddleware)
+            request.session.set_expiry(0)  # Use default session length
+
             # Redirect to next URL or dashboard
             return HttpResponse(
                 status=200,
