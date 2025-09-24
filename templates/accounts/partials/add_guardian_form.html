@@ -1,0 +1,191 @@
+<!-- Add Guardian Form -->
+<form hx-post="{% url 'accounts:add_guardian' school.id student.id %}"
+      hx-target="#guardian-list-container"
+      hx-swap="innerHTML"
+      class="space-y-4">
+    {% csrf_token %}
+
+    <!-- Guardian Information -->
+    <div>
+        <label for="{{ add_guardian_form.email.id_for_label }}"
+               class="block text-sm font-medium text-gray-700 mb-1">
+            {{ add_guardian_form.email.label }} *
+        </label>
+        {{ add_guardian_form.email }}
+        {% if add_guardian_form.email.help_text %}
+            <p class="mt-1 text-sm text-gray-500">{{ add_guardian_form.email.help_text }}</p>
+        {% endif %}
+        {% if add_guardian_form.email.errors %}
+            <div class="mt-1 text-sm text-red-600">
+                {% for error in add_guardian_form.email.errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <div>
+        <label for="{{ add_guardian_form.name.id_for_label }}"
+               class="block text-sm font-medium text-gray-700 mb-1">
+            {{ add_guardian_form.name.label }} *
+        </label>
+        {{ add_guardian_form.name }}
+        {% if add_guardian_form.name.help_text %}
+            <p class="mt-1 text-sm text-gray-500">{{ add_guardian_form.name.help_text }}</p>
+        {% endif %}
+        {% if add_guardian_form.name.errors %}
+            <div class="mt-1 text-sm text-red-600">
+                {% for error in add_guardian_form.name.errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <div>
+        <label for="{{ add_guardian_form.phone.id_for_label }}"
+               class="block text-sm font-medium text-gray-700 mb-1">
+            {{ add_guardian_form.phone.label }}
+        </label>
+        {{ add_guardian_form.phone }}
+        {% if add_guardian_form.phone.help_text %}
+            <p class="mt-1 text-sm text-gray-500">{{ add_guardian_form.phone.help_text }}</p>
+        {% endif %}
+        {% if add_guardian_form.phone.errors %}
+            <div class="mt-1 text-sm text-red-600">
+                {% for error in add_guardian_form.phone.errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <div>
+        <label for="{{ add_guardian_form.relationship_type.id_for_label }}"
+               class="block text-sm font-medium text-gray-700 mb-1">
+            {{ add_guardian_form.relationship_type.label }}
+        </label>
+        {{ add_guardian_form.relationship_type }}
+        {% if add_guardian_form.relationship_type.help_text %}
+            <p class="mt-1 text-sm text-gray-500">{{ add_guardian_form.relationship_type.help_text }}</p>
+        {% endif %}
+        {% if add_guardian_form.relationship_type.errors %}
+            <div class="mt-1 text-sm text-red-600">
+                {% for error in add_guardian_form.relationship_type.errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Primary Guardian Setting -->
+    <div>
+        <div class="flex items-center">
+            {{ add_guardian_form.is_primary }}
+            <label for="{{ add_guardian_form.is_primary.id_for_label }}"
+                   class="ml-2 text-sm text-gray-700">
+                {{ add_guardian_form.is_primary.label }}
+            </label>
+        </div>
+        {% if add_guardian_form.is_primary.help_text %}
+            <p class="mt-1 text-sm text-gray-500">{{ add_guardian_form.is_primary.help_text }}</p>
+        {% endif %}
+        {% if add_guardian_form.is_primary.errors %}
+            <div class="mt-1 text-sm text-red-600">
+                {% for error in add_guardian_form.is_primary.errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Permissions -->
+    <div>
+        <h4 class="text-sm font-medium text-gray-700 mb-3">Permissions</h4>
+        <div class="space-y-2">
+            <div class="flex items-center">
+                {{ add_guardian_form.can_manage_finances }}
+                <label for="{{ add_guardian_form.can_manage_finances.id_for_label }}"
+                       class="ml-2 text-sm text-gray-700">
+                    {{ add_guardian_form.can_manage_finances.label }}
+                </label>
+            </div>
+            {% if add_guardian_form.can_manage_finances.help_text %}
+                <p class="ml-6 text-xs text-gray-500">{{ add_guardian_form.can_manage_finances.help_text }}</p>
+            {% endif %}
+
+            <div class="flex items-center">
+                {{ add_guardian_form.can_book_classes }}
+                <label for="{{ add_guardian_form.can_book_classes.id_for_label }}"
+                       class="ml-2 text-sm text-gray-700">
+                    {{ add_guardian_form.can_book_classes.label }}
+                </label>
+            </div>
+            {% if add_guardian_form.can_book_classes.help_text %}
+                <p class="ml-6 text-xs text-gray-500">{{ add_guardian_form.can_book_classes.help_text }}</p>
+            {% endif %}
+
+            <div class="flex items-center">
+                {{ add_guardian_form.can_view_records }}
+                <label for="{{ add_guardian_form.can_view_records.id_for_label }}"
+                       class="ml-2 text-sm text-gray-700">
+                    {{ add_guardian_form.can_view_records.label }}
+                </label>
+            </div>
+            {% if add_guardian_form.can_view_records.help_text %}
+                <p class="ml-6 text-xs text-gray-500">{{ add_guardian_form.can_view_records.help_text }}</p>
+            {% endif %}
+
+            <div class="flex items-center">
+                {{ add_guardian_form.can_edit_profile }}
+                <label for="{{ add_guardian_form.can_edit_profile.id_for_label }}"
+                       class="ml-2 text-sm text-gray-700">
+                    {{ add_guardian_form.can_edit_profile.label }}
+                </label>
+            </div>
+            {% if add_guardian_form.can_edit_profile.help_text %}
+                <p class="ml-6 text-xs text-gray-500">{{ add_guardian_form.can_edit_profile.help_text }}</p>
+            {% endif %}
+
+            <div class="flex items-center">
+                {{ add_guardian_form.can_receive_notifications }}
+                <label for="{{ add_guardian_form.can_receive_notifications.id_for_label }}"
+                       class="ml-2 text-sm text-gray-700">
+                    {{ add_guardian_form.can_receive_notifications.label }}
+                </label>
+            </div>
+            {% if add_guardian_form.can_receive_notifications.help_text %}
+                <p class="ml-6 text-xs text-gray-500">{{ add_guardian_form.can_receive_notifications.help_text }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+        <button type="button"
+                onclick="document.getElementById('add-guardian-modal').classList.add('hidden')"
+                class="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            Cancel
+        </button>
+        <button type="submit"
+                class="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            Add Guardian
+        </button>
+    </div>
+</form>
+
+<script>
+// Auto-check financial permissions when primary is checked
+document.addEventListener('DOMContentLoaded', function() {
+    const isPrimaryCheckbox = document.getElementById('{{ add_guardian_form.is_primary.id_for_label }}');
+    const canManageFinancesCheckbox = document.getElementById('{{ add_guardian_form.can_manage_finances.id_for_label }}');
+
+    if (isPrimaryCheckbox && canManageFinancesCheckbox) {
+        isPrimaryCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                canManageFinancesCheckbox.checked = true;
+            }
+        });
+    }
+});
+</script>
