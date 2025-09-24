@@ -130,7 +130,7 @@ class PeopleViewStudentDetailsTest(TestCase):
 
     def test_get_guardian_only_student_details_success(self):
         """
-        Test that getting details for a Guardian-Only student (no user account) works correctly.
+        Test that Guardian-Only student details work correctly with guardian_only_* ID format.
         """
         # Create a Guardian-Only student
         _, student_profile = self._create_guardian_only_student("Maria Santos", "guardian.maria@test.com", "Year 5")
@@ -138,47 +138,24 @@ class PeopleViewStudentDetailsTest(TestCase):
         # Login as teacher
         self.client.force_login(self.teacher_user)
 
-        # Request student details via HTMX
-        # Note: This might need to use the user ID of guardian-only students differently
+        # Request student details using the proper guardian_only_* format
         response = self.client.post(
             reverse("people"),
             {
                 "action": "get_student_detail",
-                "student_id": student_profile.user.id if student_profile.user else student_profile.id,
+                "student_id": f"guardian_only_{student_profile.id}",
             },
             headers={"hx-request": "true"},
         )
 
-        # Verify response is successful (no database errors)
+        # Verify response is successful
         self.assertEqual(response.status_code, 200)
 
-        # Check if response contains error about educational_system (the bug we're testing for)
+        # Verify Guardian-Only student data is present
         response_content = response.content.decode()
-        self.assertNotIn("Non-relational field given in select_related: 'educational_system'", response_content)
-
-        # Verify student data is present in the response (HTML or JSON)
         self.assertIn("Maria Santos", response_content)
         self.assertIn("Year 5", response_content)
-
-        # If it's JSON format, check the structure
-        if response.get("Content-Type") == "application/json":
-            import json
-
-            response_data = json.loads(response.content)
-
-            # Verify student data is correctly included
-            self.assertIn("student", response_data)
-            student_data = response_data["student"]
-
-            self.assertEqual(student_data["name"], "Maria Santos")
-            self.assertEqual(student_data["school_year"], "Year 5")
-            self.assertEqual(student_data["educational_system"], "pt")
-            self.assertEqual(student_data["account_type"], "GUARDIAN_ONLY")
-
-            # Verify guardian data is included if present
-            if "guardian" in student_data:
-                guardian_data = student_data["guardian"]
-                self.assertIn("Guardian of Maria Santos", guardian_data["name"])
+        self.assertIn("guardian.maria@test.com", response_content)  # Guardian's email should be shown
 
     def test_get_student_detail_missing_student_id(self):
         """Test that missing student_id parameter returns appropriate error."""
@@ -232,17 +209,12 @@ class PeopleViewStudentDetailsTest(TestCase):
         # Verify response is successful
         self.assertEqual(response.status_code, 200)
 
-        # Verify it returns JSON, not HTML
-        self.assertEqual(response["Content-Type"], "application/json")
+        # Verify it returns HTML for HTMX usage
+        self.assertEqual(response["Content-Type"], "text/html; charset=utf-8")
 
-        # Verify JSON structure is valid
-        import json
-
-        try:
-            response_data = json.loads(response.content)
-            self.assertIn("student", response_data)
-        except json.JSONDecodeError:
-            self.fail("Response is not valid JSON")
+        # Verify HTML contains expected student data
+        response_content = response.content.decode()
+        self.assertIn("Test Student", response_content)
 
     def test_student_details_requires_authentication(self):
         """Test that student details endpoint requires user to be logged in."""

@@ -703,52 +703,41 @@ class PeopleView(LoginRequiredMixin, View):
         return self._render_students_partial(request, search_query=search_query)
 
     def _handle_get_student_detail(self, request):
-        """Handle student detail requests"""
+        """Handle student detail requests for both regular students and Guardian-Only students"""
 
         try:
             student_id = request.POST.get("student_id")
             if not student_id:
                 return render(request, "shared/partials/error_message.html", {"error": "Student ID is required"})
 
-            # Get student with all related data
-            student = CustomUser.objects.select_related("student_profile", "student_profile__guardian").get(
-                id=student_id
-            )
-
-            # Get school membership
-            membership = (
-                SchoolMembership.objects.filter(user=student, role=SchoolRole.STUDENT.value)
-                .select_related("school")
-                .first()
-            )
-
-            # Prepare student detail data
-            student_detail = {
-                "id": student.id,
-                "email": student.email,
-                "name": student.name,
-                "full_name": student.get_full_name(),
-                "phone_number": student.phone_number or "",
-                "is_active": student.is_active,
-                "date_joined": student.date_joined,
-                "last_login": student.last_login,
-                "school": {"name": membership.school.name, "id": membership.school.id} if membership else None,
-            }
-
-            # Add student profile data if exists
-            if hasattr(student, "student_profile"):
-                profile = student.student_profile
-                student_detail.update(
-                    {
-                        "school_year": profile.school_year or "",
-                        "birth_date": profile.birth_date,
-                        "account_type": profile.account_type or "",
-                        "notes": profile.notes or "",
-                        "educational_system": profile.educational_system or "",
-                    }
+            # Handle Guardian-Only students (guardian_only_123 format)
+            if str(student_id).startswith("guardian_only_"):
+                profile_id = str(student_id).replace("guardian_only_", "")
+                profile = StudentProfile.objects.select_related("guardian", "guardian__user").get(
+                    id=profile_id, user=None, account_type="GUARDIAN_ONLY"
                 )
 
-                # Add guardian data if exists
+                # Build student detail from profile data
+                student_detail = {
+                    "id": student_id,
+                    "email": profile.guardian.user.email if profile.guardian and profile.guardian.user else "",
+                    "name": profile.name,
+                    "full_name": profile.name,
+                    "phone_number": profile.guardian.user.phone_number
+                    if profile.guardian and profile.guardian.user
+                    else "",
+                    "is_active": True,
+                    "date_joined": profile.created_at if hasattr(profile, "created_at") else None,
+                    "last_login": None,
+                    "school": None,  # Guardian-Only students may not have direct school membership
+                    "school_year": profile.school_year or "",
+                    "birth_date": profile.birth_date,
+                    "account_type": profile.account_type,
+                    "notes": profile.notes or "",
+                    "educational_system": profile.educational_system or "",
+                }
+
+                # Add guardian information
                 if profile.guardian:
                     guardian = profile.guardian
                     student_detail["guardian"] = {
@@ -763,9 +752,63 @@ class PeopleView(LoginRequiredMixin, View):
                         "sms_notifications_enabled": guardian.sms_notifications_enabled,
                     }
 
+            else:
+                # Handle regular students (CustomUser ID)
+                student = CustomUser.objects.select_related("student_profile", "student_profile__guardian").get(
+                    id=student_id
+                )
+
+                # Get school membership
+                membership = (
+                    SchoolMembership.objects.filter(user=student, role=SchoolRole.STUDENT.value)
+                    .select_related("school")
+                    .first()
+                )
+
+                # Prepare student detail data
+                student_detail = {
+                    "id": student.id,
+                    "email": student.email,
+                    "name": student.name,
+                    "full_name": student.get_full_name(),
+                    "phone_number": student.phone_number or "",
+                    "is_active": student.is_active,
+                    "date_joined": student.date_joined,
+                    "last_login": student.last_login,
+                    "school": {"name": membership.school.name, "id": membership.school.id} if membership else None,
+                }
+
+                # Add student profile data if exists
+                if hasattr(student, "student_profile"):
+                    profile = student.student_profile
+                    student_detail.update(
+                        {
+                            "school_year": profile.school_year or "",
+                            "birth_date": profile.birth_date,
+                            "account_type": profile.account_type or "",
+                            "notes": profile.notes or "",
+                            "educational_system": profile.educational_system or "",
+                        }
+                    )
+
+                    # Add guardian data if exists
+                    if profile.guardian:
+                        guardian = profile.guardian
+                        student_detail["guardian"] = {
+                            "id": guardian.id,
+                            "name": guardian.user.get_full_name() if guardian.user else "",
+                            "email": guardian.user.email if guardian.user else "",
+                            "phone_number": guardian.user.phone_number if guardian.user else "",
+                            "tax_number": guardian.tax_nr or "",
+                            "address": guardian.address or "",
+                            "invoice": guardian.invoice,
+                            "email_notifications_enabled": guardian.email_notifications_enabled,
+                            "sms_notifications_enabled": guardian.sms_notifications_enabled,
+                        }
+
             return render(request, "dashboard/partials/student_detail_modal_content.html", {"student": student_detail})
 
-        except CustomUser.DoesNotExist:
+        except (CustomUser.DoesNotExist, StudentProfile.DoesNotExist):
             return render(request, "shared/partials/error_message.html", {"error": "Student not found"})
         except Exception as e:
             return render(
