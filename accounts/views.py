@@ -1088,9 +1088,9 @@ class EmailVerificationView(SesameLoginView):
     """Handle email verification via magic link"""
 
     def login_success(self):
-        """Mark email as verified and log user in"""
-        # Access request and user from the view instance
+        """Mark email as verified and redirect to dashboard with success message"""
         user = self.request.user
+
         if not user.email_verified:
             user.email_verified = True
             user.email_verified_at = timezone.now()
@@ -1104,8 +1104,18 @@ class EmailVerificationView(SesameLoginView):
         else:
             messages.info(self.request, "Your email is already verified!")
 
-        # Let the parent class handle the redirect properly
-        return super().login_success()
+        # Handle redirect directly to avoid 403 from parent class
+        return self._handle_verification_success_redirect()
+
+    def _handle_verification_success_redirect(self):
+        """Handle post-verification redirect with success UX"""
+        # Create success page with auto-redirect to dashboard
+        context = {
+            "verification_type": "email",
+            "redirect_url": reverse("dashboard:dashboard"),
+            "success_message": "Your email has been successfully verified!",
+        }
+        return render(self.request, "accounts/partials/verify_success.html", context)
 
 
 class PhoneVerificationView(SesameLoginView):
