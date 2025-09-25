@@ -1787,9 +1787,9 @@ class StudentSeparateCreateView(BaseStudentCreateView):
 
     def post(self, request):
         """Handle Student + Guardian account creation with support for multiple guardians"""
-        from django.db import transaction
+        from django.db import IntegrityError, transaction
 
-        from accounts.models.profiles import GuardianProfile, GuardianStudentRelationship
+        from accounts.models.profiles import GuardianProfile, GuardianStudentRelationship, StudentProfile
         from accounts.permissions import PermissionService
 
         try:
@@ -1863,15 +1863,43 @@ class StudentSeparateCreateView(BaseStudentCreateView):
                 except ValidationError as e:
                     return self._render_error(request, f"Guardian {i + 1}: {e!s}")
 
+            # Pre-transaction validation checks
+            # Check if student user already has a StudentProfile
+            if StudentProfile.objects.filter(user__email=student_email).exists():
+                return self._render_error(
+                    request,
+                    f"The email {student_email} is already registered as a student. Please use a different email address.",
+                )
+
+            # Check for duplicate guardian emails and existing relationships
+            for i, guardian_data in enumerate(guardians):
+                guardian_email = guardian_data["email"]
+
+                # Check if this guardian is already linked to this student
+                if GuardianStudentRelationship.objects.filter(
+                    guardian__email=guardian_email, student__email=student_email
+                ).exists():
+                    return self._render_error(
+                        request, f"Guardian {guardian_email} is already linked to student {student_email}"
+                    )
+
+                # Validate phone number format if provided
+                if guardian_data["phone"] and not re.match(r"^\+\d{1,3}\d{8,14}$", guardian_data["phone"]):
+                    return self._render_error(
+                        request,
+                        f"Guardian {i + 1}: Please enter a valid phone number with country code (e.g., +351912345678)",
+                    )
+
             # Get user's schools
             user_schools = self._get_user_schools(request.user)
-            with transaction.atomic():
-                # Temporarily disconnect the task creation signal to prevent orphaned tasks
-                from django.db.models.signals import post_save
+            try:
+                with transaction.atomic():
+                    # Temporarily disconnect the task creation signal to prevent orphaned tasks
+                    from django.db.models.signals import post_save
 
-                from accounts.signals.verification_task_signals import create_system_tasks_for_new_user
+                    from accounts.signals.verification_task_signals import create_system_tasks_for_new_user
 
-                post_save.disconnect(create_system_tasks_for_new_user, sender=User)
+                    post_save.disconnect(create_system_tasks_for_new_user, sender=User)
 
                 try:
                     # Create or get student user
@@ -1977,9 +2005,34 @@ class StudentSeparateCreateView(BaseStudentCreateView):
                     # Reconnect the signal
                     post_save.connect(create_system_tasks_for_new_user, sender=User)
 
-            guardian_names = [g["name"] for g in guardians]
-            success_message = f"Successfully created student account for {student_name} and guardian accounts for {', '.join(guardian_names)}. All users can now login independently."
-            return self._render_success(request, success_message)
+                guardian_names = [g["name"] for g in guardians]
+                success_message = f"Successfully created student account for {student_name} and guardian accounts for {', '.join(guardian_names)}. All users can now login independently."
+                return self._render_success(request, success_message)
+
+            except IntegrityError as e:
+                error_str = str(e).lower()
+                if "accounts_studentprofile_user_id_key" in error_str:
+                    return self._render_error(
+                        request, "This user already has a student profile. Please check if the student already exists."
+                    )
+                elif "customuser_email" in error_str or ("email" in error_str and "unique" in error_str):
+                    return self._render_error(
+                        request,
+                        "One of the email addresses provided is already registered. Please check and try again.",
+                    )
+                elif "phone_number" in error_str and "unique" in error_str:
+                    return self._render_error(
+                        request,
+                        "One of the phone numbers provided is already in use. Please use a different phone number.",
+                    )
+                elif "guardianstudenrelationship" in error_str or "guardian_student" in error_str:
+                    return self._render_error(request, "This guardian is already linked to this student.")
+                else:
+                    logger.error(f"Database integrity error in student creation: {e}", exc_info=True)
+                    return self._render_error(
+                        request,
+                        "Unable to create accounts due to conflicting data. Please verify all information is correct.",
+                    )
 
         except Exception as e:
             logger.error(f"Unexpected error in separate student creation: {e}", exc_info=True)
@@ -1992,7 +2045,7 @@ class StudentGuardianOnlyCreateView(BaseStudentCreateView):
 
     def post(self, request):
         """Handle Guardian-Only account creation with support for multiple guardians"""
-        from django.db import transaction
+        from django.db import IntegrityError, transaction
 
         from accounts.models.profiles import GuardianProfile
         from accounts.permissions import PermissionService
@@ -2059,15 +2112,25 @@ class StudentGuardianOnlyCreateView(BaseStudentCreateView):
                 except ValidationError as e:
                     return self._render_error(request, f"Guardian {i + 1}: {e!s}")
 
+            # Pre-transaction validation checks for guardian-only students
+            for i, guardian_data in enumerate(guardians):
+                # Validate phone number format if provided
+                if guardian_data["phone"] and not re.match(r"^\+\d{1,3}\d{8,14}$", guardian_data["phone"]):
+                    return self._render_error(
+                        request,
+                        f"Guardian {i + 1}: Please enter a valid phone number with country code (e.g., +351912345678)",
+                    )
+
             # Get user's schools
             user_schools = self._get_user_schools(request.user)
-            with transaction.atomic():
-                # Temporarily disconnect the task creation signal to prevent orphaned tasks
-                from django.db.models.signals import post_save
+            try:
+                with transaction.atomic():
+                    # Temporarily disconnect the task creation signal to prevent orphaned tasks
+                    from django.db.models.signals import post_save
 
-                from accounts.signals.verification_task_signals import create_system_tasks_for_new_user
+                    from accounts.signals.verification_task_signals import create_system_tasks_for_new_user
 
-                post_save.disconnect(create_system_tasks_for_new_user, sender=User)
+                    post_save.disconnect(create_system_tasks_for_new_user, sender=User)
 
                 try:
                     # For guardian-only students, create student profile without user account
@@ -2143,9 +2206,28 @@ class StudentGuardianOnlyCreateView(BaseStudentCreateView):
                     # Reconnect the signal
                     post_save.connect(create_system_tasks_for_new_user, sender=User)
 
-            guardian_names = [g["name"] for g in guardians]
-            success_message = f"Successfully created guardian accounts for {', '.join(guardian_names)} who will manage {student_name}'s profile. Only the guardians can login."
-            return self._render_success(request, success_message)
+                guardian_names = [g["name"] for g in guardians]
+                success_message = f"Successfully created guardian accounts for {', '.join(guardian_names)} who will manage {student_name}'s profile. Only the guardians can login."
+                return self._render_success(request, success_message)
+
+            except IntegrityError as e:
+                error_str = str(e).lower()
+                if "customuser_email" in error_str or ("email" in error_str and "unique" in error_str):
+                    return self._render_error(
+                        request,
+                        "One of the guardian email addresses provided is already registered. Please check and try again.",
+                    )
+                elif "phone_number" in error_str and "unique" in error_str:
+                    return self._render_error(
+                        request,
+                        "One of the phone numbers provided is already in use. Please use a different phone number.",
+                    )
+                else:
+                    logger.error(f"Database integrity error in guardian-only creation: {e}", exc_info=True)
+                    return self._render_error(
+                        request,
+                        "Unable to create guardian accounts due to conflicting data. Please verify all information is correct.",
+                    )
 
         except Exception as e:
             logger.error(f"Unexpected error in guardian-only creation: {e}", exc_info=True)
@@ -2158,9 +2240,9 @@ class StudentAdultCreateView(BaseStudentCreateView):
 
     def post(self, request):
         """Handle Adult Student account creation"""
-        from django.db import transaction
+        from django.db import IntegrityError, transaction
 
-        from accounts.models.profiles import GuardianProfile
+        from accounts.models.profiles import GuardianProfile, StudentProfile
         from accounts.permissions import PermissionService
 
         try:
@@ -2199,15 +2281,30 @@ class StudentAdultCreateView(BaseStudentCreateView):
                 error_msg = f"Missing required fields: {', '.join(missing_fields)}"
                 return self._render_error(request, error_msg)
 
+            # Pre-transaction validation checks
+            # Check if student user already has a StudentProfile
+            if StudentProfile.objects.filter(user__email=student_email).exists():
+                return self._render_error(
+                    request,
+                    f"The email {student_email} is already registered as a student. Please use a different email address.",
+                )
+
+            # Validate phone number format if provided
+            if student_phone and not re.match(r"^\+\d{1,3}\d{8,14}$", student_phone):
+                return self._render_error(
+                    request, "Please enter a valid phone number with country code (e.g., +351912345678)"
+                )
+
             # Get user's schools and educational system
             user_schools = self._get_user_schools(request.user)
-            with transaction.atomic():
-                # Temporarily disconnect the task creation signal to prevent orphaned tasks
-                from django.db.models.signals import post_save
+            try:
+                with transaction.atomic():
+                    # Temporarily disconnect the task creation signal to prevent orphaned tasks
+                    from django.db.models.signals import post_save
 
-                from accounts.signals.verification_task_signals import create_system_tasks_for_new_user
+                    from accounts.signals.verification_task_signals import create_system_tasks_for_new_user
 
-                post_save.disconnect(create_system_tasks_for_new_user, sender=User)
+                    post_save.disconnect(create_system_tasks_for_new_user, sender=User)
 
                 try:
                     # Create or get student user
@@ -2267,8 +2364,30 @@ class StudentAdultCreateView(BaseStudentCreateView):
                     # Reconnect the signal
                     post_save.connect(create_system_tasks_for_new_user, sender=User)
 
-            success_message = f"Successfully created adult student account for {student_name}. They can now login and manage their own account."
-            return self._render_success(request, success_message)
+                success_message = f"Successfully created adult student account for {student_name}. They can now login and manage their own account."
+                return self._render_success(request, success_message)
+
+            except IntegrityError as e:
+                error_str = str(e).lower()
+                if "accounts_studentprofile_user_id_key" in error_str:
+                    return self._render_error(
+                        request, "This user already has a student profile. Please check if the student already exists."
+                    )
+                elif "customuser_email" in error_str or ("email" in error_str and "unique" in error_str):
+                    return self._render_error(
+                        request,
+                        "The email address provided is already registered. Please use a different email address.",
+                    )
+                elif "phone_number" in error_str and "unique" in error_str:
+                    return self._render_error(
+                        request, "The phone number provided is already in use. Please use a different phone number."
+                    )
+                else:
+                    logger.error(f"Database integrity error in adult student creation: {e}", exc_info=True)
+                    return self._render_error(
+                        request,
+                        "Unable to create account due to conflicting data. Please verify all information is correct.",
+                    )
 
         except Exception as e:
             logger.error(f"Unexpected error in adult student creation: {e}", exc_info=True)
