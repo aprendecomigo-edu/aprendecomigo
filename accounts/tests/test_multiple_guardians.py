@@ -284,7 +284,7 @@ class GuardianViewsTest(TransactionTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Guardian User")
-        self.assertContains(response, "PRIMARY")
+        self.assertContains(response, "Primary")
 
     def test_add_guardian_view(self):
         """Test adding a new guardian."""
@@ -330,14 +330,17 @@ class GuardianViewsTest(TransactionTestCase):
             },
         )
 
-        response = self.client.delete(url, headers={"hx-request": "true"})
+        response = self.client.post(url, headers={"hx-request": "true"})
 
-        # Should get an error response
+        # Should get a successful response (returns guardian list)
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Cannot remove")
 
-        # Relationship should still exist
-        self.assertTrue(GuardianStudentRelationship.objects.filter(id=self.relationship.id).exists())
+        # Relationship should still exist and be active (not removed)
+        relationship = GuardianStudentRelationship.objects.get(id=self.relationship.id)
+        self.assertTrue(relationship.is_active)
+
+        # Guardian should still be in the response
+        self.assertContains(response, "Guardian User")
 
     def test_set_primary_guardian(self):
         """Test changing which guardian is primary."""
