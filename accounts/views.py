@@ -1901,18 +1901,16 @@ class StudentSeparateCreateView(BaseStudentCreateView):
                         # Create or get guardian user
                         try:
                             guardian_user = User.objects.get(email=guardian_data["email"])
-                            guardian_user_was_created = False
                         except User.DoesNotExist:
                             guardian_user = User.objects.create_user(
                                 email=guardian_data["email"],
                                 name=guardian_data["name"],
                                 phone_number=guardian_data["phone"],
                             )
-                            guardian_user_was_created = True
                             created_guardian_users.append(guardian_user)
 
-                        # Create guardian profile
-                        guardian_profile, _ = GuardianProfile.objects.get_or_create(
+                        # Create guardian profile (unused here; keep underscore to satisfy ruff)
+                        _guardian_profile, _ = GuardianProfile.objects.get_or_create(
                             user=guardian_user,
                             defaults={
                                 "address": guardian_data["address"],
@@ -2084,14 +2082,12 @@ class StudentGuardianOnlyCreateView(BaseStudentCreateView):
                         # Create or get guardian user
                         try:
                             guardian_user = User.objects.get(email=guardian_data["email"])
-                            guardian_user_was_created = False
                         except User.DoesNotExist:
                             guardian_user = User.objects.create_user(
                                 email=guardian_data["email"],
                                 name=guardian_data["name"],
                                 phone_number=guardian_data["phone"],
                             )
-                            guardian_user_was_created = True
                             created_guardian_users.append(guardian_user)
 
                         # Create guardian profile
