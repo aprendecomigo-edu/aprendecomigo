@@ -70,14 +70,14 @@ class AddStudentFormDataTransmissionTest(BaseTestCase):
             "birth_date": "2010-05-15",
             "school_year": "5",  # Use numeric value
             "notes": "Test student notes",
-            "guardian_name": "Test Guardian Name",
-            "guardian_email": "test.guardian@example.com",
-            "guardian_phone": "+351912345678",
-            "guardian_tax_nr": "123456789",
-            "guardian_address": "Test Address, Lisboa",
-            "guardian_invoice": "on",
-            "guardian_email_notifications": "on",
-            "guardian_sms_notifications": "on",
+            "guardian_0_name": "Test Guardian Name",
+            "guardian_0_email": "test.guardian@example.com",
+            "guardian_0_phone": "+351912345678",
+            "guardian_0_tax_nr": "123456789",
+            "guardian_0_address": "Test Address, Lisboa",
+            "guardian_0_invoice": "on",
+            "guardian_0_email_notifications": "on",
+            "guardian_0_sms_notifications": "on",
         }
 
         # This request should work with the new dedicated endpoint
@@ -124,13 +124,13 @@ class AddStudentFormDataTransmissionTest(BaseTestCase):
             "birth_date": "2012-03-20",
             "school_year": "3",  # Use numeric value
             "notes": "Young student notes",
-            "guardian_name": "Managing Guardian",
-            "guardian_email": "managing.guardian@example.com",
-            "guardian_phone": "+351987654321",
-            "guardian_tax_nr": "987654321",
-            "guardian_address": "Guardian Address",
-            "guardian_invoice": "on",
-            "guardian_email_notifications": "on",
+            "guardian_0_name": "Managing Guardian",
+            "guardian_0_email": "managing.guardian@example.com",
+            "guardian_0_phone": "+351987654321",
+            "guardian_0_tax_nr": "987654321",
+            "guardian_0_address": "Guardian Address",
+            "guardian_0_invoice": "on",
+            "guardian_0_email_notifications": "on",
         }
 
         response = self.client.post(self.student_guardian_only_url, form_data)
@@ -220,11 +220,11 @@ class AddStudentFormFieldDisplayTest(BaseTestCase):
         self.assertContains(response, 'name="notes"')
 
         # Guardian section fields
-        self.assertContains(response, 'name="guardian_name"')
-        self.assertContains(response, 'name="guardian_email"')
-        self.assertContains(response, 'name="guardian_phone"')
-        self.assertContains(response, 'name="guardian_tax_nr"')
-        self.assertContains(response, 'name="guardian_address"')
+        self.assertContains(response, 'name="guardian_0_name"')
+        self.assertContains(response, 'name="guardian_0_email"')
+        self.assertContains(response, 'name="guardian_0_phone"')
+        self.assertContains(response, 'name="guardian_0_tax_nr"')
+        self.assertContains(response, 'name="guardian_0_address"')
 
     def test_guardian_only_form_hides_student_email_field(self):
         """Test that Guardian-Only form doesn't show student email field."""
@@ -234,11 +234,10 @@ class AddStudentFormFieldDisplayTest(BaseTestCase):
         # Should have student basic info but NO student email
         self.assertContains(response, 'name="name"')
         self.assertContains(response, 'name="birth_date"')
-
-        # Guardian fields should exist with clean names
-        self.assertContains(response, 'name="guardian_name"')
-        self.assertContains(response, 'name="guardian_email"')
-        self.assertContains(response, 'name="guardian_phone"')
+        # Guardian fields should exist with indexed names (primary guardian = index 0)
+        self.assertContains(response, 'name="guardian_0_name"')
+        self.assertContains(response, 'name="guardian_0_email"')
+        self.assertContains(response, 'name="guardian_0_phone"')
 
     def test_adult_student_form_hides_guardian_section(self):
         """Test that Adult Student form shows no guardian fields."""
@@ -299,7 +298,7 @@ class AddStudentFormValidationTest(BaseTestCase):
             "name": "Test Student",
             "email": "student@test.com",
             "birth_date": "2010-01-01",
-            "guardian_name": "Test Guardian",
+            "guardian_0_name": "Test Guardian",
             # Missing guardian_email
         }
 
@@ -352,8 +351,8 @@ class AddStudentFormValidationTest(BaseTestCase):
             "name": "",  # Empty - simulates current bug
             "email": "",  # Empty - simulates current bug
             "birth_date": "",  # Empty - simulates current bug
-            "guardian_name": "",  # Empty - simulates current bug
-            "guardian_email": "",  # Empty - simulates current bug
+            "guardian_0_name": "",  # Empty - simulates current bug
+            "guardian_0_email": "",  # Empty - simulates current bug
         }
 
         response = self.client.post(self.student_separate_url, form_data)
@@ -399,12 +398,12 @@ class AddStudentAccountCreationTest(BaseTestCase):
             "birth_date": "2010-01-01",
             "school_year": "5",
             "notes": "Test notes",
-            "guardian_name": "Test Guardian",
-            "guardian_email": "guardian@test.com",
-            "guardian_phone": "+351123456789",
-            "guardian_tax_nr": "123456789",
-            "guardian_address": "Test Address",
-            "guardian_email_notifications": "on",
+            "guardian_0_name": "Test Guardian",
+            "guardian_0_email": "guardian@test.com",
+            "guardian_0_phone": "+351123456789",
+            "guardian_0_tax_nr": "123456789",
+            "guardian_0_address": "Test Address",
+            "guardian_0_email_notifications": "on",
         }
 
         response = self.client.post(self.student_separate_url, form_data)
@@ -439,9 +438,9 @@ class AddStudentAccountCreationTest(BaseTestCase):
             "birth_date": "2012-01-01",
             "school_year": "3",
             "notes": "Young child notes",
-            "guardian_name": "Managing Guardian",
-            "guardian_email": "managing@test.com",
-            "guardian_phone": "+351987654321",
+            "guardian_0_name": "Managing Guardian",
+            "guardian_0_email": "managing@test.com",
+            "guardian_0_phone": "+351987654321",
         }
 
         response = self.client.post(self.student_guardian_only_url, form_data)
@@ -531,8 +530,8 @@ class AddStudentEdgeCaseTest(BaseTestCase):
                 "name": "New Student",
                 "email": "existing@test.com",  # Duplicate email
                 "birth_date": "2010-01-01",
-                "guardian_name": "New Guardian",
-                "guardian_email": "newguardian@test.com",
+                "guardian_0_name": "New Guardian",
+                "guardian_0_email": "newguardian@test.com",
             }
 
             response = self.client.post(self.student_separate_url, form_data)
@@ -640,9 +639,9 @@ class AddStudentIntegrationTest(BaseTestCase):
             "email": "integration.student@test.com",
             "birth_date": "2008-06-15",
             "school_year": "8",
-            "guardian_name": "Integration Guardian",
-            "guardian_email": "integration.guardian@test.com",
-            "guardian_email_notifications": "on",
+            "guardian_0_name": "Integration Guardian",
+            "guardian_0_email": "integration.guardian@test.com",
+            "guardian_0_email_notifications": "on",
         }
 
         response = self.client.post(self.student_separate_url, student_guardian_data)
@@ -697,8 +696,8 @@ class AddStudentIntegrationTest(BaseTestCase):
                 "name": "Mixed Student",
                 "email": "mixed.student@test.com",
                 "birth_date": "2010-01-01",
-                "guardian_name": "Mixed Guardian",
-                "guardian_email": "mixed.guardian@test.com",
+                "guardian_0_name": "Mixed Guardian",
+                "guardian_0_email": "mixed.guardian@test.com",
             },
         )
         self.assertEqual(response1.status_code, 200)
@@ -709,8 +708,8 @@ class AddStudentIntegrationTest(BaseTestCase):
             {
                 "name": "Young Mixed",
                 "birth_date": "2013-01-01",
-                "guardian_name": "Solo Guardian",
-                "guardian_email": "solo.guardian@test.com",
+                "guardian_0_name": "Solo Guardian",
+                "guardian_0_email": "solo.guardian@test.com",
             },
         )
         self.assertEqual(response2.status_code, 200)
@@ -775,8 +774,8 @@ class StudentCreationRefreshTest(BaseTestCase):
             "name": "New Student For Refresh",
             "email": "newstudent@refresh.test",
             "birth_date": "2010-01-01",
-            "guardian_name": "Guardian For Refresh",
-            "guardian_email": "guardian@refresh.test",
+            "guardian_0_name": "Guardian For Refresh",
+            "guardian_0_email": "guardian@refresh.test",
         }
 
         # Simulate HTMX request
@@ -817,8 +816,8 @@ class StudentCreationRefreshTest(BaseTestCase):
             "name": "OOB Test Student",
             "email": "oob@test.com",
             "birth_date": "2010-01-01",
-            "guardian_name": "OOB Guardian",
-            "guardian_email": "oob.guardian@test.com",
+            "guardian_0_name": "OOB Guardian",
+            "guardian_0_email": "oob.guardian@test.com",
         }
 
         response = self.client.post(self.student_separate_url, form_data, headers={"hx-request": "true"})

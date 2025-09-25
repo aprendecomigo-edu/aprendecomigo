@@ -1897,6 +1897,7 @@ class StudentSeparateCreateView(BaseStudentCreateView):
                     created_guardian_users = []
 
                     # Create guardian users and relationships
+                    primary_guardian_profile = None
                     for guardian_data in guardians:
                         # Create or get guardian user
                         try:
@@ -1909,8 +1910,8 @@ class StudentSeparateCreateView(BaseStudentCreateView):
                             )
                             created_guardian_users.append(guardian_user)
 
-                        # Create guardian profile (unused here; keep underscore to satisfy ruff)
-                        _guardian_profile, _ = GuardianProfile.objects.get_or_create(
+                        # Create or get guardian profile
+                        guardian_profile, _ = GuardianProfile.objects.get_or_create(
                             user=guardian_user,
                             defaults={
                                 "address": guardian_data["address"],
@@ -1921,7 +1922,11 @@ class StudentSeparateCreateView(BaseStudentCreateView):
                             },
                         )
 
-                        # Add both users to schools
+                        # Remember primary guardian to populate legacy FK later
+                        if guardian_data.get("is_primary"):
+                            primary_guardian_profile = guardian_profile
+
+                        # Add both users to schools and create relationship
                         for school in user_schools:
                             SchoolMembership.objects.get_or_create(
                                 user=guardian_user, school=school, defaults={"role": SchoolRole.GUARDIAN}
@@ -1945,6 +1950,11 @@ class StudentSeparateCreateView(BaseStudentCreateView):
                                     "created_by": request.user,
                                 },
                             )
+
+                    # Populate deprecated guardian FK for backward compatibility
+                    if primary_guardian_profile:
+                        student_profile.guardian = primary_guardian_profile
+                        student_profile.save()
 
                     # Add student to schools
                     for school in user_schools:
