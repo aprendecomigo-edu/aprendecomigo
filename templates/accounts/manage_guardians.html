@@ -1,0 +1,234 @@
+{% extends "base_with_navs.html" %}
+{% load static %}
+
+{% block title %}Manage Guardians - {{ student.name }} - Aprende Comigo{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="flex items-center">
+                        <a href="{% url 'accounts:school_members' school.pk %}"
+                           class="text-gray-500 hover:text-gray-700 mr-4">
+                            <i class="fas fa-arrow-left"></i>
+                        </a>
+                        <h1 class="text-3xl font-bold text-gray-900">Manage Guardians</h1>
+                    </div>
+                    <p class="text-gray-600 mt-2">
+                        Managing guardians for <strong>{{ student.name }}</strong> at {{ school.name }}
+                    </p>
+                </div>
+                <button id="add-guardian-btn"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <i class="fas fa-plus mr-2"></i>
+                    Add Guardian
+                </button>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+            <div class="mb-6">
+                {% for message in messages %}
+                    <div class="mb-4 p-4 rounded-md
+                        {% if message.tags == 'success' %}bg-green-50 border border-green-200 text-green-700
+                        {% elif message.tags == 'error' %}bg-red-50 border border-red-200 text-red-700
+                        {% elif message.tags == 'warning' %}bg-yellow-50 border border-yellow-200 text-yellow-700
+                        {% else %}bg-blue-50 border border-blue-200 text-blue-700{% endif %}">
+                        <div class="flex">
+                            <i class="fas
+                                {% if message.tags == 'success' %}fa-check-circle text-green-400
+                                {% elif message.tags == 'error' %}fa-exclamation-triangle text-red-400
+                                {% elif message.tags == 'warning' %}fa-exclamation-triangle text-yellow-400
+                                {% else %}fa-info-circle text-blue-400{% endif %} mr-3 mt-1"></i>
+                            <div class="text-sm">{{ message }}</div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Guardian List Container -->
+        <div id="guardian-list-container">
+            {% include "accounts/partials/guardian_list.html" %}
+        </div>
+
+        <!-- Add Guardian Form Modal -->
+        <div id="add-guardian-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                <div class="mt-3">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-900">Add New Guardian</h3>
+                        <button id="close-modal-btn" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div id="add-guardian-form-container">
+                        {% include "accounts/partials/add_guardian_form.html" %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Guardian Modal -->
+        <div id="edit-guardian-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                <div class="mt-3">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-900">Edit Guardian Permissions</h3>
+                        <button id="close-edit-modal-btn" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div id="edit-guardian-form-container">
+                        <!-- Form will be loaded here via HTMX -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div id="confirm-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3 text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+                <i class="fas fa-exclamation-triangle text-red-600"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mt-4" id="confirm-title">Confirm Action</h3>
+            <div class="mt-2">
+                <p class="text-sm text-gray-500" id="confirm-message">
+                    Are you sure you want to perform this action?
+                </p>
+            </div>
+            <div class="flex justify-center gap-3 mt-6">
+                <button id="confirm-cancel-btn"
+                        class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                    Cancel
+                </button>
+                <button id="confirm-action-btn"
+                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Modal management
+document.addEventListener('DOMContentLoaded', function() {
+    const addGuardianBtn = document.getElementById('add-guardian-btn');
+    const addGuardianModal = document.getElementById('add-guardian-modal');
+    const editGuardianModal = document.getElementById('edit-guardian-modal');
+    const confirmModal = document.getElementById('confirm-modal');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+    const closeEditModalBtn = document.getElementById('close-edit-modal-btn');
+    const confirmCancelBtn = document.getElementById('confirm-cancel-btn');
+
+    // Show add guardian modal
+    addGuardianBtn.addEventListener('click', function() {
+        addGuardianModal.classList.remove('hidden');
+    });
+
+    // Close add guardian modal
+    closeModalBtn.addEventListener('click', function() {
+        addGuardianModal.classList.add('hidden');
+    });
+
+    // Close edit guardian modal
+    closeEditModalBtn.addEventListener('click', function() {
+        editGuardianModal.classList.add('hidden');
+    });
+
+    // Close confirm modal
+    confirmCancelBtn.addEventListener('click', function() {
+        confirmModal.classList.add('hidden');
+    });
+
+    // Close modals when clicking outside
+    window.addEventListener('click', function(event) {
+        if (event.target === addGuardianModal) {
+            addGuardianModal.classList.add('hidden');
+        }
+        if (event.target === editGuardianModal) {
+            editGuardianModal.classList.add('hidden');
+        }
+        if (event.target === confirmModal) {
+            confirmModal.classList.add('hidden');
+        }
+    });
+});
+
+// Edit guardian function
+function editGuardian(relationshipId) {
+    const modal = document.getElementById('edit-guardian-modal');
+    const container = document.getElementById('edit-guardian-form-container');
+
+    // Load edit form via HTMX
+    htmx.ajax('GET',
+        `{% url 'accounts:update_guardian_permissions' school.id student.id 999999 %}`.replace('999999', relationshipId),
+        {
+            target: '#edit-guardian-form-container',
+            swap: 'innerHTML'
+        }
+    ).then(() => {
+        modal.classList.remove('hidden');
+    });
+}
+
+// Remove guardian with confirmation
+function removeGuardian(relationshipId, guardianName) {
+    const modal = document.getElementById('confirm-modal');
+    const title = document.getElementById('confirm-title');
+    const message = document.getElementById('confirm-message');
+    const confirmBtn = document.getElementById('confirm-action-btn');
+
+    title.textContent = 'Remove Guardian';
+    message.textContent = `Are you sure you want to remove ${guardianName} as a guardian? This action cannot be undone.`;
+
+    confirmBtn.onclick = function() {
+        htmx.ajax('POST',
+            `{% url 'accounts:remove_guardian' school.id student.id 999999 %}`.replace('999999', relationshipId),
+            {
+                headers: {'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value},
+                target: '#guardian-list-container',
+                swap: 'innerHTML'
+            }
+        );
+        modal.classList.add('hidden');
+    };
+
+    modal.classList.remove('hidden');
+}
+
+// Set primary guardian with confirmation
+function setPrimaryGuardian(relationshipId, guardianName) {
+    const modal = document.getElementById('confirm-modal');
+    const title = document.getElementById('confirm-title');
+    const message = document.getElementById('confirm-message');
+    const confirmBtn = document.getElementById('confirm-action-btn');
+
+    title.textContent = 'Set Primary Guardian';
+    message.textContent = `Are you sure you want to set ${guardianName} as the primary guardian? They will automatically receive financial management permissions.`;
+
+    confirmBtn.onclick = function() {
+        htmx.ajax('POST',
+            `{% url 'accounts:set_primary_guardian' school.id student.id 999999 %}`.replace('999999', relationshipId),
+            {
+                headers: {'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value},
+                target: '#guardian-list-container',
+                swap: 'innerHTML'
+            }
+        );
+        modal.classList.add('hidden');
+    };
+
+    modal.classList.remove('hidden');
+}
+</script>
+{% endblock %}
