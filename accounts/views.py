@@ -1786,41 +1786,64 @@ class StudentSeparateCreateView(BaseStudentCreateView):
     """Create both student and guardian user accounts (separate logins)."""
 
     def post(self, request):
-        """Handle Student + Guardian account creation"""
+        """Handle Student + Guardian account creation with support for multiple guardians"""
         from django.db import transaction
 
-        from accounts.models.profiles import GuardianProfile
+        from accounts.models.profiles import GuardianProfile, GuardianStudentRelationship
         from accounts.permissions import PermissionService
 
         try:
-            # Sanitize and extract form data
+            # Sanitize and extract student form data
             student_name = escape(request.POST.get("name", "").strip())
             student_email_raw = request.POST.get("email", "").strip()
             student_birth_date = request.POST.get("birth_date")
             student_school_year = escape(request.POST.get("school_year", "").strip())
             student_notes = escape(request.POST.get("notes", "").strip())
 
-            guardian_name = escape(request.POST.get("guardian_name", "").strip())
-            guardian_email_raw = request.POST.get("guardian_email", "").strip()
-            guardian_phone = escape(request.POST.get("guardian_phone", "").strip())
-            guardian_tax_nr = escape(request.POST.get("guardian_tax_nr", "").strip())
-            guardian_address = escape(request.POST.get("guardian_address", "").strip())
-            guardian_invoice = request.POST.get("guardian_invoice") == "on"
-            guardian_email_notifications = request.POST.get("guardian_email_notifications") == "on"
-            guardian_sms_notifications = request.POST.get("guardian_sms_notifications") == "on"
+            # Extract multiple guardians from POST data
+            guardians = []
+            index = 0
+            while f"guardian_{index}_name" in request.POST:
+                guardian_data = {
+                    "name": escape(request.POST.get(f"guardian_{index}_name", "").strip()),
+                    "email": request.POST.get(f"guardian_{index}_email", "").strip(),
+                    "phone": escape(request.POST.get(f"guardian_{index}_phone", "").strip()),
+                    "tax_nr": escape(request.POST.get(f"guardian_{index}_tax_nr", "").strip()),
+                    "address": escape(request.POST.get(f"guardian_{index}_address", "").strip()),
+                    "is_primary": index == 0,  # First guardian is always primary
+                    "permissions": {
+                        "can_manage_bookings": request.POST.get(f"guardian_{index}_can_manage_bookings") == "on",
+                        "can_view_financial_info": request.POST.get(f"guardian_{index}_can_view_financial_info")
+                        == "on",
+                        "can_communicate_with_teachers": request.POST.get(
+                            f"guardian_{index}_can_communicate_with_teachers"
+                        )
+                        == "on",
+                    },
+                    "notifications": {
+                        "email": request.POST.get(f"guardian_{index}_email_notifications") == "on",
+                        "sms": request.POST.get(f"guardian_{index}_sms_notifications") == "on",
+                    },
+                    "invoice": request.POST.get(f"guardian_{index}_invoice") == "on",
+                }
+                guardians.append(guardian_data)
+                index += 1
 
             # Log form data for debugging
-            logger.info(f"Processing separate student creation: student={student_name}, guardian={guardian_name}")
+            logger.info(f"Processing separate student creation: student={student_name}, guardians={len(guardians)}")
 
-            # Validate and sanitize emails
+            # Validate student email
             try:
                 student_email = self._validate_email_format(student_email_raw)
-                guardian_email = self._validate_email_format(guardian_email_raw)
             except ValidationError as e:
                 return self._render_error(request, str(e))
 
-            # Validate required fields
-            if not all([student_name, student_email, student_birth_date, guardian_name, guardian_email]):
+            # Validate that at least one guardian is provided
+            if not guardians:
+                return self._render_error(request, "At least one guardian is required")
+
+            # Validate required fields for student and guardians
+            if not all([student_name, student_email, student_birth_date]):
                 missing_fields = []
                 if not student_name:
                     missing_fields.append("student name")
@@ -1828,15 +1851,19 @@ class StudentSeparateCreateView(BaseStudentCreateView):
                     missing_fields.append("student email")
                 if not student_birth_date:
                     missing_fields.append("student birth date")
-                if not guardian_name:
-                    missing_fields.append("guardian name")
-                if not guardian_email:
-                    missing_fields.append("guardian email")
-
-                error_msg = f"Missing required fields: {', '.join(missing_fields)}"
+                error_msg = f"Missing required student fields: {', '.join(missing_fields)}"
                 return self._render_error(request, error_msg)
 
-            # Get user's schools and educational system
+            # Validate guardian emails and required fields
+            for i, guardian_data in enumerate(guardians):
+                if not guardian_data["name"] or not guardian_data["email"]:
+                    return self._render_error(request, f"Guardian {i + 1}: Name and email are required")
+                try:
+                    guardian_data["email"] = self._validate_email_format(guardian_data["email"])
+                except ValidationError as e:
+                    return self._render_error(request, f"Guardian {i + 1}: {e!s}")
+
+            # Get user's schools
             user_schools = self._get_user_schools(request.user)
             with transaction.atomic():
                 # Temporarily disconnect the task creation signal to prevent orphaned tasks
@@ -1855,64 +1882,95 @@ class StudentSeparateCreateView(BaseStudentCreateView):
                         student_user = User.objects.create_user(email=student_email, name=student_name)
                         student_user_was_created = True
 
-                    # Create or get guardian user
-                    try:
-                        guardian_user = User.objects.get(email=guardian_email)
-                        guardian_user_was_created = False
-                    except User.DoesNotExist:
-                        guardian_user = User.objects.create_user(
-                            email=guardian_email, name=guardian_name, phone_number=guardian_phone
-                        )
-                        guardian_user_was_created = True
-
-                    # Create guardian profile
-                    guardian_profile, _ = GuardianProfile.objects.get_or_create(
-                        user=guardian_user,
-                        defaults={
-                            "address": guardian_address,
-                            "tax_nr": guardian_tax_nr,
-                            "invoice": guardian_invoice,
-                            "email_notifications_enabled": guardian_email_notifications,
-                            "sms_notifications_enabled": guardian_sms_notifications,
-                        },
-                    )
-
-                    # Create student profile
+                    # Create student profile (without setting the legacy guardian field)
                     student_profile = StudentProfile.objects.create(
                         user=student_user,
                         name=student_name,
                         account_type="STUDENT_GUARDIAN",
                         school_year=student_school_year,
                         birth_date=student_birth_date,
-                        guardian=guardian_profile,
+                        guardian=None,  # Will be handled via GuardianStudentRelationship
                         notes=student_notes,
                     )
 
-                    # Setup permissions
-                    PermissionService.setup_permissions_for_student(student_profile)
+                    # Track created guardian users for system tasks
+                    created_guardian_users = []
 
-                    # Add both users to schools
+                    # Create guardian users and relationships
+                    for guardian_data in guardians:
+                        # Create or get guardian user
+                        try:
+                            guardian_user = User.objects.get(email=guardian_data["email"])
+                            guardian_user_was_created = False
+                        except User.DoesNotExist:
+                            guardian_user = User.objects.create_user(
+                                email=guardian_data["email"],
+                                name=guardian_data["name"],
+                                phone_number=guardian_data["phone"],
+                            )
+                            guardian_user_was_created = True
+                            created_guardian_users.append(guardian_user)
+
+                        # Create guardian profile
+                        guardian_profile, _ = GuardianProfile.objects.get_or_create(
+                            user=guardian_user,
+                            defaults={
+                                "address": guardian_data["address"],
+                                "tax_nr": guardian_data["tax_nr"],
+                                "invoice": guardian_data["invoice"],
+                                "email_notifications_enabled": guardian_data["notifications"]["email"],
+                                "sms_notifications_enabled": guardian_data["notifications"]["sms"],
+                            },
+                        )
+
+                        # Add both users to schools
+                        for school in user_schools:
+                            SchoolMembership.objects.get_or_create(
+                                user=guardian_user, school=school, defaults={"role": SchoolRole.GUARDIAN}
+                            )
+
+                            # Create GuardianStudentRelationship
+                            GuardianStudentRelationship.objects.get_or_create(
+                                guardian=guardian_user,
+                                student=student_user,
+                                school=school,
+                                defaults={
+                                    "is_primary": guardian_data["is_primary"],
+                                    "can_manage_finances": guardian_data[
+                                        "is_primary"
+                                    ],  # Primary guardian always manages finances
+                                    "can_book_classes": guardian_data["permissions"]["can_manage_bookings"],
+                                    "can_view_records": guardian_data["permissions"]["can_view_financial_info"],
+                                    "can_edit_profile": guardian_data["permissions"]["can_communicate_with_teachers"],
+                                    "can_receive_notifications": guardian_data["notifications"]["email"]
+                                    or guardian_data["notifications"]["sms"],
+                                    "created_by": request.user,
+                                },
+                            )
+
+                    # Add student to schools
                     for school in user_schools:
                         SchoolMembership.objects.get_or_create(
                             user=student_user, school=school, defaults={"role": SchoolRole.STUDENT}
                         )
-                        SchoolMembership.objects.get_or_create(
-                            user=guardian_user, school=school, defaults={"role": SchoolRole.GUARDIAN}
-                        )
+
+                    # Setup permissions
+                    PermissionService.setup_permissions_for_student(student_profile)
 
                     # Manually create system tasks after successful student creation
                     from tasks.services import TaskService
 
                     if student_user_was_created:
                         TaskService.initialize_system_tasks(student_user)
-                    if guardian_user_was_created:
+                    for guardian_user in created_guardian_users:
                         TaskService.initialize_system_tasks(guardian_user)
 
                 finally:
                     # Reconnect the signal
                     post_save.connect(create_system_tasks_for_new_user, sender=User)
 
-            success_message = f"Successfully created student account for {student_name} and guardian account for {guardian_name}. Both can now login independently."
+            guardian_names = [g["name"] for g in guardians]
+            success_message = f"Successfully created student account for {student_name} and guardian accounts for {', '.join(guardian_names)}. All users can now login independently."
             return self._render_success(request, success_message)
 
         except Exception as e:
@@ -1925,53 +1983,75 @@ class StudentGuardianOnlyCreateView(BaseStudentCreateView):
     """Create guardian account only, with student profile managed by guardian."""
 
     def post(self, request):
-        """Handle Guardian-Only account creation"""
+        """Handle Guardian-Only account creation with support for multiple guardians"""
         from django.db import transaction
 
         from accounts.models.profiles import GuardianProfile
         from accounts.permissions import PermissionService
 
         try:
-            # Sanitize and extract form data
+            # Sanitize and extract student form data
             student_name = escape(request.POST.get("name", "").strip())
             student_birth_date = request.POST.get("birth_date")
             student_school_year = escape(request.POST.get("school_year", "").strip())
             student_notes = escape(request.POST.get("notes", "").strip())
 
-            guardian_name = escape(request.POST.get("guardian_name", "").strip())
-            guardian_email_raw = request.POST.get("guardian_email", "").strip()
-            guardian_phone = escape(request.POST.get("guardian_phone", "").strip())
-            guardian_tax_nr = escape(request.POST.get("guardian_tax_nr", "").strip())
-            guardian_address = escape(request.POST.get("guardian_address", "").strip())
-            guardian_invoice = request.POST.get("guardian_invoice") == "on"
-            guardian_email_notifications = request.POST.get("guardian_email_notifications") == "on"
-            guardian_sms_notifications = request.POST.get("guardian_sms_notifications") == "on"
+            # Extract multiple guardians from POST data
+            guardians = []
+            index = 0
+            while f"guardian_{index}_name" in request.POST:
+                guardian_data = {
+                    "name": escape(request.POST.get(f"guardian_{index}_name", "").strip()),
+                    "email": request.POST.get(f"guardian_{index}_email", "").strip(),
+                    "phone": escape(request.POST.get(f"guardian_{index}_phone", "").strip()),
+                    "tax_nr": escape(request.POST.get(f"guardian_{index}_tax_nr", "").strip()),
+                    "address": escape(request.POST.get(f"guardian_{index}_address", "").strip()),
+                    "is_primary": index == 0,  # First guardian is always primary
+                    "permissions": {
+                        "can_manage_bookings": request.POST.get(f"guardian_{index}_can_manage_bookings") == "on",
+                        "can_view_financial_info": request.POST.get(f"guardian_{index}_can_view_financial_info")
+                        == "on",
+                        "can_communicate_with_teachers": request.POST.get(
+                            f"guardian_{index}_can_communicate_with_teachers"
+                        )
+                        == "on",
+                    },
+                    "notifications": {
+                        "email": request.POST.get(f"guardian_{index}_email_notifications") == "on",
+                        "sms": request.POST.get(f"guardian_{index}_sms_notifications") == "on",
+                    },
+                    "invoice": request.POST.get(f"guardian_{index}_invoice") == "on",
+                }
+                guardians.append(guardian_data)
+                index += 1
 
             # Log form data for debugging
-            logger.info(f"Processing guardian-only creation: student={student_name}, guardian={guardian_name}")
+            logger.info(f"Processing guardian-only creation: student={student_name}, guardians={len(guardians)}")
 
-            # Validate and sanitize email
-            try:
-                guardian_email = self._validate_email_format(guardian_email_raw)
-            except ValidationError as e:
-                return self._render_error(request, str(e))
+            # Validate that at least one guardian is provided
+            if not guardians:
+                return self._render_error(request, "At least one guardian is required")
 
-            # Validate required fields
-            if not all([student_name, student_birth_date, guardian_name, guardian_email]):
+            # Validate required fields for student
+            if not all([student_name, student_birth_date]):
                 missing_fields = []
                 if not student_name:
                     missing_fields.append("student name")
                 if not student_birth_date:
                     missing_fields.append("student birth date")
-                if not guardian_name:
-                    missing_fields.append("guardian name")
-                if not guardian_email:
-                    missing_fields.append("guardian email")
-
-                error_msg = f"Missing required fields: {', '.join(missing_fields)}"
+                error_msg = f"Missing required student fields: {', '.join(missing_fields)}"
                 return self._render_error(request, error_msg)
 
-            # Get user's schools and educational system
+            # Validate guardian emails and required fields
+            for i, guardian_data in enumerate(guardians):
+                if not guardian_data["name"] or not guardian_data["email"]:
+                    return self._render_error(request, f"Guardian {i + 1}: Name and email are required")
+                try:
+                    guardian_data["email"] = self._validate_email_format(guardian_data["email"])
+                except ValidationError as e:
+                    return self._render_error(request, f"Guardian {i + 1}: {e!s}")
+
+            # Get user's schools
             user_schools = self._get_user_schools(request.user)
             with transaction.atomic():
                 # Temporarily disconnect the task creation signal to prevent orphaned tasks
@@ -1982,59 +2062,83 @@ class StudentGuardianOnlyCreateView(BaseStudentCreateView):
                 post_save.disconnect(create_system_tasks_for_new_user, sender=User)
 
                 try:
-                    # Create or get guardian user
-                    try:
-                        guardian_user = User.objects.get(email=guardian_email)
-                        guardian_user_was_created = False
-                    except User.DoesNotExist:
-                        guardian_user = User.objects.create_user(
-                            email=guardian_email, name=guardian_name, phone_number=guardian_phone
-                        )
-                        guardian_user_was_created = True
-
-                    # Create guardian profile
-                    guardian_profile, _ = GuardianProfile.objects.get_or_create(
-                        user=guardian_user,
-                        defaults={
-                            "address": guardian_address,
-                            "tax_nr": guardian_tax_nr,
-                            "invoice": guardian_invoice,
-                            "email_notifications_enabled": guardian_email_notifications,
-                            "sms_notifications_enabled": guardian_sms_notifications,
-                        },
-                    )
-
-                    # Create student profile WITHOUT a user account (guardian-only)
+                    # For guardian-only students, create student profile without user account
+                    # We'll handle the guardian relationships via the legacy guardian field for now
+                    # and set up the new relationships once the student has a user account
                     student_profile = StudentProfile.objects.create(
                         user=None,  # No user account for guardian-only students
-                        name=student_name,  # Store student name directly
+                        name=student_name,
                         account_type="GUARDIAN_ONLY",
                         school_year=student_school_year,
                         birth_date=student_birth_date,
-                        guardian=guardian_profile,
+                        guardian=None,  # Will be set to primary guardian below
                         notes=student_notes,
                     )
+
+                    # Track created guardian users for system tasks
+                    created_guardian_users = []
+                    primary_guardian_profile = None
+
+                    # Create guardian users and profiles
+                    for guardian_data in guardians:
+                        # Create or get guardian user
+                        try:
+                            guardian_user = User.objects.get(email=guardian_data["email"])
+                            guardian_user_was_created = False
+                        except User.DoesNotExist:
+                            guardian_user = User.objects.create_user(
+                                email=guardian_data["email"],
+                                name=guardian_data["name"],
+                                phone_number=guardian_data["phone"],
+                            )
+                            guardian_user_was_created = True
+                            created_guardian_users.append(guardian_user)
+
+                        # Create guardian profile
+                        guardian_profile, _ = GuardianProfile.objects.get_or_create(
+                            user=guardian_user,
+                            defaults={
+                                "address": guardian_data["address"],
+                                "tax_nr": guardian_data["tax_nr"],
+                                "invoice": guardian_data["invoice"],
+                                "email_notifications_enabled": guardian_data["notifications"]["email"],
+                                "sms_notifications_enabled": guardian_data["notifications"]["sms"],
+                            },
+                        )
+
+                        # Set primary guardian for the legacy guardian field
+                        if guardian_data["is_primary"]:
+                            primary_guardian_profile = guardian_profile
+
+                        # Add guardian to schools
+                        for school in user_schools:
+                            SchoolMembership.objects.get_or_create(
+                                user=guardian_user, school=school, defaults={"role": SchoolRole.GUARDIAN}
+                            )
+
+                    # Set the primary guardian in the student profile (legacy field)
+                    if primary_guardian_profile:
+                        student_profile.guardian = primary_guardian_profile
+                        student_profile.save()
+
+                    # Note: GuardianStudentRelationship entries will be created when/if the student
+                    # gets a user account in the future, or through a separate management interface
 
                     # Setup permissions
                     PermissionService.setup_permissions_for_student(student_profile)
 
-                    # Add guardian to schools
-                    for school in user_schools:
-                        SchoolMembership.objects.get_or_create(
-                            user=guardian_user, school=school, defaults={"role": SchoolRole.GUARDIAN}
-                        )
+                    # Manually create system tasks for guardian users only (not the placeholder student)
+                    from tasks.services import TaskService
 
-                    # Manually create system tasks after successful student creation
-                    if guardian_user_was_created:
-                        from tasks.services import TaskService
-
+                    for guardian_user in created_guardian_users:
                         TaskService.initialize_system_tasks(guardian_user)
 
                 finally:
                     # Reconnect the signal
                     post_save.connect(create_system_tasks_for_new_user, sender=User)
 
-            success_message = f"Successfully created guardian account for {guardian_name} who will manage {student_name}'s profile. Only the guardian can login."
+            guardian_names = [g["name"] for g in guardians]
+            success_message = f"Successfully created guardian accounts for {', '.join(guardian_names)} who will manage {student_name}'s profile. Only the guardians can login."
             return self._render_success(request, success_message)
 
         except Exception as e:

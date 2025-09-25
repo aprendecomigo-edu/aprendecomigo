@@ -528,8 +528,10 @@ class PeopleView(LoginRequiredMixin, View):
             try:
                 profile = user.student_profile
                 school_year = profile.school_year
+                created_at = profile.created_at  # Use StudentProfile.created_at
             except (StudentProfile.DoesNotExist, AttributeError):
                 school_year = ""
+                created_at = user.date_joined  # Fallback to user creation date if no profile
 
             students.append(
                 {
@@ -540,6 +542,7 @@ class PeopleView(LoginRequiredMixin, View):
                     "school_year": school_year,
                     "school": {"id": membership.school.id, "name": membership.school.name},
                     "status": "active" if user.is_active else "inactive",
+                    "date_joined": created_at,
                 }
             )
 
