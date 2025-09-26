@@ -1781,6 +1781,20 @@ class BaseStudentCreateView(LoginRequiredMixin, View):
         except ValidationError:
             raise ValidationError(f"Invalid email format: {email}")
 
+    def _validate_birth_date(self, birth_date_str):
+        """Validate and parse birth date string, raise ValidationError if invalid"""
+        if not birth_date_str:
+            raise ValidationError("Birth date is required")
+
+        try:
+            from datetime import datetime
+
+            # Try to parse the date - this will raise ValueError if invalid
+            parsed_date = datetime.strptime(birth_date_str, "%Y-%m-%d").date()
+            return parsed_date
+        except ValueError:
+            raise ValidationError(f"Invalid birth date format: '{birth_date_str}'. Please use YYYY-MM-DD format.")
+
     def _get_user_schools(self, user):
         """Get schools accessible to the current user"""
         if user.is_staff or user.is_superuser:
@@ -2297,18 +2311,15 @@ class StudentAdultCreateView(BaseStudentCreateView):
             except ValidationError as e:
                 return self._render_error(request, str(e))
 
-            # Validate required fields
-            if not all([student_name, student_email, student_birth_date]):
-                missing_fields = []
-                if not student_name:
-                    missing_fields.append("student name")
-                if not student_email:
-                    missing_fields.append("student email")
-                if not student_birth_date:
-                    missing_fields.append("student birth date")
+            # Validate and parse birth date
+            try:
+                parsed_birth_date = self._validate_birth_date(student_birth_date)
+            except ValidationError as e:
+                return self._render_error(request, str(e))
 
-                error_msg = f"Missing required fields: {', '.join(missing_fields)}"
-                return self._render_error(request, error_msg)
+            # Validate required fields (email and birth date already validated above)
+            if not student_name:
+                return self._render_error(request, "Student name is required")
 
             # Pre-transaction validation checks
             # Check if student user already has a StudentProfile
@@ -2364,7 +2375,7 @@ class StudentAdultCreateView(BaseStudentCreateView):
                         name=student_name,
                         account_type="ADULT_STUDENT",
                         school_year=student_school_year,
-                        birth_date=student_birth_date,
+                        birth_date=parsed_birth_date,
                         guardian=guardian_profile,  # Adult student is their own guardian
                         notes=student_notes,
                         email_notifications_enabled=student_email_notifications,
@@ -2376,7 +2387,6 @@ class StudentAdultCreateView(BaseStudentCreateView):
 
                     # Setup permissions
                     PermissionService.setup_permissions_for_student(student_profile)
-
                     # Add student to schools
                     for school in user_schools:
                         SchoolMembership.objects.get_or_create(
@@ -2389,12 +2399,12 @@ class StudentAdultCreateView(BaseStudentCreateView):
 
                         TaskService.initialize_system_tasks(student_user)
 
+                    # Return success from within atomic block
+                    success_message = f"Successfully created adult student account for {student_name}. They can now login and manage their own account."
+                    return self._render_success(request, success_message)
                 finally:
                     # Reconnect the signal
                     post_save.connect(create_system_tasks_for_new_user, sender=User)
-
-                success_message = f"Successfully created adult student account for {student_name}. They can now login and manage their own account."
-                return self._render_success(request, success_message)
 
             except IntegrityError as e:
                 error_str = str(e).lower()
@@ -2419,5 +2429,11 @@ class StudentAdultCreateView(BaseStudentCreateView):
                     )
 
         except Exception as e:
-            logger.error(f"Unexpected error in adult student creation: {e}", exc_info=True)
-            return self._render_error(request, "An unexpected error occurred. Please try again.")
+            # Check if this is a permission setup failure (should have already caused rollback)
+            error_message = str(e)
+            if "Permission setup failed" in error_message or "permission" in error_message.lower():
+                logger.error(f"Permission setup failed in adult student creation: {e}", exc_info=True)
+                return self._render_error(request, "Failed to set up student permissions. Please try again.")
+            else:
+                logger.error(f"Unexpected error in adult student creation: {e}", exc_info=True)
+                return self._render_error(request, "An unexpected error occurred. Please try again.")

@@ -79,6 +79,25 @@ class CustomEducationLevel(models.TextChoices):
     HIGH_SCHOOL = "high_school", _("High School")
 
 
+class UnifiedSchoolYear(models.TextChoices):
+    """Unified school year choices for all educational systems"""
+
+    YEAR_1 = "1", _("Year 1")
+    YEAR_2 = "2", _("Year 2")
+    YEAR_3 = "3", _("Year 3")
+    YEAR_4 = "4", _("Year 4")
+    YEAR_5 = "5", _("Year 5")
+    YEAR_6 = "6", _("Year 6")
+    YEAR_7 = "7", _("Year 7")
+    YEAR_8 = "8", _("Year 8")
+    YEAR_9 = "9", _("Year 9")
+    YEAR_10 = "10", _("Year 10")
+    YEAR_11 = "11", _("Year 11")
+    YEAR_12 = "12", _("Year 12")
+    HIGHER_EDUCATION = "ensino_superior", _("Ensino Superior")
+    OTHER = "outro", _("Outro")
+
+
 class EducationalSystemType(models.TextChoices):
     """Types of educational systems"""
 

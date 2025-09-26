@@ -189,7 +189,9 @@ class StudentProfile(models.Model):
         help_text=_("Educational system this student belongs to"),
     )
     school_year: models.CharField = models.CharField(
-        _("school year"), max_length=50, help_text=_("School year within the educational system")
+        _("school year"),
+        max_length=50,
+        help_text=_("School year within the educational system. Available choices defined in UnifiedSchoolYear enum."),
     )
     birth_date: models.DateField = models.DateField(_("birth date"))
     # Account configuration - defines the 3 use cases clearly

@@ -579,6 +579,9 @@ class PeopleView(LoginRequiredMixin, View):
 
         student_stats = {"total": len(students)}
 
+        # Import context helper
+        from accounts.context_helpers import get_school_year_choices
+
         return render(
             request,
             "dashboard/people.html",
@@ -590,6 +593,7 @@ class PeopleView(LoginRequiredMixin, View):
                 "students": students,
                 "teacher_stats": teacher_stats,
                 "student_stats": student_stats,
+                "school_year_choices": get_school_year_choices(),
             },
         )
 
