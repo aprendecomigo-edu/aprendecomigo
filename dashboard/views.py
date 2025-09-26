@@ -528,8 +528,10 @@ class PeopleView(LoginRequiredMixin, View):
             try:
                 profile = user.student_profile
                 school_year = profile.school_year
+                created_at = profile.created_at  # Use StudentProfile.created_at
             except (StudentProfile.DoesNotExist, AttributeError):
                 school_year = ""
+                created_at = user.date_joined  # Fallback to user creation date if no profile
 
             students.append(
                 {
@@ -540,6 +542,7 @@ class PeopleView(LoginRequiredMixin, View):
                     "school_year": school_year,
                     "school": {"id": membership.school.id, "name": membership.school.name},
                     "status": "active" if user.is_active else "inactive",
+                    "date_joined": created_at,
                 }
             )
 
@@ -576,6 +579,9 @@ class PeopleView(LoginRequiredMixin, View):
 
         student_stats = {"total": len(students)}
 
+        # Import context helper
+        from accounts.context_helpers import get_school_year_choices
+
         return render(
             request,
             "dashboard/people.html",
@@ -587,6 +593,7 @@ class PeopleView(LoginRequiredMixin, View):
                 "students": students,
                 "teacher_stats": teacher_stats,
                 "student_stats": student_stats,
+                "school_year_choices": get_school_year_choices(),
             },
         )
 
@@ -600,8 +607,12 @@ class PeopleView(LoginRequiredMixin, View):
             return self._handle_invite_teacher(request)
         elif action == "search_students":
             return self._handle_search_students(request)
+        elif action == "filter_students":
+            return self._handle_filter_students(request)
         elif action == "get_student_detail":
             return self._handle_get_student_detail(request)
+        elif action == "refresh_students":
+            return self._handle_refresh_students(request)
         else:
             return JsonResponse({"error": "Invalid action"}, status=400)
 
@@ -702,53 +713,58 @@ class PeopleView(LoginRequiredMixin, View):
         search_query = request.POST.get("search", "").strip()
         return self._render_students_partial(request, search_query=search_query)
 
+    def _handle_filter_students(self, request):
+        """Handle student filtering requests with status, school year, and search"""
+        search_query = request.POST.get("search", "").strip()
+        status_filter = request.POST.get("status", "").strip() or request.POST.get("status_filter", "").strip()
+        school_year_filter = (
+            request.POST.get("school_year", "").strip() or request.POST.get("school_year_filter", "").strip()
+        )
+
+        return self._render_students_partial(
+            request, search_query=search_query, status_filter=status_filter, school_year_filter=school_year_filter
+        )
+
+    def _handle_refresh_students(self, request):
+        """Handle student list refresh requests (triggered by HTMX after student creation)"""
+        return self._render_students_partial(request)
+
     def _handle_get_student_detail(self, request):
-        """Handle student detail requests"""
+        """Handle student detail requests for both regular students and Guardian-Only students"""
 
         try:
             student_id = request.POST.get("student_id")
             if not student_id:
                 return render(request, "shared/partials/error_message.html", {"error": "Student ID is required"})
 
-            # Get student with all related data
-            student = CustomUser.objects.select_related(
-                "student_profile", "student_profile__guardian", "student_profile__educational_system"
-            ).get(id=student_id)
-
-            # Get school membership
-            membership = (
-                SchoolMembership.objects.filter(user=student, role=SchoolRole.STUDENT.value)
-                .select_related("school")
-                .first()
-            )
-
-            # Prepare student detail data
-            student_detail = {
-                "id": student.id,
-                "email": student.email,
-                "name": student.name,
-                "full_name": student.get_full_name(),
-                "phone_number": student.phone_number or "",
-                "is_active": student.is_active,
-                "date_joined": student.date_joined,
-                "last_login": student.last_login,
-                "school": {"name": membership.school.name, "id": membership.school.id} if membership else None,
-            }
-
-            # Add student profile data if exists
-            if hasattr(student, "student_profile"):
-                profile = student.student_profile
-                student_detail.update(
-                    {
-                        "school_year": profile.school_year or "",
-                        "birth_date": profile.birth_date,
-                        "account_type": profile.account_type or "",
-                        "notes": profile.notes or "",
-                        "educational_system": profile.educational_system.name if profile.educational_system else "",
-                    }
+            # Handle Guardian-Only students (guardian_only_123 format)
+            if str(student_id).startswith("guardian_only_"):
+                profile_id = str(student_id).replace("guardian_only_", "")
+                profile = StudentProfile.objects.select_related("guardian", "guardian__user").get(
+                    id=profile_id, user=None, account_type="GUARDIAN_ONLY"
                 )
 
-                # Add guardian data if exists
+                # Build student detail from profile data
+                student_detail = {
+                    "id": student_id,
+                    "email": profile.guardian.user.email if profile.guardian and profile.guardian.user else "",
+                    "name": profile.name,
+                    "full_name": profile.name,
+                    "phone_number": profile.guardian.user.phone_number
+                    if profile.guardian and profile.guardian.user
+                    else "",
+                    "is_active": True,
+                    "date_joined": profile.created_at if hasattr(profile, "created_at") else None,
+                    "last_login": None,
+                    "school": None,  # Guardian-Only students may not have direct school membership
+                    "school_year": profile.school_year or "",
+                    "birth_date": profile.birth_date,
+                    "account_type": profile.account_type,
+                    "notes": profile.notes or "",
+                    "educational_system": profile.educational_system or "",
+                }
+
+                # Add guardian information
                 if profile.guardian:
                     guardian = profile.guardian
                     student_detail["guardian"] = {
@@ -763,9 +779,63 @@ class PeopleView(LoginRequiredMixin, View):
                         "sms_notifications_enabled": guardian.sms_notifications_enabled,
                     }
 
+            else:
+                # Handle regular students (CustomUser ID)
+                student = CustomUser.objects.select_related("student_profile", "student_profile__guardian").get(
+                    id=student_id
+                )
+
+                # Get school membership
+                membership = (
+                    SchoolMembership.objects.filter(user=student, role=SchoolRole.STUDENT.value)
+                    .select_related("school")
+                    .first()
+                )
+
+                # Prepare student detail data
+                student_detail = {
+                    "id": student.id,
+                    "email": student.email,
+                    "name": student.name,
+                    "full_name": student.get_full_name(),
+                    "phone_number": student.phone_number or "",
+                    "is_active": student.is_active,
+                    "date_joined": student.date_joined,
+                    "last_login": student.last_login,
+                    "school": {"name": membership.school.name, "id": membership.school.id} if membership else None,
+                }
+
+                # Add student profile data if exists
+                if hasattr(student, "student_profile"):
+                    profile = student.student_profile
+                    student_detail.update(
+                        {
+                            "school_year": profile.school_year or "",
+                            "birth_date": profile.birth_date,
+                            "account_type": profile.account_type or "",
+                            "notes": profile.notes or "",
+                            "educational_system": profile.educational_system or "",
+                        }
+                    )
+
+                    # Add guardian data if exists
+                    if profile.guardian:
+                        guardian = profile.guardian
+                        student_detail["guardian"] = {
+                            "id": guardian.id,
+                            "name": guardian.user.get_full_name() if guardian.user else "",
+                            "email": guardian.user.email if guardian.user else "",
+                            "phone_number": guardian.user.phone_number if guardian.user else "",
+                            "tax_number": guardian.tax_nr or "",
+                            "address": guardian.address or "",
+                            "invoice": guardian.invoice,
+                            "email_notifications_enabled": guardian.email_notifications_enabled,
+                            "sms_notifications_enabled": guardian.sms_notifications_enabled,
+                        }
+
             return render(request, "dashboard/partials/student_detail_modal_content.html", {"student": student_detail})
 
-        except CustomUser.DoesNotExist:
+        except (CustomUser.DoesNotExist, StudentProfile.DoesNotExist):
             return render(request, "shared/partials/error_message.html", {"error": "Student not found"})
         except Exception as e:
             return render(
@@ -836,9 +906,8 @@ class PeopleView(LoginRequiredMixin, View):
             },
         )
 
-    def _render_students_partial(self, request, search_query=None):
-        """Render students list partial for HTMX updates"""
-        from django.db.models import Q
+    def _render_students_partial(self, request, search_query=None, status_filter=None, school_year_filter=None):
+        """Render students list partial for HTMX updates with filtering support"""
 
         from accounts.models import School, SchoolMembership
         from accounts.models.enums import SchoolRole
@@ -853,21 +922,14 @@ class PeopleView(LoginRequiredMixin, View):
 
         user_schools = get_user_schools(request.user)
 
-        # Get students data with profiles
+        # Get ALL students data with profiles (no premature filtering)
         student_memberships = SchoolMembership.objects.filter(
             school__in=user_schools, role=SchoolRole.STUDENT.value
         ).select_related("user", "school")
 
-        # Apply search filter if provided
-        if search_query:
-            # Search across student and guardian fields
-            student_memberships = student_memberships.filter(
-                Q(user__name__icontains=search_query)
-                | Q(user__email__icontains=search_query)
-                | Q(user__student_profile__school_year__icontains=search_query)
-            )
-
         students = []
+
+        # Process regular students (with user accounts)
         for membership in student_memberships:
             user = membership.user
             try:
@@ -891,7 +953,6 @@ class PeopleView(LoginRequiredMixin, View):
                 guardian_info = None
                 created_at = user.date_joined  # Fallback to user creation date if no profile
 
-            # Include guardian info in search
             student_data = {
                 "id": user.id,
                 "email": user.email,
@@ -901,14 +962,26 @@ class PeopleView(LoginRequiredMixin, View):
                 "account_type": account_type,
                 "guardian": guardian_info,
                 "school": {"id": membership.school.id, "name": membership.school.name},
-                "status": "active" if user.is_active else "inactive",
+                "status": "active" if membership.is_active else "inactive",
                 "date_joined": created_at,
             }
 
-            # Add student to results if no search or if search matches
-            if not search_query:
-                students.append(student_data)
-            else:
+            # Apply filters: status, school year, and search
+            should_include = True
+
+            # Status filter
+            if status_filter and (
+                (status_filter == "active" and student_data["status"] != "active")
+                or (status_filter == "inactive" and student_data["status"] != "inactive")
+            ):
+                should_include = False
+
+            # School year filter
+            if should_include and school_year_filter and school_year != school_year_filter:
+                should_include = False
+
+            # Search filter
+            if should_include and search_query:
                 # Check if search matches any student field
                 student_matches = any(
                     search_query.lower() in str(value).lower() for value in [user.name, user.email, school_year]
@@ -922,8 +995,77 @@ class PeopleView(LoginRequiredMixin, View):
                         for value in [guardian_info.get("name", ""), guardian_info.get("email", "")]
                     )
 
-                if student_matches or guardian_matches:
-                    students.append(student_data)
+                if not (student_matches or guardian_matches):
+                    should_include = False
+
+            if should_include:
+                students.append(student_data)
+
+        # Add Guardian-Only students (no user accounts) to search results
+        guardian_only_profiles = StudentProfile.objects.filter(
+            user=None,  # Guardian-Only students have no user account
+            account_type="GUARDIAN_ONLY",
+        ).select_related("guardian")
+
+        for profile in guardian_only_profiles:
+            # Use the first school from user_schools for display (admin can manage across schools)
+            school = user_schools.first() if user_schools.exists() else None
+            guardian_user = profile.guardian.user if profile.guardian else None
+
+            guardian_info = None
+            if profile.guardian:
+                guardian_profile = profile.guardian
+                guardian_info = {
+                    "name": guardian_profile.user.get_full_name() if guardian_profile.user else "",
+                    "email": guardian_profile.user.email if guardian_profile.user else "",
+                    "phone": guardian_profile.user.phone_number if guardian_profile.user else "",
+                }
+
+            student_data = {
+                "id": f"guardian_only_{profile.id}",  # Unique ID for guardian-only students
+                "email": guardian_user.email if guardian_user else "",
+                "name": profile.name,  # Use the name field from StudentProfile
+                "full_name": profile.name,
+                "school_year": profile.school_year,
+                "account_type": profile.account_type,
+                "guardian": guardian_info,
+                "school": {"id": school.id, "name": school.name} if school else {"id": 0, "name": "Unknown"},
+                "status": "active",  # Guardian-Only students are always "active"
+                "date_joined": profile.created_at,
+            }
+
+            # Apply filters: status, school year, and search for Guardian-Only students
+            should_include = True
+
+            # Status filter (Guardian-Only students are always "active")
+            if status_filter and status_filter == "inactive":
+                should_include = False  # Guardian-Only students are never inactive
+
+            # School year filter
+            if should_include and school_year_filter and profile.school_year != school_year_filter:
+                should_include = False
+
+            # Search filter
+            if should_include and search_query:
+                # Check if search matches Guardian-Only student fields
+                guardian_only_matches = any(
+                    search_query.lower() in str(value).lower()
+                    for value in [profile.name, profile.school_year, guardian_user.email if guardian_user else ""]
+                )
+
+                # Check if search matches guardian fields
+                guardian_matches = False
+                if guardian_info:
+                    guardian_matches = any(
+                        search_query.lower() in str(value).lower()
+                        for value in [guardian_info.get("name", ""), guardian_info.get("email", "")]
+                    )
+
+                if not (guardian_only_matches or guardian_matches):
+                    should_include = False
+
+            if should_include:
+                students.append(student_data)
 
         # Sort students by newest first (by created_at date)
         students.sort(key=lambda x: x["date_joined"], reverse=True)

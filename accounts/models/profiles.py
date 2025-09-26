@@ -9,6 +9,7 @@ and functionality specific to their role.
 import logging
 
 from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -189,7 +190,9 @@ class StudentProfile(models.Model):
         help_text=_("Educational system this student belongs to"),
     )
     school_year: models.CharField = models.CharField(
-        _("school year"), max_length=50, help_text=_("School year within the educational system")
+        _("school year"),
+        max_length=50,
+        help_text=_("School year within the educational system. Available choices defined in UnifiedSchoolYear enum."),
     )
     birth_date: models.DateField = models.DateField(_("birth date"))
     # Account configuration - defines the 3 use cases clearly
@@ -205,13 +208,16 @@ class StudentProfile(models.Model):
         help_text=_("Defines who has accounts and manages this student"),
     )
 
+    # DEPRECATED - will be removed after migration is complete
     guardian: models.ForeignKey = models.ForeignKey(
         "GuardianProfile",
         on_delete=models.SET_NULL,
-        related_name="students",
+        related_name="students_old",
         null=True,
         blank=True,
-        help_text=_("Guardian of the student (required for guardian-managed accounts)"),
+        help_text=_(
+            "DEPRECATED - Use guardians ManyToMany instead. Guardian of the student (required for guardian-managed accounts)"
+        ),
     )
 
     notes: models.TextField = models.TextField(
@@ -236,6 +242,32 @@ class StudentProfile(models.Model):
     invoice: models.BooleanField = models.BooleanField(
         _("invoice"), default=False, help_text=_("Whether to issue invoices (only for adult students)")
     )
+
+    # Phone number field - required for STUDENT_GUARDIAN account type (Issue #287)
+    phone_number: models.CharField = models.CharField(
+        _("student phone number"),
+        max_length=20,
+        blank=True,
+        validators=[
+            RegexValidator(
+                regex=r"^(\+|00)[1-9]\d{1,14}$",
+                message=_("Please enter a valid international phone number format (e.g., +351912345678)"),
+                code="invalid_phone_format",
+            )
+        ],
+        help_text=_("International phone number with country code (required for Student+Guardian accounts)"),
+    )
+
+    # NEW - All guardians through enhanced relationship model
+    # Note: This will be added in a separate migration after field renames are complete
+    # guardians = models.ManyToManyField(
+    #     'GuardianProfile',
+    #     through='GuardianStudentRelationship',
+    #     through_fields=('student_user', 'guardian_user'),
+    #     related_name='students_new',
+    #     blank=True,
+    #     help_text=_("All guardians for this student through the relationship model")
+    # )
 
     # Audit timestamps
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
@@ -283,6 +315,45 @@ class StudentProfile(models.Model):
                 )
             if not self.guardian:
                 raise ValidationError({"guardian": _("Student+Guardian accounts require a guardian to be assigned.")})
+            # GitHub Issue #287: Phone number is required for Student+Guardian accounts
+            if not self.phone_number or not self.phone_number.strip():
+                raise ValidationError({"phone_number": _("Phone number is required for Student+Guardian accounts.")})
+
+    @property
+    def primary_guardian(self):
+        """Get the primary guardian for backward compatibility."""
+        if not self.user:
+            return None
+
+        rel = self.user.student_guardian_relationships.filter(is_primary=True).first()
+        if rel:
+            return GuardianProfile.objects.filter(user=rel.guardian).first()
+        return None
+
+    @property
+    def all_guardians(self):
+        """Get all guardians for this student."""
+        if not self.user:
+            return GuardianProfile.objects.none()
+
+        guardian_users = self.user.student_guardian_relationships.values_list("guardian", flat=True)
+        return GuardianProfile.objects.filter(user__in=guardian_users)
+
+    def get_guardians_for_school(self, school):
+        """Get all guardians for this student in a specific school."""
+        if not self.user:
+            return GuardianProfile.objects.none()
+
+        guardian_users = self.user.student_guardian_relationships.filter(school=school, is_active=True).values_list(
+            "guardian", flat=True
+        )
+        return GuardianProfile.objects.filter(user__in=guardian_users)
+
+    def has_primary_guardian(self):
+        """Check if student has a primary guardian."""
+        if not self.user:
+            return False
+        return self.user.student_guardian_relationships.filter(is_primary=True).exists()
 
 
 class GuardianProfile(models.Model):
@@ -347,23 +418,23 @@ class GuardianProfile(models.Model):
 
 class GuardianStudentRelationship(models.Model):
     """
-    Model to represent guardian-student relationships within the school system.
-    Allows guardians to manage their studentren's accounts with appropriate permissions.
+    Enhanced relationship model for guardian-student connections.
+    Supports multiple guardians per student with one designated as primary for billing.
     """
 
     guardian: models.ForeignKey = models.ForeignKey(
         "CustomUser",
         on_delete=models.CASCADE,
-        related_name="studentren_relationships",
-        verbose_name=_("guardian"),
+        related_name="guardian_student_relationships",
+        verbose_name=_("guardian user"),
         help_text=_("Guardian user who manages the student account"),
     )
 
     student: models.ForeignKey = models.ForeignKey(
         "CustomUser",
         on_delete=models.CASCADE,
-        related_name="guardian_relationships",
-        verbose_name=_("student"),
+        related_name="student_guardian_relationships",
+        verbose_name=_("student user"),
         help_text=_("Student user whose account is managed by the guardian"),
     )
 
@@ -374,11 +445,49 @@ class GuardianStudentRelationship(models.Model):
         help_text=_("School where this relationship is established"),
     )
 
+    # New fields for multiple guardian support
+    is_primary: models.BooleanField = models.BooleanField(
+        default=False,
+        verbose_name=_("is primary guardian"),
+        help_text=_("Primary guardian handles billing and is main contact"),
+    )
+
+    # Granular permissions
+    can_manage_finances: models.BooleanField = models.BooleanField(
+        default=False,
+        verbose_name=_("can manage finances"),
+        help_text=_("Can manage student's financial accounts and payments"),
+    )
+    can_book_classes: models.BooleanField = models.BooleanField(
+        default=True, verbose_name=_("can book classes"), help_text=_("Can book and cancel classes for the student")
+    )
+    can_view_records: models.BooleanField = models.BooleanField(
+        default=True,
+        verbose_name=_("can view records"),
+        help_text=_("Can view student's academic records and progress"),
+    )
+    can_edit_profile: models.BooleanField = models.BooleanField(
+        default=True, verbose_name=_("can edit profile"), help_text=_("Can edit student's profile information")
+    )
+    can_receive_notifications: models.BooleanField = models.BooleanField(
+        default=True,
+        verbose_name=_("can receive notifications"),
+        help_text=_("Receives notifications about the student"),
+    )
+
+    # Relationship metadata
+    relationship_type: models.CharField = models.CharField(
+        max_length=50,
+        blank=True,
+        verbose_name=_("relationship type"),
+        help_text=_("e.g., 'Mother', 'Father', 'Legal Guardian'"),
+    )
+
     is_active: models.BooleanField = models.BooleanField(
         _("is active"), default=True, help_text=_("Whether this relationship is currently active")
     )
 
-    # Approval settings specific to this guardian-student relationship
+    # Legacy approval settings for backward compatibility
     requires_purchase_approval: models.BooleanField = models.BooleanField(
         _("requires purchase approval"),
         default=True,
@@ -394,6 +503,14 @@ class GuardianStudentRelationship(models.Model):
     # Audit timestamps
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
     updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
+    created_by: models.ForeignKey = models.ForeignKey(
+        "CustomUser",
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="created_guardian_relationships",
+        verbose_name=_("created by"),
+        help_text=_("User who created this relationship"),
+    )
 
     class Meta:
         verbose_name = _("guardian-student Relationship")
@@ -403,15 +520,30 @@ class GuardianStudentRelationship(models.Model):
             models.Index(fields=["guardian", "is_active"]),
             models.Index(fields=["student", "is_active"]),
             models.Index(fields=["school", "is_active"]),
+            models.Index(fields=["student", "is_primary"]),
+            models.Index(fields=["guardian", "is_primary"]),
         ]
         constraints = [
-            models.CheckConstraint(condition=~models.Q(guardian=models.F("student")), name="guardian_cannot_be_student")
+            models.CheckConstraint(
+                condition=~models.Q(guardian=models.F("student")), name="guardian_cannot_be_student"
+            ),
+            # Global constraint: each student can have only one primary guardian across all schools
+            models.UniqueConstraint(
+                fields=["student"], condition=models.Q(is_primary=True), name="unique_primary_guardian_per_student"
+            ),
         ]
 
     def __str__(self) -> str:
         guardian_name = self.guardian.name if hasattr(self.guardian, "name") else str(self.guardian)
         student_name = self.student.name if hasattr(self.student, "name") else str(self.student)
-        return f"{guardian_name} -> {student_name} ({self.school.name})"
+        primary_indicator = " [PRIMARY]" if self.is_primary else ""
+        return f"{guardian_name} -> {student_name} ({self.school.name}){primary_indicator}"
+
+    def save(self, *args, **kwargs):
+        """Ensure primary guardian has financial permissions."""
+        if self.is_primary:
+            self.can_manage_finances = True
+        super().save(*args, **kwargs)
 
     def clean(self):
         """Validate the relationship data."""

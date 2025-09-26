@@ -24,12 +24,6 @@ User = get_user_model()
 class HTMXFormSubmissionTest(BaseTestCase):
     """
     Test HTMX-specific form submission behavior.
-
-    The issue appears to be that HTMX is not properly capturing form data
-    when the form is submitted. This could be due to:
-    1. Alpine.js x-model not being properly bound
-    2. HTMX form serialization issues
-    3. Form submit event handling conflicts
     """
 
     def setUp(self):
@@ -50,8 +44,8 @@ class HTMXFormSubmissionTest(BaseTestCase):
             "name": "HTMX Test Student",
             "email": "htmx@test.com",
             "birth_date": "2010-05-15",
-            "guardian_name": "HTMX Guardian",
-            "guardian_email": "htmx.guardian@test.com",
+            "guardian_0_name": "HTMX Guardian",
+            "guardian_0_email": "htmx.guardian@test.com",
         }
 
         # Use the new dedicated endpoint for separate student creation
@@ -87,8 +81,8 @@ class HTMXFormSubmissionTest(BaseTestCase):
             "name": "Regular POST Student",
             "email": "regular@test.com",
             "birth_date": "2010-05-15",
-            "guardian_name": "Regular Guardian",
-            "guardian_email": "regular.guardian@test.com",
+            "guardian_0_name": "Regular Guardian",
+            "guardian_0_email": "regular.guardian@test.com",
         }
 
         # Use the new dedicated endpoint
@@ -114,8 +108,8 @@ class HTMXFormSubmissionTest(BaseTestCase):
             "name": "Encoding Test Student",
             "email": "encoding@test.com",
             "birth_date": "2010-05-15",
-            "guardian_name": "Encoding Guardian",
-            "guardian_email": "encoding.guardian@test.com",
+            "guardian_0_name": "Encoding Guardian",
+            "guardian_0_email": "encoding.guardian@test.com",
         }
 
         # Use the new dedicated endpoint
@@ -136,62 +130,6 @@ class HTMXFormSubmissionTest(BaseTestCase):
             print("SUCCESS: Form encoding handled correctly")
         except User.DoesNotExist:
             print("ENCODING ISSUE: Form data encoding problem")
-
-
-class AlpineJSFormDataBindingTest(BaseTestCase):
-    """
-    Test potential Alpine.js x-model binding issues.
-
-    The form uses Alpine.js x-model for two-way data binding.
-    If x-model is not working correctly, form field values
-    might not be captured when the form is submitted.
-    """
-
-    def setUp(self):
-        super().setUp()
-        self.admin_user = User.objects.create_user(email="admin@test.com", name="Admin User", is_active=True)
-        self.school = School.objects.create(name="Test School")
-        SchoolMembership.objects.create(
-            user=self.admin_user, school=self.school, role=SchoolRole.SCHOOL_ADMIN, is_active=True
-        )
-        self.people_url = reverse("people")
-
-    def test_template_rendering_includes_alpine_js(self):
-        """Test that the people page includes Alpine.js and proper x-model bindings."""
-        self.client.force_login(self.admin_user)
-        response = self.client.get(self.people_url)
-
-        # Check that Alpine.js component is present
-        self.assertContains(response, 'x-data="peopleManager()"')
-
-        # Check that form fields have x-model bindings for the new forms
-        self.assertContains(response, 'x-model="separateForm.name"')
-        self.assertContains(response, 'x-model="separateForm.email"')
-        self.assertContains(response, 'x-model="separateForm.guardian_name"')
-        self.assertContains(response, 'x-model="separateForm.guardian_email"')
-
-    def test_alpine_js_form_state_consistency(self):
-        """
-        Test that Alpine.js form state names match the actual form field names.
-
-        If Alpine.js x-model names don't match form input names,
-        this could cause the data binding issue.
-        """
-        self.client.force_login(self.admin_user)
-        response = self.client.get(self.people_url)
-
-        # Student+Guardian form consistency checks for new clean field names
-        self.assertContains(response, 'name="name"')
-        self.assertContains(response, 'x-model="separateForm.name"')
-
-        self.assertContains(response, 'name="email"')
-        self.assertContains(response, 'x-model="separateForm.email"')
-
-        self.assertContains(response, 'name="guardian_name"')
-        self.assertContains(response, 'x-model="separateForm.guardian_name"')
-
-        self.assertContains(response, 'name="guardian_email"')
-        self.assertContains(response, 'x-model="separateForm.guardian_email"')
 
 
 class FormSubmissionDebuggingTest(BaseTestCase):
@@ -219,8 +157,8 @@ class FormSubmissionDebuggingTest(BaseTestCase):
             "name": "Debug Student",
             "email": "debug@test.com",
             "birth_date": "2010-01-01",
-            "guardian_name": "Debug Guardian",
-            "guardian_email": "debug.guardian@test.com",
+            "guardian_0_name": "Debug Guardian",
+            "guardian_0_email": "debug.guardian@test.com",
         }
 
         # Use the new dedicated endpoint
@@ -256,8 +194,8 @@ class FormSubmissionDebuggingTest(BaseTestCase):
             "name": "CSRF Test Student",
             "email": "csrf@test.com",
             "birth_date": "2010-01-01",
-            "guardian_name": "CSRF Guardian",
-            "guardian_email": "csrf.guardian@test.com",
+            "guardian_0_name": "CSRF Guardian",
+            "guardian_0_email": "csrf.guardian@test.com",
         }
 
         # Use the new dedicated endpoint
@@ -277,8 +215,8 @@ class FormSubmissionDebuggingTest(BaseTestCase):
         guardian_only_data = {
             "name": "Guardian Only Debug",
             "birth_date": "2012-01-01",
-            "guardian_name": "Debug Guardian Only",
-            "guardian_email": "debug.guardian.only@test.com",
+            "guardian_0_name": "Debug Guardian Only",
+            "guardian_0_email": "debug.guardian.only@test.com",
         }
 
         # Use the new dedicated endpoint

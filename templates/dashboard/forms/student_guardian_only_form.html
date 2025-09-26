@@ -45,18 +45,9 @@
                     <select name="school_year" x-model="guardianOnlyForm.school_year"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
                         <option value="">{% trans "Select school year" %}</option>
-                        <option value="1">{% trans "Year 1" %}</option>
-                        <option value="2">{% trans "Year 2" %}</option>
-                        <option value="3">{% trans "Year 3" %}</option>
-                        <option value="4">{% trans "Year 4" %}</option>
-                        <option value="5">{% trans "Year 5" %}</option>
-                        <option value="6">{% trans "Year 6" %}</option>
-                        <option value="7">{% trans "Year 7" %}</option>
-                        <option value="8">{% trans "Year 8" %}</option>
-                        <option value="9">{% trans "Year 9" %}</option>
-                        <option value="10">{% trans "Year 10" %}</option>
-                        <option value="11">{% trans "Year 11" %}</option>
-                        <option value="12">{% trans "Year 12" %}</option>
+                        {% for value, label in school_year_choices %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
                     </select>
                 </div>
             </div>
@@ -68,72 +59,248 @@
             </div>
         </div>
 
-        <!-- Guardian Account Information Section -->
-        <div class="bg-green-50 rounded-lg p-6">
+        <!-- Multiple Guardians Section -->
+        <div class="bg-green-50 rounded-lg p-6" x-data="guardianOnlyManager()">
             <h5 class="text-lg font-medium text-green-900 mb-4 flex items-center">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                 </svg>
                 Guardian Account & Information
             </h5>
+
             <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
                 <div class="flex items-start space-x-2">
                     <svg class="w-5 h-5 text-orange-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>
                     </svg>
-                    <span class="text-orange-700 text-sm">Guardian will have full access to manage the student's account, bookings, and payments.</span>
+                    <span class="text-orange-700 text-sm">Guardians will have access to manage the student's account, bookings, and payments. The primary guardian handles billing.</span>
                 </div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="space-y-1">
-                    <label class="block text-sm font-medium text-gray-700">Guardian Name *</label>
-                    <input type="text" name="guardian_name" required
-                           data-test="guardian-name-input"
-                           x-model="guardianOnlyForm.guardian_name"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                           placeholder="Enter guardian's full name">
+
+            <!-- Primary Guardian (always visible, cannot be removed) -->
+            <div class="bg-white border-2 border-green-200 rounded-lg p-4 mb-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h6 class="text-sm font-semibold text-green-800 flex items-center">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mr-2">
+                            Primary Guardian
+                        </span>
+                        Manages billing and is main contact
+                    </h6>
                 </div>
-                <div class="space-y-1">
-                    <label class="block text-sm font-medium text-gray-700">Guardian Email *</label>
-                    <input type="email" name="guardian_email" required
-                           data-test="guardian-email-input"
-                           x-model="guardianOnlyForm.guardian_email"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                           placeholder="guardian@example.com">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-1">
+                        <label class="block text-sm font-medium text-gray-700">Guardian Name *</label>
+                        <input type="text" name="guardian_0_name" required
+                               data-test="guardian-name-input"
+                               x-model="primaryGuardian.name"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                               placeholder="Enter guardian's full name">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-sm font-medium text-gray-700">Guardian Email *</label>
+                        <input type="email" name="guardian_0_email" required
+                               data-test="guardian-email-input"
+                               x-model="primaryGuardian.email"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                               placeholder="guardian@example.com">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-sm font-medium text-gray-700">Phone Number</label>
+                        <input type="tel" name="guardian_0_phone" x-model="primaryGuardian.phone"
+                               pattern="^(\+|00)[1-9]\d{1,14}$"
+                               title="Please enter a valid phone number with country code (e.g., +351912345678, 00351912345678)"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                               placeholder="+351 912 345 678"
+                               x-on:input="primaryGuardian.phone = $event.target.value.replace(/\s/g, '')">
+                        <small class="text-gray-500 text-xs">Include country code (+351 or 00351 for Portugal, +44 or 0044 for UK)</small>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="block text-sm font-medium text-gray-700">Tax Number</label>
+                        <input type="text" name="guardian_0_tax_nr" x-model="primaryGuardian.tax_nr"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                               placeholder="123456789">
+                    </div>
                 </div>
-                <div class="space-y-1">
-                    <label class="block text-sm font-medium text-gray-700">Phone Number</label>
-                    <input type="tel" name="guardian_phone" x-model="guardianOnlyForm.guardian_phone"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                           placeholder="+351 912 345 678">
+                <div class="mt-4 space-y-1">
+                    <label class="block text-sm font-medium text-gray-700">Address</label>
+                    <textarea name="guardian_0_address" x-model="primaryGuardian.address"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                              rows="2" placeholder="Street address, postal code, city..."></textarea>
                 </div>
-                <div class="space-y-1">
-                    <label class="block text-sm font-medium text-gray-700">Tax Number</label>
-                    <input type="text" name="guardian_tax_nr" x-model="guardianOnlyForm.guardian_tax_nr"
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                           placeholder="123456789">
+                <div class="mt-4">
+                    <h6 class="text-sm font-medium text-gray-700 mb-2">Permissions & Notifications</h6>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-2">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="guardian_0_can_manage_bookings" x-model="primaryGuardian.can_manage_bookings" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" checked />
+                                <span class="text-sm text-gray-700">Can manage bookings</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="guardian_0_can_view_financial_info" x-model="primaryGuardian.can_view_financial_info" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" checked />
+                                <span class="text-sm text-gray-700">Can view financial info</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="guardian_0_can_communicate_with_teachers" x-model="primaryGuardian.can_communicate_with_teachers" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" checked />
+                                <span class="text-sm text-gray-700">Can communicate with teachers</span>
+                            </label>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="guardian_0_invoice" x-model="primaryGuardian.invoice" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
+                                <span class="text-sm text-gray-700">Issue invoices</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="guardian_0_email_notifications" x-model="primaryGuardian.email_notifications" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" checked />
+                                <span class="text-sm text-gray-700">Email notifications</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="guardian_0_sms_notifications" x-model="primaryGuardian.sms_notifications" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
+                                <span class="text-sm text-gray-700">SMS notifications</span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="mt-4 space-y-1">
-                <label class="block text-sm font-medium text-gray-700">Address</label>
-                <textarea name="guardian_address" x-model="guardianOnlyForm.guardian_address"
-                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                          rows="2" placeholder="Street address, postal code, city..."></textarea>
+
+            <!-- Additional Guardians -->
+            <template x-for="(guardian, index) in additionalGuardians" :key="index">
+                <div class="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h6 class="text-sm font-semibold text-gray-700">
+                            Additional Guardian <span x-text="index + 2"></span>
+                        </h6>
+                        <button type="button" @click="removeGuardian(index)" class="text-red-600 hover:text-red-800 focus:outline-none">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="block text-sm font-medium text-gray-700">Guardian Name *</label>
+                            <input type="text" :name="'guardian_' + (index + 1) + '_name'" required
+                                   x-model="guardian.name"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                   placeholder="Enter guardian's full name">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-sm font-medium text-gray-700">Guardian Email *</label>
+                            <input type="email" :name="'guardian_' + (index + 1) + '_email'" required
+                                   x-model="guardian.email"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                   placeholder="guardian@example.com">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-sm font-medium text-gray-700">Phone Number</label>
+                            <input type="tel" :name="'guardian_' + (index + 1) + '_phone'"
+                                   x-model="guardian.phone"
+                                   pattern="^(\+|00)[1-9]\d{1,14}$"
+                                   title="Please enter a valid phone number with country code (e.g., +351912345678, 00351912345678)"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                   placeholder="+351 912 345 678"
+                                   x-on:input="guardian.phone = $event.target.value.replace(/\s/g, '')">
+                            <small class="text-gray-500 text-xs">Include country code (+351 or 00351 for Portugal, +44 or 0044 for UK)</small>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-sm font-medium text-gray-700">Tax Number</label>
+                            <input type="text" :name="'guardian_' + (index + 1) + '_tax_nr'"
+                                   x-model="guardian.tax_nr"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                   placeholder="123456789">
+                        </div>
+                    </div>
+                    <div class="mt-4 space-y-1">
+                        <label class="block text-sm font-medium text-gray-700">Address</label>
+                        <textarea :name="'guardian_' + (index + 1) + '_address'" x-model="guardian.address"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                  rows="2" placeholder="Street address, postal code, city..."></textarea>
+                    </div>
+                    <div class="mt-4">
+                        <h6 class="text-sm font-medium text-gray-700 mb-2">Permissions & Notifications</h6>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" :name="'guardian_' + (index + 1) + '_can_manage_bookings'" x-model="guardian.can_manage_bookings" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
+                                    <span class="text-sm text-gray-700">Can manage bookings</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" :name="'guardian_' + (index + 1) + '_can_view_financial_info'" x-model="guardian.can_view_financial_info" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
+                                    <span class="text-sm text-gray-700">Can view financial info</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" :name="'guardian_' + (index + 1) + '_can_communicate_with_teachers'" x-model="guardian.can_communicate_with_teachers" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
+                                    <span class="text-sm text-gray-700">Can communicate with teachers</span>
+                                </label>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" :name="'guardian_' + (index + 1) + '_invoice'" x-model="guardian.invoice" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
+                                    <span class="text-sm text-gray-700">Issue invoices</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" :name="'guardian_' + (index + 1) + '_email_notifications'" x-model="guardian.email_notifications" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
+                                    <span class="text-sm text-gray-700">Email notifications</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer">
+                                    <input type="checkbox" :name="'guardian_' + (index + 1) + '_sms_notifications'" x-model="guardian.sms_notifications" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
+                                    <span class="text-sm text-gray-700">SMS notifications</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+
+            <!-- Add Guardian Button -->
+            <div class="text-center">
+                <button type="button" @click="addGuardian()" class="inline-flex items-center px-4 py-2 border border-green-300 text-sm font-medium rounded-md text-green-700 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Add Another Guardian
+                </button>
             </div>
-            <div class="flex flex-wrap gap-6 mt-4">
-                <label class="flex items-center space-x-2 cursor-pointer">
-                    <input type="checkbox" name="guardian_invoice" x-model="guardianOnlyForm.guardian_invoice" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
-                    <span class="text-sm text-gray-700">Issue invoices</span>
-                </label>
-                <label class="flex items-center space-x-2 cursor-pointer">
-                    <input type="checkbox" name="guardian_email_notifications" x-model="guardianOnlyForm.guardian_email_notifications" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" checked />
-                    <span class="text-sm text-gray-700">Email notifications</span>
-                </label>
-                <label class="flex items-center space-x-2 cursor-pointer">
-                    <input type="checkbox" name="guardian_sms_notifications" x-model="guardianOnlyForm.guardian_sms_notifications" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
-                    <span class="text-sm text-gray-700">SMS notifications</span>
-                </label>
-            </div>
+
+            <script>
+                function guardianOnlyManager() {
+                    return {
+                        primaryGuardian: {
+                            name: '',
+                            email: '',
+                            phone: '',
+                            tax_nr: '',
+                            address: '',
+                            can_manage_bookings: true,
+                            can_view_financial_info: true,
+                            can_communicate_with_teachers: true,
+                            invoice: false,
+                            email_notifications: true,
+                            sms_notifications: false
+                        },
+                        additionalGuardians: [],
+
+                        addGuardian() {
+                            this.additionalGuardians.push({
+                                name: '',
+                                email: '',
+                                phone: '',
+                                tax_nr: '',
+                                address: '',
+                                can_manage_bookings: true,
+                                can_view_financial_info: false,
+                                can_communicate_with_teachers: true,
+                                invoice: false,
+                                email_notifications: true,
+                                sms_notifications: false
+                            });
+                        },
+
+                        removeGuardian(index) {
+                            this.additionalGuardians.splice(index, 1);
+                        }
+                    }
+                }
+            </script>
         </div>
     </div>
 

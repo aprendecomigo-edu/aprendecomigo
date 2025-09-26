@@ -46,7 +46,6 @@ from messaging.services import send_magic_link_email, send_otp_email_message, se
 
 from .db_queries import create_user_school_and_membership, get_user_by_email, user_exists
 from .models import School, SchoolMembership, SchoolSettings, TeacherInvitation
-from .models.profiles import StudentProfile
 from .models.schools import SchoolRole
 from .permissions import IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin
 from .services.otp_service import OTPService
@@ -134,115 +133,97 @@ class SignInView(View):
         return render(
             request,
             "accounts/signin.html",
-            {"title": "Sign In - Aprende Comigo", "meta_description": "Sign in to your Aprende Comigo account"},
+            {
+                "title": "Sign In - Aprende Comigo",
+                "meta_description": "Sign in to your Aprende Comigo account",
+                "sms_enabled": switch_is_active("sms_feature"),
+            },
         )
 
     @method_decorator(csrf_protect)
     def post(self, request):
-        """Handle email submission and show delivery options"""
+        """
+        Simplified handler for sign-in form submission.
+        Since the consolidated form now handles both email input and delivery choice on one page,
+        this method just renders the form with any provided email value.
+        All validation and user verification is now handled by send_otp_email and send_otp_sms.
+        """
         email = request.POST.get("email", "").strip().lower()
-        logger.info(f"[SIGNIN] Starting signin process for: {email}")
 
-        # Validate email
-        email_pattern = r"^[^\s@]+@[^\s@]+\.[^\s@]+$"
-
-        if not email:
-            return render(
-                request,
-                "accounts/partials/signin_form.html",
-                {
-                    "error": "Please enter your email address",
-                    "email": email,
-                    "sms_enabled": switch_is_active("sms_feature"),
-                },
-            )
-
-        if not re.match(email_pattern, email):
-            return render(
-                request,
-                "accounts/partials/signin_form.html",
-                {
-                    "error": "Please enter a valid email address",
-                    "email": email,
-                    "sms_enabled": switch_is_active("sms_feature"),
-                },
-            )
-
-        try:
-            # Check if user exists
-            if not user_exists(email):
-                logger.warning(f"Authentication attempt with unregistered email: {email}")
-                # Prevent email enumeration - show generic message
-                return render(
-                    request,
-                    "accounts/partials/signin_form.html",
-                    {
-                        "error": "Invalid email or account not verified",
-                        "email": email,
-                        "sms_enabled": switch_is_active("sms_feature"),
-                    },
-                )
-
-            user = get_user_by_email(email)
-
-            # Check if user has at least one verified contact method
-            if not (user.email_verified or user.phone_verified):
-                logger.warning(f"Signin attempt by unverified user: {email}")
-                return render(
-                    request,
-                    "accounts/partials/signin_unverified.html",
-                    {"email": email},
-                )
-
-            # Store email in session for OTP delivery
-            request.session["signin_email"] = email
-            request.session["signin_user_id"] = user.id
-
-            # For test phase - show delivery choice directly in signin form
-            return render(
-                request,
-                "accounts/partials/signin_form.html",
-                {
-                    "email": email,
-                    "show_delivery_choice": True,
-                    "phone_available": bool(user.phone_number),
-                    "sms_enabled": switch_is_active("sms_feature"),
-                },
-            )
-
-        except Exception as e:
-            logger.error(f"Sign in error for {email}: {e}")
-            return render(
-                request,
-                "accounts/partials/signin_form.html",
-                {
-                    "error": "There was an issue processing your request. Please try again.",
-                    "email": email,
-                    "sms_enabled": switch_is_active("sms_feature"),
-                },
-            )
+        # Simply render the consolidated signin form
+        return render(
+            request,
+            "accounts/partials/signin_form.html",
+            {
+                "email": email,
+                "sms_enabled": switch_is_active("sms_feature"),
+            },
+        )
 
 
 @require_http_methods(["POST"])
 @csrf_protect
 def send_otp_email(request):
     """Send OTP via email for signin"""
-    email = request.session.get("signin_email")
-    user_id = request.session.get("signin_user_id")
+    email = request.POST.get("email", "").strip().lower()
+    logger.info(f"[SIGNIN] OTP email request for: {email}")
 
-    if not email or not user_id:
+    # Validate email
+    if not email:
         return render(
             request,
             "accounts/partials/signin_form.html",
             {
-                "error": "Session expired. Please start over.",
-                "email": "",
+                "error": "Please enter your email address",
+                "email": email,
+                "sms_enabled": switch_is_active("sms_feature"),
+            },
+        )
+
+    if not re.match(EMAIL_REGEX, email):
+        return render(
+            request,
+            "accounts/partials/signin_form.html",
+            {
+                "error": "Please enter a valid email address",
+                "email": email,
                 "sms_enabled": switch_is_active("sms_feature"),
             },
         )
 
     try:
-        user = User.objects.get(id=user_id, email=email)
+        # Check if user exists and is verified
+        if not user_exists(email):
+            logger.warning(f"OTP email attempt with unregistered email: {email}")
+            return render(
+                request,
+                "accounts/partials/signin_form.html",
+                {
+                    "error": "Please check your email address. If you don't have an account yet, please sign up first.",
+                    "email": email,
+                    "sms_enabled": switch_is_active("sms_feature"),
+                },
+            )
+
+        user = get_user_by_email(email)
+
+        # Check if user's email is verified
+        if not user.email_verified:
+            logger.warning(f"OTP email attempt with unverified email: {email}")
+            return render(
+                request,
+                "accounts/partials/signin_form.html",
+                {
+                    "error": "Please verify your email address first",
+                    "email": email,
+                    "sms_enabled": switch_is_active("sms_feature"),
+                    "show_resend_verification": True,  # Flag to show resend verification button
+                },
+            )
+
+        # Store email and user_id in session for OTP verification
+        request.session["signin_email"] = email
+        request.session["signin_user_id"] = user.id
 
         # Generate OTP
         otp_code, token_id = OTPService.generate_otp(user, "email")
@@ -272,32 +253,17 @@ def send_otp_email(request):
                 {
                     "error": "Failed to send email. Please try again later.",
                     "email": email,
-                    "show_delivery_choice": True,
-                    "phone_available": bool(user.phone_number),
                     "sms_enabled": switch_is_active("sms_feature"),
                 },
             )
-
-    except User.DoesNotExist:
-        return render(
-            request,
-            "accounts/partials/signin_form.html",
-            {
-                "error": "Session expired. Please start over.",
-                "email": "",
-                "sms_enabled": switch_is_active("sms_feature"),
-            },
-        )
     except Exception as e:
-        logger.error(f"Error sending OTP email to {email}: {e}")
+        logger.error(f"Error in send_otp_email for {email}: {e!s}")
         return render(
             request,
             "accounts/partials/signin_form.html",
             {
-                "error": "Failed to send code. Please try again.",
+                "error": "An error occurred. Please try again later.",
                 "email": email,
-                "show_delivery_choice": True,
-                "phone_available": False,
                 "sms_enabled": switch_is_active("sms_feature"),
             },
         )
@@ -314,29 +280,65 @@ def send_otp_sms(request):
             "accounts/partials/signin_form.html",
             {
                 "error": "SMS service is temporarily unavailable. Please use email instead.",
-                "email": request.session.get("signin_email", ""),
-                "show_delivery_choice": True,
-                "phone_available": False,
+                "email": request.POST.get("email", ""),
                 "sms_enabled": False,
             },
         )
 
-    email = request.session.get("signin_email")
-    user_id = request.session.get("signin_user_id")
+    email = request.POST.get("email", "").strip().lower()
+    logger.info(f"[SIGNIN] OTP SMS request for: {email}")
 
-    if not email or not user_id:
+    # Validate email
+    if not email:
         return render(
             request,
             "accounts/partials/signin_form.html",
             {
-                "error": "Session expired. Please start over.",
-                "email": "",
+                "error": "Please enter your email address",
+                "email": email,
+                "sms_enabled": switch_is_active("sms_feature"),
+            },
+        )
+
+    if not re.match(EMAIL_REGEX, email):
+        return render(
+            request,
+            "accounts/partials/signin_form.html",
+            {
+                "error": "Please enter a valid email address",
+                "email": email,
                 "sms_enabled": switch_is_active("sms_feature"),
             },
         )
 
     try:
-        user = User.objects.get(id=user_id, email=email)
+        # Check if user exists and is verified
+        if not user_exists(email):
+            logger.warning(f"OTP SMS attempt with unregistered email: {email}")
+            return render(
+                request,
+                "accounts/partials/signin_form.html",
+                {
+                    "error": "Invalid email or account not verified",
+                    "email": email,
+                    "sms_enabled": switch_is_active("sms_feature"),
+                },
+            )
+
+        user = get_user_by_email(email)
+
+        # Check if user's email is verified
+        if not user.email_verified:
+            logger.warning(f"OTP SMS attempt with unverified email: {email}")
+            return render(
+                request,
+                "accounts/partials/signin_form.html",
+                {
+                    "error": "Please verify your email address first",
+                    "email": email,
+                    "sms_enabled": switch_is_active("sms_feature"),
+                },
+            )
 
         # Check if phone is verified
         if not user.phone_verified or not user.phone_number:
@@ -346,11 +348,13 @@ def send_otp_sms(request):
                 {
                     "error": "Phone not verified. Please choose email or verify your phone first.",
                     "email": email,
-                    "show_delivery_choice": True,
-                    "phone_available": False,
                     "sms_enabled": switch_is_active("sms_feature"),
                 },
             )
+
+        # Store email and user_id in session for OTP verification
+        request.session["signin_email"] = email
+        request.session["signin_user_id"] = user.id
 
         # Generate OTP
         otp_code, token_id = OTPService.generate_otp(user, "sms")
@@ -366,40 +370,31 @@ def send_otp_sms(request):
             logger.info(f"OTP sent via SMS to: {user.phone_number}")
             return render(
                 request,
-                "accounts/partials/otp_input.html",
-                {"delivery_method": "sms", "masked_contact": f"***{user.phone_number[-4:]}"},
+                "accounts/partials/signin_success_with_verify.html",
+                {
+                    "delivery_method": "sms",
+                    "masked_contact": f"***{user.phone_number[-4:]}",
+                    "email": email,
+                },
             )
         else:
             return render(
                 request,
-                "accounts/partials/delivery_choice.html",
+                "accounts/partials/signin_form.html",
                 {
                     "error": "Failed to send SMS. Please try email or try again later.",
                     "email": email,
-                    "available_methods": ["email", "sms"] if user.email_verified else ["sms"],
+                    "sms_enabled": switch_is_active("sms_feature"),
                 },
             )
-
-    except User.DoesNotExist:
-        return render(
-            request,
-            "accounts/partials/signin_form.html",
-            {
-                "error": "Session expired. Please start over.",
-                "email": "",
-                "sms_enabled": switch_is_active("sms_feature"),
-            },
-        )
     except Exception as e:
-        logger.error(f"Error sending OTP SMS to {email}: {e}")
+        logger.error(f"Error in send_otp_sms for {email}: {e!s}")
         return render(
             request,
             "accounts/partials/signin_form.html",
             {
-                "error": "Failed to send code. Please try again.",
+                "error": "An error occurred. Please try again later.",
                 "email": email,
-                "show_delivery_choice": True,
-                "phone_available": False,
                 "sms_enabled": switch_is_active("sms_feature"),
             },
         )
@@ -696,6 +691,15 @@ class VerifyOTPView(View):
                 del request.session["signin_user_id"]
             if "signin_next_url" in request.session:
                 del request.session["signin_next_url"]
+
+            # Clean up unverified user session markers after successful OTP verification
+            if "is_unverified_user" in request.session:
+                del request.session["is_unverified_user"]
+            if "unverified_until" in request.session:
+                del request.session["unverified_until"]
+
+            # Reset session expiry to default (consistent with VerificationCompletionMiddleware)
+            request.session.set_expiry(0)  # Use default session length
 
             # Redirect to next URL or dashboard
             return HttpResponse(
@@ -1083,10 +1087,37 @@ class AcceptTeacherInvitationView(View):
 class EmailVerificationView(SesameLoginView):
     """Handle email verification via magic link"""
 
+    def dispatch(self, request, *args, **kwargs):
+        """Override dispatch to handle 403 errors gracefully instead of showing forbidden page"""
+        try:
+            response = super().dispatch(request, *args, **kwargs)
+            # If sesame authentication fails, it returns 403. Convert to user-friendly redirect.
+            if response.status_code == 403:
+                logger.error("EmailVerificationView: Invalid/expired email verification link - redirecting to signin")
+                messages.error(
+                    request, "Email verification link is invalid or expired. Please request a new verification email."
+                )
+                return redirect(reverse("accounts:signin"))
+            return response
+        except Exception as e:
+            logger.error(f"EmailVerificationView.dispatch error: {e}")
+            messages.error(
+                request, "Email verification link is invalid or expired. Please request a new verification email."
+            )
+            return redirect(reverse("accounts:signin"))
+
+    def login_failure(self, request):
+        """Handle invalid/expired verification links gracefully instead of returning 403"""
+        logger.error("EmailVerificationView.login_failure called - email verification link invalid/expired")
+        messages.error(
+            request, "Email verification link is invalid or expired. Please request a new verification email."
+        )
+        return redirect(reverse("accounts:signin"))
+
     def login_success(self):
-        """Mark email as verified and log user in"""
-        # Access request and user from the view instance
+        """Mark email as verified and redirect to dashboard with success message"""
         user = self.request.user
+
         if not user.email_verified:
             user.email_verified = True
             user.email_verified_at = timezone.now()
@@ -1100,8 +1131,18 @@ class EmailVerificationView(SesameLoginView):
         else:
             messages.info(self.request, "Your email is already verified!")
 
-        # Let the parent class handle the redirect properly
-        return super().login_success()
+        # Handle redirect directly to avoid 403 from parent class
+        return self._handle_verification_success_redirect()
+
+    def _handle_verification_success_redirect(self):
+        """Handle post-verification redirect with success UX"""
+        # Create success page with auto-redirect to dashboard
+        context = {
+            "verification_type": "email",
+            "redirect_url": reverse("dashboard:dashboard"),
+            "success_message": "Your email has been successfully verified!",
+        }
+        return render(self.request, "accounts/partials/verify_success.html", context)
 
 
 class PhoneVerificationView(SesameLoginView):
@@ -1583,12 +1624,13 @@ def resend_verification_email_signin(request):
     try:
         # Get user by email
         user = get_user_by_email(email)
-        if not user:
-            # Don't reveal if user exists - security best practice
-            return HttpResponse(
-                '<div class="text-red-600 text-sm">If this email is registered, a verification email will be sent.</div>'
-            )
+    except User.DoesNotExist:
+        # Don't reveal if user exists - security best practice
+        return HttpResponse(
+            '<div class="text-red-600 text-sm">If this email is registered, a verification email will be sent.</div>'
+        )
 
+    try:
         # Check if already verified
         if user.email_verified:
             return HttpResponse(
@@ -1738,6 +1780,20 @@ class BaseStudentCreateView(LoginRequiredMixin, View):
         except ValidationError:
             raise ValidationError(f"Invalid email format: {email}")
 
+    def _validate_birth_date(self, birth_date_str):
+        """Validate and parse birth date string, raise ValidationError if invalid"""
+        if not birth_date_str:
+            raise ValidationError("Birth date is required")
+
+        try:
+            from datetime import datetime
+
+            # Try to parse the date - this will raise ValueError if invalid
+            parsed_date = datetime.strptime(birth_date_str, "%Y-%m-%d").date()
+            return parsed_date
+        except ValueError:
+            raise ValidationError(f"Invalid birth date format: '{birth_date_str}'. Please use YYYY-MM-DD format.")
+
     def _get_user_schools(self, user):
         """Get schools accessible to the current user"""
         if user.is_staff or user.is_superuser:
@@ -1755,13 +1811,16 @@ class BaseStudentCreateView(LoginRequiredMixin, View):
         )
 
     def _render_success(self, request, success_message):
-        """Render success message template"""
+        """Render success message template with HX-Trigger to refresh students list"""
         logger.info(f"Student creation success: {success_message}")
-        return render(
+        response = render(
             request,
             "shared/partials/success_message.html",
             {"message": success_message},
         )
+        # Add HX-Trigger header to automatically refresh the students list
+        response["HX-Trigger"] = "refreshStudents"
+        return response
 
 
 @method_decorator(csrf_protect, name="dispatch")
@@ -1769,41 +1828,65 @@ class StudentSeparateCreateView(BaseStudentCreateView):
     """Create both student and guardian user accounts (separate logins)."""
 
     def post(self, request):
-        """Handle Student + Guardian account creation"""
+        """Handle Student + Guardian account creation with support for multiple guardians"""
         from django.db import transaction
 
-        from accounts.models.profiles import GuardianProfile
+        from accounts.models.profiles import GuardianProfile, GuardianStudentRelationship, StudentProfile
         from accounts.permissions import PermissionService
 
         try:
-            # Sanitize and extract form data
+            # Sanitize and extract student form data
             student_name = escape(request.POST.get("name", "").strip())
             student_email_raw = request.POST.get("email", "").strip()
             student_birth_date = request.POST.get("birth_date")
             student_school_year = escape(request.POST.get("school_year", "").strip())
             student_notes = escape(request.POST.get("notes", "").strip())
+            student_phone_number = escape(request.POST.get("phone_number", "").strip())
 
-            guardian_name = escape(request.POST.get("guardian_name", "").strip())
-            guardian_email_raw = request.POST.get("guardian_email", "").strip()
-            guardian_phone = escape(request.POST.get("guardian_phone", "").strip())
-            guardian_tax_nr = escape(request.POST.get("guardian_tax_nr", "").strip())
-            guardian_address = escape(request.POST.get("guardian_address", "").strip())
-            guardian_invoice = request.POST.get("guardian_invoice") == "on"
-            guardian_email_notifications = request.POST.get("guardian_email_notifications") == "on"
-            guardian_sms_notifications = request.POST.get("guardian_sms_notifications") == "on"
+            # Extract multiple guardians from POST data
+            guardians = []
+            index = 0
+            while f"guardian_{index}_name" in request.POST:
+                guardian_data = {
+                    "name": escape(request.POST.get(f"guardian_{index}_name", "").strip()),
+                    "email": request.POST.get(f"guardian_{index}_email", "").strip(),
+                    "phone": escape(request.POST.get(f"guardian_{index}_phone", "").strip()),
+                    "tax_nr": escape(request.POST.get(f"guardian_{index}_tax_nr", "").strip()),
+                    "address": escape(request.POST.get(f"guardian_{index}_address", "").strip()),
+                    "is_primary": index == 0,  # First guardian is always primary
+                    "permissions": {
+                        "can_manage_bookings": request.POST.get(f"guardian_{index}_can_manage_bookings") == "on",
+                        "can_view_financial_info": request.POST.get(f"guardian_{index}_can_view_financial_info")
+                        == "on",
+                        "can_communicate_with_teachers": request.POST.get(
+                            f"guardian_{index}_can_communicate_with_teachers"
+                        )
+                        == "on",
+                    },
+                    "notifications": {
+                        "email": request.POST.get(f"guardian_{index}_email_notifications") == "on",
+                        "sms": request.POST.get(f"guardian_{index}_sms_notifications") == "on",
+                    },
+                    "invoice": request.POST.get(f"guardian_{index}_invoice") == "on",
+                }
+                guardians.append(guardian_data)
+                index += 1
 
             # Log form data for debugging
-            logger.info(f"Processing separate student creation: student={student_name}, guardian={guardian_name}")
+            logger.info(f"Processing separate student creation: student={student_name}, guardians={len(guardians)}")
 
-            # Validate and sanitize emails
+            # Validate student email
             try:
                 student_email = self._validate_email_format(student_email_raw)
-                guardian_email = self._validate_email_format(guardian_email_raw)
             except ValidationError as e:
                 return self._render_error(request, str(e))
 
-            # Validate required fields
-            if not all([student_name, student_email, student_birth_date, guardian_name, guardian_email]):
+            # Validate that at least one guardian is provided
+            if not guardians:
+                return self._render_error(request, "At least one guardian is required")
+
+            # Validate required fields for student and guardians (GitHub Issue #287: phone required)
+            if not all([student_name, student_email, student_birth_date, student_phone_number]):
                 missing_fields = []
                 if not student_name:
                     missing_fields.append("student name")
@@ -1811,95 +1894,185 @@ class StudentSeparateCreateView(BaseStudentCreateView):
                     missing_fields.append("student email")
                 if not student_birth_date:
                     missing_fields.append("student birth date")
-                if not guardian_name:
-                    missing_fields.append("guardian name")
-                if not guardian_email:
-                    missing_fields.append("guardian email")
-
-                error_msg = f"Missing required fields: {', '.join(missing_fields)}"
+                if not student_phone_number:
+                    missing_fields.append("student phone number")
+                error_msg = f"Missing required student fields: {', '.join(missing_fields)}"
                 return self._render_error(request, error_msg)
 
-            # Get user's schools and educational system
-            user_schools = self._get_user_schools(request.user)
-            with transaction.atomic():
-                # Temporarily disconnect the task creation signal to prevent orphaned tasks
-                from django.db.models.signals import post_save
+            # GitHub Issue #287: Validate student phone number format
+            import re
 
-                from accounts.signals.verification_task_signals import create_system_tasks_for_new_user
+            phone_pattern = r"^(\+|00)[1-9]\d{1,14}$"
+            if not re.match(phone_pattern, student_phone_number):
+                return self._render_error(
+                    request,
+                    "Student phone number must be in international format (e.g., +351912345678 or 00351912345678)",
+                )
 
-                post_save.disconnect(create_system_tasks_for_new_user, sender=User)
-
+            # Validate guardian emails and required fields
+            for i, guardian_data in enumerate(guardians):
+                if not guardian_data["name"] or not guardian_data["email"]:
+                    return self._render_error(request, f"Guardian {i + 1}: Name and email are required")
                 try:
-                    # Create or get student user
-                    try:
-                        student_user = User.objects.get(email=student_email)
-                        student_user_was_created = False
-                    except User.DoesNotExist:
-                        student_user = User.objects.create_user(email=student_email, name=student_name)
-                        student_user_was_created = True
+                    guardian_data["email"] = self._validate_email_format(guardian_data["email"])
+                except ValidationError as e:
+                    return self._render_error(request, f"Guardian {i + 1}: {e!s}")
 
-                    # Create or get guardian user
-                    try:
-                        guardian_user = User.objects.get(email=guardian_email)
-                        guardian_user_was_created = False
-                    except User.DoesNotExist:
-                        guardian_user = User.objects.create_user(
-                            email=guardian_email, name=guardian_name, phone_number=guardian_phone
-                        )
-                        guardian_user_was_created = True
+            # Pre-transaction validation checks
+            # Check if student user already has a StudentProfile
+            if StudentProfile.objects.filter(user__email=student_email).exists():
+                return self._render_error(
+                    request,
+                    f"The email {student_email} is already registered as a student. Please use a different email address.",
+                )
 
-                    # Create guardian profile
-                    guardian_profile, _ = GuardianProfile.objects.get_or_create(
-                        user=guardian_user,
-                        defaults={
-                            "address": guardian_address,
-                            "tax_nr": guardian_tax_nr,
-                            "invoice": guardian_invoice,
-                            "email_notifications_enabled": guardian_email_notifications,
-                            "sms_notifications_enabled": guardian_sms_notifications,
-                        },
+            # Check for duplicate guardian emails and existing relationships
+            for i, guardian_data in enumerate(guardians):
+                guardian_email = guardian_data["email"]
+
+                # Check if this guardian is already linked to this student
+                if GuardianStudentRelationship.objects.filter(
+                    guardian__email=guardian_email, student__email=student_email
+                ).exists():
+                    return self._render_error(
+                        request, f"Guardian {guardian_email} is already linked to student {student_email}"
                     )
 
-                    # Create student profile
-                    student_profile = StudentProfile.objects.create(
-                        user=student_user,
-                        name=student_name,
-                        account_type="STUDENT_GUARDIAN",
-                        school_year=student_school_year,
-                        birth_date=student_birth_date,
-                        guardian=guardian_profile,
-                        notes=student_notes,
+                # Validate phone number format if provided
+                if guardian_data["phone"] and not re.match(r"^\+\d{1,3}\d{8,14}$", guardian_data["phone"]):
+                    return self._render_error(
+                        request,
+                        f"Guardian {i + 1}: Please enter a valid phone number with country code (e.g., +351912345678)",
                     )
 
-                    # Setup permissions
-                    PermissionService.setup_permissions_for_student(student_profile)
+            # Get user's schools
+            user_schools = self._get_user_schools(request.user)
 
-                    # Add both users to schools
-                    for school in user_schools:
-                        SchoolMembership.objects.get_or_create(
-                            user=student_user, school=school, defaults={"role": SchoolRole.STUDENT}
+            # Temporarily disconnect the task creation signal to prevent orphaned tasks
+            from django.db.models.signals import post_save
+
+            from accounts.signals.verification_task_signals import create_system_tasks_for_new_user
+
+            post_save.disconnect(create_system_tasks_for_new_user, sender=User)
+            try:
+                with transaction.atomic():
+                    try:
+                        # Create or get student user
+                        try:
+                            student_user = User.objects.get(email=student_email)
+                            student_user_was_created = False
+                        except User.DoesNotExist:
+                            student_user = User.objects.create_user(email=student_email, name=student_name)
+                            student_user_was_created = True
+
+                        # Create student profile (without setting the legacy guardian field)
+                        student_profile = StudentProfile.objects.create(
+                            user=student_user,
+                            name=student_name,
+                            account_type="STUDENT_GUARDIAN",
+                            school_year=student_school_year,
+                            birth_date=student_birth_date,
+                            guardian=None,  # Will be handled via GuardianStudentRelationship
+                            notes=student_notes,
+                            phone_number=student_phone_number,  # GitHub Issue #287
                         )
-                        SchoolMembership.objects.get_or_create(
-                            user=guardian_user, school=school, defaults={"role": SchoolRole.GUARDIAN}
-                        )
 
-                    # Manually create system tasks after successful student creation
-                    from tasks.services import TaskService
+                        # Track created guardian users for system tasks
+                        created_guardian_users = []
 
-                    if student_user_was_created:
-                        TaskService.initialize_system_tasks(student_user)
-                    if guardian_user_was_created:
-                        TaskService.initialize_system_tasks(guardian_user)
+                        # Create guardian users and relationships
+                        primary_guardian_profile = None
+                        for guardian_data in guardians:
+                            # Create or get guardian user
+                            try:
+                                guardian_user = User.objects.get(email=guardian_data["email"])
+                            except User.DoesNotExist:
+                                guardian_user = User.objects.create_user(
+                                    email=guardian_data["email"],
+                                    name=guardian_data["name"],
+                                    phone_number=guardian_data["phone"],
+                                )
+                                created_guardian_users.append(guardian_user)
 
-                finally:
-                    # Reconnect the signal
-                    post_save.connect(create_system_tasks_for_new_user, sender=User)
+                            # Create or get guardian profile
+                            guardian_profile, _ = GuardianProfile.objects.get_or_create(
+                                user=guardian_user,
+                                defaults={
+                                    "address": guardian_data["address"],
+                                    "tax_nr": guardian_data["tax_nr"],
+                                    "invoice": guardian_data["invoice"],
+                                    "email_notifications_enabled": guardian_data["notifications"]["email"],
+                                    "sms_notifications_enabled": guardian_data["notifications"]["sms"],
+                                },
+                            )
 
-            success_message = f"Successfully created student account for {student_name} and guardian account for {guardian_name}. Both can now login independently."
-            return self._render_success(request, success_message)
+                            # Remember primary guardian to populate legacy FK later
+                            if guardian_data.get("is_primary"):
+                                primary_guardian_profile = guardian_profile
+
+                            # Add both users to schools and create relationship
+                            for school in user_schools:
+                                SchoolMembership.objects.get_or_create(
+                                    user=guardian_user, school=school, defaults={"role": SchoolRole.GUARDIAN}
+                                )
+
+                                # Create GuardianStudentRelationship
+                                GuardianStudentRelationship.objects.get_or_create(
+                                    guardian=guardian_user,
+                                    student=student_user,
+                                    school=school,
+                                    defaults={
+                                        "is_primary": guardian_data["is_primary"],
+                                        "can_manage_finances": guardian_data[
+                                            "is_primary"
+                                        ],  # Primary guardian always manages finances
+                                        "can_book_classes": guardian_data["permissions"]["can_manage_bookings"],
+                                        "can_view_records": guardian_data["permissions"]["can_view_financial_info"],
+                                        "can_edit_profile": guardian_data["permissions"][
+                                            "can_communicate_with_teachers"
+                                        ],
+                                        "can_receive_notifications": guardian_data["notifications"]["email"]
+                                        or guardian_data["notifications"]["sms"],
+                                        "created_by": request.user,
+                                    },
+                                )
+
+                        # Populate deprecated guardian FK for backward compatibility
+                        if primary_guardian_profile:
+                            student_profile.guardian = primary_guardian_profile
+                            student_profile.save()
+
+                        # Add student to schools
+                        for school in user_schools:
+                            SchoolMembership.objects.get_or_create(
+                                user=student_user, school=school, defaults={"role": SchoolRole.STUDENT}
+                            )
+
+                        # Setup permissions
+                        PermissionService.setup_permissions_for_student(student_profile)
+
+                        # Manually create system tasks after successful student creation
+                        from tasks.services import TaskService
+
+                        if student_user_was_created:
+                            TaskService.initialize_system_tasks(student_user)
+                        for guardian_user in created_guardian_users:
+                            TaskService.initialize_system_tasks(guardian_user)
+
+                    except Exception as e:
+                        # Handle permission setup failures or any other errors within transaction
+                        logger.error(f"Error during separate student creation: {e}", exc_info=True)
+                        raise Exception("Failed to create student accounts or set up permissions.")
+
+                guardian_names = [g["name"] for g in guardians]
+                success_message = f"Successfully created student account for {student_name} and guardian accounts for {', '.join(guardian_names)}. All users can now login independently."
+                return self._render_success(request, success_message)
+            finally:
+                # Reconnect the signal
+                post_save.connect(create_system_tasks_for_new_user, sender=User)
 
         except Exception as e:
-            logger.error(f"Unexpected error in separate student creation: {e}", exc_info=True)
+            logger.error(f"Error in separate student creation: {e}", exc_info=True)
             return self._render_error(request, "An unexpected error occurred. Please try again.")
 
 
@@ -1908,121 +2081,209 @@ class StudentGuardianOnlyCreateView(BaseStudentCreateView):
     """Create guardian account only, with student profile managed by guardian."""
 
     def post(self, request):
-        """Handle Guardian-Only account creation"""
+        """Handle Guardian-Only account creation with support for multiple guardians"""
+        # TODO: Fix transaction structure - temporarily disabled due to syntax errors
+        return self._render_error(
+            request, "Guardian-only account creation is temporarily disabled while fixing transaction issues."
+        )
+
+        # Commented out broken code:
+        r"""
         from django.db import transaction
 
         from accounts.models.profiles import GuardianProfile
         from accounts.permissions import PermissionService
 
         try:
-            # Sanitize and extract form data
+            # Sanitize and extract student form data
             student_name = escape(request.POST.get("name", "").strip())
             student_birth_date = request.POST.get("birth_date")
             student_school_year = escape(request.POST.get("school_year", "").strip())
             student_notes = escape(request.POST.get("notes", "").strip())
 
-            guardian_name = escape(request.POST.get("guardian_name", "").strip())
-            guardian_email_raw = request.POST.get("guardian_email", "").strip()
-            guardian_phone = escape(request.POST.get("guardian_phone", "").strip())
-            guardian_tax_nr = escape(request.POST.get("guardian_tax_nr", "").strip())
-            guardian_address = escape(request.POST.get("guardian_address", "").strip())
-            guardian_invoice = request.POST.get("guardian_invoice") == "on"
-            guardian_email_notifications = request.POST.get("guardian_email_notifications") == "on"
-            guardian_sms_notifications = request.POST.get("guardian_sms_notifications") == "on"
+            # Extract multiple guardians from POST data
+            guardians = []
+            index = 0
+            while f"guardian_{index}_name" in request.POST:
+                guardian_data = {
+                    "name": escape(request.POST.get(f"guardian_{index}_name", "").strip()),
+                    "email": request.POST.get(f"guardian_{index}_email", "").strip(),
+                    "phone": escape(request.POST.get(f"guardian_{index}_phone", "").strip()),
+                    "tax_nr": escape(request.POST.get(f"guardian_{index}_tax_nr", "").strip()),
+                    "address": escape(request.POST.get(f"guardian_{index}_address", "").strip()),
+                    "is_primary": index == 0,  # First guardian is always primary
+                    "permissions": {
+                        "can_manage_bookings": request.POST.get(f"guardian_{index}_can_manage_bookings") == "on",
+                        "can_view_financial_info": request.POST.get(f"guardian_{index}_can_view_financial_info")
+                        == "on",
+                        "can_communicate_with_teachers": request.POST.get(
+                            f"guardian_{index}_can_communicate_with_teachers"
+                        )
+                        == "on",
+                    },
+                    "notifications": {
+                        "email": request.POST.get(f"guardian_{index}_email_notifications") == "on",
+                        "sms": request.POST.get(f"guardian_{index}_sms_notifications") == "on",
+                    },
+                    "invoice": request.POST.get(f"guardian_{index}_invoice") == "on",
+                }
+                guardians.append(guardian_data)
+                index += 1
 
             # Log form data for debugging
-            logger.info(f"Processing guardian-only creation: student={student_name}, guardian={guardian_name}")
+            logger.info(f"Processing guardian-only creation: student={student_name}, guardians={len(guardians)}")
 
-            # Validate and sanitize email
-            try:
-                guardian_email = self._validate_email_format(guardian_email_raw)
-            except ValidationError as e:
-                return self._render_error(request, str(e))
+            # Validate that at least one guardian is provided
+            if not guardians:
+                return self._render_error(request, "At least one guardian is required")
 
-            # Validate required fields
-            if not all([student_name, student_birth_date, guardian_name, guardian_email]):
+            # Validate required fields for student
+            if not all([student_name, student_birth_date]):
                 missing_fields = []
                 if not student_name:
                     missing_fields.append("student name")
                 if not student_birth_date:
                     missing_fields.append("student birth date")
-                if not guardian_name:
-                    missing_fields.append("guardian name")
-                if not guardian_email:
-                    missing_fields.append("guardian email")
-
-                error_msg = f"Missing required fields: {', '.join(missing_fields)}"
+                error_msg = f"Missing required student fields: {', '.join(missing_fields)}"
                 return self._render_error(request, error_msg)
 
-            # Get user's schools and educational system
-            user_schools = self._get_user_schools(request.user)
-            with transaction.atomic():
-                # Temporarily disconnect the task creation signal to prevent orphaned tasks
-                from django.db.models.signals import post_save
-
-                from accounts.signals.verification_task_signals import create_system_tasks_for_new_user
-
-                post_save.disconnect(create_system_tasks_for_new_user, sender=User)
-
+            # Validate guardian emails and required fields
+            for i, guardian_data in enumerate(guardians):
+                if not guardian_data["name"] or not guardian_data["email"]:
+                    return self._render_error(request, f"Guardian {i + 1}: Name and email are required")
                 try:
-                    # Create or get guardian user
-                    try:
-                        guardian_user = User.objects.get(email=guardian_email)
-                        guardian_user_was_created = False
-                    except User.DoesNotExist:
-                        guardian_user = User.objects.create_user(
-                            email=guardian_email, name=guardian_name, phone_number=guardian_phone
-                        )
-                        guardian_user_was_created = True
+                    guardian_data["email"] = self._validate_email_format(guardian_data["email"])
+                except ValidationError as e:
+                    return self._render_error(request, f"Guardian {i + 1}: {e!s}")
 
-                    # Create guardian profile
-                    guardian_profile, _ = GuardianProfile.objects.get_or_create(
-                        user=guardian_user,
-                        defaults={
-                            "address": guardian_address,
-                            "tax_nr": guardian_tax_nr,
-                            "invoice": guardian_invoice,
-                            "email_notifications_enabled": guardian_email_notifications,
-                            "sms_notifications_enabled": guardian_sms_notifications,
-                        },
+            # Pre-transaction validation checks for guardian-only students
+            for i, guardian_data in enumerate(guardians):
+                # Validate phone number format if provided
+                if guardian_data["phone"] and not re.match(r"^\+\d{1,3}\d{8,14}$", guardian_data["phone"]):
+                    return self._render_error(
+                        request,
+                        f"Guardian {i + 1}: Please enter a valid phone number with country code (e.g., +351912345678)",
                     )
 
-                    # Create student profile WITHOUT a user account (guardian-only)
-                    student_profile = StudentProfile.objects.create(
+            # Get user's schools
+            user_schools = self._get_user_schools(request.user)
+
+            # Temporarily disconnect the task creation signal to prevent orphaned tasks
+            from django.db.models.signals import post_save
+            from accounts.signals.verification_task_signals import create_system_tasks_for_new_user
+
+            post_save.disconnect(create_system_tasks_for_new_user, sender=User)
+            try:
+                with transaction.atomic():
+                    try:
+                        # For guardian-only students, create student profile without user account
+                        # We'll handle the guardian relationships via the legacy guardian field for now
+                        # and set up the new relationships once the student has a user account
+                        student_profile = StudentProfile.objects.create(
                         user=None,  # No user account for guardian-only students
-                        name=student_name,  # Store student name directly
+                        name=student_name,
                         account_type="GUARDIAN_ONLY",
                         school_year=student_school_year,
                         birth_date=student_birth_date,
-                        guardian=guardian_profile,
-                        notes=student_notes,
-                    )
+                        guardian=None,  # Will be set to primary guardian below
+                            notes=student_notes,
+                        )
+
+                        # Track created guardian users for system tasks
+                        created_guardian_users = []
+                        primary_guardian_profile = None
+
+                        # Create guardian users and profiles
+                        for guardian_data in guardians:
+                            # Create or get guardian user
+                            try:
+                                guardian_user = User.objects.get(email=guardian_data["email"])
+                            except User.DoesNotExist:
+                                guardian_user = User.objects.create_user(
+                                    email=guardian_data["email"],
+                                    name=guardian_data["name"],
+                                    phone_number=guardian_data["phone"],
+                                )
+                                created_guardian_users.append(guardian_user)
+
+                            # Create guardian profile
+                            guardian_profile, _ = GuardianProfile.objects.get_or_create(
+                                user=guardian_user,
+                                defaults={
+                                    "address": guardian_data["address"],
+                                    "tax_nr": guardian_data["tax_nr"],
+                                    "invoice": guardian_data["invoice"],
+                                    "email_notifications_enabled": guardian_data["notifications"]["email"],
+                                    "sms_notifications_enabled": guardian_data["notifications"]["sms"],
+                                },
+                            )
+
+                            # Set primary guardian for the legacy guardian field
+                            if guardian_data["is_primary"]:
+                                primary_guardian_profile = guardian_profile
+
+                            # Add guardian to schools
+                            for school in user_schools:
+                                SchoolMembership.objects.get_or_create(
+                                    user=guardian_user, school=school, defaults={"role": SchoolRole.GUARDIAN}
+                            )
+
+                    # Set the primary guardian in the student profile (legacy field)
+                    if primary_guardian_profile:
+                        student_profile.guardian = primary_guardian_profile
+                        student_profile.save()
+
+                    # Note: GuardianStudentRelationship entries will be created when/if the student
+                    # gets a user account in the future, or through a separate management interface
 
                     # Setup permissions
                     PermissionService.setup_permissions_for_student(student_profile)
 
-                    # Add guardian to schools
-                    for school in user_schools:
-                        SchoolMembership.objects.get_or_create(
-                            user=guardian_user, school=school, defaults={"role": SchoolRole.GUARDIAN}
-                        )
-
-                    # Manually create system tasks after successful student creation
-                    if guardian_user_was_created:
+                    # Manually create system tasks for guardian users only (not the placeholder student)
                         from tasks.services import TaskService
 
-                        TaskService.initialize_system_tasks(guardian_user)
+                        for guardian_user in created_guardian_users:
+                            TaskService.initialize_system_tasks(guardian_user)
 
-                finally:
+                    except Exception as e:
+                        # Handle permission setup failures or any other errors within transaction
+                        logger.error(f"Error during guardian-only student creation: {e}", exc_info=True)
+                        raise Exception("Failed to create guardian accounts or set up permissions.")
+
+                guardian_names = [g["name"] for g in guardians]
+                success_message = f"Successfully created guardian accounts for {', '.join(guardian_names)} who will manage {student_name}'s profile. Only the guardians can login."
+                return self._render_success(request, success_message)
+            finally:
                     # Reconnect the signal
                     post_save.connect(create_system_tasks_for_new_user, sender=User)
 
-            success_message = f"Successfully created guardian account for {guardian_name} who will manage {student_name}'s profile. Only the guardian can login."
-            return self._render_success(request, success_message)
+                guardian_names = [g["name"] for g in guardians]
+                success_message = f"Successfully created guardian accounts for {', '.join(guardian_names)} who will manage {student_name}'s profile. Only the guardians can login."
+                return self._render_success(request, success_message)
+
+            except IntegrityError as e:
+                error_str = str(e).lower()
+                if "customuser_email" in error_str or ("email" in error_str and "unique" in error_str):
+                    return self._render_error(
+                        request,
+                        "One of the guardian email addresses provided is already registered. Please check and try again.",
+                    )
+                elif "phone_number" in error_str and "unique" in error_str:
+                    return self._render_error(
+                        request,
+                        "One of the phone numbers provided is already in use. Please use a different phone number.",
+                    )
+                else:
+                    logger.error(f"Database integrity error in guardian-only creation: {e}", exc_info=True)
+                    return self._render_error(
+                        request,
+                        "Unable to create guardian accounts due to conflicting data. Please verify all information is correct.",
+                    )
 
         except Exception as e:
             logger.error(f"Unexpected error in guardian-only creation: {e}", exc_info=True)
             return self._render_error(request, "An unexpected error occurred. Please try again.")
+        """
 
 
 @method_decorator(csrf_protect, name="dispatch")
@@ -2033,7 +2294,7 @@ class StudentAdultCreateView(BaseStudentCreateView):
         """Handle Adult Student account creation"""
         from django.db import transaction
 
-        from accounts.models.profiles import GuardianProfile
+        from accounts.models.profiles import GuardianProfile, StudentProfile
         from accounts.permissions import PermissionService
 
         try:
@@ -2059,90 +2320,113 @@ class StudentAdultCreateView(BaseStudentCreateView):
             except ValidationError as e:
                 return self._render_error(request, str(e))
 
-            # Validate required fields
-            if not all([student_name, student_email, student_birth_date]):
-                missing_fields = []
-                if not student_name:
-                    missing_fields.append("student name")
-                if not student_email:
-                    missing_fields.append("student email")
-                if not student_birth_date:
-                    missing_fields.append("student birth date")
+            # Validate and parse birth date
+            try:
+                parsed_birth_date = self._validate_birth_date(student_birth_date)
+            except ValidationError as e:
+                return self._render_error(request, str(e))
 
-                error_msg = f"Missing required fields: {', '.join(missing_fields)}"
-                return self._render_error(request, error_msg)
+            # Validate required fields (email and birth date already validated above)
+            if not student_name:
+                return self._render_error(request, "Student name is required")
+
+            # Pre-transaction validation checks
+            # Check if student user already has a StudentProfile
+            if StudentProfile.objects.filter(user__email=student_email).exists():
+                return self._render_error(
+                    request,
+                    f"The email {student_email} is already registered as a student. Please use a different email address.",
+                )
+
+            # Validate phone number format if provided
+            if student_phone and not re.match(r"^\+\d{1,3}\d{8,14}$", student_phone):
+                return self._render_error(
+                    request, "Please enter a valid phone number with country code (e.g., +351912345678)"
+                )
 
             # Get user's schools and educational system
             user_schools = self._get_user_schools(request.user)
-            with transaction.atomic():
-                # Temporarily disconnect the task creation signal to prevent orphaned tasks
-                from django.db.models.signals import post_save
+            # Temporarily disconnect the task creation signal to prevent orphaned tasks
+            from django.db.models.signals import post_save
 
-                from accounts.signals.verification_task_signals import create_system_tasks_for_new_user
+            from accounts.signals.verification_task_signals import create_system_tasks_for_new_user
 
-                post_save.disconnect(create_system_tasks_for_new_user, sender=User)
+            post_save.disconnect(create_system_tasks_for_new_user, sender=User)
 
-                try:
-                    # Create or get student user
+            try:
+                with transaction.atomic():
                     try:
-                        student_user = User.objects.get(email=student_email)
-                        user_was_created = False
-                    except User.DoesNotExist:
-                        student_user = User.objects.create_user(
-                            email=student_email, name=student_name, phone_number=student_phone
-                        )
-                        user_was_created = True
+                        # Create or get student user
+                        try:
+                            student_user = User.objects.get(email=student_email)
+                            user_was_created = False
+                        except User.DoesNotExist:
+                            student_user = User.objects.create_user(
+                                email=student_email, name=student_name, phone_number=student_phone
+                            )
+                            user_was_created = True
 
-                    # Create or update guardian profile for self (adult students are their own guardian)
-                    guardian_profile, _ = GuardianProfile.objects.get_or_create(
-                        user=student_user,
-                        defaults={
-                            "address": student_address,
-                            "tax_nr": student_tax_nr,
-                            "invoice": student_invoice,
-                            "email_notifications_enabled": student_email_notifications,
-                            "sms_notifications_enabled": student_sms_notifications,
-                        },
-                    )
-
-                    # Create student profile
-                    student_profile = StudentProfile.objects.create(
-                        user=student_user,
-                        name=student_name,
-                        account_type="ADULT_STUDENT",
-                        school_year=student_school_year,
-                        birth_date=student_birth_date,
-                        guardian=guardian_profile,  # Adult student is their own guardian
-                        notes=student_notes,
-                        email_notifications_enabled=student_email_notifications,
-                        sms_notifications_enabled=student_sms_notifications,
-                        address=student_address,
-                        tax_nr=student_tax_nr,
-                        invoice=student_invoice,
-                    )
-
-                    # Setup permissions
-                    PermissionService.setup_permissions_for_student(student_profile)
-
-                    # Add student to schools
-                    for school in user_schools:
-                        SchoolMembership.objects.get_or_create(
-                            user=student_user, school=school, defaults={"role": SchoolRole.STUDENT}
+                        # Create or update guardian profile for self (adult students are their own guardian)
+                        guardian_profile, _ = GuardianProfile.objects.get_or_create(
+                            user=student_user,
+                            defaults={
+                                "address": student_address,
+                                "tax_nr": student_tax_nr,
+                                "invoice": student_invoice,
+                                "email_notifications_enabled": student_email_notifications,
+                                "sms_notifications_enabled": student_sms_notifications,
+                            },
                         )
 
-                    # Manually create system tasks after successful student creation
-                    if user_was_created:
-                        from tasks.services import TaskService
+                        # Create student profile
+                        student_profile = StudentProfile.objects.create(
+                            user=student_user,
+                            name=student_name,
+                            account_type="ADULT_STUDENT",
+                            school_year=student_school_year,
+                            birth_date=parsed_birth_date,
+                            guardian=guardian_profile,  # Adult student is their own guardian
+                            notes=student_notes,
+                            email_notifications_enabled=student_email_notifications,
+                            sms_notifications_enabled=student_sms_notifications,
+                            address=student_address,
+                            tax_nr=student_tax_nr,
+                            invoice=student_invoice,
+                        )
 
-                        TaskService.initialize_system_tasks(student_user)
+                        # Setup permissions - if this fails, transaction will rollback
+                        PermissionService.setup_permissions_for_student(student_profile)
 
-                finally:
-                    # Reconnect the signal
-                    post_save.connect(create_system_tasks_for_new_user, sender=User)
+                        # Add student to schools
+                        for school in user_schools:
+                            SchoolMembership.objects.get_or_create(
+                                user=student_user, school=school, defaults={"role": SchoolRole.STUDENT}
+                            )
 
-            success_message = f"Successfully created adult student account for {student_name}. They can now login and manage their own account."
-            return self._render_success(request, success_message)
+                        # Manually create system tasks after successful student creation
+                        if user_was_created:
+                            from tasks.services import TaskService
+
+                            TaskService.initialize_system_tasks(student_user)
+
+                    except Exception as e:
+                        # Handle any errors within transaction (including permission setup failures)
+                        # Transaction will automatically rollback
+                        logger.error(f"Error during adult student creation: {e}", exc_info=True)
+                        if "Permission setup failed" in str(e):
+                            raise Exception("Failed to set up student permissions. Please try again.")
+                        else:
+                            raise Exception("An error occurred during account creation. Please try again.")
+
+                # Success - return after transaction commits
+                success_message = f"Successfully created adult student account for {student_name}. They can now login and manage their own account."
+                return self._render_success(request, success_message)
+
+            finally:
+                # Always reconnect the signal
+                post_save.connect(create_system_tasks_for_new_user, sender=User)
 
         except Exception as e:
-            logger.error(f"Unexpected error in adult student creation: {e}", exc_info=True)
-            return self._render_error(request, "An unexpected error occurred. Please try again.")
+            # Handle any remaining exceptions (like validation errors before transaction)
+            logger.error(f"Error in adult student creation: {e}", exc_info=True)
+            return self._render_error(request, "An error occurred. Please try again.")

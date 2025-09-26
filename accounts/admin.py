@@ -302,14 +302,20 @@ class GuardianStudentRelationshipAdmin(admin.ModelAdmin):
         "get_guardian_name",
         "get_student_name",
         "school",
+        "is_primary",
         "is_active",
-        "requires_purchase_approval",
+        "can_manage_finances",
+        "can_book_classes",
         "created_at",
     )
     list_filter = (
+        "is_primary",
         "is_active",
-        "requires_purchase_approval",
-        "requires_session_approval",
+        "can_manage_finances",
+        "can_book_classes",
+        "can_view_records",
+        "can_edit_profile",
+        "can_receive_notifications",
         "school",
         "created_at",
     )
@@ -317,11 +323,24 @@ class GuardianStudentRelationshipAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at", "updated_at")
 
     fieldsets = (
-        ("Relationship Details", {"fields": ("guardian", "student", "school", "is_active")}),
+        ("Relationship Details", {"fields": ("guardian", "student", "school", "is_primary", "is_active")}),
         (
-            "Permissions & Approval Settings",
+            "Guardian Permissions",
+            {
+                "fields": (
+                    "can_manage_finances",
+                    "can_book_classes",
+                    "can_view_records",
+                    "can_edit_profile",
+                    "can_receive_notifications",
+                )
+            },
+        ),
+        (
+            "Legacy Approval Settings",
             {"fields": ("requires_purchase_approval", "requires_session_approval")},
         ),
+        ("Additional Info", {"fields": ("relationship_type", "created_by")}),
         ("Timestamps", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
     )
 

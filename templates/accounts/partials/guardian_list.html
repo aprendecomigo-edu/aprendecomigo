@@ -1,0 +1,24 @@
+<!-- Guardian List Container -->
+<div class="bg-white shadow rounded-lg">
+    {% if guardian_relationships %}
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">Current Guardians ({{ guardian_relationships|length }})</h3>
+        </div>
+        <div class="divide-y divide-gray-200">
+            {% for relationship in guardian_relationships %}
+                {% include "accounts/partials/guardian_card.html" %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-12">
+            <i class="fas fa-users text-gray-400 text-6xl mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No Guardians Found</h3>
+            <p class="text-gray-500 mb-6">This student doesn't have any guardians assigned yet.</p>
+            <button onclick="document.getElementById('add-guardian-btn').click()"
+                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+                <i class="fas fa-plus mr-2"></i>
+                Add First Guardian
+            </button>
+        </div>
+    {% endif %}
+</div>

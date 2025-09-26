@@ -11,9 +11,18 @@
 
     <!-- Success message -->
     <div class="space-y-2">
-        <h3 class="text-xl font-bold text-gray-900 font-primary">Welcome back!</h3>
+        <h3 class="text-xl font-bold text-gray-900 font-primary">
+            {% if verification_type == 'email' %}
+                Email Verified Successfully!
+            {% else %}
+                Welcome back!
+            {% endif %}
+        </h3>
         <p class="text-gray-600 font-body">
-            You have been successfully logged in.
+            {{ success_message|default:"You have been successfully logged in." }}
+        </p>
+        <p class="text-sm text-gray-500">
+            Redirecting you to your dashboard...
         </p>
     </div>
 

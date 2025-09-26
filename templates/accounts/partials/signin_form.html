@@ -1,99 +1,91 @@
-{% if show_delivery_choice %}
-<!-- Delivery Choice UI -->
-<div class="w-full space-y-6">
-    <div class="form-control">
-        <label class="label">
-            <span class="label-text font-primary font-medium">Email: {{ email }}</span>
-        </label>
-    </div>
-
-    <!-- Email Option -->
-    <form hx-post="{% url 'accounts:send_otp_email' %}"
-          hx-target="#signin-form-container"
-          hx-swap="innerHTML"
-          class="w-full">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-primary w-full bg-gradient-primary glass-light">
-            Send Code via Email
-        </button>
-    </form>
-
-    <!-- SMS Option - conditionally shown based on waffle flag -->
-    {% if sms_enabled and phone_available %}
-    <form hx-post="{% url 'accounts:send_otp_sms' %}"
-          hx-target="#signin-form-container"
-          hx-swap="innerHTML"
-          class="w-full">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-secondary w-full glass-light">
-            Send Code via SMS
-        </button>
-    </form>
-    {% elif sms_enabled %}
-    <button class="btn btn-neutral w-full glass-light" disabled>
-        Send Code via SMS (No phone number)
-    </button>
-    {% endif %}
-
-    <!-- Back to edit email -->
-    <div class="text-center">
-        <button hx-get="{% url 'accounts:signin' %}"
-                hx-target="#signin-form-container"
-                hx-swap="innerHTML"
-                class="link link-neutral text-sm">
-            Change email address
-        </button>
-    </div>
-</div>
-
-{% else %}
-<!-- Email Input Form -->
-<form hx-post="{% url 'accounts:signin' %}"
-      hx-target="#signin-form-container"
-      hx-swap="innerHTML"
-      class="w-full space-y-8">
-    {% csrf_token %}
-
-    <!-- Email or Phone Field with Join Component -->
+<!-- Consolidated Sign-In Form - Email Input and Delivery Choice on Same Page -->
+<div class="w-full space-y-8" x-data="{ email: '{{ email|default:'' }}' }">
+    <!-- Email Input Field -->
     <div class="form-control">
         <label class="label">
             <span class="label-text font-primary font-medium">Email address</span>
         </label>
         <div class="relative">
-            <div class="join w-full htmx-request:opacity-50 htmx-request:pointer-events-none transition-opacity">
-                <div class="flex-1">
-                    <label class="input validator join-item glass-light w-full">
-                        <input type="text"
-                               name="email"
-                               value="{{ email|default:'' }}"
-                               placeholder="your_email@example.com"
-                               pattern="^[^\s@]+@[^\s@]+\.[^\s@]+$"
-                               title="Must be a valid email address"
-                               autocomplete="email"
-                               required />
-                    </label>
-                    <div class="validator-hint">
-                        Must be a valid email address
-                    </div>
+            <label class="input validator glass-light w-full">
+                <input type="email"
+                       x-model="email"
+                       placeholder="your_email@example.com"
+                       pattern="^[^\s@]+@[^\s@]+\.[^\s@]+$"
+                       title="Must be a valid email address"
+                       autocomplete="email"
+                       required />
+            </label>
+            <div class="validator-hint">
+                Must be a valid email address
+            </div>
 
-                    <!-- Server-side error message -->
-                    {% if error %}
-                    <div class="validator-hint text-error">
-                        {{ error }}
-                    </div>
-                    {% endif %}
+            <!-- Server-side error message -->
+            {% if error %}
+            <div class="validator-hint text-error">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <!-- Resend verification button for unverified users -->
+            {% if show_resend_verification %}
+            <div class="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <div class="text-sm text-amber-800 mb-3">
+                    Need to verify your email? We can send you a new verification link.
                 </div>
-
-                <button type="submit" class="btn btn-neutral join-item bg-gradient-primary glass-light shrink-0">
-                    Continue
-                </button>
+                <div id="resend-verification-message"></div>
+                <form hx-post="{% url 'accounts:resend_verification_email_signin' %}"
+                      hx-target="#resend-verification-message"
+                      hx-swap="innerHTML"
+                      class="inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="email" x-bind:value="email" />
+                    <button type="submit"
+                            class="btn btn-sm btn-outline btn-amber htmx-request:opacity-50 htmx-request:pointer-events-none">
+                        <span class="htmx-indicator loading loading-spinner loading-xs opacity-0"></span>
+                        Resend Verification Email
+                    </button>
+                </form>
             </div>
-
-            <!-- Loading Spinner Overlay -->
-            <div class="htmx-indicator absolute inset-0 flex items-center justify-center bg-base-100/50 backdrop-blur-sm rounded-lg opacity-0 invisible">
-                <div class="loading loading-spinner loading-md text-primary"></div>
-            </div>
+            {% endif %}
         </div>
     </div>
-</form>
-{% endif %}
+
+    <!-- Delivery Method Options -->
+    <div class="space-y-4">
+        <div class="text-center">
+            <span class="label-text font-primary font-medium">Choose how to receive your sign-in code:</span>
+        </div>
+
+        <!-- Email Option -->
+        <form hx-post="{% url 'accounts:send_otp_email' %}"
+              hx-target="#signin-form-container"
+              hx-swap="innerHTML"
+              class="w-full">
+            {% csrf_token %}
+            <input type="hidden" name="email" x-bind:value="email" />
+            <button type="submit"
+                    class="btn btn-primary w-full bg-gradient-primary glass-light htmx-request:opacity-50 htmx-request:pointer-events-none"
+                    x-bind:disabled="!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)">
+                <span class="htmx-indicator loading loading-spinner loading-sm opacity-0"></span>
+                Send Code via Email
+            </button>
+        </form>
+
+        <!-- SMS Option - conditionally shown based on waffle flag -->
+        {% if sms_enabled %}
+        <form hx-post="{% url 'accounts:send_otp_sms' %}"
+              hx-target="#signin-form-container"
+              hx-swap="innerHTML"
+              class="w-full">
+            {% csrf_token %}
+            <input type="hidden" name="email" x-bind:value="email" />
+            <button type="submit"
+                    class="btn btn-secondary w-full glass-light htmx-request:opacity-50 htmx-request:pointer-events-none"
+                    x-bind:disabled="!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)">
+                <span class="htmx-indicator loading loading-spinner loading-sm opacity-0"></span>
+                Send Code via SMS
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>

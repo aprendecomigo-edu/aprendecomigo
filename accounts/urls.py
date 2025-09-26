@@ -1,5 +1,14 @@
 from django.urls import path
 
+from .guardian_views import (
+    add_guardian,
+    get_guardian_details,
+    manage_student_guardians,
+    remove_guardian,
+    set_primary_guardian,
+    update_guardian_permissions,
+)
+
 # Import the Django web authentication views
 from .views import (
     # Invitation management views
@@ -84,6 +93,37 @@ urlpatterns = [
         "students/create/guardian-only/", StudentGuardianOnlyCreateView.as_view(), name="student_create_guardian_only"
     ),
     path("students/create/adult/", StudentAdultCreateView.as_view(), name="student_create_adult"),
+    # Guardian Management
+    path(
+        "schools/<int:school_id>/students/<int:student_id>/guardians/",
+        manage_student_guardians,
+        name="manage_student_guardians",
+    ),
+    path(
+        "schools/<int:school_id>/students/<int:student_id>/guardians/add/",
+        add_guardian,
+        name="add_guardian",
+    ),
+    path(
+        "schools/<int:school_id>/students/<int:student_id>/guardians/<int:relationship_id>/edit/",
+        update_guardian_permissions,
+        name="update_guardian_permissions",
+    ),
+    path(
+        "schools/<int:school_id>/students/<int:student_id>/guardians/<int:relationship_id>/remove/",
+        remove_guardian,
+        name="remove_guardian",
+    ),
+    path(
+        "schools/<int:school_id>/students/<int:student_id>/guardians/<int:relationship_id>/set-primary/",
+        set_primary_guardian,
+        name="set_primary_guardian",
+    ),
+    path(
+        "schools/<int:school_id>/students/<int:student_id>/guardians/<int:relationship_id>/details/",
+        get_guardian_details,
+        name="get_guardian_details",
+    ),
     # Internationalization
     path("set-language/", set_language, name="set_language"),
 ]

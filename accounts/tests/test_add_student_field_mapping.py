@@ -61,16 +61,17 @@ class AddStudentFieldMappingTest(BaseTestCase):
             "email": "template.student@test.com",
             "birth_date": "2010-05-15",
             "school_year": "5",  # Use numeric value
+            "phone_number": "+351912345678",  # Required for Student+Guardian accounts (Issue #287)
             "notes": "Template notes",
-            # Guardian fields - exactly as named in template
-            "guardian_name": "Template Guardian",
-            "guardian_email": "template.guardian@test.com",
-            "guardian_phone": "+351912345678",
-            "guardian_tax_nr": "123456789",
-            "guardian_address": "Template Address",
-            "guardian_invoice": "on",
-            "guardian_email_notifications": "on",
-            "guardian_sms_notifications": "on",
+            # Guardian fields - exactly as named in template (indexed)
+            "guardian_0_name": "Template Guardian",
+            "guardian_0_email": "template.guardian@test.com",
+            "guardian_0_phone": "+351912345678",
+            "guardian_0_tax_nr": "123456789",
+            "guardian_0_address": "Template Address",
+            "guardian_0_invoice": "on",
+            "guardian_0_email_notifications": "on",
+            "guardian_0_sms_notifications": "on",
         }
 
         # Use the new dedicated endpoint
@@ -103,14 +104,14 @@ class AddStudentFieldMappingTest(BaseTestCase):
             "birth_date": "2012-03-20",
             "school_year": "3",  # Use numeric value
             "notes": "Young student notes",
-            # Guardian fields - clean names
-            "guardian_name": "Template Managing Guardian",
-            "guardian_email": "template.managing@test.com",
-            "guardian_phone": "+351987654321",
-            "guardian_tax_nr": "987654321",
-            "guardian_address": "Guardian Address",
-            "guardian_invoice": "on",
-            "guardian_email_notifications": "on",
+            # Guardian fields - clean names (indexed)
+            "guardian_0_name": "Template Managing Guardian",
+            "guardian_0_email": "template.managing@test.com",
+            "guardian_0_phone": "+351987654321",
+            "guardian_0_tax_nr": "987654321",
+            "guardian_0_address": "Guardian Address",
+            "guardian_0_invoice": "on",
+            "guardian_0_email_notifications": "on",
         }
 
         # Use the new dedicated endpoint
@@ -202,8 +203,8 @@ class AddStudentFieldMappingTest(BaseTestCase):
             "name": "",  # Empty but field name is correct
             "email": "",  # Empty but field name is correct
             "birth_date": "",  # Empty but field name is correct
-            "guardian_name": "",  # Empty but field name is correct
-            "guardian_email": "",  # Empty but field name is correct
+            "guardian_0_name": "",  # Empty but field name is correct
+            "guardian_0_email": "",  # Empty but field name is correct
         }
 
         # Use the new dedicated endpoint

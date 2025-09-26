@@ -51,26 +51,21 @@
                 <div class="space-y-1">
                     <label class="block text-sm font-medium text-gray-700">Phone Number</label>
                     <input type="tel" name="phone" x-model="adultForm.phone"
+                           pattern="^(\+|00)[1-9]\d{1,14}$"
+                           title="Please enter a valid phone number with country code (e.g., +351912345678, 00351912345678)"
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                           placeholder="+351 912 345 678">
+                           placeholder="+351 912 345 678"
+                           x-on:input="adultForm.phone = $event.target.value.replace(/\s/g, '')">
+                    <small class="text-gray-500 text-xs">Include country code (+351 or 00351 for Portugal, +44 or 0044 for UK)</small>
                 </div>
                 <div class="space-y-1">
                     <label class="block text-sm font-medium text-gray-700">School Year</label>
                     <select name="school_year" x-model="adultForm.school_year"
                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
                         <option value="">{% trans "Select school year" %}</option>
-                        <option value="1">{% trans "Year 1" %}</option>
-                        <option value="2">{% trans "Year 2" %}</option>
-                        <option value="3">{% trans "Year 3" %}</option>
-                        <option value="4">{% trans "Year 4" %}</option>
-                        <option value="5">{% trans "Year 5" %}</option>
-                        <option value="6">{% trans "Year 6" %}</option>
-                        <option value="7">{% trans "Year 7" %}</option>
-                        <option value="8">{% trans "Year 8" %}</option>
-                        <option value="9">{% trans "Year 9" %}</option>
-                        <option value="10">{% trans "Year 10" %}</option>
-                        <option value="11">{% trans "Year 11" %}</option>
-                        <option value="12">{% trans "Year 12" %}</option>
+                        {% for value, label in school_year_choices %}
+                            <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div class="space-y-1">

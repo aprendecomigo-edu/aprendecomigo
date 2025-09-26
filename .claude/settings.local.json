@@ -89,7 +89,9 @@
       "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_UpkXE5/**)",
       "Read(//Users/anapmc/Code/aprendecomigo-fix-272/accounts/**)",
       "Read(//Users/anapmc/Code/aprendecomigo-fix-272/templates/dashboard/forms/**)",
-      "Read(//Users/anapmc/Code/aprendecomigo-fix-272/tasks/**)"
+      "Read(//Users/anapmc/Code/aprendecomigo-fix-272/tasks/**)",
+      "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_nQqf9t/**)",
+      "Read(//var/folders/vq/2rgpd6z13cj736c2kqb37y100000gn/T/TemporaryItems/NSIRD_screencaptureui_IBlcdN/**)"
     ],
     "deny": [],
     "ask": []

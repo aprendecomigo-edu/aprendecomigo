@@ -14,7 +14,8 @@
 <div x-data="peopleManager()"
      class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50"
      hx-trigger="refreshStudents from:body"
-     hx-get="/people/students/"
+     hx-post="/people/"
+     hx-vals='{"action": "refresh_students", "csrfmiddlewaretoken": "{{ csrf_token }}"}'
      hx-target="#students-content"
      hx-swap="outerHTML">
     <!-- Page Header -->
@@ -146,36 +147,81 @@
                     </button>
                 </div>
 
-                <!-- Search -->
-                <div class="flex items-center space-x-2">
-                    <div class="relative">
-                        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                <!-- Filters and Search -->
+                <div class="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-4">
+                    <!-- Status Filter -->
+                    <div class="flex items-center space-x-2">
+                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
                         </svg>
-                        <input
-                            type="text"
-                            x-model="studentSearchQuery"
+                        <select
+                            name="status_filter"
                             hx-post="/people/"
                             hx-target="#students-content"
                             hx-swap="outerHTML"
-                            hx-trigger="keyup changed delay:300ms"
-                            hx-vals='{"action": "search_students"}'
-                            name="search"
-                            placeholder="Buscar alunos, guardiões..."
-                            class="pl-10 pr-4 py-2 w-64 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        >
-                        {% csrf_token %}
+                            hx-trigger="change"
+                            hx-include="[name='school_year_filter'], [name='search']"
+                            hx-vals='{"action": "filter_students"}'
+                            class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Todos os Status</option>
+                            <option value="active">Ativos</option>
+                            <option value="inactive">Inativos</option>
+                        </select>
                     </div>
-                    <button
-                        x-show="studentSearchQuery.length > 0"
-                        @click="studentSearchQuery = ''; htmx.trigger(document.querySelector('input[name=search]'), 'keyup')"
-                        class="p-2 text-gray-500 hover:text-gray-700"
-                        title="Clear search"
-                    >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+
+                    <!-- School Year Filter -->
+                    <div class="flex items-center space-x-2">
+                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                         </svg>
-                    </button>
+                        <select
+                            name="school_year_filter"
+                            hx-post="/people/"
+                            hx-target="#students-content"
+                            hx-swap="outerHTML"
+                            hx-trigger="change"
+                            hx-include="[name='status_filter'], [name='search']"
+                            hx-vals='{"action": "filter_students"}'
+                            class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Todos os Anos</option>
+                            {% for value, label in school_year_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Search -->
+                    <div class="flex items-center space-x-2">
+                        <div class="relative">
+                            <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                            <input
+                                type="text"
+                                x-model="studentSearchQuery"
+                                hx-post="/people/"
+                                hx-target="#students-content"
+                                hx-swap="outerHTML"
+                                hx-trigger="keyup changed delay:150ms, search_clear"
+                                hx-include="[name='status_filter'], [name='school_year_filter']"
+                                hx-vals='{"action": "filter_students"}'
+                                name="search"
+                                placeholder="Buscar alunos, guardiões..."
+                                class="pl-10 pr-4 py-2 w-64 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                            {% csrf_token %}
+                        </div>
+                        <button
+                            x-show="studentSearchQuery.length > 0"
+                            @click="studentSearchQuery = ''; $nextTick(() => htmx.trigger(document.querySelector('input[name=search]'), 'search_clear'))"
+                            class="p-2 text-gray-500 hover:text-gray-700"
+                            title="Clear search"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -389,16 +435,9 @@
             <div class="relative z-10 inline-block px-6 pt-6 pb-6 overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
             <!-- Modal Header -->
             <div class="flex items-center justify-between pb-4 border-b border-gray-200">
-                <div class="flex items-center space-x-3">
-                    <div class="flex-shrink-0 w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                        <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-semibold text-gray-900">Add New Student</h3>
-                        <p class="text-sm text-gray-500">Create a student profile and account</p>
-                    </div>
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-900">Add New Student</h3>
+                    <p class="text-sm text-gray-500">Create a student profile and account</p>
                 </div>
                 <button type="button" @click="showAddStudentModal = false"
                         class="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
@@ -510,57 +549,8 @@
     </div>
 
     <!-- Message Area for HTMX responses -->
-    <div id="message-area" class="fixed top-4 right-4 space-y-2 z-50"></div>
+    <div id="message-area" class="fixed top-4 right-4 space-y-2 z-50 max-w-md"></div>
 
-    <!-- Success Messages -->
-    <div
-        x-show="successMessage"
-        x-transition
-        class="fixed bottom-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg shadow-lg"
-        role="alert"
-    >
-        <div class="flex">
-            <div class="py-1">
-                <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                </svg>
-            </div>
-            <div>
-                <p class="font-bold">Success</p>
-                <p class="text-sm" x-text="successMessage"></p>
-            </div>
-            <button @click="successMessage = null" class="ml-4 text-green-700 hover:text-green-900">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-        </div>
-    </div>
-
-    <!-- Error Messages -->
-    <div
-        x-show="error"
-        x-transition
-        class="fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg"
-        role="alert"
-    >
-        <div class="flex">
-            <div class="py-1">
-                <svg class="w-5 h-5 text-red-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-            </div>
-            <div>
-                <p class="font-bold">Error</p>
-                <p class="text-sm" x-text="error"></p>
-            </div>
-            <button @click="error = null" class="ml-4 text-red-700 hover:text-red-900">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-        </div>
-    </div>
 </div>
 
 <script>
@@ -568,8 +558,6 @@ function peopleManager() {
     return {
         // UI State only (no server data)
         activeTab: 'students',
-        error: null,
-        successMessage: null,
         studentSearchQuery: '',
 
         // Modal state
@@ -676,17 +664,10 @@ function peopleManager() {
             };
         },
 
-        showSuccessMessage(message) {
-            this.successMessage = message;
-            setTimeout(() => {
-                this.successMessage = null;
-            }, 5000);
-        },
 
         // Modal actions - only UI state management
         openModal(modalType) {
             this.resetForms();
-            this.error = null;
 
             switch(modalType) {
                 case 'addTeacher':
@@ -705,7 +686,6 @@ function peopleManager() {
 
         // Open student detail modal
         openStudentDetail(studentId) {
-            this.error = null;
             this.showStudentDetailModal = true;
 
             // Use HTMX to fetch student details
@@ -722,14 +702,9 @@ function peopleManager() {
 
         // HTMX event handlers for success/error messages
         handleSuccess(message) {
-            this.showSuccessMessage(message);
             this.showAddTeacherModal = false;
             this.showInviteTeacherModal = false;
             this.showAddStudentModal = false;
-        },
-
-        handleError(message) {
-            this.error = message;
         },
 
 
@@ -749,10 +724,8 @@ function peopleManager() {
                 // True success - close modal and reset forms (success message shown by server)
                 this.showAddStudentModal = false;
                 this.resetForms();
-            } else {
-                // HTTP error - let HTMX handle the error display
-                this.error = 'Failed to add student. Please try again.';
             }
+            // Error handling is now done by the shared error template with auto-dismiss
         }
     }
 }
