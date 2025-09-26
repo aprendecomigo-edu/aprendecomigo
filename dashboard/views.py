@@ -605,6 +605,8 @@ class PeopleView(LoginRequiredMixin, View):
             return self._handle_search_students(request)
         elif action == "get_student_detail":
             return self._handle_get_student_detail(request)
+        elif action == "refresh_students":
+            return self._handle_refresh_students(request)
         else:
             return JsonResponse({"error": "Invalid action"}, status=400)
 
@@ -704,6 +706,10 @@ class PeopleView(LoginRequiredMixin, View):
         """Handle student search requests"""
         search_query = request.POST.get("search", "").strip()
         return self._render_students_partial(request, search_query=search_query)
+
+    def _handle_refresh_students(self, request):
+        """Handle student list refresh requests (triggered by HTMX after student creation)"""
+        return self._render_students_partial(request)
 
     def _handle_get_student_detail(self, request):
         """Handle student detail requests for both regular students and Guardian-Only students"""

@@ -1625,12 +1625,13 @@ def resend_verification_email_signin(request):
     try:
         # Get user by email
         user = get_user_by_email(email)
-        if not user:
-            # Don't reveal if user exists - security best practice
-            return HttpResponse(
-                '<div class="text-red-600 text-sm">If this email is registered, a verification email will be sent.</div>'
-            )
+    except User.DoesNotExist:
+        # Don't reveal if user exists - security best practice
+        return HttpResponse(
+            '<div class="text-red-600 text-sm">If this email is registered, a verification email will be sent.</div>'
+        )
 
+    try:
         # Check if already verified
         if user.email_verified:
             return HttpResponse(

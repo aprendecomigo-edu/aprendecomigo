@@ -124,7 +124,9 @@ class EmailOTPSecurityTest(BaseTestCase):
 
         self.assertEqual(response.status_code, 200)
         # Should return generic error that doesn't reveal email doesn't exist
-        self.assertContains(response, "Invalid email or account not verified")
+        self.assertContains(
+            response, "Please check your email address. If you don&#x27;t have an account yet, please sign up first."
+        )
         # Should not reveal specific details about user existence
         self.assertNotContains(response, "does not exist")
         self.assertNotContains(response, "not found")
@@ -143,7 +145,9 @@ class EmailOTPSecurityTest(BaseTestCase):
         self.assertEqual(response.status_code, 200)
 
         # Should show clear error message
-        self.assertContains(response, "Invalid email or account not verified")
+        self.assertContains(
+            response, "Please check your email address. If you don&#x27;t have an account yet, please sign up first."
+        )
 
         # Should preserve the email in the form for correction
         self.assertContains(response, fake_email)
@@ -305,7 +309,7 @@ class EmailOTPSecurityTest(BaseTestCase):
 
         self.assertEqual(response.status_code, 200)
         # Should return generic message to prevent email enumeration
-        self.assertContains(response, "If this email is registered")
+        self.assertContains(response, "If this email is registered, a verification email will be sent.")
 
         # Should not send email
         mock_send_email.assert_not_called()
