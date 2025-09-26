@@ -9,6 +9,7 @@ and functionality specific to their role.
 import logging
 
 from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -242,6 +243,21 @@ class StudentProfile(models.Model):
         _("invoice"), default=False, help_text=_("Whether to issue invoices (only for adult students)")
     )
 
+    # Phone number field - required for STUDENT_GUARDIAN account type (Issue #287)
+    phone_number: models.CharField = models.CharField(
+        _("student phone number"),
+        max_length=20,
+        blank=True,
+        validators=[
+            RegexValidator(
+                regex=r"^(\+|00)[1-9]\d{1,14}$",
+                message=_("Please enter a valid international phone number format (e.g., +351912345678)"),
+                code="invalid_phone_format",
+            )
+        ],
+        help_text=_("International phone number with country code (required for Student+Guardian accounts)"),
+    )
+
     # NEW - All guardians through enhanced relationship model
     # Note: This will be added in a separate migration after field renames are complete
     # guardians = models.ManyToManyField(
@@ -299,6 +315,9 @@ class StudentProfile(models.Model):
                 )
             if not self.guardian:
                 raise ValidationError({"guardian": _("Student+Guardian accounts require a guardian to be assigned.")})
+            # GitHub Issue #287: Phone number is required for Student+Guardian accounts
+            if not self.phone_number or not self.phone_number.strip():
+                raise ValidationError({"phone_number": _("Phone number is required for Student+Guardian accounts.")})
 
     @property
     def primary_guardian(self):

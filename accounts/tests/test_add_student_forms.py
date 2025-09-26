@@ -69,10 +69,11 @@ class AddStudentFormDataTransmissionTest(BaseTestCase):
             "email": "test.student@example.com",
             "birth_date": "2010-05-15",
             "school_year": "5",  # Use numeric value
+            "phone_number": "+351912345678",  # Required for Student+Guardian accounts (Issue #287)
             "notes": "Test student notes",
             "guardian_0_name": "Test Guardian Name",
             "guardian_0_email": "test.guardian@example.com",
-            "guardian_0_phone": "+351912345678",
+            "guardian_0_phone": "+351912345679",
             "guardian_0_tax_nr": "123456789",
             "guardian_0_address": "Test Address, Lisboa",
             "guardian_0_invoice": "on",
@@ -397,6 +398,7 @@ class AddStudentAccountCreationTest(BaseTestCase):
             "email": "student@test.com",
             "birth_date": "2010-01-01",
             "school_year": "5",
+            "phone_number": "+351912345678",  # Required for Student+Guardian accounts (Issue #287)
             "notes": "Test notes",
             "guardian_0_name": "Test Guardian",
             "guardian_0_email": "guardian@test.com",

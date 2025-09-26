@@ -41,6 +41,18 @@
                            class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 <div class="space-y-1">
+                    <label class="block text-sm font-medium text-gray-700">Phone Number *</label>
+                    <input type="tel" name="phone_number" required
+                           data-test="student-phone-input"
+                           pattern="^(\+|00)[1-9]\d{1,14}$"
+                           title="Please enter a valid phone number with country code (e.g., +351912345678, 00351912345678)"
+                           x-model="separateForm.phone_number"
+                           class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="+351 912 345 678"
+                           x-on:input="separateForm.phone_number = $event.target.value.replace(/\s/g, '')">
+                    <small class="text-gray-500 text-xs">Include country code (+351 or 00351 for Portugal, +44 or 0044 for UK)</small>
+                </div>
+                <div class="space-y-1">
                     <label class="block text-sm font-medium text-gray-700">School Year</label>
                     <select name="school_year" x-model="separateForm.school_year"
                             class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">

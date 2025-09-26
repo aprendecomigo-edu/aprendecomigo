@@ -1842,6 +1842,7 @@ class StudentSeparateCreateView(BaseStudentCreateView):
             student_birth_date = request.POST.get("birth_date")
             student_school_year = escape(request.POST.get("school_year", "").strip())
             student_notes = escape(request.POST.get("notes", "").strip())
+            student_phone_number = escape(request.POST.get("phone_number", "").strip())
 
             # Extract multiple guardians from POST data
             guardians = []
@@ -1885,8 +1886,8 @@ class StudentSeparateCreateView(BaseStudentCreateView):
             if not guardians:
                 return self._render_error(request, "At least one guardian is required")
 
-            # Validate required fields for student and guardians
-            if not all([student_name, student_email, student_birth_date]):
+            # Validate required fields for student and guardians (GitHub Issue #287: phone required)
+            if not all([student_name, student_email, student_birth_date, student_phone_number]):
                 missing_fields = []
                 if not student_name:
                     missing_fields.append("student name")
@@ -1894,8 +1895,20 @@ class StudentSeparateCreateView(BaseStudentCreateView):
                     missing_fields.append("student email")
                 if not student_birth_date:
                     missing_fields.append("student birth date")
+                if not student_phone_number:
+                    missing_fields.append("student phone number")
                 error_msg = f"Missing required student fields: {', '.join(missing_fields)}"
                 return self._render_error(request, error_msg)
+
+            # GitHub Issue #287: Validate student phone number format
+            import re
+
+            phone_pattern = r"^(\+|00)[1-9]\d{1,14}$"
+            if not re.match(phone_pattern, student_phone_number):
+                return self._render_error(
+                    request,
+                    "Student phone number must be in international format (e.g., +351912345678 or 00351912345678)",
+                )
 
             # Validate guardian emails and required fields
             for i, guardian_data in enumerate(guardians):
@@ -1962,6 +1975,7 @@ class StudentSeparateCreateView(BaseStudentCreateView):
                         birth_date=student_birth_date,
                         guardian=None,  # Will be handled via GuardianStudentRelationship
                         notes=student_notes,
+                        phone_number=student_phone_number,  # GitHub Issue #287
                     )
 
                     # Track created guardian users for system tasks
