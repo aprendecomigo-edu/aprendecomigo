@@ -14,7 +14,8 @@
 <div x-data="peopleManager()"
      class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50"
      hx-trigger="refreshStudents from:body"
-     hx-get="/people/students/"
+     hx-post="/people/"
+     hx-vals='{"action": "refresh_students", "csrfmiddlewaretoken": "{{ csrf_token }}"}'
      hx-target="#students-content"
      hx-swap="outerHTML">
     <!-- Page Header -->
