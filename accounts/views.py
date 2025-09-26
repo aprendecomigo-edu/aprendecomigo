@@ -1088,6 +1088,33 @@ class AcceptTeacherInvitationView(View):
 class EmailVerificationView(SesameLoginView):
     """Handle email verification via magic link"""
 
+    def dispatch(self, request, *args, **kwargs):
+        """Override dispatch to handle 403 errors gracefully instead of showing forbidden page"""
+        try:
+            response = super().dispatch(request, *args, **kwargs)
+            # If sesame authentication fails, it returns 403. Convert to user-friendly redirect.
+            if response.status_code == 403:
+                logger.error("EmailVerificationView: Invalid/expired email verification link - redirecting to signin")
+                messages.error(
+                    request, "Email verification link is invalid or expired. Please request a new verification email."
+                )
+                return redirect(reverse("accounts:signin"))
+            return response
+        except Exception as e:
+            logger.error(f"EmailVerificationView.dispatch error: {e}")
+            messages.error(
+                request, "Email verification link is invalid or expired. Please request a new verification email."
+            )
+            return redirect(reverse("accounts:signin"))
+
+    def login_failure(self, request):
+        """Handle invalid/expired verification links gracefully instead of returning 403"""
+        logger.error("EmailVerificationView.login_failure called - email verification link invalid/expired")
+        messages.error(
+            request, "Email verification link is invalid or expired. Please request a new verification email."
+        )
+        return redirect(reverse("accounts:signin"))
+
     def login_success(self):
         """Mark email as verified and redirect to dashboard with success message"""
         user = self.request.user
