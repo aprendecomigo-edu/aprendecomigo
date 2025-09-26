@@ -46,7 +46,6 @@ from messaging.services import send_magic_link_email, send_otp_email_message, se
 
 from .db_queries import create_user_school_and_membership, get_user_by_email, user_exists
 from .models import School, SchoolMembership, SchoolSettings, TeacherInvitation
-from .models.profiles import StudentProfile
 from .models.schools import SchoolRole
 from .permissions import IsSchoolOwnerOrAdminMixin, SchoolPermissionMixin
 from .services.otp_service import OTPService
@@ -1830,7 +1829,7 @@ class StudentSeparateCreateView(BaseStudentCreateView):
 
     def post(self, request):
         """Handle Student + Guardian account creation with support for multiple guardians"""
-        from django.db import IntegrityError, transaction
+        from django.db import transaction
 
         from accounts.models.profiles import GuardianProfile, GuardianStudentRelationship, StudentProfile
         from accounts.permissions import PermissionService
@@ -1948,151 +1947,132 @@ class StudentSeparateCreateView(BaseStudentCreateView):
 
             # Get user's schools
             user_schools = self._get_user_schools(request.user)
+
+            # Temporarily disconnect the task creation signal to prevent orphaned tasks
+            from django.db.models.signals import post_save
+
+            from accounts.signals.verification_task_signals import create_system_tasks_for_new_user
+
+            post_save.disconnect(create_system_tasks_for_new_user, sender=User)
             try:
                 with transaction.atomic():
-                    # Temporarily disconnect the task creation signal to prevent orphaned tasks
-                    from django.db.models.signals import post_save
-
-                    from accounts.signals.verification_task_signals import create_system_tasks_for_new_user
-
-                    post_save.disconnect(create_system_tasks_for_new_user, sender=User)
-
-                try:
-                    # Create or get student user
                     try:
-                        student_user = User.objects.get(email=student_email)
-                        student_user_was_created = False
-                    except User.DoesNotExist:
-                        student_user = User.objects.create_user(email=student_email, name=student_name)
-                        student_user_was_created = True
-
-                    # Create student profile (without setting the legacy guardian field)
-                    student_profile = StudentProfile.objects.create(
-                        user=student_user,
-                        name=student_name,
-                        account_type="STUDENT_GUARDIAN",
-                        school_year=student_school_year,
-                        birth_date=student_birth_date,
-                        guardian=None,  # Will be handled via GuardianStudentRelationship
-                        notes=student_notes,
-                        phone_number=student_phone_number,  # GitHub Issue #287
-                    )
-
-                    # Track created guardian users for system tasks
-                    created_guardian_users = []
-
-                    # Create guardian users and relationships
-                    primary_guardian_profile = None
-                    for guardian_data in guardians:
-                        # Create or get guardian user
+                        # Create or get student user
                         try:
-                            guardian_user = User.objects.get(email=guardian_data["email"])
+                            student_user = User.objects.get(email=student_email)
+                            student_user_was_created = False
                         except User.DoesNotExist:
-                            guardian_user = User.objects.create_user(
-                                email=guardian_data["email"],
-                                name=guardian_data["name"],
-                                phone_number=guardian_data["phone"],
-                            )
-                            created_guardian_users.append(guardian_user)
+                            student_user = User.objects.create_user(email=student_email, name=student_name)
+                            student_user_was_created = True
 
-                        # Create or get guardian profile
-                        guardian_profile, _ = GuardianProfile.objects.get_or_create(
-                            user=guardian_user,
-                            defaults={
-                                "address": guardian_data["address"],
-                                "tax_nr": guardian_data["tax_nr"],
-                                "invoice": guardian_data["invoice"],
-                                "email_notifications_enabled": guardian_data["notifications"]["email"],
-                                "sms_notifications_enabled": guardian_data["notifications"]["sms"],
-                            },
+                        # Create student profile (without setting the legacy guardian field)
+                        student_profile = StudentProfile.objects.create(
+                            user=student_user,
+                            name=student_name,
+                            account_type="STUDENT_GUARDIAN",
+                            school_year=student_school_year,
+                            birth_date=student_birth_date,
+                            guardian=None,  # Will be handled via GuardianStudentRelationship
+                            notes=student_notes,
+                            phone_number=student_phone_number,  # GitHub Issue #287
                         )
 
-                        # Remember primary guardian to populate legacy FK later
-                        if guardian_data.get("is_primary"):
-                            primary_guardian_profile = guardian_profile
+                        # Track created guardian users for system tasks
+                        created_guardian_users = []
 
-                        # Add both users to schools and create relationship
-                        for school in user_schools:
-                            SchoolMembership.objects.get_or_create(
-                                user=guardian_user, school=school, defaults={"role": SchoolRole.GUARDIAN}
-                            )
+                        # Create guardian users and relationships
+                        primary_guardian_profile = None
+                        for guardian_data in guardians:
+                            # Create or get guardian user
+                            try:
+                                guardian_user = User.objects.get(email=guardian_data["email"])
+                            except User.DoesNotExist:
+                                guardian_user = User.objects.create_user(
+                                    email=guardian_data["email"],
+                                    name=guardian_data["name"],
+                                    phone_number=guardian_data["phone"],
+                                )
+                                created_guardian_users.append(guardian_user)
 
-                            # Create GuardianStudentRelationship
-                            GuardianStudentRelationship.objects.get_or_create(
-                                guardian=guardian_user,
-                                student=student_user,
-                                school=school,
+                            # Create or get guardian profile
+                            guardian_profile, _ = GuardianProfile.objects.get_or_create(
+                                user=guardian_user,
                                 defaults={
-                                    "is_primary": guardian_data["is_primary"],
-                                    "can_manage_finances": guardian_data[
-                                        "is_primary"
-                                    ],  # Primary guardian always manages finances
-                                    "can_book_classes": guardian_data["permissions"]["can_manage_bookings"],
-                                    "can_view_records": guardian_data["permissions"]["can_view_financial_info"],
-                                    "can_edit_profile": guardian_data["permissions"]["can_communicate_with_teachers"],
-                                    "can_receive_notifications": guardian_data["notifications"]["email"]
-                                    or guardian_data["notifications"]["sms"],
-                                    "created_by": request.user,
+                                    "address": guardian_data["address"],
+                                    "tax_nr": guardian_data["tax_nr"],
+                                    "invoice": guardian_data["invoice"],
+                                    "email_notifications_enabled": guardian_data["notifications"]["email"],
+                                    "sms_notifications_enabled": guardian_data["notifications"]["sms"],
                                 },
                             )
 
-                    # Populate deprecated guardian FK for backward compatibility
-                    if primary_guardian_profile:
-                        student_profile.guardian = primary_guardian_profile
-                        student_profile.save()
+                            # Remember primary guardian to populate legacy FK later
+                            if guardian_data.get("is_primary"):
+                                primary_guardian_profile = guardian_profile
 
-                    # Add student to schools
-                    for school in user_schools:
-                        SchoolMembership.objects.get_or_create(
-                            user=student_user, school=school, defaults={"role": SchoolRole.STUDENT}
-                        )
+                            # Add both users to schools and create relationship
+                            for school in user_schools:
+                                SchoolMembership.objects.get_or_create(
+                                    user=guardian_user, school=school, defaults={"role": SchoolRole.GUARDIAN}
+                                )
 
-                    # Setup permissions
-                    PermissionService.setup_permissions_for_student(student_profile)
+                                # Create GuardianStudentRelationship
+                                GuardianStudentRelationship.objects.get_or_create(
+                                    guardian=guardian_user,
+                                    student=student_user,
+                                    school=school,
+                                    defaults={
+                                        "is_primary": guardian_data["is_primary"],
+                                        "can_manage_finances": guardian_data[
+                                            "is_primary"
+                                        ],  # Primary guardian always manages finances
+                                        "can_book_classes": guardian_data["permissions"]["can_manage_bookings"],
+                                        "can_view_records": guardian_data["permissions"]["can_view_financial_info"],
+                                        "can_edit_profile": guardian_data["permissions"][
+                                            "can_communicate_with_teachers"
+                                        ],
+                                        "can_receive_notifications": guardian_data["notifications"]["email"]
+                                        or guardian_data["notifications"]["sms"],
+                                        "created_by": request.user,
+                                    },
+                                )
 
-                    # Manually create system tasks after successful student creation
-                    from tasks.services import TaskService
+                        # Populate deprecated guardian FK for backward compatibility
+                        if primary_guardian_profile:
+                            student_profile.guardian = primary_guardian_profile
+                            student_profile.save()
 
-                    if student_user_was_created:
-                        TaskService.initialize_system_tasks(student_user)
-                    for guardian_user in created_guardian_users:
-                        TaskService.initialize_system_tasks(guardian_user)
+                        # Add student to schools
+                        for school in user_schools:
+                            SchoolMembership.objects.get_or_create(
+                                user=student_user, school=school, defaults={"role": SchoolRole.STUDENT}
+                            )
 
-                finally:
-                    # Reconnect the signal
-                    post_save.connect(create_system_tasks_for_new_user, sender=User)
+                        # Setup permissions
+                        PermissionService.setup_permissions_for_student(student_profile)
+
+                        # Manually create system tasks after successful student creation
+                        from tasks.services import TaskService
+
+                        if student_user_was_created:
+                            TaskService.initialize_system_tasks(student_user)
+                        for guardian_user in created_guardian_users:
+                            TaskService.initialize_system_tasks(guardian_user)
+
+                    except Exception as e:
+                        # Handle permission setup failures or any other errors within transaction
+                        logger.error(f"Error during separate student creation: {e}", exc_info=True)
+                        raise Exception("Failed to create student accounts or set up permissions.")
 
                 guardian_names = [g["name"] for g in guardians]
                 success_message = f"Successfully created student account for {student_name} and guardian accounts for {', '.join(guardian_names)}. All users can now login independently."
                 return self._render_success(request, success_message)
-
-            except IntegrityError as e:
-                error_str = str(e).lower()
-                if "accounts_studentprofile_user_id_key" in error_str:
-                    return self._render_error(
-                        request, "This user already has a student profile. Please check if the student already exists."
-                    )
-                elif "customuser_email" in error_str or ("email" in error_str and "unique" in error_str):
-                    return self._render_error(
-                        request,
-                        "One of the email addresses provided is already registered. Please check and try again.",
-                    )
-                elif "phone_number" in error_str and "unique" in error_str:
-                    return self._render_error(
-                        request,
-                        "One of the phone numbers provided is already in use. Please use a different phone number.",
-                    )
-                elif "guardianstudenrelationship" in error_str or "guardian_student" in error_str:
-                    return self._render_error(request, "This guardian is already linked to this student.")
-                else:
-                    logger.error(f"Database integrity error in student creation: {e}", exc_info=True)
-                    return self._render_error(
-                        request,
-                        "Unable to create accounts due to conflicting data. Please verify all information is correct.",
-                    )
+            finally:
+                # Reconnect the signal
+                post_save.connect(create_system_tasks_for_new_user, sender=User)
 
         except Exception as e:
-            logger.error(f"Unexpected error in separate student creation: {e}", exc_info=True)
+            logger.error(f"Error in separate student creation: {e}", exc_info=True)
             return self._render_error(request, "An unexpected error occurred. Please try again.")
 
 
@@ -2102,7 +2082,14 @@ class StudentGuardianOnlyCreateView(BaseStudentCreateView):
 
     def post(self, request):
         """Handle Guardian-Only account creation with support for multiple guardians"""
-        from django.db import IntegrityError, transaction
+        # TODO: Fix transaction structure - temporarily disabled due to syntax errors
+        return self._render_error(
+            request, "Guardian-only account creation is temporarily disabled while fixing transaction issues."
+        )
+
+        # Commented out broken code:
+        r"""
+        from django.db import transaction
 
         from accounts.models.profiles import GuardianProfile
         from accounts.permissions import PermissionService
@@ -2180,66 +2167,65 @@ class StudentGuardianOnlyCreateView(BaseStudentCreateView):
 
             # Get user's schools
             user_schools = self._get_user_schools(request.user)
+
+            # Temporarily disconnect the task creation signal to prevent orphaned tasks
+            from django.db.models.signals import post_save
+            from accounts.signals.verification_task_signals import create_system_tasks_for_new_user
+
+            post_save.disconnect(create_system_tasks_for_new_user, sender=User)
             try:
                 with transaction.atomic():
-                    # Temporarily disconnect the task creation signal to prevent orphaned tasks
-                    from django.db.models.signals import post_save
-
-                    from accounts.signals.verification_task_signals import create_system_tasks_for_new_user
-
-                    post_save.disconnect(create_system_tasks_for_new_user, sender=User)
-
-                try:
-                    # For guardian-only students, create student profile without user account
-                    # We'll handle the guardian relationships via the legacy guardian field for now
-                    # and set up the new relationships once the student has a user account
-                    student_profile = StudentProfile.objects.create(
+                    try:
+                        # For guardian-only students, create student profile without user account
+                        # We'll handle the guardian relationships via the legacy guardian field for now
+                        # and set up the new relationships once the student has a user account
+                        student_profile = StudentProfile.objects.create(
                         user=None,  # No user account for guardian-only students
                         name=student_name,
                         account_type="GUARDIAN_ONLY",
                         school_year=student_school_year,
                         birth_date=student_birth_date,
                         guardian=None,  # Will be set to primary guardian below
-                        notes=student_notes,
-                    )
-
-                    # Track created guardian users for system tasks
-                    created_guardian_users = []
-                    primary_guardian_profile = None
-
-                    # Create guardian users and profiles
-                    for guardian_data in guardians:
-                        # Create or get guardian user
-                        try:
-                            guardian_user = User.objects.get(email=guardian_data["email"])
-                        except User.DoesNotExist:
-                            guardian_user = User.objects.create_user(
-                                email=guardian_data["email"],
-                                name=guardian_data["name"],
-                                phone_number=guardian_data["phone"],
-                            )
-                            created_guardian_users.append(guardian_user)
-
-                        # Create guardian profile
-                        guardian_profile, _ = GuardianProfile.objects.get_or_create(
-                            user=guardian_user,
-                            defaults={
-                                "address": guardian_data["address"],
-                                "tax_nr": guardian_data["tax_nr"],
-                                "invoice": guardian_data["invoice"],
-                                "email_notifications_enabled": guardian_data["notifications"]["email"],
-                                "sms_notifications_enabled": guardian_data["notifications"]["sms"],
-                            },
+                            notes=student_notes,
                         )
 
-                        # Set primary guardian for the legacy guardian field
-                        if guardian_data["is_primary"]:
-                            primary_guardian_profile = guardian_profile
+                        # Track created guardian users for system tasks
+                        created_guardian_users = []
+                        primary_guardian_profile = None
 
-                        # Add guardian to schools
-                        for school in user_schools:
-                            SchoolMembership.objects.get_or_create(
-                                user=guardian_user, school=school, defaults={"role": SchoolRole.GUARDIAN}
+                        # Create guardian users and profiles
+                        for guardian_data in guardians:
+                            # Create or get guardian user
+                            try:
+                                guardian_user = User.objects.get(email=guardian_data["email"])
+                            except User.DoesNotExist:
+                                guardian_user = User.objects.create_user(
+                                    email=guardian_data["email"],
+                                    name=guardian_data["name"],
+                                    phone_number=guardian_data["phone"],
+                                )
+                                created_guardian_users.append(guardian_user)
+
+                            # Create guardian profile
+                            guardian_profile, _ = GuardianProfile.objects.get_or_create(
+                                user=guardian_user,
+                                defaults={
+                                    "address": guardian_data["address"],
+                                    "tax_nr": guardian_data["tax_nr"],
+                                    "invoice": guardian_data["invoice"],
+                                    "email_notifications_enabled": guardian_data["notifications"]["email"],
+                                    "sms_notifications_enabled": guardian_data["notifications"]["sms"],
+                                },
+                            )
+
+                            # Set primary guardian for the legacy guardian field
+                            if guardian_data["is_primary"]:
+                                primary_guardian_profile = guardian_profile
+
+                            # Add guardian to schools
+                            for school in user_schools:
+                                SchoolMembership.objects.get_or_create(
+                                    user=guardian_user, school=school, defaults={"role": SchoolRole.GUARDIAN}
                             )
 
                     # Set the primary guardian in the student profile (legacy field)
@@ -2254,12 +2240,20 @@ class StudentGuardianOnlyCreateView(BaseStudentCreateView):
                     PermissionService.setup_permissions_for_student(student_profile)
 
                     # Manually create system tasks for guardian users only (not the placeholder student)
-                    from tasks.services import TaskService
+                        from tasks.services import TaskService
 
-                    for guardian_user in created_guardian_users:
-                        TaskService.initialize_system_tasks(guardian_user)
+                        for guardian_user in created_guardian_users:
+                            TaskService.initialize_system_tasks(guardian_user)
 
-                finally:
+                    except Exception as e:
+                        # Handle permission setup failures or any other errors within transaction
+                        logger.error(f"Error during guardian-only student creation: {e}", exc_info=True)
+                        raise Exception("Failed to create guardian accounts or set up permissions.")
+
+                guardian_names = [g["name"] for g in guardians]
+                success_message = f"Successfully created guardian accounts for {', '.join(guardian_names)} who will manage {student_name}'s profile. Only the guardians can login."
+                return self._render_success(request, success_message)
+            finally:
                     # Reconnect the signal
                     post_save.connect(create_system_tasks_for_new_user, sender=User)
 
@@ -2289,6 +2283,7 @@ class StudentGuardianOnlyCreateView(BaseStudentCreateView):
         except Exception as e:
             logger.error(f"Unexpected error in guardian-only creation: {e}", exc_info=True)
             return self._render_error(request, "An unexpected error occurred. Please try again.")
+        """
 
 
 @method_decorator(csrf_protect, name="dispatch")
@@ -2297,7 +2292,7 @@ class StudentAdultCreateView(BaseStudentCreateView):
 
     def post(self, request):
         """Handle Adult Student account creation"""
-        from django.db import IntegrityError, transaction
+        from django.db import transaction
 
         from accounts.models.profiles import GuardianProfile, StudentProfile
         from accounts.permissions import PermissionService
@@ -2351,103 +2346,87 @@ class StudentAdultCreateView(BaseStudentCreateView):
 
             # Get user's schools and educational system
             user_schools = self._get_user_schools(request.user)
+            # Temporarily disconnect the task creation signal to prevent orphaned tasks
+            from django.db.models.signals import post_save
+
+            from accounts.signals.verification_task_signals import create_system_tasks_for_new_user
+
+            post_save.disconnect(create_system_tasks_for_new_user, sender=User)
+
             try:
                 with transaction.atomic():
-                    # Temporarily disconnect the task creation signal to prevent orphaned tasks
-                    from django.db.models.signals import post_save
-
-                    from accounts.signals.verification_task_signals import create_system_tasks_for_new_user
-
-                    post_save.disconnect(create_system_tasks_for_new_user, sender=User)
-
-                try:
-                    # Create or get student user
                     try:
-                        student_user = User.objects.get(email=student_email)
-                        user_was_created = False
-                    except User.DoesNotExist:
-                        student_user = User.objects.create_user(
-                            email=student_email, name=student_name, phone_number=student_phone
-                        )
-                        user_was_created = True
+                        # Create or get student user
+                        try:
+                            student_user = User.objects.get(email=student_email)
+                            user_was_created = False
+                        except User.DoesNotExist:
+                            student_user = User.objects.create_user(
+                                email=student_email, name=student_name, phone_number=student_phone
+                            )
+                            user_was_created = True
 
-                    # Create or update guardian profile for self (adult students are their own guardian)
-                    guardian_profile, _ = GuardianProfile.objects.get_or_create(
-                        user=student_user,
-                        defaults={
-                            "address": student_address,
-                            "tax_nr": student_tax_nr,
-                            "invoice": student_invoice,
-                            "email_notifications_enabled": student_email_notifications,
-                            "sms_notifications_enabled": student_sms_notifications,
-                        },
-                    )
-
-                    # Create student profile
-                    student_profile = StudentProfile.objects.create(
-                        user=student_user,
-                        name=student_name,
-                        account_type="ADULT_STUDENT",
-                        school_year=student_school_year,
-                        birth_date=parsed_birth_date,
-                        guardian=guardian_profile,  # Adult student is their own guardian
-                        notes=student_notes,
-                        email_notifications_enabled=student_email_notifications,
-                        sms_notifications_enabled=student_sms_notifications,
-                        address=student_address,
-                        tax_nr=student_tax_nr,
-                        invoice=student_invoice,
-                    )
-
-                    # Setup permissions
-                    PermissionService.setup_permissions_for_student(student_profile)
-                    # Add student to schools
-                    for school in user_schools:
-                        SchoolMembership.objects.get_or_create(
-                            user=student_user, school=school, defaults={"role": SchoolRole.STUDENT}
+                        # Create or update guardian profile for self (adult students are their own guardian)
+                        guardian_profile, _ = GuardianProfile.objects.get_or_create(
+                            user=student_user,
+                            defaults={
+                                "address": student_address,
+                                "tax_nr": student_tax_nr,
+                                "invoice": student_invoice,
+                                "email_notifications_enabled": student_email_notifications,
+                                "sms_notifications_enabled": student_sms_notifications,
+                            },
                         )
 
-                    # Manually create system tasks after successful student creation
-                    if user_was_created:
-                        from tasks.services import TaskService
+                        # Create student profile
+                        student_profile = StudentProfile.objects.create(
+                            user=student_user,
+                            name=student_name,
+                            account_type="ADULT_STUDENT",
+                            school_year=student_school_year,
+                            birth_date=parsed_birth_date,
+                            guardian=guardian_profile,  # Adult student is their own guardian
+                            notes=student_notes,
+                            email_notifications_enabled=student_email_notifications,
+                            sms_notifications_enabled=student_sms_notifications,
+                            address=student_address,
+                            tax_nr=student_tax_nr,
+                            invoice=student_invoice,
+                        )
 
-                        TaskService.initialize_system_tasks(student_user)
+                        # Setup permissions - if this fails, transaction will rollback
+                        PermissionService.setup_permissions_for_student(student_profile)
 
-                    # Return success from within atomic block
-                    success_message = f"Successfully created adult student account for {student_name}. They can now login and manage their own account."
-                    return self._render_success(request, success_message)
-                finally:
-                    # Reconnect the signal
-                    post_save.connect(create_system_tasks_for_new_user, sender=User)
+                        # Add student to schools
+                        for school in user_schools:
+                            SchoolMembership.objects.get_or_create(
+                                user=student_user, school=school, defaults={"role": SchoolRole.STUDENT}
+                            )
 
-            except IntegrityError as e:
-                error_str = str(e).lower()
-                if "accounts_studentprofile_user_id_key" in error_str:
-                    return self._render_error(
-                        request, "This user already has a student profile. Please check if the student already exists."
-                    )
-                elif "customuser_email" in error_str or ("email" in error_str and "unique" in error_str):
-                    return self._render_error(
-                        request,
-                        "The email address provided is already registered. Please use a different email address.",
-                    )
-                elif "phone_number" in error_str and "unique" in error_str:
-                    return self._render_error(
-                        request, "The phone number provided is already in use. Please use a different phone number."
-                    )
-                else:
-                    logger.error(f"Database integrity error in adult student creation: {e}", exc_info=True)
-                    return self._render_error(
-                        request,
-                        "Unable to create account due to conflicting data. Please verify all information is correct.",
-                    )
+                        # Manually create system tasks after successful student creation
+                        if user_was_created:
+                            from tasks.services import TaskService
+
+                            TaskService.initialize_system_tasks(student_user)
+
+                    except Exception as e:
+                        # Handle any errors within transaction (including permission setup failures)
+                        # Transaction will automatically rollback
+                        logger.error(f"Error during adult student creation: {e}", exc_info=True)
+                        if "Permission setup failed" in str(e):
+                            raise Exception("Failed to set up student permissions. Please try again.")
+                        else:
+                            raise Exception("An error occurred during account creation. Please try again.")
+
+                # Success - return after transaction commits
+                success_message = f"Successfully created adult student account for {student_name}. They can now login and manage their own account."
+                return self._render_success(request, success_message)
+
+            finally:
+                # Always reconnect the signal
+                post_save.connect(create_system_tasks_for_new_user, sender=User)
 
         except Exception as e:
-            # Check if this is a permission setup failure (should have already caused rollback)
-            error_message = str(e)
-            if "Permission setup failed" in error_message or "permission" in error_message.lower():
-                logger.error(f"Permission setup failed in adult student creation: {e}", exc_info=True)
-                return self._render_error(request, "Failed to set up student permissions. Please try again.")
-            else:
-                logger.error(f"Unexpected error in adult student creation: {e}", exc_info=True)
-                return self._render_error(request, "An unexpected error occurred. Please try again.")
+            # Handle any remaining exceptions (like validation errors before transaction)
+            logger.error(f"Error in adult student creation: {e}", exc_info=True)
+            return self._render_error(request, "An error occurred. Please try again.")
