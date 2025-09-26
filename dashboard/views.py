@@ -970,16 +970,15 @@ class PeopleView(LoginRequiredMixin, View):
             should_include = True
 
             # Status filter
-            if status_filter:
-                if (status_filter == "active" and student_data["status"] != "active") or (
-                    status_filter == "inactive" and student_data["status"] != "inactive"
-                ):
-                    should_include = False
+            if status_filter and (
+                (status_filter == "active" and student_data["status"] != "active")
+                or (status_filter == "inactive" and student_data["status"] != "inactive")
+            ):
+                should_include = False
 
             # School year filter
-            if should_include and school_year_filter:
-                if school_year != school_year_filter:
-                    should_include = False
+            if should_include and school_year_filter and school_year != school_year_filter:
+                should_include = False
 
             # Search filter
             if should_include and search_query:
@@ -1039,14 +1038,12 @@ class PeopleView(LoginRequiredMixin, View):
             should_include = True
 
             # Status filter (Guardian-Only students are always "active")
-            if status_filter:
-                if status_filter == "inactive":
-                    should_include = False  # Guardian-Only students are never inactive
+            if status_filter and status_filter == "inactive":
+                should_include = False  # Guardian-Only students are never inactive
 
             # School year filter
-            if should_include and school_year_filter:
-                if profile.school_year != school_year_filter:
-                    should_include = False
+            if should_include and school_year_filter and profile.school_year != school_year_filter:
+                should_include = False
 
             # Search filter
             if should_include and search_query:
