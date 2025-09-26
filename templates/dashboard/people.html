@@ -147,36 +147,81 @@
                     </button>
                 </div>
 
-                <!-- Search -->
-                <div class="flex items-center space-x-2">
-                    <div class="relative">
-                        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                <!-- Filters and Search -->
+                <div class="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-4">
+                    <!-- Status Filter -->
+                    <div class="flex items-center space-x-2">
+                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
                         </svg>
-                        <input
-                            type="text"
-                            x-model="studentSearchQuery"
+                        <select
+                            name="status_filter"
                             hx-post="/people/"
                             hx-target="#students-content"
                             hx-swap="outerHTML"
-                            hx-trigger="keyup changed delay:150ms, search_clear"
-                            hx-vals='{"action": "search_students"}'
-                            name="search"
-                            placeholder="Buscar alunos, guardiões..."
-                            class="pl-10 pr-4 py-2 w-64 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        >
-                        {% csrf_token %}
+                            hx-trigger="change"
+                            hx-include="[name='school_year_filter'], [name='search']"
+                            hx-vals='{"action": "filter_students"}'
+                            class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Todos os Status</option>
+                            <option value="active">Ativos</option>
+                            <option value="inactive">Inativos</option>
+                        </select>
                     </div>
-                    <button
-                        x-show="studentSearchQuery.length > 0"
-                        @click="studentSearchQuery = ''; $nextTick(() => htmx.trigger(document.querySelector('input[name=search]'), 'search_clear'))"
-                        class="p-2 text-gray-500 hover:text-gray-700"
-                        title="Clear search"
-                    >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+
+                    <!-- School Year Filter -->
+                    <div class="flex items-center space-x-2">
+                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                         </svg>
-                    </button>
+                        <select
+                            name="school_year_filter"
+                            hx-post="/people/"
+                            hx-target="#students-content"
+                            hx-swap="outerHTML"
+                            hx-trigger="change"
+                            hx-include="[name='status_filter'], [name='search']"
+                            hx-vals='{"action": "filter_students"}'
+                            class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Todos os Anos</option>
+                            {% for value, label in school_year_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Search -->
+                    <div class="flex items-center space-x-2">
+                        <div class="relative">
+                            <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                            <input
+                                type="text"
+                                x-model="studentSearchQuery"
+                                hx-post="/people/"
+                                hx-target="#students-content"
+                                hx-swap="outerHTML"
+                                hx-trigger="keyup changed delay:150ms, search_clear"
+                                hx-include="[name='status_filter'], [name='school_year_filter']"
+                                hx-vals='{"action": "filter_students"}'
+                                name="search"
+                                placeholder="Buscar alunos, guardiões..."
+                                class="pl-10 pr-4 py-2 w-64 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                            {% csrf_token %}
+                        </div>
+                        <button
+                            x-show="studentSearchQuery.length > 0"
+                            @click="studentSearchQuery = ''; $nextTick(() => htmx.trigger(document.querySelector('input[name=search]'), 'search_clear'))"
+                            class="p-2 text-gray-500 hover:text-gray-700"
+                            title="Clear search"
+                        >
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
 

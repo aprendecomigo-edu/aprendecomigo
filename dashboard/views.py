@@ -607,6 +607,8 @@ class PeopleView(LoginRequiredMixin, View):
             return self._handle_invite_teacher(request)
         elif action == "search_students":
             return self._handle_search_students(request)
+        elif action == "filter_students":
+            return self._handle_filter_students(request)
         elif action == "get_student_detail":
             return self._handle_get_student_detail(request)
         elif action == "refresh_students":
@@ -710,6 +712,18 @@ class PeopleView(LoginRequiredMixin, View):
         """Handle student search requests"""
         search_query = request.POST.get("search", "").strip()
         return self._render_students_partial(request, search_query=search_query)
+
+    def _handle_filter_students(self, request):
+        """Handle student filtering requests with status, school year, and search"""
+        search_query = request.POST.get("search", "").strip()
+        status_filter = request.POST.get("status", "").strip() or request.POST.get("status_filter", "").strip()
+        school_year_filter = (
+            request.POST.get("school_year", "").strip() or request.POST.get("school_year_filter", "").strip()
+        )
+
+        return self._render_students_partial(
+            request, search_query=search_query, status_filter=status_filter, school_year_filter=school_year_filter
+        )
 
     def _handle_refresh_students(self, request):
         """Handle student list refresh requests (triggered by HTMX after student creation)"""
@@ -892,8 +906,8 @@ class PeopleView(LoginRequiredMixin, View):
             },
         )
 
-    def _render_students_partial(self, request, search_query=None):
-        """Render students list partial for HTMX updates"""
+    def _render_students_partial(self, request, search_query=None, status_filter=None, school_year_filter=None):
+        """Render students list partial for HTMX updates with filtering support"""
 
         from accounts.models import School, SchoolMembership
         from accounts.models.enums import SchoolRole
@@ -948,14 +962,27 @@ class PeopleView(LoginRequiredMixin, View):
                 "account_type": account_type,
                 "guardian": guardian_info,
                 "school": {"id": membership.school.id, "name": membership.school.name},
-                "status": "active" if user.is_active else "inactive",
+                "status": "active" if membership.is_active else "inactive",
                 "date_joined": created_at,
             }
 
-            # Apply search filter in Python (not in database)
-            if not search_query:
-                students.append(student_data)
-            else:
+            # Apply filters: status, school year, and search
+            should_include = True
+
+            # Status filter
+            if status_filter:
+                if (status_filter == "active" and student_data["status"] != "active") or (
+                    status_filter == "inactive" and student_data["status"] != "inactive"
+                ):
+                    should_include = False
+
+            # School year filter
+            if should_include and school_year_filter:
+                if school_year != school_year_filter:
+                    should_include = False
+
+            # Search filter
+            if should_include and search_query:
                 # Check if search matches any student field
                 student_matches = any(
                     search_query.lower() in str(value).lower() for value in [user.name, user.email, school_year]
@@ -969,8 +996,11 @@ class PeopleView(LoginRequiredMixin, View):
                         for value in [guardian_info.get("name", ""), guardian_info.get("email", "")]
                     )
 
-                if student_matches or guardian_matches:
-                    students.append(student_data)
+                if not (student_matches or guardian_matches):
+                    should_include = False
+
+            if should_include:
+                students.append(student_data)
 
         # Add Guardian-Only students (no user accounts) to search results
         guardian_only_profiles = StudentProfile.objects.filter(
@@ -1005,10 +1035,21 @@ class PeopleView(LoginRequiredMixin, View):
                 "date_joined": profile.created_at,
             }
 
-            # Apply search filter for Guardian-Only students too
-            if not search_query:
-                students.append(student_data)
-            else:
+            # Apply filters: status, school year, and search for Guardian-Only students
+            should_include = True
+
+            # Status filter (Guardian-Only students are always "active")
+            if status_filter:
+                if status_filter == "inactive":
+                    should_include = False  # Guardian-Only students are never inactive
+
+            # School year filter
+            if should_include and school_year_filter:
+                if profile.school_year != school_year_filter:
+                    should_include = False
+
+            # Search filter
+            if should_include and search_query:
                 # Check if search matches Guardian-Only student fields
                 guardian_only_matches = any(
                     search_query.lower() in str(value).lower()
@@ -1023,8 +1064,11 @@ class PeopleView(LoginRequiredMixin, View):
                         for value in [guardian_info.get("name", ""), guardian_info.get("email", "")]
                     )
 
-                if guardian_only_matches or guardian_matches:
-                    students.append(student_data)
+                if not (guardian_only_matches or guardian_matches):
+                    should_include = False
+
+            if should_include:
+                students.append(student_data)
 
         # Sort students by newest first (by created_at date)
         students.sort(key=lambda x: x["date_joined"], reverse=True)
