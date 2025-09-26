@@ -532,6 +532,7 @@ class AddStudentEdgeCaseTest(BaseTestCase):
                 "name": "New Student",
                 "email": "existing@test.com",  # Duplicate email
                 "birth_date": "2010-01-01",
+                "phone_number": "+351912345678",  # Required for Student+Guardian accounts (Issue #287)
                 "guardian_0_name": "New Guardian",
                 "guardian_0_email": "newguardian@test.com",
             }
@@ -641,6 +642,7 @@ class AddStudentIntegrationTest(BaseTestCase):
             "email": "integration.student@test.com",
             "birth_date": "2008-06-15",
             "school_year": "8",
+            "phone_number": "+351912345678",  # Required for Student+Guardian accounts (Issue #287)
             "guardian_0_name": "Integration Guardian",
             "guardian_0_email": "integration.guardian@test.com",
             "guardian_0_email_notifications": "on",
@@ -698,6 +700,7 @@ class AddStudentIntegrationTest(BaseTestCase):
                 "name": "Mixed Student",
                 "email": "mixed.student@test.com",
                 "birth_date": "2010-01-01",
+                "phone_number": "+351912345678",  # Required for Student+Guardian accounts (Issue #287)
                 "guardian_0_name": "Mixed Guardian",
                 "guardian_0_email": "mixed.guardian@test.com",
             },

@@ -61,6 +61,7 @@ class AddStudentFieldMappingTest(BaseTestCase):
             "email": "template.student@test.com",
             "birth_date": "2010-05-15",
             "school_year": "5",  # Use numeric value
+            "phone_number": "+351912345678",  # Required for Student+Guardian accounts (Issue #287)
             "notes": "Template notes",
             # Guardian fields - exactly as named in template (indexed)
             "guardian_0_name": "Template Guardian",
