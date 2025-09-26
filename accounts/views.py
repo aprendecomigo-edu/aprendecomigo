@@ -200,7 +200,7 @@ def send_otp_email(request):
                 request,
                 "accounts/partials/signin_form.html",
                 {
-                    "error": "Invalid email or account not verified",
+                    "error": "Please check your email address. If you don't have an account yet, please sign up first.",
                     "email": email,
                     "sms_enabled": switch_is_active("sms_feature"),
                 },
@@ -218,6 +218,7 @@ def send_otp_email(request):
                     "error": "Please verify your email address first",
                     "email": email,
                     "sms_enabled": switch_is_active("sms_feature"),
+                    "show_resend_verification": True,  # Flag to show resend verification button
                 },
             )
 

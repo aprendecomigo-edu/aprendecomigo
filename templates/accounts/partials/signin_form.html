@@ -25,6 +25,28 @@
                 {{ error }}
             </div>
             {% endif %}
+
+            <!-- Resend verification button for unverified users -->
+            {% if show_resend_verification %}
+            <div class="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                <div class="text-sm text-amber-800 mb-3">
+                    Need to verify your email? We can send you a new verification link.
+                </div>
+                <div id="resend-verification-message"></div>
+                <form hx-post="{% url 'accounts:resend_verification_email_signin' %}"
+                      hx-target="#resend-verification-message"
+                      hx-swap="innerHTML"
+                      class="inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="email" x-bind:value="email" />
+                    <button type="submit"
+                            class="btn btn-sm btn-outline btn-amber htmx-request:opacity-50 htmx-request:pointer-events-none">
+                        <span class="htmx-indicator loading loading-spinner loading-xs opacity-0"></span>
+                        Resend Verification Email
+                    </button>
+                </form>
+            </div>
+            {% endif %}
         </div>
     </div>
 
